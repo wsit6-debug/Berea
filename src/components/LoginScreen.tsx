@@ -93,14 +93,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       const salt = import.meta.env.VITE_APP_PASSWORD_SALT || '';
       const inputHash = await computeHash(password, salt);
       const expectedHash = import.meta.env.VITE_APP_PASSWORD_HASH;
-      const rawPlain = import.meta.env.VITE_APP_PASSWORD;
 
-      // Ignore un-decrypted ciphertext if private key was missing during build
-      const expectedPlain = (rawPlain && !rawPlain.startsWith('encrypted:')) ? rawPlain : undefined;
-
-      const isHashValid = expectedHash ? timingSafeEqual(inputHash, expectedHash) : false;
-      const isPlainValid = expectedPlain ? timingSafeEqual(password, expectedPlain) : false;
-      const isValid = isHashValid || isPlainValid;
+      const isValid = expectedHash ? timingSafeEqual(inputHash, expectedHash) : false;
 
       if (isValid) {
         setFailedAttempts(0);
