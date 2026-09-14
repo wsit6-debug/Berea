@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, ChevronDown, Check, Sparkles } from 'lucide-react';
+import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock } from 'lucide-react';
 import { 
   TRANSLATIONS, 
   TranslationId, 
@@ -22,6 +22,7 @@ interface HeaderProps {
   onOpenSearch: () => void;
   isAiPanelOpen?: boolean;
   onToggleAiPanel?: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,7 +36,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAbout,
   onOpenSearch,
   isAiPanelOpen = true,
-  onToggleAiPanel
+  onToggleAiPanel,
+  onLogout
 }) => {
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
@@ -247,6 +249,18 @@ export const Header: React.FC<HeaderProps> = ({
               <kbd className="hidden sm:inline-block text-[9.5px] font-mono bg-white px-1.5 py-0.5 rounded text-[#78716C] border border-[#EBE5DC]">
                 ⌘I
               </kbd>
+            </button>
+          )}
+
+          {/* Lock / Log Out Button */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="ios-glass-btn text-[#78716C] hover:text-red-600 hover:border-red-200 hover:bg-red-50/50 border border-[#EBE5DC] !p-1.5 transition-all"
+              title="Lock & Log Out"
+              aria-label="Lock and log out"
+            >
+              <Lock className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
