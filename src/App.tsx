@@ -251,6 +251,10 @@ export function App() {
                 }
                 setIsAiPanelOpen(true);
                 setAiPanelTab('studyGuide');
+              isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
+              onOpenQuiz={(type) => {
+                setQuizType(type);
+                setIsQuizModalOpen(true);
               }}
             />
           </div>

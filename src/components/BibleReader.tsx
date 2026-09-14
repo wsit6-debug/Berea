@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Verse, Chapter, TranslationId } from '../data/bibleData';
-import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers } from 'lucide-react';
+import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
 import {
@@ -70,6 +70,8 @@ interface BibleReaderProps {
   isLoading?: boolean;
   onSelectPassage?: (bookId: string, chapterNum: number, verseNum?: number) => void;
   onCreateStudyGuide?: (verse: Verse, range?: { start: number; end: number }) => void;
+  onOpenQuiz?: (type: 'chapter' | 'book') => void;
+  isLastChapterOfBook?: boolean;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -89,6 +91,9 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   isLoading = false,
   onSelectPassage,
   onCreateStudyGuide
+,
+  onOpenQuiz,
+  isLastChapterOfBook = false
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
@@ -982,6 +987,28 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
+            
+            {/* Quiz Buttons */}
+            {onOpenQuiz && (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3 animate-fadeIn">
+                <button
+                  onClick={() => onOpenQuiz('chapter')}
+                  className="px-4 py-2 bg-[#FAF5ED] text-[#B4793D] border border-[#D4A373] hover:bg-[#F5EFE6] rounded-full text-xs font-semibold flex items-center gap-2 transition-all shadow-sm"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Finish Chapter
+                </button>
+                {isLastChapterOfBook && (
+                  <button
+                    onClick={() => onOpenQuiz('book')}
+                    className="px-4 py-2 bg-[#B4793D] text-white hover:bg-[#9A632E] rounded-full text-xs font-semibold flex items-center gap-2 transition-all shadow-sm"
+                  >
+                    <Trophy className="w-3.5 h-3.5" />
+                    Finished Book
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 

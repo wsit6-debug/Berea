@@ -12,6 +12,13 @@ export interface QuizQuestion {
   explanation: string;
 }
 
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'assistant' | 'system';
@@ -765,4 +772,100 @@ export async function getAccumulatedBookQuiz(book: string, numQuestions: number 
 
   // Shuffle options and questions lightly
   return finalQuestions.slice(0, numQuestions);
+}
+
+export async function generateQuiz(
+  book: string,
+  chapter: number,
+  type: 'chapter' | 'book',
+  numQuestions: number = 3
+): Promise<QuizQuestion[]> {
+  const scope = type === 'chapter' ? `chapter ${chapter} of the book of ${book}` : `the entire book of ${book}`;
+  const prompt = `Generate a multiple-choice quiz about ${scope} with exactly ${numQuestions} questions.
+Ensure that the questions focus on specific, randomly selected details, themes, or quotes from the text so that this quiz is unique and different every time it is generated. Avoid asking the same general questions. Include an element of randomness (seed: ${Math.random()}).
+Respond strictly with a valid JSON array. Do not include markdown formatting like \`\`\`json or any other text before or after the array.
+Each object in the array must match this schema:
+{
+  "question": "The question text",
+  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+  "correctAnswerIndex": 0, // integer index of the correct option (0-3)
+  "explanation": "Brief explanation of why this is the correct answer."
+}`;
+
+  try {
+    const { generateLocalAiResponse } = await import('./webLlmService');
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }]);
+    
+    // Clean up potential markdown formatting or extra text from the LLM
+    let cleanJson = responseText.trim();
+    if (cleanJson.startsWith('\`\`\`json')) cleanJson = cleanJson.substring(7);
+    if (cleanJson.startsWith('\`\`\`')) cleanJson = cleanJson.substring(3);
+    if (cleanJson.endsWith('\`\`\`')) cleanJson = cleanJson.substring(0, cleanJson.length - 3);
+    cleanJson = cleanJson.trim();
+
+    // Sometimes LLMs put text before the JSON array starts
+    const bracketIndex = cleanJson.indexOf('[');
+    const endBracketIndex = cleanJson.lastIndexOf(']');
+    if (bracketIndex !== -1 && endBracketIndex !== -1) {
+      cleanJson = cleanJson.substring(bracketIndex, endBracketIndex + 1);
+    }
+
+    const quiz: QuizQuestion[] = JSON.parse(cleanJson);
+    if (Array.isArray(quiz) && quiz.length > 0) {
+      return quiz;
+    } else {
+      throw new Error('Invalid JSON format returned from LLM');
+    }
+  } catch (err) {
+    console.error('Error generating quiz:', err);
+    // Fallback static quiz if LLM fails
+    const fallbackPool: QuizQuestion[] = [
+      {
+        question: `What is a central theme in ${type === 'chapter' ? `${book} ${chapter}` : book}?`,
+        options: ['God\'s faithfulness', 'Human rebellion', 'The promised Messiah', 'All of the above'],
+        correctAnswerIndex: 3,
+        explanation: 'Biblical narratives often weave together these core theological themes.'
+      },
+      {
+        question: `Which key figure is most prominent in ${book}?`,
+        options: ['Moses', 'David', 'Jesus', 'It varies by chapter'],
+        correctAnswerIndex: 3,
+        explanation: 'Different sections highlight different leaders, prophets, or figures.'
+      },
+      {
+        question: `How does the narrative in ${type === 'chapter' ? `${book} ${chapter}` : book} primarily unfold?`,
+        options: ['Through historical accounts', 'Through poetry and song', 'Through prophetic visions', 'Through dialogue and teaching'],
+        correctAnswerIndex: 0,
+        explanation: 'Most biblical books utilize historical narrative as their primary vehicle.'
+      },
+      {
+        question: `What is the primary spiritual lesson of ${book}?`,
+        options: ['Trusting in God\'s promises', 'The importance of the law', 'The need for repentance', 'God\'s sovereignty'],
+        correctAnswerIndex: 0,
+        explanation: 'Trust in God is a universally applicable lesson throughout scripture.'
+      },
+      {
+        question: `Which theological concept is most heavily emphasized in ${type === 'chapter' ? `${book} ${chapter}` : book}?`,
+        options: ['Covenant', 'Sacrifice', 'Redemption', 'Justice'],
+        correctAnswerIndex: 2,
+        explanation: 'Redemption is a core thread running throughout the biblical text.'
+      }
+    ];
+
+    // Shuffle and pick numQuestions
+    const shuffled = [...fallbackPool].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, numQuestions);
+
+    // If we need more questions than the pool has, pad with generic ones
+    while (selected.length < numQuestions) {
+      selected.push({
+        question: `Detail from ${book} (Question ${selected.length + 1})`,
+        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        correctAnswerIndex: 0,
+        explanation: 'Fallback question.'
+      });
+    }
+
+    return selected;
+  }
 }
