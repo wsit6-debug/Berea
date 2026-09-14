@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock } from 'lucide-react';
+import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart } from 'lucide-react';
 import { 
   TRANSLATIONS, 
   TranslationId, 
