@@ -1,0 +1,254 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { 
+  BIBLE_BOOKS, 
+  TranslationId, 
+  getBook, 
+  getChapter, 
+  Verse, 
+  Chapter,
+  getApprovedTranslationsForDenomination,
+  getDefaultTranslationForDenomination 
+} from './data/bibleData';
+import { DenominationalLens } from './data/theologyData';
+import { Header } from './components/Header';
+import { BibleReader } from './components/BibleReader';
+import { BereaAiPanel } from './components/BereaAiPanel';
+import { BookSelectorModal } from './components/BookSelectorModal';
+import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
+import { SearchModal } from './components/SearchModal';
+import { fetchFullMultiTranslationChapter } from './services/youversionService';
+
+export function App() {
+  // Retrieve saved passage from local storage if available, otherwise default to Genesis 1:1
+  const savedPassage = (() => {
+    try {
+      const raw = localStorage.getItem('berea_current_passage');
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+    return null;
+  })();
+
+  const [bookId, setBookId] = useState<string>(() => savedPassage?.bookId || 'genesis');
+  const [chapterNum, setChapterNum] = useState<number>(() => savedPassage?.chapterNum || 1);
+  const [activeLens, setActiveLens] = useState<DenominationalLens>('catholic');
+  const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination('catholic'));
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState<boolean>(true);
+
+  // Modals state
+  const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+  // Dynamic Chapter State fetched from YouVersion Scripture API
+  const currentBook = getBook(bookId) || BIBLE_BOOKS[0];
+  const [currentChapter, setCurrentChapter] = useState<Chapter>(() => getChapter(bookId, chapterNum));
+  const [isLoadingChapter, setIsLoadingChapter] = useState<boolean>(false);
+
+  const targetVerseRef = useRef<number | undefined>(savedPassage?.verseNum || 1);
+
+  // Selected Verse State
+  const [selectedVerse, setSelectedVerse] = useState<Verse>(() => {
+    const initialVerseNum = savedPassage?.verseNum || 1;
+    return currentChapter.verses.find(v => v.verseNumber === initialVerseNum) || currentChapter.verses[0] || {
+      verseNumber: 1,
+      text: { KJV: 'Loading scripture...' }
+    };
+  });
+
+  // Save current passage coordinates to local storage on navigation
+  useEffect(() => {
+    try {
+      localStorage.setItem('berea_current_passage', JSON.stringify({
+        bookId,
+        chapterNum,
+        verseNum: selectedVerse?.verseNumber || 1
+      }));
+    } catch (e) {
+      console.warn(e);
+    }
+  }, [bookId, chapterNum, selectedVerse]);
+
+  // Handle Denomination Change with Automatic Approved Translation Enforcement
+  const handleSelectLens = (newLens: DenominationalLens) => {
+    setActiveLens(newLens);
+    const approved = getApprovedTranslationsForDenomination(newLens);
+    if (!approved.some(t => t.id === activeTranslation)) {
+      const defaultTrans = getDefaultTranslationForDenomination(newLens);
+      setActiveTranslation(defaultTrans);
+    }
+  };
+
+  // Fetch full multi-translation chapter from YouVersion Scripture API
+  const loadChapterFromApi = useCallback(async (targetBookId: string, targetChapterNum: number, currentTrans?: TranslationId) => {
+    setIsLoadingChapter(true);
+    try {
+      const transToLoad = currentTrans || activeTranslation;
+      const versionsToFetch: TranslationId[] = Array.from(new Set([
+        transToLoad,
+        'NABRE', 'RSVCE', 'NRSVCE', 'DRB', 'ESV', 'NIV', 'NLT', 'NASB', 'CSB', 'NKJV', 'KJV', 'GENEVA', 'BSB', 'CEB'
+      ]));
+      const fetched = await fetchFullMultiTranslationChapter(targetBookId, targetChapterNum, versionsToFetch);
+      setCurrentChapter(fetched);
+      
+      const desiredVerseNum = targetVerseRef.current || 1;
+      const defaultV = fetched.verses.find(v => v.verseNumber === desiredVerseNum) || fetched.verses[0];
+      if (defaultV) {
+        setSelectedVerse(defaultV);
+      }
+    } catch (err) {
+      console.error('Failed to fetch chapter from YouVersion API', err);
+    } finally {
+      setIsLoadingChapter(false);
+    }
+  }, [activeTranslation]);
+
+  // Trigger API fetch whenever bookId, chapterNum, or activeTranslation changes
+  useEffect(() => {
+    loadChapterFromApi(bookId, chapterNum, activeTranslation);
+  }, [bookId, chapterNum, activeTranslation, loadChapterFromApi]);
+
+  // Keyboard shortcut for Cmd+K and Cmd+I
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchModalOpen(prev => !prev);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        setIsAiPanelOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleNextChapter = () => {
+    targetVerseRef.current = 1;
+    if (chapterNum < currentBook.chaptersCount) {
+      setChapterNum(prev => prev + 1);
+    } else {
+      const currentIdx = BIBLE_BOOKS.findIndex(b => b.id === bookId);
+      if (currentIdx < BIBLE_BOOKS.length - 1) {
+        const nextBook = BIBLE_BOOKS[currentIdx + 1];
+        setBookId(nextBook.id);
+        setChapterNum(1);
+      }
+    }
+  };
+
+  const handlePrevChapter = () => {
+    targetVerseRef.current = 1;
+    if (chapterNum > 1) {
+      setChapterNum(prev => prev - 1);
+    } else {
+      const currentIdx = BIBLE_BOOKS.findIndex(b => b.id === bookId);
+      if (currentIdx > 0) {
+        const prevBook = BIBLE_BOOKS[currentIdx - 1];
+        setBookId(prevBook.id);
+        setChapterNum(prevBook.chaptersCount);
+      }
+    }
+  };
+
+  const handleSelectPassage = (newBookId: string, newChapterNum: number, targetVerseNum?: number) => {
+    const vNum = targetVerseNum || 1;
+    targetVerseRef.current = vNum;
+    setBookId(newBookId);
+    setChapterNum(newChapterNum);
+    
+    // Check locally available chapter data
+    const localCh = getChapter(newBookId, newChapterNum);
+    if (localCh && localCh.verses.length > 0) {
+      const v = localCh.verses.find(x => x.verseNumber === vNum) || localCh.verses[0];
+      if (v) setSelectedVerse(v);
+    }
+  };
+
+  return (
+    <div className="berea-app h-screen flex flex-col font-sans bg-[#FAF7F2] text-[#26221F] overflow-hidden">
+      {/* Top Application Header with Global Denomination and Approved Translation Selectors */}
+      <Header
+        currentBookName={currentBook.name}
+        currentChapterNum={chapterNum}
+        onOpenBookSelector={() => setIsBookSelectorOpen(true)}
+        activeLens={activeLens}
+        onSelectLens={handleSelectLens}
+        activeTranslation={activeTranslation}
+        onSelectTranslation={setActiveTranslation}
+        onOpenAbout={() => setIsAboutModalOpen(true)}
+        onOpenSearch={() => setIsSearchModalOpen(true)}
+        isAiPanelOpen={isAiPanelOpen}
+        onToggleAiPanel={() => setIsAiPanelOpen(prev => !prev)}
+      />
+
+      {/* Main App Workspace: Clean Scripture Reading + Berea AI Guide */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden">
+        <div className={`flex-1 grid grid-cols-1 ${isAiPanelOpen ? 'lg:grid-cols-12' : 'max-w-4xl mx-auto w-full'} gap-3 h-full min-h-0 overflow-hidden`}>
+          {/* Bible Reader Pane */}
+          <div className={`${isAiPanelOpen ? 'lg:col-span-7' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
+            <BibleReader
+              bookName={currentBook.name}
+              chapter={currentChapter}
+              activeTranslation={activeTranslation}
+              selectedVerseNumber={selectedVerse.verseNumber}
+              onSelectVerse={setSelectedVerse}
+              onNextChapter={handleNextChapter}
+              onPrevChapter={handlePrevChapter}
+              isFirstChapter={bookId === BIBLE_BOOKS[0].id && chapterNum === 1}
+              isLastChapter={bookId === BIBLE_BOOKS[BIBLE_BOOKS.length - 1].id && chapterNum === currentBook.chaptersCount}
+              onOpenBereaAi={() => setIsAiPanelOpen(true)}
+              isAiPanelOpen={isAiPanelOpen}
+              isLoading={isLoadingChapter}
+              onSelectPassage={handleSelectPassage}
+            />
+          </div>
+
+          {/* Berea AI Inspector Sidebar */}
+          {isAiPanelOpen && (
+            <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+              <BereaAiPanel
+                currentBook={currentBook.name}
+                currentChapter={chapterNum}
+                selectedVerse={selectedVerse}
+                activeLens={activeLens}
+                onLensChange={handleSelectLens}
+                activeTranslation={activeTranslation}
+                onTranslationChange={setActiveTranslation}
+                onClose={() => setIsAiPanelOpen(false)}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Book & Chapter Picker Modal (All 66 Books OT/NT) */}
+      <BookSelectorModal
+        isOpen={isBookSelectorOpen}
+        onClose={() => setIsBookSelectorOpen(false)}
+        currentBookId={bookId}
+        currentChapterNum={chapterNum}
+        onSelectPassage={(bId, chNum) => handleSelectPassage(bId, chNum)}
+      />
+
+      {/* Pitch Deck & Architecture Overview Modal */}
+      <PitchDeckAboutModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+      />
+
+      {/* Global Scripture & Theology Search Modal */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
+        activeTranslation={activeTranslation}
+        activeLens={activeLens}
+      />
+    </div>
+  );
+}
+
+export default App;

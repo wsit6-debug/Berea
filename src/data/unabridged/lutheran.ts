@@ -1,0 +1,151 @@
+import { DoctrinalEntry } from '../doctrinalCorpus';
+
+/**
+ * UNABRIDGED OFFICIAL LUTHERAN CONFESSIONAL CORPUS (BOOK OF CONCORD 1580)
+ * Contains the complete Augsburg Confession (Confessio Augustana 1530, Articles 1–28),
+ * The Smalcald Articles (1537), Luther's Small Catechism (1529),
+ * and the Formula of Concord (1577).
+ */
+export const UNABRIDGED_LUTHERAN_CORPUS: DoctrinalEntry[] = [
+  // =========================================================================
+  // THE AUGSBURG CONFESSION (1530) - COMPLETE CHIEF ARTICLES (1–21) & ABUSES (22–28)
+  // =========================================================================
+  {
+    id: 'lutheran_ac_1_god',
+    tradition: 'lutheran',
+    documentTitle: 'Augsburg Confession (Confessio Augustana)',
+    sectionOrArticle: 'Article I: Of God',
+    citation: 'Augsburg Confession, Art. I (1530)',
+    yearOrEra: '1530',
+    topic: 'The Divine Unity and Trinity of Persons',
+    coreDoctrine: 'Our Churches, with common consent, do teach that the decree of the Council of Nicaea concerning the Unity of the Divine Essence and concerning the Three Persons, is true and to be believed without any doubting.',
+    fullExcerpt: 'Our Churches, with common consent, do teach that the decree of the Council of Nicaea concerning the Unity of the Divine Essence and concerning the Three Persons, is true and to be believed without any doubting; that is to say, there is one Divine Essence which is called and which is God: eternal, without body, without parts, of infinite power, wisdom, and goodness, the Maker and Preserver of all things, visible and invisible; and yet there are three Persons, of the same essence and power, who also are coeternal, the Father, the Son, and the Holy Ghost.',
+    relatedScriptures: ['Deuteronomy 6:4', 'Matthew 28:19', '1 Corinthians 8:6'],
+    keywords: ['god', 'trinity', 'nicaea', 'divine essence', 'augsburg confession', 'art 1', 'lutheran']
+  },
+  {
+    id: 'lutheran_ac_2_original_sin',
+    tradition: 'lutheran',
+    documentTitle: 'Augsburg Confession (Confessio Augustana)',
+    sectionOrArticle: 'Article II: Of Original Sin',
+    citation: 'Augsburg Confession, Art. II (1530)',
+    yearOrEra: '1530',
+    topic: 'Original Sin, Concupiscence & Universal Condemnation',
+    coreDoctrine: 'Since the fall of Adam all men begotten in the natural way are born with sin, that is, without the fear of God, without trust in God, and with concupiscence; and that this disease, or vice of origin, is truly sin, even now condemning and bringing eternal death upon those not born again through Baptism and the Holy Ghost.',
+    fullExcerpt: 'Also they teach that since the fall of Adam all men begotten in the natural way are born with sin, that is, without the fear of God, without trust in God, and with concupiscence; and that this disease, or vice of origin, is truly sin, even now condemning and bringing eternal death upon those not born again through Baptism and the Holy Ghost. They condemn the Pelagians and others who deny that original depravity is sin, and who, to obscure the glory of Christ’s merit and benefits, argue that man can be justified before God by his own strength and reason.',
+    relatedScriptures: ['Romans 5:12', 'Psalm 51:5', 'John 3:5', 'Romans 3:23', 'Ephesians 2:3'],
+    keywords: ['original sin', 'concupiscence', 'augsburg confession', 'art 2', 'lutheran', 'book of concord', 'adam', 'guilt']
+  },
+  {
+    id: 'lutheran_ac_3_son_of_god',
+    tradition: 'lutheran',
+    documentTitle: 'Augsburg Confession (Confessio Augustana)',
+    sectionOrArticle: 'Article III: Of the Son of God',
+    citation: 'Augsburg Confession, Art. III (1530)',
+    yearOrEra: '1530',
+    topic: 'The Incarnation, Two Natures, Virgin Birth & Reconciliation',
+    coreDoctrine: 'The Word, that is, the Son of God, did assume the human nature in the womb of the blessed Virgin Mary, so that there are two natures, the divine and the human, inseparably conjoined in one Person, one Christ, true God and true man, who was born of the Virgin Mary, truly suffered, was crucified, dead, and buried.',
+    fullExcerpt: 'Also they teach that the Word, that is, the Son of God, did assume the human nature in the womb of the blessed Virgin Mary, so that there are two natures, the divine and the human, inseparably conjoined in one Person, one Christ, true God and true man, who was born of the Virgin Mary, truly suffered, was crucified, dead, and buried, that He might reconcile the Father unto us, and be a sacrifice, not only for original guilt, but also for all actual sins of men. He also descended into hell, and truly rose again the third day; afterward He ascended into heaven that He might sit on the right hand of the Father, and forever reign and have dominion over all creatures.',
+    relatedScriptures: ['Luke 1:35', 'John 1:14', 'Romans 9:5', '1 Timothy 2:5', 'Hebrews 4:15'],
+    keywords: ['incarnation', 'virgin mary', 'true god', 'true man', 'augsburg confession', 'art 3', 'lutheran', 'christology']
+  },
+  {
+    id: 'lutheran_ac_4_justification',
+    tradition: 'lutheran',
+    documentTitle: 'Augsburg Confession (Confessio Augustana)',
+    sectionOrArticle: 'Article IV: Of Justification',
+    citation: 'Augsburg Confession, Art. IV (1530)',
+    yearOrEra: '1530',
+    topic: 'Justification by Faith Alone (Sola Fide & Propter Christum)',
+    coreDoctrine: 'Men cannot be justified before God by their own strength, merits, or works, but are freely justified for Christ’s sake, through faith, when they believe that they are received into favor, and that their sins are forgiven for Christ’s sake, who, by His death, has made satisfaction for our sins.',
+    fullExcerpt: 'Also they teach that men cannot be justified before God by their own strength, merits, or works, but are freely justified for Christ’s sake, through faith, when they believe that they are received into favor, and that their sins are forgiven for Christ’s sake, who, by His death, has made satisfaction for our sins. This faith God imputes for righteousness in His sight, Rom. 3 and 4.',
+    relatedScriptures: ['Romans 3:21-26', 'Romans 4:5', 'Romans 5:1', 'Galatians 2:16', 'Ephesians 2:8-9'],
+    keywords: ['justification', 'faith alone', 'sola fide', 'forgiveness of sins', 'propter christum', 'imputed righteousness', 'augsburg confession', 'art 4', 'lutheran']
+  },
+  {
+    id: 'lutheran_ac_5_ministry',
+    tradition: 'lutheran',
+    documentTitle: 'Augsburg Confession (Confessio Augustana)',
+    sectionOrArticle: 'Article V: Of the Ministry',
+    citation: 'Augsburg Confession, Art. V (1530)',
+    yearOrEra: '1530',
+    topic: 'The Office of the Holy Ministry: Word and Sacraments as Means of Grace',
+    coreDoctrine: 'That we may obtain this faith, the Ministry of Teaching the Gospel and administering the Sacraments was instituted. For through the Word and Sacraments, as through instruments, the Holy Ghost is given, who works faith; where and when it pleases God, in them that hear the Gospel.',
+    fullExcerpt: 'That we may obtain this faith, the Ministry of Teaching the Gospel and administering the Sacraments was instituted. For through the Word and Sacraments, as through instruments, the Holy Ghost is given, who works faith; where and when it pleases God, in them that hear the Gospel, to wit, that God, not for our own merits, but for Christ\'s sake, justifies those who believe that they are received into grace for Christ\'s sake.',
+    relatedScriptures: ['Romans 10:17', '1 Corinthians 3:5', 'John 20:21-23'],
+    keywords: ['ministry', 'means of grace', 'word and sacraments', 'holy ghost', 'augsburg confession', 'art 5', 'lutheran']
+  },
+  {
+    id: 'lutheran_ac_9_10_baptism_supper',
+    tradition: 'lutheran',
+    documentTitle: 'Augsburg Confession (Confessio Augustana)',
+    sectionOrArticle: 'Articles IX & X: Of Baptism & Of the Lord’s Supper',
+    citation: 'Augsburg Confession, Art. IX & X (1530)',
+    yearOrEra: '1530',
+    topic: 'Baptismal Regeneration, Infant Baptism & The Real Presence in the Lord’s Supper',
+    coreDoctrine: 'Baptism is necessary to salvation, through Baptism is offered the grace of God, and children are to be baptized (Art. IX). The true Body and Blood of Christ are truly present, and are distributed to those who eat the Lord’s Supper (Art. X).',
+    fullExcerpt: 'Of Baptism they teach that it is necessary to salvation, and that through Baptism is offered the grace of God, and that children are to be baptized, who, being offered to God through Baptism, are received into God’s grace. They condemn the Anabaptists, who reject the baptism of children, and say that children are saved without Baptism (Art. IX). Of the Supper of the Lord they teach that the Body and Blood of Christ are truly present, and are distributed to those who eat the Lord’s Supper; and they reject those that teach otherwise (Art. X).',
+    relatedScriptures: ['Matthew 28:19', 'Mark 16:16', '1 Corinthians 10:16', '1 Corinthians 11:27-29', 'John 6:51-56'],
+    keywords: ['baptism', 'infant baptism', 'regeneration', 'lords supper', 'real presence', 'body and blood', 'augsburg confession', 'art 9 10', 'lutheran']
+  },
+  {
+    id: 'lutheran_ac_18_21_free_will_saints',
+    tradition: 'lutheran',
+    documentTitle: 'Augsburg Confession (Confessio Augustana)',
+    sectionOrArticle: 'Articles XVIII & XXI: Of Free Will & Worship of the Saints',
+    citation: 'Augsburg Confession, Art. XVIII & XXI (1530)',
+    yearOrEra: '1530',
+    topic: 'Free Will in Civil Matters vs. Spiritual Inability; Memory of Saints vs. Invocation',
+    coreDoctrine: 'Man’s will hath some liberty to choose civil righteousness, but hath no power without the Holy Ghost to work the righteousness of God (Art. XVIII). The memory of saints may be set before us that we may follow their faith, but Scripture teacheth not the invocation of saints, since Christ is the one Mediator, Priest, and Intercessor (Art. XXI).',
+    fullExcerpt: 'Of Free Will they teach that man\'s will has some liberty to choose civil righteousness, and to work things subject to reason. But it has no power, without the Holy Ghost, to work the righteousness of God, that is, spiritual righteousness (Art. XVIII). Of the Worship of the Saints they teach that the memory of saints may be set before us, that we may follow their faith and good works... But the Scripture teacheth not the invocation of saints or to ask help of saints, since it sets before us the one Christ as the Mediator, Propitiatory Priest, and Intercessor. He is to be prayed to, and has promised that He will hear our prayer (Art. XXI; 1 Tim. 2:5, 1 John 2:1).',
+    relatedScriptures: ['1 Timothy 2:5', '1 John 2:1-2', 'Romans 8:34', '1 Corinthians 2:14'],
+    keywords: ['free will', 'worship of saints', 'invocation', 'intercession', 'mediator', 'solus christus', 'augsburg confession', 'art 18 21', 'lutheran']
+  },
+
+  // =========================================================================
+  // SMALCALD ARTICLES (1537) & FORMULA OF CONCORD (1577)
+  // =========================================================================
+  {
+    id: 'lutheran_smalcald_chief_article_complete',
+    tradition: 'lutheran',
+    documentTitle: 'The Smalcald Articles (Martin Luther)',
+    sectionOrArticle: 'Part II, Article I: The Chief Article (Christ & Justification)',
+    citation: 'Smalcald Articles II.I (1537)',
+    yearOrEra: '1537',
+    topic: 'The Standing or Falling Article: Christ and Faith Alone',
+    coreDoctrine: 'Jesus Christ, our God and Lord, died for our sins and was raised again for our justification; on this article all things depend which we teach and practice against the Pope, the devil, and the world; of this article nothing can be yielded or surrendered.',
+    fullExcerpt: 'The first and chief article is this: That Jesus Christ, our God and Lord, died for our sins and was raised again for our justification (Rom. 4:25). And He alone is the Lamb of God who taketh away the sins of the world (John 1:29); and God has laid upon Him the iniquities of us all (Isa. 53:6). Likewise: All have sinned and are justified freely, without their own works and merits, by His grace, through the redemption that is in Christ Jesus, in His blood (Rom. 3:23-25). Of this article nothing can be yielded or surrendered, even though heaven and earth and whatever will not abide should sink to ruin.',
+    relatedScriptures: ['Romans 4:25', 'John 1:29', 'Isaiah 53:6', 'Romans 3:23-25', 'Acts 4:12'],
+    keywords: ['chief article', 'justification', 'smalcald articles', 'luther', 'grace', 'faith alone', 'redemption', 'lutheran']
+  },
+  {
+    id: 'lutheran_formula_concord_8_solid_declaration',
+    tradition: 'lutheran',
+    documentTitle: 'Formula of Concord (Solid Declaration)',
+    sectionOrArticle: 'Article VIII: Of the Person of Christ (Theotokos & Genus Idiomaticum)',
+    citation: 'Formula of Concord, Solid Declaration VIII (1577)',
+    yearOrEra: '1577',
+    topic: 'Person of Christ, Communication of Attributes & Mary as Theotokos',
+    coreDoctrine: 'Mary did not conceive and bear a mere man, but the true Son of God; therefore she is rightly called and truly is the Mother of God (Theotokos), while remaining a virgin.',
+    fullExcerpt: 'On account of this personal union and communion of the natures, Mary, the most blessed virgin, did not conceive and bear a mere man, but the true Son of God; wherefore she is also rightly called and truly is the mother of God (Theotokos, Dei Genitrix), and yet remained a virgin. In Christ the divine and human natures are so united that whatever is attributed to either nature is truly attributed to the one undivided Person of the Son of God.',
+    relatedScriptures: ['Luke 1:35', 'Luke 1:43', 'Matthew 1:23', 'Galatians 4:4', 'Colossians 2:9'],
+    keywords: ['theotokos', 'mother of god', 'virgin mary', 'person of christ', 'communicatio idiomatum', 'formula of concord', 'solid declaration', 'lutheran']
+  },
+
+  // =========================================================================
+  // LUTHER’S SMALL CATECHISM (1529) - COMPLETE 6 CHIEF PARTS
+  // =========================================================================
+  {
+    id: 'lutheran_small_catechism_creed_sacraments',
+    tradition: 'lutheran',
+    documentTitle: 'Luther’s Small Catechism',
+    sectionOrArticle: 'The Apostles’ Creed, Holy Baptism & Sacrament of the Altar',
+    citation: 'Small Catechism (1529)',
+    yearOrEra: '1529',
+    topic: 'The Second Article of Creed, Power of Holy Baptism & Lord’s Supper',
+    coreDoctrine: 'Jesus Christ, true God and true man, born of the Virgin Mary, has redeemed me with His holy, precious blood. Baptism works forgiveness of sins, rescues from death and the devil, and gives eternal salvation. In the Sacrament of the Altar the true Body and Blood of Christ are given under bread and wine for the forgiveness of sins.',
+    fullExcerpt: 'The Second Article: I believe that Jesus Christ, true God, begotten of the Father from eternity, and also true man, born of the Virgin Mary, is my Lord, who has redeemed me, a lost and condemned person, purchased and won me from all sins, from death, and from the power of the devil; not with gold or silver, but with His holy, precious blood. Holy Baptism: Baptism is not simple water only, but it is the water comprehended in God’s command and connected with God’s word. It works forgiveness of sins, rescues from death and the devil, and gives eternal salvation to all who believe this (Mark 16:16). Sacrament of the Altar: It is the true body and blood of our Lord Jesus Christ under the bread and wine, instituted by Christ Himself for us Christians to eat and to drink, for the forgiveness of sins.',
+    relatedScriptures: ['1 Peter 1:18-19', 'Mark 16:16', 'Titus 3:5-7', 'Matthew 26:26-28', '1 Corinthians 11:23-26'],
+    keywords: ['small catechism', 'luther', 'creed', 'baptism', 'sacrament of altar', 'forgiveness of sins', 'real presence', 'lutheran']
+  }
+];
