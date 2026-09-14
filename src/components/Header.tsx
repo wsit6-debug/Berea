@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, ChevronDown, Check, Sparkles } from 'lucide-react';
+import { BookOpen, Search, ChevronDown, Check, Sparkles, MessageSquareHeart } from 'lucide-react';
 import { 
   TRANSLATIONS, 
   TranslationId, 
@@ -22,6 +22,7 @@ interface HeaderProps {
   onOpenSearch: () => void;
   isAiPanelOpen?: boolean;
   onToggleAiPanel?: () => void;
+  onOpenFeedback?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,7 +36,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAbout,
   onOpenSearch,
   isAiPanelOpen = true,
-  onToggleAiPanel
+  onToggleAiPanel,
+  onOpenFeedback
 }) => {
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
@@ -234,6 +236,18 @@ export const Header: React.FC<HeaderProps> = ({
               ⌘K
             </kbd>
           </button>
+
+          {/* Clergy & Pastor Feedback Button */}
+          {onOpenFeedback && (
+            <button
+              onClick={onOpenFeedback}
+              className="ios-glass-btn text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC] hover:border-[#D4A373] !px-2.5 !py-1 transition-all"
+              title="Clergy & Theological Feedback"
+            >
+              <MessageSquareHeart className="w-3.5 h-3.5 text-[#B4793D]" />
+              <span className="text-xs font-semibold text-[#26221F] hidden sm:inline">Feedback</span>
+            </button>
+          )}
 
           {/* AI Guide Inspector Toggle Button */}
           {onToggleAiPanel && (

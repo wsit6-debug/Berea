@@ -275,7 +275,7 @@ export function normalizeScriptureForSpeech(rawText: string): string {
 /**
  * Play a pleasant auditory feedback cue
  */
-export function playAuditoryCue(type: 'start' | 'verse' | 'pause') {
+export function playAuditoryCue(type: 'start' | 'verse' | 'pause' | 'select') {
   if (typeof window === 'undefined') return;
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
