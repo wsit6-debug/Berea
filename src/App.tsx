@@ -16,7 +16,6 @@ import { BereaAiPanel } from './components/BereaAiPanel';
 import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
-import { FeedbackModal } from './components/FeedbackModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 
 export function App() {
@@ -41,7 +40,6 @@ export function App() {
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   // Dynamic Chapter State fetched from YouVersion Scripture API
   const currentBook = getBook(bookId) || BIBLE_BOOKS[0];
@@ -182,7 +180,6 @@ export function App() {
         onSelectTranslation={setActiveTranslation}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onOpenSearch={() => setIsSearchModalOpen(true)}
-        onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         isAiPanelOpen={isAiPanelOpen}
         onToggleAiPanel={() => setIsAiPanelOpen(prev => !prev)}
       />
@@ -249,17 +246,6 @@ export function App() {
         onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
         activeTranslation={activeTranslation}
         activeLens={activeLens}
-      />
-
-      {/* Clergy & Pastor Feedback Modal */}
-      <FeedbackModal
-        isOpen={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
-        currentBookName={currentBook.name}
-        currentChapterNum={chapterNum}
-        currentVerseNum={selectedVerse?.verseNumber}
-        activeLens={activeLens}
-        activeTranslation={activeTranslation}
       />
     </div>
   );

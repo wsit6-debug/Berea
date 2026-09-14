@@ -9,6 +9,7 @@ import {
 import { DENOMINATIONS, DenominationConfig, DenominationalLens } from '../data/theologyData';
 
 import { BereaLogo } from './BereaLogo';
+import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
 
 interface HeaderProps {
   currentBookName: string;
@@ -22,7 +23,6 @@ interface HeaderProps {
   onOpenSearch: () => void;
   isAiPanelOpen?: boolean;
   onToggleAiPanel?: () => void;
-  onOpenFeedback?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,8 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAbout,
   onOpenSearch,
   isAiPanelOpen = true,
-  onToggleAiPanel,
-  onOpenFeedback
+  onToggleAiPanel
 }) => {
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
@@ -237,17 +236,17 @@ export const Header: React.FC<HeaderProps> = ({
             </kbd>
           </button>
 
-          {/* Clergy & Pastor Feedback Button */}
-          {onOpenFeedback && (
-            <button
-              onClick={onOpenFeedback}
-              className="ios-glass-btn text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC] hover:border-[#D4A373] !px-2.5 !py-1 transition-all"
-              title="Clergy & Theological Feedback"
-            >
-              <MessageSquareHeart className="w-3.5 h-3.5 text-[#B4793D]" />
-              <span className="text-xs font-semibold text-[#26221F] hidden sm:inline">Feedback</span>
-            </button>
-          )}
+          {/* Clergy & Pastor Feedback Link (Launches Google Form directly) */}
+          <a
+            href={FEEDBACK_CONFIG.shareUrl || FEEDBACK_CONFIG.formUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ios-glass-btn text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC] hover:border-[#D4A373] !px-2.5 !py-1 transition-all"
+            title="Open Feedback Form (Google Forms)"
+          >
+            <MessageSquareHeart className="w-3.5 h-3.5 text-[#B4793D]" />
+            <span className="text-xs font-semibold text-[#26221F] hidden sm:inline">Feedback</span>
+          </a>
 
           {/* AI Guide Inspector Toggle Button */}
           {onToggleAiPanel && (
