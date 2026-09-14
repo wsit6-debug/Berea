@@ -138,13 +138,16 @@ export async function fetchChapterFromYouVersion(
   }
 
   const book = BIBLE_BOOKS.find(b => b.id.toLowerCase() === bookId.toLowerCase()) || BIBLE_BOOKS[0];
-  const bookNum = getBookNumber(book.id);
+  const rawBookNum = getBookNumber(book.id);
+  const safeBookNum = Math.max(1, Math.min(66, Math.floor(rawBookNum) || 1));
+  const safeChapter = Math.max(1, Math.min(150, Math.floor(chapterNum) || 1));
 
   // Strategy 1: High-Speed Open Scripture Endpoint (Bolls Life Scripture API - 66 books, all major versions)
   try {
     const matchedTranslation = TRANSLATIONS.find(t => t.id.toLowerCase() === version.toLowerCase());
-    const apiVersion = matchedTranslation ? matchedTranslation.apiCode : version;
-    const response = await fetch(`https://bolls.life/get-chapter/${apiVersion}/${bookNum}/${chapterNum}/`, {
+    const rawApiVersion = matchedTranslation ? matchedTranslation.apiCode : version;
+    const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
+    const response = await fetch(`https://bolls.life/get-chapter/${safeApiVersion}/${safeBookNum}/${safeChapter}/`, {
       headers: { 'Accept': 'application/json' }
     });
 
@@ -389,8 +392,9 @@ export async function searchEntireBible(
 
   // 2. Full Scripture Search API across all 66 books
   try {
-    const apiVersion = version === 'CSB' ? 'CSB' : version;
-    const response = await fetch(`https://bolls.life/search/${apiVersion}/?search=${encodeURIComponent(cleanQ)}`, {
+    const rawApiVersion = version === 'CSB' ? 'CSB' : version;
+    const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
+    const response = await fetch(`https://bolls.life/search/${safeApiVersion}/?search=${encodeURIComponent(cleanQ)}`, {
       headers: { 'Accept': 'application/json' }
     });
 

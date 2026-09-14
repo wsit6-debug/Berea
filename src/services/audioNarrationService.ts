@@ -311,6 +311,14 @@ export function playAuditoryCue(type: 'start' | 'verse' | 'pause' | 'select') {
       gain.connect(ctx.destination);
       osc.start(now);
       osc.stop(now + 0.19);
+    } else if (type === 'verse' || type === 'select') {
+      osc.frequency.setValueAtTime(587.33, now);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.09);
     }
   } catch {
     // ignore

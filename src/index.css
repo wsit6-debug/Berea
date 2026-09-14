@@ -83,6 +83,16 @@ body {
   }
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -730,4 +740,158 @@ button:active:not(:disabled) {
 .hover\:text-\[\#26221F\]:hover { color: #26221F !important; }
 .hover\:text-white:hover { color: #FFFFFF !important; }
 .hover\:border-\[\#D4A373\]:hover { border-color: #D4A373 !important; }
+
+/* ==========================================================================
+   Berea Login Screen
+   ========================================================================== */
+.berea-login-wrap {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #FAF7F2;
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+.berea-login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #FFFFFF;
+  border: 1px solid #EBE5DC;
+  border-radius: 1.25rem;
+  box-shadow: 0 20px 40px -15px rgba(180, 121, 61, 0.15), 0 0 0 1px rgba(235, 229, 220, 0.5);
+  padding: 2.25rem 2rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.berea-login-logo {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1.5px solid #D4A373;
+  box-shadow: 0 8px 20px rgba(180, 121, 61, 0.18);
+  background: #FAF7F2;
+  padding: 4px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.berea-login-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0.75rem;
+}
+
+.berea-login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.berea-login-input-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: #A8A29E;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.berea-login-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 2.6rem;
+  background-color: #FAF7F2;
+  border: 1px solid #EBE5DC;
+  border-radius: 0.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #26221F;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.berea-login-input:focus {
+  border-color: #B4793D;
+  box-shadow: 0 0 0 3px rgba(180, 121, 61, 0.15);
+  background-color: #FFFFFF;
+}
+
+.berea-login-eye-btn {
+  position: absolute;
+  right: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #A8A29E;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.berea-login-eye-btn:hover {
+  color: #26221F;
+  background: #FAF5ED;
+}
+
+.berea-login-btn {
+  width: 100%;
+  height: 44px;
+  margin-top: 1rem;
+  background: #26221F;
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(38, 34, 31, 0.12);
+  transition: background-color 0.15s ease, transform 0.08s ease;
+  box-sizing: border-box;
+}
+
+.berea-login-btn:hover:not(:disabled) {
+  background: #38332E;
+}
+
+.berea-login-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.berea-login-error {
+  margin-top: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 0.5rem;
+  color: #DC2626;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-align: left;
+}
+
 
