@@ -12,8 +12,40 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  // Persist lockout across page refreshes via sessionStorage
+  const [failedAttempts, setFailedAttempts] = useState<number>(() => {
+    try {
+      const stored = sessionStorage.getItem('berea_auth_failures');
+      return stored ? parseInt(stored, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(() => {
+    try {
+      const stored = sessionStorage.getItem('berea_auth_lockout');
+      const ts = stored ? parseInt(stored, 10) : null;
+      if (ts && ts > Date.now()) return ts;
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Countdown timer for lockout
+  React.useEffect(() => {
+    if (!lockoutUntil) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= lockoutUntil) {
+        setLockoutUntil(null);
+        try {
+          sessionStorage.removeItem('berea_auth_lockout');
+        } catch {}
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
 
   const computeHash = async (str: string, salt: string = ''): Promise<string> => {
     const encoder = new TextEncoder();
@@ -62,14 +94,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       if (isValid) {
         setFailedAttempts(0);
         setLockoutUntil(null);
+        try {
+          sessionStorage.removeItem('berea_auth_failures');
+          sessionStorage.removeItem('berea_auth_lockout');
+        } catch {}
         onLogin();
       } else {
         const nextAttempts = failedAttempts + 1;
         setFailedAttempts(nextAttempts);
+        try {
+          sessionStorage.setItem('berea_auth_failures', String(nextAttempts));
+        } catch {}
 
         if (nextAttempts >= 5) {
           const lockoutTime = Date.now() + 30000;
           setLockoutUntil(lockoutTime);
+          try {
+            sessionStorage.setItem('berea_auth_lockout', String(lockoutTime));
+          } catch {}
           setError('Too many failed attempts. Locked for 30 seconds.');
         } else {
           setError(`Incorrect password. Please try again (${5 - nextAttempts} attempts remaining).`);
