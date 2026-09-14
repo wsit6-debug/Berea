@@ -16,6 +16,7 @@ import { BereaAiPanel } from './components/BereaAiPanel';
 import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
+import { QuizModal } from './components/QuizModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 
 export function App() {
@@ -40,6 +41,8 @@ export function App() {
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [quizType, setQuizType] = useState<'chapter' | 'book'>('chapter');
 
   // Dynamic Chapter State fetched from YouVersion Scripture API
   const currentBook = getBook(bookId) || BIBLE_BOOKS[0];
@@ -203,6 +206,11 @@ export function App() {
               isAiPanelOpen={isAiPanelOpen}
               isLoading={isLoadingChapter}
               onSelectPassage={handleSelectPassage}
+              isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
+              onOpenQuiz={(type) => {
+                setQuizType(type);
+                setIsQuizModalOpen(true);
+              }}
             />
           </div>
 
@@ -246,6 +254,15 @@ export function App() {
         onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
         activeTranslation={activeTranslation}
         activeLens={activeLens}
+      />
+
+      {/* Quiz Modal */}
+      <QuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        bookName={currentBook.name}
+        chapterNumber={chapterNum}
+        quizType={quizType}
       />
     </div>
   );
