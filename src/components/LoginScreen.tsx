@@ -53,8 +53,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       const salt = import.meta.env.VITE_APP_PASSWORD_SALT || '';
       const inputHash = await computeHash(password, salt);
       const expectedHash = import.meta.env.VITE_APP_PASSWORD_HASH;
+      const expectedPlain = import.meta.env.VITE_APP_PASSWORD;
 
-      const isValid = expectedHash ? timingSafeEqual(inputHash, expectedHash) : false;
+      const isHashValid = expectedHash ? timingSafeEqual(inputHash, expectedHash) : false;
+      const isPlainValid = expectedPlain ? timingSafeEqual(password, expectedPlain) : false;
+      const isValid = isHashValid || isPlainValid;
 
       if (isValid) {
         setFailedAttempts(0);
