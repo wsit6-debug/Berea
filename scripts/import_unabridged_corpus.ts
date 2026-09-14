@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 const PUBLIC_CORPUS_DIR = path.join(process.cwd(), 'public', 'corpus');
 
@@ -9,17 +10,40 @@ async function ensureDir(dirPath: string) {
   }
 }
 
-async function downloadFile(url: string, destPath: string): Promise<boolean> {
+async function downloadFile(url: string, destPath: string, expectedSha256?: string): Promise<boolean> {
   try {
     console.log(`Downloading from ${url}...`);
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Berea-Corpus-Ingest/1.0',
+        'Accept': 'application/json, text/plain'
+      }
+    });
     if (!res.ok) {
       console.warn(`[WARN] Failed to fetch ${url} (HTTP ${res.status})`);
       return false;
     }
     const text = await res.text();
+
+    // Verify valid JSON structure before writing to disk
+    try {
+      JSON.parse(text);
+    } catch {
+      console.error(`[ERROR] Downloaded content from ${url} is not valid JSON. Aborting.`);
+      return false;
+    }
+
+    // Optional cryptographic integrity verification
+    if (expectedSha256) {
+      const hash = crypto.createHash('sha256').update(text, 'utf-8').digest('hex');
+      if (hash.toLowerCase() !== expectedSha256.toLowerCase()) {
+        console.error(`[SECURITY ERROR] Checksum mismatch for ${url}. Expected: ${expectedSha256}, got: ${hash}`);
+        return false;
+      }
+    }
+
     fs.writeFileSync(destPath, text, 'utf-8');
-    console.log(`[SAVED] ${destPath} (${(text.length / 1024).toFixed(1)} KB)`);
+    console.log(`[SAVED & VERIFIED] ${destPath} (${(text.length / 1024).toFixed(1)} KB)`);
     return true;
   } catch (err: any) {
     console.error(`[ERROR] Download failed for ${url}:`, err.message);

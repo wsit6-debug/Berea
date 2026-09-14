@@ -12,16 +12,35 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
-  const computeSha256 = async (str: string): Promise<string> => {
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+
+  const computeHash = async (str: string, salt: string = ''): Promise<string> => {
     const encoder = new TextEncoder();
-    const data = encoder.encode(str);
+    const data = encoder.encode(salt + str);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   };
 
+  const timingSafeEqual = (a: string, b: string): boolean => {
+    if (a.length !== b.length) return false;
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+    return result === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const remainingSecs = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      setError(`Too many failed attempts. Please wait ${remainingSecs}s.`);
+      return;
+    }
+
     if (!password) {
       setError('Please enter your password.');
       return;
@@ -31,19 +50,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     setError(null);
 
     try {
-      const inputHash = await computeSha256(password);
+      const salt = import.meta.env.VITE_APP_PASSWORD_SALT || '';
+      const inputHash = await computeHash(password, salt);
       const expectedHash = import.meta.env.VITE_APP_PASSWORD_HASH;
-      const expectedPlain = import.meta.env.VITE_APP_PASSWORD;
 
-      const isValid = (expectedHash && inputHash === expectedHash) || 
-                      (expectedPlain && password === expectedPlain);
+      const isValid = expectedHash ? timingSafeEqual(inputHash, expectedHash) : false;
 
       if (isValid) {
+        setFailedAttempts(0);
+        setLockoutUntil(null);
         onLogin();
       } else {
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+
+        if (nextAttempts >= 5) {
+          const lockoutTime = Date.now() + 30000;
+          setLockoutUntil(lockoutTime);
+          setError('Too many failed attempts. Locked for 30 seconds.');
+        } else {
+          setError(`Incorrect password. Please try again (${5 - nextAttempts} attempts remaining).`);
+        }
+
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 500);
-        setError('Incorrect password. Please try again.');
         setIsSubmitting(false);
       }
     } catch (err) {
@@ -150,7 +180,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || Boolean(lockoutUntil && Date.now() < lockoutUntil)}
             className="berea-login-btn"
           >
             <span>Unlock Berea</span>
