@@ -16,9 +16,21 @@ import { BereaAiPanel } from './components/BereaAiPanel';
 import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
+import { LoginScreen } from './components/LoginScreen';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 
 export function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Clear any legacy persistent auth tokens so every visit prompts for password
+  useEffect(() => {
+    localStorage.removeItem('berea_authenticated');
+    localStorage.removeItem('berea_auth_timestamp');
+  }, []);
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
   // Retrieve saved passage from local storage if available, otherwise default to Genesis 1:1
   const savedPassage = (() => {
     try {
@@ -167,6 +179,10 @@ export function App() {
     }
   };
 
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <div className="berea-app h-screen flex flex-col font-sans bg-[#FAF7F2] text-[#26221F] overflow-hidden">
       {/* Top Application Header with Global Denomination and Approved Translation Selectors */}
@@ -182,6 +198,7 @@ export function App() {
         onOpenSearch={() => setIsSearchModalOpen(true)}
         isAiPanelOpen={isAiPanelOpen}
         onToggleAiPanel={() => setIsAiPanelOpen(prev => !prev)}
+        onLogout={handleLogout}
       />
 
       {/* Main App Workspace: Clean Scripture Reading + Berea AI Guide */}

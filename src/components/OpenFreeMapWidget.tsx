@@ -130,6 +130,14 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
       polylineRef.current = null;
     }
 
+// HTML Entity encoder to neutralize XSS in Leaflet HTML injection points
+function escapeHtml(str: string | number | undefined): string {
+  if (str === undefined || str === null) return '';
+  return String(str).replace(/[&<>'"]/g, 
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
+}
+
     // 1. Plot Ancient Biblical Territorial Regions (Judea, Samaria, Galilee, etc.)
     ANCIENT_BIBLICAL_REGIONS.forEach((region) => {
       const regionIcon = L.divIcon({
@@ -138,7 +146,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
           <div style="
             color: rgba(120, 71, 31, 0.65);
             font-family: Georgia, 'Times New Roman', serif;
-            font-size: ${region.fontSize};
+            font-size: ${escapeHtml(region.fontSize)};
             font-weight: 700;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -147,7 +155,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
             pointer-events: none;
             user-select: none;
           ">
-            ${region.name}
+            ${escapeHtml(region.name)}
           </div>
         `,
         iconSize: [80, 20],
@@ -191,7 +199,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
               font-weight: 800;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">
-              ${ev.stepNumber}
+              ${escapeHtml(ev.stepNumber)}
             </span>
             ${isCurrent ? `
               <div style="
@@ -220,7 +228,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
               pointer-events: none;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">
-              ${placeLabel}
+              ${escapeHtml(placeLabel)}
             </div>
           </div>
         `,
@@ -237,14 +245,14 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #26221F; padding: 4px; max-width: 250px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
             <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D;">
-              Event ${ev.stepNumber} • ${ev.passageRef}
+              Event ${escapeHtml(ev.stepNumber)} • ${escapeHtml(ev.passageRef)}
             </span>
           </div>
-          <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: #78471F;">${ev.title}</h4>
-          <p style="margin: 0 0 4px 0; font-size: 10.5px; color: #78716C; font-weight: 500;">📍 ${ev.locationName}</p>
-          <p style="margin: 0 0 6px 0; font-size: 11.5px; line-height: 1.4; color: #44403C;">${ev.description}</p>
+          <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: #78471F;">${escapeHtml(ev.title)}</h4>
+          <p style="margin: 0 0 4px 0; font-size: 10.5px; color: #78716C; font-weight: 500;">📍 ${escapeHtml(ev.locationName)}</p>
+          <p style="margin: 0 0 6px 0; font-size: 11.5px; line-height: 1.4; color: #44403C;">${escapeHtml(ev.description)}</p>
           <div style="font-size: 10px; background: #FAF5ED; padding: 5px; border-radius: 6px; border-left: 2px solid #B4793D; color: #57524E;">
-            <strong style="color: #78471F;">Theology:</strong> ${ev.theologicalSignificance}
+            <strong style="color: #78471F;">Theology:</strong> ${escapeHtml(ev.theologicalSignificance)}
           </div>
         </div>
       `);
