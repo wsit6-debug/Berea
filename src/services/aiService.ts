@@ -778,10 +778,12 @@ export async function generateQuiz(
   book: string,
   chapter: number,
   type: 'chapter' | 'book',
-  numQuestions: number = 3
+  numQuestions: number = 3,
+  chapterText?: string
 ): Promise<QuizQuestion[]> {
   const scope = type === 'chapter' ? `chapter ${chapter} of the book of ${book}` : `the entire book of ${book}`;
-  const prompt = `Generate a multiple-choice quiz about ${scope} with exactly ${numQuestions} questions.
+  
+  let prompt = `Generate a multiple-choice quiz about ${scope} with exactly ${numQuestions} questions.
 Ensure that the questions focus on specific, randomly selected details, themes, or quotes from the text so that this quiz is unique and different every time it is generated. Avoid asking the same general questions. Include an element of randomness (seed: ${Math.random()}).
 Respond strictly with a valid JSON array. Do not include markdown formatting like \`\`\`json or any other text before or after the array.
 Each object in the array must match this schema:
@@ -791,6 +793,22 @@ Each object in the array must match this schema:
   "correctAnswerIndex": 0, // integer index of the correct option (0-3)
   "explanation": "Brief explanation of why this is the correct answer."
 }`;
+
+  if (chapterText && type === 'chapter') {
+    prompt = `Based ONLY on the following scripture text from ${book} chapter ${chapter}, generate a multiple-choice quiz with exactly ${numQuestions} questions. 
+Do not hallucinate or use outside knowledge. The correct answers MUST be provable from the provided text. Focus on specific details found in this text. (seed: ${Math.random()})
+Respond strictly with a valid JSON array. Do not include markdown formatting like \`\`\`json or any other text before or after the array.
+Each object in the array must match this schema:
+{
+  "question": "The question text",
+  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+  "correctAnswerIndex": 0, // integer index of the correct option (0-3)
+  "explanation": "Brief explanation referencing the specific part of the text."
+}
+
+SCRIPTURE TEXT:
+${chapterText}`;
+  }
 
   try {
     const { generateLocalAiResponse } = await import('./webLlmService');
@@ -810,45 +828,50 @@ Each object in the array must match this schema:
       cleanJson = cleanJson.substring(bracketIndex, endBracketIndex + 1);
     }
 
-    const quiz: QuizQuestion[] = JSON.parse(cleanJson);
+    const quiz: any = JSON.parse(cleanJson);
     if (Array.isArray(quiz) && quiz.length > 0) {
-      return quiz;
+      const isValid = quiz.every(q => 
+        q && 
+        typeof q.question === 'string' && 
+        Array.isArray(q.options) && 
+        q.options.length > 0 && 
+        typeof q.correctAnswerIndex === 'number'
+      );
+      if (isValid) {
+        return quiz as QuizQuestion[];
+      } else {
+        throw new Error('Invalid JSON format returned from LLM: Missing required fields (question, options array, correctAnswerIndex)');
+      }
     } else {
-      throw new Error('Invalid JSON format returned from LLM');
+      throw new Error('Invalid JSON format returned from LLM: Not a valid non-empty array');
     }
   } catch (err) {
     console.error('Error generating quiz:', err);
     // Fallback static quiz if LLM fails
     const fallbackPool: QuizQuestion[] = [
       {
-        question: `What is a central theme in ${type === 'chapter' ? `${book} ${chapter}` : book}?`,
-        options: ['God\'s faithfulness', 'Human rebellion', 'The promised Messiah', 'All of the above'],
-        correctAnswerIndex: 3,
-        explanation: 'Biblical narratives often weave together these core theological themes.'
+        question: `What is the overarching narrative purpose of the book of ${book}?`,
+        options: ['To provide a detailed historical record of neighboring nations', 'To reveal God\'s character and His relationship with His people', 'To serve primarily as an agricultural manual', 'To document ancient philosophical debates'],
+        correctAnswerIndex: 1,
+        explanation: 'Biblical books primarily serve to reveal God\'s redemptive plan and His covenant relationship with humanity.'
       },
       {
-        question: `Which key figure is most prominent in ${book}?`,
-        options: ['Moses', 'David', 'Jesus', 'It varies by chapter'],
-        correctAnswerIndex: 3,
-        explanation: 'Different sections highlight different leaders, prophets, or figures.'
+        question: `When studying ${type === 'chapter' ? `chapter ${chapter} of ${book}` : `the book of ${book}`}, why is it important to consider the original historical context?`,
+        options: ['Because it changes the modern literal translation', 'To properly understand the author\'s original intent and audience', 'Because the original languages are no longer understood', 'It is not important; the text only has modern meaning'],
+        correctAnswerIndex: 1,
+        explanation: 'Understanding the historical and cultural context is essential for accurate biblical exegesis.'
       },
       {
-        question: `How does the narrative in ${type === 'chapter' ? `${book} ${chapter}` : book} primarily unfold?`,
-        options: ['Through historical accounts', 'Through poetry and song', 'Through prophetic visions', 'Through dialogue and teaching'],
-        correctAnswerIndex: 0,
-        explanation: 'Most biblical books utilize historical narrative as their primary vehicle.'
-      },
-      {
-        question: `What is the primary spiritual lesson of ${book}?`,
-        options: ['Trusting in God\'s promises', 'The importance of the law', 'The need for repentance', 'God\'s sovereignty'],
-        correctAnswerIndex: 0,
-        explanation: 'Trust in God is a universally applicable lesson throughout scripture.'
-      },
-      {
-        question: `Which theological concept is most heavily emphasized in ${type === 'chapter' ? `${book} ${chapter}` : book}?`,
-        options: ['Covenant', 'Sacrifice', 'Redemption', 'Justice'],
+        question: `How does ${type === 'chapter' ? `${book} ${chapter}` : book} fit into the broader biblical canon?`,
+        options: ['It is a completely standalone text with no relation to other books', 'It was written much later than the rest of scripture', 'It contributes to the unified narrative of God\'s redemptive history', 'It only applies to a specific ancient civilization'],
         correctAnswerIndex: 2,
-        explanation: 'Redemption is a core thread running throughout the biblical text.'
+        explanation: 'Each book of the Bible contributes uniquely to the overarching story of redemption.'
+      },
+      {
+        question: `What is a common feature of the literary style found in ${book}?`,
+        options: ['It utilizes ancient literary forms to convey theological truths', 'It is written entirely in modern scientific terms', 'It actively avoids using any metaphors or symbolism', 'It is primarily a collection of random proverbs'],
+        correctAnswerIndex: 0,
+        explanation: 'Biblical authors used various literary genres (narrative, poetry, prophecy) to communicate divine truth.'
       }
     ];
 
@@ -868,4 +891,47 @@ Each object in the array must match this schema:
 
     return selected;
   }
+}
+
+// Local Storage Keys for Quiz Accumulation
+const QUIZ_HISTORY_KEY_PREFIX = 'berea_quiz_history_';
+
+export function saveChapterQuizToHistory(book: string, chapter: number, questions: QuizQuestion[]) {
+  try {
+    const key = `${QUIZ_HISTORY_KEY_PREFIX}${book}_${chapter}`;
+    localStorage.setItem(key, JSON.stringify(questions));
+  } catch (e) {
+    console.warn('Failed to save quiz history to local storage', e);
+  }
+}
+
+export function getAccumulatedBookQuiz(book: string, numQuestions: number = 10): QuizQuestion[] {
+  let allQuestions: QuizQuestion[] = [];
+  
+  // Search local storage for all chapter quizzes for this book
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(`${QUIZ_HISTORY_KEY_PREFIX}${book}_`)) {
+      try {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const parsed = JSON.parse(data) as QuizQuestion[];
+          allQuestions = allQuestions.concat(parsed);
+        }
+      } catch (e) {
+        // ignore invalid json
+      }
+    }
+  }
+
+  if (allQuestions.length === 0) {
+    return []; // Handled by caller to show error
+  }
+
+  // Deduplicate questions just in case, based on question text
+  const uniqueQuestions = Array.from(new Map(allQuestions.map(q => [q.question, q])).values());
+
+  // Shuffle and pick
+  const shuffled = uniqueQuestions.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, numQuestions);
 }
