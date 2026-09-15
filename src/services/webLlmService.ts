@@ -74,7 +74,8 @@ export function deduplicateRepetitions(text: string): string {
 
 export async function generateLocalAiResponse(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-  onProgress?: (progress: { text: string; progress: number }) => void
+  onProgress?: (progress: { text: string; progress: number }) => void,
+  skipDeduplication: boolean = false
 ): Promise<string> {
   const engine = await getOrInitLocalEngine(onProgress);
 
@@ -88,7 +89,7 @@ export async function generateLocalAiResponse(
   });
 
   const rawContent = reply.choices[0]?.message?.content || '';
-  return deduplicateRepetitions(rawContent);
+  return skipDeduplication ? rawContent : deduplicateRepetitions(rawContent);
 }
 
 export function isLocalEngineReady(): boolean {

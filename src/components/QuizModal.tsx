@@ -44,7 +44,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     setError(null);
     try {
       if (quizType === 'book') {
-        const historyQuiz = getAccumulatedBookQuiz(bookName, 10);
+        const historyQuiz = await getAccumulatedBookQuiz(bookName, 10);
         if (historyQuiz.length === 0) {
           setError('No chapter quizzes found for this book. Please read and complete chapter quizzes to build up your final book quiz!');
         } else {
@@ -57,8 +57,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({
         // Save to history so the book quiz can use it later
         saveChapterQuizToHistory(bookName, chapterNumber, fetchedQuestions);
       }
-    } catch (err) {
-      setError('Failed to generate quiz. Please try again.');
+    } catch (err: any) {
+      setError(`Failed to generate quiz: ${err.message || String(err)}`);
       console.error(err);
     } finally {
       setIsLoading(false);
