@@ -1,3 +1,5 @@
+export type StudyGuideAudience = 'small_group' | 'deep_exegesis' | 'youth_family';
+
 export interface SupportingPassage {
   ref: string;
   text?: string;
@@ -7,6 +9,9 @@ export interface SupportingPassage {
 export interface StudyGuide {
   id: string;
   passageRef: string;
+  startVerse?: number;
+  endVerse?: number;
+  audience?: StudyGuideAudience;
   contextSnapshot: string;
   icebreakers: string[];
   deepPrompts: string[];

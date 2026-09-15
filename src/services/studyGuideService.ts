@@ -1,4 +1,4 @@
-import { StudyGuide, SupportingPassage } from '../types';
+import { StudyGuide, SupportingPassage, StudyGuideAudience } from '../types';
 import { DenominationalLens, DENOMINATIONS, getTheologicalInsight } from '../data/theologyData';
 import { searchDoctrinalCorpus } from './ragService';
 import { findMatchingScriptures } from '../data/scriptureCorpus';
@@ -223,9 +223,15 @@ export function generateStudyGuideContent(
   verseText?: string,
   lens: DenominationalLens = 'catholic',
   verseLemmas?: { word: string; transliteration: string; strongs?: string; definition?: string }[],
-  existingSupportingPassages?: SupportingPassage[]
+  existingSupportingPassages?: SupportingPassage[],
+  audience: StudyGuideAudience = 'small_group',
+  endVerseNumber?: number
 ): StudyGuide {
-  const passageRef = `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
+  const isMultiVerse = endVerseNumber && verseNumber && endVerseNumber > verseNumber;
+  const passageRef = isMultiVerse
+    ? `${book} ${chapter}:${verseNumber}–${endVerseNumber}`
+    : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
+
   const denom = DENOMINATIONS.find(d => d.id === lens) || DENOMINATIONS[0];
   const insight = getTheologicalInsight(book, chapter, verseNumber, verseText, verseLemmas);
   const lensPerspective = insight.lensPerspectives[lens] || Object.values(insight.lensPerspectives)[0] || '';
@@ -258,7 +264,7 @@ export function generateStudyGuideContent(
     langNote = `${l.term} (${l.originalScript}, ${l.transliteration}${l.strongsRef ? ` - ${l.strongsRef}` : ''}): ${l.nuance}`;
   }
 
-  // 3. Rich, Multilayered Context Snapshot
+  // 3. Rich, Multilayered Context Snapshot tailored to Audience
   const contextSnapshot = [
     verseText && verseText.trim().length > 0 ? `Text: "${verseText.trim()}"` : null,
     insight.historicalContext ? `Historical & Literary Setting: ${insight.historicalContext}` : null,
@@ -266,49 +272,93 @@ export function generateStudyGuideContent(
     `${denom.name} Confessional Stance (${confessionName}): ${doctrinalDoc ? `"${doctrinalDoc.coreDoctrine}" ` : ''}${lensPerspective}`
   ].filter(Boolean).join('\n\n');
 
-  // 4. Verse-Specific Icebreakers
-  const icebreakers: string[] = [
-    `When you reflect on this specific passage (${passageRef}${verseText ? `: "${verseText.trim()}"` : ''}), what word or phrase strikes you most directly, and why?`,
-    `What makes the reality declared in ${passageRef} challenging—or deeply reassuring—in your everyday discipleship?`
-  ];
+  // 4. Audience-Tailored Icebreakers
+  let icebreakers: string[] = [];
+  if (audience === 'youth_family') {
+    icebreakers = [
+      `If you had to summarize what happens in ${passageRef} as a 10-second headline or video, what would you say?`,
+      `Imagine you were right there in the crowd when this happened in ${book} ${chapter}—how would you have felt, and what question would you ask?`
+    ];
+  } else if (audience === 'deep_exegesis') {
+    icebreakers = [
+      `Literary Structure: As you examine ${passageRef}, what key grammatical pivot, repetition, or theological tension frames this pericope?`,
+      `Canonical Context: How does the immediate literary and covenantal context of ${book} ${chapter} shape the doctrinal locus at stake?`
+    ];
+  } else {
+    // Default: Small Group
+    icebreakers = [
+      `When you reflect on this specific passage (${passageRef}${verseText ? `: "${verseText.trim()}"` : ''}), what word or phrase strikes you most directly, and why?`,
+      `What makes the reality declared in ${passageRef} challenging—or deeply reassuring—in your everyday discipleship?`
+    ];
+  }
 
-  // 5. Rigorous Deep Discussion Prompts (3 Exegetical Tiers)
+  // 5. Audience-Tailored Deep Discussion Prompts (3 Tiers)
   const deepPrompts: string[] = [];
 
-  // Tier 1: Textual Exegesis & Original Meaning
-  if (insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0) {
-    const l = insight.originalLanguageInsights[0];
+  if (audience === 'youth_family') {
     deepPrompts.push(
-      `Textual & Linguistic Exegesis: Note the key biblical term "${l.term}" (${l.originalScript}, ${l.transliteration} ${l.strongsRef ? `[${l.strongsRef}]` : ''}), which highlights ${l.nuance}. How does understanding this linguistic weight sharpen our reading of ${passageRef}? What divine truths or actions does the inspired text emphasize?`
+      `Story & Who Jesus Is: In ${passageRef}${verseText ? `, the text tells us: "${verseText.trim()}"` : ''}. What does this passage show us about who God is and how much He cares, and why should that amaze us?`,
+      `Real-Life Scenario: Think about school, home, or hanging out with friends. When is it hard to trust or obey God the way this passage describes, and how can remembering God's promises help you?`,
+      `Following Jesus: What is one practical way Jesus is inviting you to follow Him or show His love to someone in your life this week?`
+    );
+  } else if (audience === 'deep_exegesis') {
+    // Tier 1: Textual & Linguistic Exegesis
+    if (insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0) {
+      const l = insight.originalLanguageInsights[0];
+      deepPrompts.push(
+        `Textual & Linguistic Exegesis: Note the key biblical term "${l.term}" (${l.originalScript}, ${l.transliteration} ${l.strongsRef ? `[${l.strongsRef}]` : ''}), which highlights ${l.nuance}. How does understanding this linguistic weight sharpen our reading of ${passageRef}? What divine truths or actions does the inspired text emphasize?`
+      );
+    } else {
+      deepPrompts.push(
+        `Textual & Literary Exegesis: In ${passageRef}${verseText ? `, the text states: "${verseText.trim()}"` : ''}. Examine the key verbs, the speaker, and the immediate audience in ${book} ${chapter}. What divine truth, command, or prophetic purpose is being communicated here, and how does it challenge conventional human assumptions?`
+      );
+    }
+
+    // Tier 2: Confessional Dogmatics
+    if (insight.suggestedQuestions && insight.suggestedQuestions.length > 0) {
+      deepPrompts.push(
+        `Confessional Dogmatics (${denom.name}): ${insight.suggestedQuestions[0]} Grounding your answer in ${confessionName}: how does ${denom.name} theology interpret this passage in light of ${denom.tagline}? How does this confessional heritage safeguard the text from common misunderstandings?`
+      );
+    } else {
+      deepPrompts.push(
+        `Confessional Dogmatics (${denom.name}): Historic ${denom.name} doctrine (${confessionName}) grounds its teaching in ${lensPerspective}. How does ${passageRef} provide the scriptural foundation for this doctrine, and how does this tradition protect the text from common cultural misreadings?`
+      );
+    }
+
+    // Tier 3: Christological & Canonical Arc
+    deepPrompts.push(
+      `Canonical Arc & Christological Center: How does ${passageRef} point forward to, find fulfillment in, or flow out of the life, death, and resurrection of Jesus Christ? What spiritual pitfalls arise if a believer attempts to live out this passage apart from living union with Christ?`
     );
   } else {
+    // Default: Small Group Discipleship
     deepPrompts.push(
-      `Textual & Literary Exegesis: In ${passageRef}${verseText ? `, the text states: "${verseText.trim()}"` : ''}. Examine the key verbs, the speaker, and the immediate audience in ${book} ${chapter}. What divine truth, command, or prophetic purpose is being communicated here, and how does it challenge conventional human assumptions?`
+      `Heart of the Text: Looking closely at ${passageRef}${verseText ? ` ("${verseText.trim()}")` : ''}, what is the main truth God wants us to grasp? How does it challenge our human instinct to rely on our own strength or understanding?`,
+      `Grounded in Truth (${denom.name}): Historic faith (${confessionName}) reminds us that God’s Word is steadfast. How does understanding ${passageRef} through the lens of ${denom.tagline} give you fresh confidence in God's promises?`,
+      `Everyday Walk: If our group truly lived out the reality revealed in ${passageRef} this week, what would look different in our attitudes, our prayers, and how we treat others?`
     );
   }
 
-  // Tier 2: Confessional & Doctrinal Formulation
-  if (insight.suggestedQuestions && insight.suggestedQuestions.length > 0) {
-    deepPrompts.push(
-      `Confessional Theology (${denom.name}): ${insight.suggestedQuestions[0]} Grounding your answer in ${confessionName}: how does ${denom.name} theology interpret this passage in light of ${denom.tagline}? How does this confessional heritage safeguard the text from common misunderstandings?`
-    );
+  // 6. Audience-Tailored Actionable Takeaway
+  let application = '';
+  if (audience === 'youth_family') {
+    application = [
+      `Family/Youth Challenge: Put ${passageRef} into action! Pick one concrete way to show kindness, pray for someone who is struggling, or memorize the key truth of this passage together this week.`,
+      `Simple Prayer: "Lord God, thank You for Your living Word in ${passageRef}. Help me trust You when things are hard, forgive me when I stumble, and give me joy to follow Jesus every day. Amen."`,
+      `Talk Together: Share one thing each person in the group or family is grateful for today based on what we learned about God.`
+    ].join('\n\n');
+  } else if (audience === 'deep_exegesis') {
+    application = [
+      insight.practicalApplication ? `Pastoral Focus: ${insight.practicalApplication}` : `Pastoral Focus: Meditate upon ${passageRef} with rigorous self-examination, allowing sound doctrine to bear fruit in holy living.`,
+      `Collect of Illumination: "Almighty God, who in Holy Scripture has revealed the mystery of Your redemptive counsel: illuminate our minds by the Holy Spirit, that hearing the truth of ${passageRef}, we may reject all error and cling steadfastly to Christ our Lord."`,
+      `Ministerial Charge: Defend and proclaim the theological truth of ${passageRef} in your teaching, pastoral care, and fellowship, building up the Body of Christ in unity and sound doctrine.`
+    ].join('\n\n');
   } else {
-    deepPrompts.push(
-      `Confessional Theology (${denom.name}): Historic ${denom.name} doctrine (${confessionName}) grounds its teaching in ${lensPerspective}. How does ${passageRef} provide the scriptural foundation for this doctrine, and how does this tradition protect the text from common cultural misreadings?`
-    );
+    application = [
+      insight.practicalApplication ? `Focus: ${insight.practicalApplication}` : `Focus: Take time to meditate on the truth of ${passageRef} today. Allow this specific passage to shape your prayers and priorities.`,
+      `Meditative Prayer: "Heavenly Father, anchor my heart in the truth of ${passageRef}. Forgive where I have neglected Your Word, and grant me the grace of Your Holy Spirit to walk in obedience and steadfast faith this week."`,
+      `Community Action: Reach out to a brother or sister in your faith community who may be facing doubts, confusion, or spiritual trials. Share how the promises in ${passageRef} provide steadfast hope and encouragement.`
+    ].join('\n\n');
   }
-
-  // Tier 3: Christological Fulfillment & Canonical Synthesis
-  deepPrompts.push(
-    `Canonical Arc & Christological Center: How does ${passageRef} point forward to, find fulfillment in, or flow out of the life, death, and resurrection of Jesus Christ? What spiritual pitfalls arise if a believer attempts to live out this passage apart from living union with Christ?`
-  );
-
-  // 6. Actionable Devotional & Community Takeaway
-  const application = [
-    insight.practicalApplication ? `Focus: ${insight.practicalApplication}` : `Focus: Take time to meditate on the truth of ${passageRef} today. Allow this specific passage to shape your prayers and priorities.`,
-    `Meditative Prayer: "Heavenly Father, anchor my heart in the truth of ${passageRef}. Forgive where I have neglected Your Word, and grant me the grace of Your Holy Spirit to walk in obedience and steadfast faith this week."`,
-    `Community Action: Reach out to a brother or sister in your faith community who may be facing doubts, confusion, or spiritual trials. Share how the promises in ${passageRef} provide steadfast hope and encouragement.`
-  ].filter(Boolean).join('\n\n');
 
   // 7. Supporting Passages & Cross-References
   const supportingPassages = existingSupportingPassages && existingSupportingPassages.length > 0
@@ -318,6 +368,9 @@ export function generateStudyGuideContent(
   return {
     id: `guide_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     passageRef,
+    startVerse: verseNumber,
+    endVerse: isMultiVerse ? endVerseNumber : verseNumber,
+    audience,
     contextSnapshot,
     icebreakers,
     deepPrompts,
@@ -333,9 +386,16 @@ export function generateStudyGuideContent(
  * Formats study guide as clean plain text for clipboard sharing
  */
 export function formatStudyGuideForClipboard(guide: StudyGuide): string {
+  const audienceLabel = guide.audience === 'deep_exegesis'
+    ? 'Pastoral & Deep Exegesis'
+    : guide.audience === 'youth_family'
+      ? 'Youth & Family'
+      : 'Small Group Discipleship';
+
   return [
     `═══════════════════════════════════════════════════`,
     `BEREA THEOLOGICAL STUDY GUIDE: ${guide.passageRef}`,
+    `Audience Depth: ${audienceLabel}`,
     guide.confessionCited ? `Confessional Standard: ${guide.confessionCited}` : null,
     `Created: ${new Date(guide.createdAt).toLocaleDateString()}`,
     `═══════════════════════════════════════════════════`,

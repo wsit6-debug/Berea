@@ -237,6 +237,7 @@ export function App() {
                 currentBook={currentBook.name}
                 currentChapter={chapterNum}
                 selectedVerse={selectedVerse}
+                chapterVerses={currentChapter?.verses}
                 activeLens={activeLens}
                 onLensChange={handleSelectLens}
                 activeTranslation={activeTranslation}

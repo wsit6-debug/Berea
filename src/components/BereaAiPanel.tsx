@@ -1,5 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X, Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp, History, Bookmark } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
+  Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers
+} from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
@@ -8,7 +12,7 @@ import { askBereaAssistant, ChatMessage } from '../services/aiService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
-import { StudyGuide, SupportingPassage, BereaAiTab } from '../types';
+import { StudyGuide, SupportingPassage, BereaAiTab, StudyGuideAudience } from '../types';
 import {
   getSavedStudyGuides,
   saveStudyGuide,
@@ -26,6 +30,7 @@ interface BereaAiPanelProps {
   currentBook: string;
   currentChapter: number;
   selectedVerse: Verse | null;
+  chapterVerses?: Verse[];
   activeLens: DenominationalLens;
   onLensChange: (lens: DenominationalLens) => void;
   activeTranslation: TranslationId;
@@ -39,6 +44,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   currentBook,
   currentChapter,
   selectedVerse,
+  chapterVerses,
   activeLens,
   onLensChange,
   activeTranslation,
@@ -110,6 +116,69 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [newPassageRefInput, setNewPassageRefInput] = useState('');
   const [isAddingPassage, setIsAddingPassage] = useState(false);
 
+  // Audience / Depth Selector State (persists across sessions)
+  const [selectedAudience, setSelectedAudience] = useState<StudyGuideAudience>(() => {
+    try {
+      const saved = localStorage.getItem('berea_study_guide_audience') as StudyGuideAudience;
+      if (saved === 'small_group' || saved === 'deep_exegesis' || saved === 'youth_family') {
+        return saved;
+      }
+      return 'small_group';
+    } catch {
+      return 'small_group';
+    }
+  });
+
+  // Start Verse & Multi-Verse Range State
+  const [manualStartVerseNum, setManualStartVerseNum] = useState<number>(activeVerseNum);
+  const [isMultiVerseMode, setIsMultiVerseMode] = useState(false);
+  const [endVerseNum, setEndVerseNum] = useState<number>(activeVerseNum);
+
+  // Sync manualStartVerseNum with activeVerseNum on external navigation
+  useEffect(() => {
+    setManualStartVerseNum(activeVerseNum);
+    if (endVerseNum < activeVerseNum) {
+      setEndVerseNum(activeVerseNum);
+    }
+  }, [activeVerseNum]);
+
+  // Ensure endVerseNum is never less than manualStartVerseNum
+  useEffect(() => {
+    if (endVerseNum < manualStartVerseNum) {
+      setEndVerseNum(manualStartVerseNum);
+    }
+  }, [manualStartVerseNum]);
+
+  const maxChapterVerses = chapterVerses?.length || 50;
+  const effectiveStartVerse = manualStartVerseNum;
+  const effectiveEndVerse = isMultiVerseMode ? Math.max(effectiveStartVerse, endVerseNum) : effectiveStartVerse;
+  const activeRangeRef = isMultiVerseMode && effectiveEndVerse > effectiveStartVerse
+    ? `${currentBook} ${currentChapter}:${effectiveStartVerse}–${effectiveEndVerse}`
+    : `${currentBook} ${currentChapter}:${effectiveStartVerse}`;
+
+  const combinedVerseText = useMemo(() => {
+    if (!isMultiVerseMode || effectiveEndVerse <= effectiveStartVerse) {
+      if (chapterVerses && chapterVerses.length > 0) {
+        const found = chapterVerses.find(v => v.verseNumber === effectiveStartVerse);
+        if (found) {
+          const raw = found.text[activeTranslation] || found.text['KJV'] || Object.values(found.text)[0] || '';
+          return cleanApiText(raw);
+        }
+      }
+      return currentVerseText;
+    }
+    if (!chapterVerses || chapterVerses.length === 0) {
+      return currentVerseText;
+    }
+    const rangeVerses = chapterVerses.filter(
+      v => v.verseNumber >= effectiveStartVerse && v.verseNumber <= effectiveEndVerse
+    );
+    return rangeVerses.map(v => {
+      const raw = v.text[activeTranslation] || v.text['KJV'] || Object.values(v.text)[0] || '';
+      return `[${v.verseNumber}] ${cleanApiText(raw)}`;
+    }).join(' ');
+  }, [isMultiVerseMode, effectiveStartVerse, effectiveEndVerse, chapterVerses, activeTranslation, currentVerseText]);
+
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
@@ -117,28 +186,44 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   // Sync guide with active passage when switching to studyGuide
   useEffect(() => {
     if (activeTab === 'studyGuide') {
-      const existing = savedGuides.find(g => g.passageRef === currentVerseRef);
+      const existing = savedGuides.find(g => g.passageRef === activeRangeRef || g.passageRef === currentVerseRef);
       if (existing) {
         setCurrentGuide(existing);
       }
     }
-  }, [activeTab, currentVerseRef, savedGuides]);
+  }, [activeTab, activeRangeRef, currentVerseRef, savedGuides]);
 
-  const handleGenerateStudyGuide = () => {
-    const isSamePassage = currentGuide?.passageRef === currentVerseRef;
+  const handleGenerateStudyGuide = (overrideAudience?: StudyGuideAudience, overrideEndVerse?: number) => {
+    const audienceToUse = overrideAudience || selectedAudience;
+    const endV = overrideEndVerse !== undefined ? overrideEndVerse : (isMultiVerseMode && effectiveEndVerse > effectiveStartVerse ? effectiveEndVerse : undefined);
+    const rangeRef = endV && endV > effectiveStartVerse
+      ? `${currentBook} ${currentChapter}:${effectiveStartVerse}–${endV}`
+      : `${currentBook} ${currentChapter}:${effectiveStartVerse}`;
+
+    const isSamePassage = currentGuide?.passageRef === rangeRef;
     const guide = generateStudyGuideContent(
       currentBook,
       currentChapter,
-      activeVerseNum,
-      currentVerseText,
+      effectiveStartVerse,
+      combinedVerseText,
       activeLens,
       selectedVerse?.greekHebrew,
-      isSamePassage ? currentGuide?.supportingPassages : undefined
+      isSamePassage ? currentGuide?.supportingPassages : undefined,
+      audienceToUse,
+      endV
     );
     const updated = saveStudyGuide(guide);
     setSavedGuides(updated);
     setCurrentGuide(guide);
     confetti({ particleCount: 35, spread: 55, origin: { y: 0.6 } });
+  };
+
+  const handleAudienceChange = (newAudience: StudyGuideAudience) => {
+    setSelectedAudience(newAudience);
+    try {
+      localStorage.setItem('berea_study_guide_audience', newAudience);
+    } catch {}
+    // Do NOT auto-generate; user clicks Generate when ready
   };
 
   const handleAddSupportingPassage = async (e?: React.FormEvent) => {
@@ -463,7 +548,179 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {/* STUDY GUIDE TAB */}
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
-            {/* Study Guide Header Bar */}
+            {/* 1. Audience / Depth Selector Bar */}
+            <div className="p-2.5 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] shadow-xs space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-[#B4793D]" />
+                  Study Guide Depth
+                </span>
+                <span className="text-[10px] text-[#B4793D] font-medium bg-white px-2 py-0.5 rounded-full border border-[#EBE5DC]">
+                  {selectedAudience === 'deep_exegesis' ? 'Pastoral & Exegetical' : selectedAudience === 'youth_family' ? 'Youth & Family' : 'Small Group'}
+                </span>
+              </div>
+
+              {/* Segmented Audience Control */}
+              <div className="flex rounded-lg bg-[#EFE9DF] p-0.5 gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleAudienceChange('small_group')}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    selectedAudience === 'small_group'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                  }`}
+                  title="Practical small group discussion, fellowship, and personal application"
+                >
+                  <Users className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <span>Small Group</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAudienceChange('deep_exegesis')}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    selectedAudience === 'deep_exegesis'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                  }`}
+                  title="Pastoral exegesis, linguistic grammar, confessional dogmatics, and historical setting"
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <span>Deep Exegesis</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAudienceChange('youth_family')}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    selectedAudience === 'youth_family'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                  }`}
+                  title="Engaging storytelling, real-world scenarios, and family discussion prompts"
+                >
+                  <Baby className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <span>Youth & Family</span>
+                </button>
+              </div>
+
+              {/* Passage Scope & Verse Range Controls */}
+              <div className="pt-2 border-t border-[#EBE5DC]/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-[#B4793D]" />
+                    Passage Scope
+                  </span>
+                  <span className="text-[11px] font-mono text-[#B4793D] font-bold bg-white px-2 py-0.5 rounded-full border border-[#EBE5DC]">
+                    {activeRangeRef}
+                  </span>
+                </div>
+
+                {/* Obvious Segmented Control: Single Verse vs Multi-Verse Section */}
+                <div className="grid grid-cols-2 rounded-lg bg-[#EFE9DF] p-0.5 gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsMultiVerseMode(false)}
+                    className={`py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      !isMultiVerseMode
+                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                        : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span>Single Verse</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMultiVerseMode(true);
+                      if (endVerseNum <= manualStartVerseNum) {
+                        setEndVerseNum(Math.min(manualStartVerseNum + 1, maxChapterVerses));
+                      }
+                    }}
+                    className={`py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      isMultiVerseMode
+                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                        : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
+                  >
+                    <Layers className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span>Multi-Verse Section</span>
+                  </button>
+                </div>
+
+                {/* Verse Selection Inputs */}
+                {!isMultiVerseMode ? (
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/90 border border-[#EBE5DC]">
+                    <span className="text-xs text-[#57524E] font-medium">Select Passage Verse:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-[#78716C]">{currentBook} {currentChapter}:</span>
+                      <select
+                        value={manualStartVerseNum}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setManualStartVerseNum(val);
+                        }}
+                        className="text-xs font-bold text-[#26221F] bg-white border border-[#EBE5DC] rounded-md px-2 py-1 focus:outline-none focus:border-[#B4793D] shadow-2xs cursor-pointer"
+                      >
+                        {Array.from({ length: maxChapterVerses }, (_, i) => i + 1).map(num => (
+                          <option key={num} value={num}>
+                            Verse {num}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/90 border border-[#EBE5DC] gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-medium text-[#78716C]">From:</span>
+                      <select
+                        value={manualStartVerseNum}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setManualStartVerseNum(val);
+                          if (endVerseNum < val) {
+                            setEndVerseNum(val);
+                          }
+                        }}
+                        className="text-xs font-bold text-[#26221F] bg-white border border-[#EBE5DC] rounded-md px-2 py-1 focus:outline-none focus:border-[#B4793D] shadow-2xs cursor-pointer"
+                      >
+                        {Array.from({ length: maxChapterVerses }, (_, i) => i + 1).map(num => (
+                          <option key={num} value={num}>
+                            v.{num}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <ArrowRight className="w-3.5 h-3.5 text-[#B4793D]" />
+
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-medium text-[#78716C]">Through:</span>
+                      <select
+                        value={effectiveEndVerse}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setEndVerseNum(val);
+                        }}
+                        className="text-xs font-bold text-[#26221F] bg-white border border-[#EBE5DC] rounded-md px-2 py-1 focus:outline-none focus:border-[#B4793D] shadow-2xs cursor-pointer"
+                      >
+                        {Array.from({ length: Math.max(1, maxChapterVerses - manualStartVerseNum + 1) }, (_, i) => manualStartVerseNum + i).map(num => (
+                          <option key={num} value={num}>
+                            v.{num}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Study Guide Action Bar */}
             <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] flex items-center justify-between gap-2 shadow-xs">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-[#FAF0E1] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
@@ -471,12 +728,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#26221F]">{currentVerseRef}</span>
+                    <span className="text-xs font-bold text-[#26221F]">{activeRangeRef}</span>
                     <span className="text-[9.5px] text-[#B4793D] font-mono font-medium px-1.5 py-0.2 rounded bg-white border border-[#EBE5DC]">
                       {activeDenom.name}
                     </span>
                   </div>
-                  <p className="text-[10.5px] text-[#78716C] leading-none mt-0.5">Custom Small Group & Study Guide</p>
+                  <p className="text-[10.5px] text-[#78716C] leading-none mt-0.5">
+                    {selectedAudience === 'deep_exegesis' ? 'Pastoral Exegesis Guide' : selectedAudience === 'youth_family' ? 'Family & Youth Guide' : 'Small Group Study Guide'}
+                  </p>
                 </div>
               </div>
 
@@ -494,12 +753,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </button>
 
                 <button
-                  onClick={handleGenerateStudyGuide}
+                  onClick={() => handleGenerateStudyGuide()}
                   className="clean-caramel-btn !text-[11px] !py-1 !px-2.5 shadow-xs"
-                  title="Generate or Refresh Study Guide"
+                  title="Generate Study Guide"
                 >
                   <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-                  <span>{currentGuide ? 'Regenerate' : 'Generate'}</span>
+                  <span>Generate</span>
                 </button>
               </div>
             </div>
@@ -565,6 +824,36 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             {/* Current Study Guide Content / Empty State */}
             {currentGuide ? (
               <div className="space-y-2.5">
+                {/* Guide Meta Bar: Reference + Audience Level + Confession */}
+                <div className="flex items-center justify-between gap-2 px-1 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-[#26221F] text-xs">{currentGuide.passageRef}</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FAF0E1] text-[#B4793D] border border-[#D4A373]/40 flex items-center gap-1">
+                      {currentGuide.audience === 'deep_exegesis' ? (
+                        <>
+                          <GraduationCap className="w-3 h-3" />
+                          Deep Exegesis
+                        </>
+                      ) : currentGuide.audience === 'youth_family' ? (
+                        <>
+                          <Baby className="w-3 h-3" />
+                          Youth & Family
+                        </>
+                      ) : (
+                        <>
+                          <Users className="w-3 h-3" />
+                          Small Group
+                        </>
+                      )}
+                    </span>
+                    {currentGuide.confessionCited && (
+                      <span className="text-[9.5px] text-[#78716C] bg-[#FAF7F2] px-1.5 py-0.5 rounded border border-[#EBE5DC] truncate max-w-[200px]" title={currentGuide.confessionCited}>
+                        {currentGuide.confessionCited}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 {/* Original Language Badge */}
                 {currentGuide.originalLanguageNote && (
                   <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC]/80 shadow-2xs">
@@ -779,15 +1068,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <div>
                   <h4 className="font-serif text-sm font-bold text-[#26221F]">Study Guide Generator</h4>
                   <p className="text-xs text-[#78716C] max-w-xs mx-auto mt-1">
-                    Generate an organized discussion guide with context, icebreakers, deep theological prompts, and application for <strong className="text-[#26221F]">{currentVerseRef}</strong>.
+                    Generate an organized discussion guide with context, icebreakers, deep theological prompts, and application for <strong className="text-[#26221F]">{activeRangeRef}</strong>.
                   </p>
                 </div>
                 <button
-                  onClick={handleGenerateStudyGuide}
+                  onClick={() => handleGenerateStudyGuide()}
                   className="clean-caramel-btn !py-1.5 !px-4 text-xs mx-auto shadow-xs flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-100 fill-amber-100" />
-                  <span>Generate Study Guide for {currentVerseRef}</span>
+                  <span>Generate Study Guide for {activeRangeRef}</span>
                 </button>
               </div>
             )}
