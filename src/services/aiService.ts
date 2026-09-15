@@ -783,113 +783,118 @@ export async function generateQuiz(
 ): Promise<QuizQuestion[]> {
   const scope = type === 'chapter' ? `chapter ${chapter} of the book of ${book}` : `the entire book of ${book}`;
   
-  let prompt = `Generate a multiple-choice quiz about ${scope} with exactly ${numQuestions} questions.
-Ensure that the questions focus on specific, randomly selected details, themes, or quotes from the text so that this quiz is unique and different every time it is generated. Avoid asking the same general questions. Include an element of randomness (seed: ${Math.random()}).
-Respond strictly with a valid JSON array. Do not include markdown formatting like \`\`\`json or any other text before or after the array.
-Each object in the array must match this schema:
-{
-  "question": "The question text",
-  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-  "correctAnswerIndex": 0, // integer index of the correct option (0-3)
-  "explanation": "Brief explanation of why this is the correct answer."
-}`;
+  let prompt = `Generate exactly ${numQuestions} multiple-choice questions about ${scope}.
+Focus on specific details and themes so it is unique. (seed: ${Math.random()})
+Do NOT output JSON. You MUST use exactly this plain text format for each question. 
+
+Here is an example of what a good question looks like:
+QUESTION: In the beginning, what did God create?
+A) The sun and moon
+B) The heavens and the earth
+C) The animals
+D) Man and woman
+CORRECT: B
+EXPLANATION: Genesis 1:1 states God created the heavens and the earth.
+
+Generate ${numQuestions} new questions now:`;
 
   if (chapterText && type === 'chapter') {
-    prompt = `Based ONLY on the following scripture text from ${book} chapter ${chapter}, generate a multiple-choice quiz with exactly ${numQuestions} questions. 
-Do not hallucinate or use outside knowledge. The correct answers MUST be provable from the provided text. Focus on specific details found in this text. (seed: ${Math.random()})
-Respond strictly with a valid JSON array. Do not include markdown formatting like \`\`\`json or any other text before or after the array.
-Each object in the array must match this schema:
-{
-  "question": "The question text",
-  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-  "correctAnswerIndex": 0, // integer index of the correct option (0-3)
-  "explanation": "Brief explanation referencing the specific part of the text."
-}
+    prompt = `Based ONLY on the following scripture text, generate exactly ${numQuestions} multiple-choice questions. 
+Do not use outside knowledge. (seed: ${Math.random()})
+Do NOT output JSON. You MUST use exactly this plain text format for each question.
 
+Here is an example of what a good question looks like:
+QUESTION: In the beginning, what did God create?
+A) The sun and moon
+B) The heavens and the earth
+C) The animals
+D) Man and woman
+CORRECT: B
+EXPLANATION: Genesis 1:1 states God created the heavens and the earth.
+
+Now, generate ${numQuestions} new questions based ONLY on this text:
 SCRIPTURE TEXT:
 ${chapterText}`;
+  } else if (type === 'book') {
+    prompt = `Generate exactly ${numQuestions} broad, overarching multiple-choice questions about the major theological themes and grand narrative of the entire book of ${book}.
+Do NOT output JSON. You MUST use exactly this plain text format for each question.
+
+Here is an example of what a good question looks like:
+QUESTION: What is the primary overarching theme of the book of Genesis?
+A) The conquest of the promised land
+B) The establishment of the Levitical priesthood
+C) God's creation and the beginnings of His covenant with humanity
+D) The rebuilding of the temple
+CORRECT: C
+EXPLANATION: Genesis covers the origins of the world and the patriarchs of Israel.
+
+Generate ${numQuestions} new questions now:`;
   }
 
   try {
     const { generateLocalAiResponse } = await import('./webLlmService');
-    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }]);
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], undefined, true);
+    let rawText = responseText.trim();
     
-    // Clean up potential markdown formatting or extra text from the LLM
-    let cleanJson = responseText.trim();
-    if (cleanJson.startsWith('\`\`\`json')) cleanJson = cleanJson.substring(7);
-    if (cleanJson.startsWith('\`\`\`')) cleanJson = cleanJson.substring(3);
-    if (cleanJson.endsWith('\`\`\`')) cleanJson = cleanJson.substring(0, cleanJson.length - 3);
-    cleanJson = cleanJson.trim();
-
-    // Sometimes LLMs put text before the JSON array starts
-    const bracketIndex = cleanJson.indexOf('[');
-    const endBracketIndex = cleanJson.lastIndexOf(']');
-    if (bracketIndex !== -1 && endBracketIndex !== -1) {
-      cleanJson = cleanJson.substring(bracketIndex, endBracketIndex + 1);
-    }
-
-    const quiz: any = JSON.parse(cleanJson);
-    if (Array.isArray(quiz) && quiz.length > 0) {
-      const isValid = quiz.every(q => 
-        q && 
-        typeof q.question === 'string' && 
-        Array.isArray(q.options) && 
-        q.options.length > 0 && 
-        typeof q.correctAnswerIndex === 'number'
-      );
-      if (isValid) {
-        return quiz as QuizQuestion[];
-      } else {
-        throw new Error('Invalid JSON format returned from LLM: Missing required fields (question, options array, correctAnswerIndex)');
+    // Parse the plain text format
+    const quizArray: QuizQuestion[] = [];
+    const splitText = rawText.split('QUESTION:');
+    
+    // The first element is always the text BEFORE the first "QUESTION:", which is usually intro chatter.
+    // We only want the actual question blocks (index 1 and onwards).
+    const questionBlocks = splitText.slice(1).filter(b => b.trim().length > 10);
+    
+    for (const block of questionBlocks) {
+      try {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        
+        const questionText = lines[0];
+        
+        // Find the option lines robustly
+        const aLine = lines.find(l => l.startsWith('A)'));
+        const bLine = lines.find(l => l.startsWith('B)'));
+        const cLine = lines.find(l => l.startsWith('C)'));
+        const dLine = lines.find(l => l.startsWith('D)'));
+        
+        // Skip this block entirely if it doesn't even have options (e.g. malformed generation)
+        if (!aLine || !bLine) continue;
+        
+        const optA = aLine.substring(2).trim();
+        const optB = bLine.substring(2).trim();
+        const optC = cLine ? cLine.substring(2).trim() : 'Option C';
+        const optD = dLine ? dLine.substring(2).trim() : 'Option D';
+        
+        const correctLine = lines.find(l => l.startsWith('CORRECT:')) || '';
+        const explLine = lines.find(l => l.startsWith('EXPLANATION:')) || '';
+        
+        let correctIdx = 0;
+        if (correctLine.includes('B') || correctLine.includes('b)')) correctIdx = 1;
+        if (correctLine.includes('C') || correctLine.includes('c)')) correctIdx = 2;
+        if (correctLine.includes('D') || correctLine.includes('d)')) correctIdx = 3;
+        
+        const explanation = explLine.length > 12 ? explLine.substring(12).trim() : 'Correct answer.';
+        
+        if (questionText.length > 5 && !questionText.includes('In the beginning, what did God create') && !questionText.includes('What is the primary overarching theme')) {
+          quizArray.push({
+            question: questionText,
+            options: [optA, optB, optC, optD],
+            correctAnswerIndex: correctIdx,
+            explanation: explanation
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to parse a question block", block);
       }
+    }
+    
+    if (quizArray.length > 0) {
+      return quizArray;
     } else {
-      throw new Error('Invalid JSON format returned from LLM: Not a valid non-empty array');
+      throw new Error(`AI failed to generate valid questions. Raw output: ${rawText.substring(0, 1000)}...`);
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error generating quiz:', err);
-    // Fallback static quiz if LLM fails
-    const fallbackPool: QuizQuestion[] = [
-      {
-        question: `What is the overarching narrative purpose of the book of ${book}?`,
-        options: ['To provide a detailed historical record of neighboring nations', 'To reveal God\'s character and His relationship with His people', 'To serve primarily as an agricultural manual', 'To document ancient philosophical debates'],
-        correctAnswerIndex: 1,
-        explanation: 'Biblical books primarily serve to reveal God\'s redemptive plan and His covenant relationship with humanity.'
-      },
-      {
-        question: `When studying ${type === 'chapter' ? `chapter ${chapter} of ${book}` : `the book of ${book}`}, why is it important to consider the original historical context?`,
-        options: ['Because it changes the modern literal translation', 'To properly understand the author\'s original intent and audience', 'Because the original languages are no longer understood', 'It is not important; the text only has modern meaning'],
-        correctAnswerIndex: 1,
-        explanation: 'Understanding the historical and cultural context is essential for accurate biblical exegesis.'
-      },
-      {
-        question: `How does ${type === 'chapter' ? `${book} ${chapter}` : book} fit into the broader biblical canon?`,
-        options: ['It is a completely standalone text with no relation to other books', 'It was written much later than the rest of scripture', 'It contributes to the unified narrative of God\'s redemptive history', 'It only applies to a specific ancient civilization'],
-        correctAnswerIndex: 2,
-        explanation: 'Each book of the Bible contributes uniquely to the overarching story of redemption.'
-      },
-      {
-        question: `What is a common feature of the literary style found in ${book}?`,
-        options: ['It utilizes ancient literary forms to convey theological truths', 'It is written entirely in modern scientific terms', 'It actively avoids using any metaphors or symbolism', 'It is primarily a collection of random proverbs'],
-        correctAnswerIndex: 0,
-        explanation: 'Biblical authors used various literary genres (narrative, poetry, prophecy) to communicate divine truth.'
-      }
-    ];
-
-    // Shuffle and pick numQuestions
-    const shuffled = [...fallbackPool].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, numQuestions);
-
-    // If we need more questions than the pool has, pad with generic ones
-    while (selected.length < numQuestions) {
-      selected.push({
-        question: `Detail from ${book} (Question ${selected.length + 1})`,
-        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-        correctAnswerIndex: 0,
-        explanation: 'Fallback question.'
-      });
-    }
-
-    return selected;
+    throw err;
   }
 }
 
@@ -905,7 +910,7 @@ export function saveChapterQuizToHistory(book: string, chapter: number, question
   }
 }
 
-export function getAccumulatedBookQuiz(book: string, numQuestions: number = 10): QuizQuestion[] {
+export async function getAccumulatedBookQuiz(book: string, numQuestions: number = 10): Promise<QuizQuestion[]> {
   let allQuestions: QuizQuestion[] = [];
   
   // Search local storage for all chapter quizzes for this book
@@ -924,14 +929,21 @@ export function getAccumulatedBookQuiz(book: string, numQuestions: number = 10):
     }
   }
 
-  if (allQuestions.length === 0) {
-    return []; // Handled by caller to show error
+  // Deduplicate questions based on question text
+  const uniqueQuestions = Array.from(new Map(allQuestions.map(q => [q.question, q])).values());
+  
+  // The user requested we use ALL questions from previous chapter quizzes.
+  let finalQuestions: QuizQuestion[] = [...uniqueQuestions];
+  
+  // Generate broad book questions dynamically to supplement
+  try {
+    // Generate 3 broad book questions
+    const broadQuestions = await generateQuiz(book, 1, 'book', 3);
+    finalQuestions = finalQuestions.concat(broadQuestions);
+  } catch (e) {
+    console.warn("Failed to generate broad book questions");
   }
 
-  // Deduplicate questions just in case, based on question text
-  const uniqueQuestions = Array.from(new Map(allQuestions.map(q => [q.question, q])).values());
-
-  // Shuffle and pick
-  const shuffled = uniqueQuestions.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, numQuestions);
+  // Final shuffle of the combined quiz
+  return finalQuestions;
 }
