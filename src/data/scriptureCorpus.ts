@@ -248,49 +248,93 @@ export const CANONICAL_SCRIPTURE_CORPUS: ScripturePassage[] = [
     greekHebrew: [
       { term: 'ἀντίτυπον', transliteration: 'Antitypon', strongs: 'G499', meaning: 'Antitype, fulfillment corresponding to a biblical type' }
     ]
+  },
+  {
+    ref: 'Mark 10:28–30',
+    book: 'Mark',
+    chapter: 10,
+    verseRange: '28-30',
+    verbatimText: 'Peter began to say to him, "See, we have left everything and followed you." Jesus said, "Truly, I say to you, there is no one who has left house or brothers or sisters or mother or father or children or lands, for my sake and for the gospel, who will not receive a hundredfold now in this time... and in the age to come eternal life."',
+    translation: 'ESV',
+    theologicalTopic: 'Leaving All for Christ & The Hundredfold Heavenly Reward',
+    keywords: ['mark 10:28', 'mark 10:29', 'mark 10:30', 'left everything', 'followed you', 'hundredfold', 'eternal life', 'discipleship cost', 'treasure in heaven'],
+    greekHebrew: [
+      { term: 'ἀφήκαμεν πάντα', transliteration: 'Aphēkamen panta', strongs: 'G863 / G3956', meaning: 'We have left / surrendered everything' },
+      { term: 'ἑκατονταπλασίονα', transliteration: 'Hekatontaplasiona', strongs: 'G1542', meaning: 'A hundredfold return' }
+    ]
+  },
+  {
+    ref: 'Philippians 3:7–8',
+    book: 'Philippians',
+    chapter: 3,
+    verseRange: '7-8',
+    verbatimText: 'But whatever gain I had, I counted as loss for the sake of Christ. Indeed, I count everything as loss because of the surpassing worth of knowing Christ Jesus my Lord. For his sake I have suffered the loss of all things and count them as rubbish, in order that I may gain Christ.',
+    translation: 'ESV',
+    theologicalTopic: 'Counting All Gain as Loss for the Surpassing Worth of Christ',
+    keywords: ['philippians 3:7', 'philippians 3:8', 'count everything as loss', 'surpassing worth of knowing christ', 'gain christ', 'loss of all things', 'rubbish'],
+    greekHebrew: [
+      { term: 'ζημίαν', transliteration: 'Zēmian', strongs: 'G2209', meaning: 'Loss, forfeiture, damage' },
+      { term: 'σκύβαλα', transliteration: 'Skybala', strongs: 'G4657', meaning: 'Refuse, rubbish, worthless dross' }
+    ]
   }
 ];
 
 export function findMatchingScriptures(query: string, limit: number = 3): ScripturePassage[] {
   const lowerQ = query.toLowerCase();
-  const queryWords = lowerQ.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+  const genericWords = new Set([
+    'the', 'and', 'for', 'that', 'with', 'said', 'them', 'they', 'what', 'then', 'peter', 'jesus',
+    'lord', 'god', 'unto', 'from', 'have', 'were', 'been', 'will', 'there', 'this', 'reply',
+    'answered', 'came', 'into', 'when', 'shall', 'about', 'after'
+  ]);
+  const queryWords = lowerQ.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !genericWords.has(w));
 
   const scored = CANONICAL_SCRIPTURE_CORPUS.map(p => {
     let score = 0;
     const lowerRef = p.ref.toLowerCase();
+    const lowerBook = p.book.toLowerCase();
     const lowerKeywords = p.keywords.map(k => k.toLowerCase());
     const lowerTopic = p.theologicalTopic.toLowerCase();
     const lowerText = p.verbatimText.toLowerCase();
 
-    // Exact reference mention in query (e.g. "luke 1", "luke 1:35", "john 19")
-    if (lowerQ.includes(p.book.toLowerCase()) && (lowerQ.includes(p.chapter.toString()) || lowerRef.includes(lowerQ))) {
+    // 1. Exact Reference Match (e.g. "luke 1:35", "john 19:26") - requires word boundary on chapter number!
+    const chapterWordMatch = new RegExp(`\\b${p.chapter}\\b`).test(lowerQ);
+    if (lowerQ.includes(lowerBook) && chapterWordMatch) {
+      score += 50;
+    } else if (lowerRef.length > 3 && lowerQ.includes(lowerRef)) {
       score += 60;
     }
 
-    // Keyword and topic matching
+    // 2. High-value theological topic / phrase match
     for (const kw of lowerKeywords) {
-      if (lowerQ.includes(kw)) {
-        score += 25;
+      if (kw.length > 4 && lowerQ.includes(kw)) {
+        score += 30;
       }
     }
 
+    // 3. Meaningful content word matching
+    let wordOverlapCount = 0;
     for (const word of queryWords) {
       if (lowerKeywords.some(k => k.includes(word))) {
-        score += 10;
+        score += 12;
+        wordOverlapCount++;
       }
       if (lowerTopic.includes(word)) {
-        score += 8;
+        score += 10;
+        wordOverlapCount++;
       }
       if (lowerText.includes(word)) {
-        score += 3;
+        score += 4;
+        wordOverlapCount++;
       }
     }
 
-    return { passage: p, score };
+    const isMeaningful = score >= 35 && wordOverlapCount >= 2;
+
+    return { passage: p, score: isMeaningful ? score : 0 };
   });
 
   return scored
-    .filter(s => s.score > 0)
+    .filter(s => s.score >= 35)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map(s => s.passage);

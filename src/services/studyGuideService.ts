@@ -150,6 +150,31 @@ function getCuratedSupportingPassages(book: string, chapter: number, verseNum?: 
     ];
   }
 
+  // Sacrificial Discipleship, Renunciation & Heavenly Reward (Matthew 19:16–30, Mark 10:17–31, Luke 18:18–30)
+  if (
+    (normBook === 'matthew' && chapter === 19 && v >= 16 && v <= 30) ||
+    (normBook === 'mark' && chapter === 10 && v >= 17 && v <= 31) ||
+    (normBook === 'luke' && chapter === 18 && v >= 18 && v <= 30)
+  ) {
+    return [
+      {
+        ref: 'Mark 10:28–30',
+        note: 'Parallel Gospel account: Jesus promises the hundredfold reward and eternal life to those who leave all for His sake',
+        text: 'Peter began to say to him, "See, we have left everything and followed you." Jesus said, "Truly, I say to you, there is no one who has left house or brothers or sisters or mother or father or children or lands, for my sake and for the gospel, who will not receive a hundredfold now in this time... and in the age to come eternal life."'
+      },
+      {
+        ref: 'Philippians 3:7–8',
+        note: 'Paul counts all worldly status and gain as loss for the surpassing worth of knowing Christ',
+        text: 'But whatever gain I had, I counted as loss for the sake of Christ. Indeed, I count everything as loss because of the surpassing worth of knowing Christ Jesus my Lord. For his sake I have suffered the loss of all things and count them as rubbish, in order that I may gain Christ.'
+      },
+      {
+        ref: 'Matthew 6:19–21',
+        note: 'The Sermon on the Mount: Laying up eternal treasures in heaven rather than earthly wealth',
+        text: 'Do not lay up for yourselves treasures on earth, where moth and rust destroy and where thieves break in and steal, but lay up for yourselves treasures in heaven... For where your treasure is, there your heart will be also.'
+      }
+    ];
+  }
+
   // Papacy & Ecclesiology (Matthew 16:16–19)
   if (normBook === 'matthew' && chapter === 16 && v >= 16 && v <= 19) {
     return [
@@ -246,11 +271,11 @@ export function generateStudyGuideContent(
     minScore: 35
   });
   const hasExplicitMatch = ragMatches.length > 0 && (
-    ragMatches[0].matchReasons.some(r => r.includes('Scripture Citation Match') || r.includes('Exact Document') || r.includes('Doctrinal Theme Match')) ||
-    (ragMatches[0].score && ragMatches[0].score >= 50)
+    ragMatches[0].matchReasons.some(r => r.includes('Scripture Citation Match') || r.includes('Exact Document')) ||
+    (ragMatches[0].matchReasons.some(r => r.includes('Doctrinal Theme Match')) && (ragMatches[0].score || 0) >= 60)
   );
   const doctrinalDoc = hasExplicitMatch ? ragMatches[0].entry : null;
-  const extractedCitation = lensPerspective.match(/\((CCC §[\d–, ]+|WCF [\d–, ]+|Augsburg [^)]+|Trent [^)]+|Canons of Dort [^)]+)\)/i);
+  const extractedCitation = lensPerspective.match(/\((?:[^)]*?)(CCC §[\d–, §]+|WCF [\d–, .]+|Augsburg [^;)]+|Trent [^;)]+|Canons of Dort [^;)]+)/i);
   const confessionName = doctrinalDoc
     ? `${doctrinalDoc.documentTitle} (${doctrinalDoc.citation})`
     : extractedCitation

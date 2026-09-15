@@ -2542,8 +2542,67 @@ export function getTheologicalInsight(
     lowerText.includes('handed over to men') || lowerText.includes('delivered into the hands of men') ||
     lowerText.includes('son of man is to be handed over') || lowerText.includes('kill him, and on the third day') ||
     lowerText.includes('killed, and after three days rise');
+  const isDiscipleshipRewardLocus =
+    (normBook === 'matthew' && chapter === 19 && vNum >= 16 && vNum <= 30) ||
+    (normBook === 'mark' && chapter === 10 && vNum >= 17 && vNum <= 31) ||
+    (normBook === 'luke' && chapter === 18 && vNum >= 18 && vNum <= 30) ||
+    lowerText.includes('given up everything') || lowerText.includes('left everything and followed') ||
+    lowerText.includes('what will there be for us') || lowerText.includes('hundredfold') ||
+    lowerText.includes('renewal of all things') || lowerText.includes('first will be last');
 
   // Topic-Aware Dynamic Resolution
+  if (isDiscipleshipRewardLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `Following the departure of the rich young ruler who prioritized wealth over the kingdom, Peter asks what reward awaits the disciples who left everything to follow Jesus (${snippet}). Christ responds by affirming the eternal value of sacrificial discipleship, promising the cosmic renewal (*palingenesia*), apostolic authority, and a hundredfold reward in this life and the next.`,
+      theologicalThemes: [
+        'Cost of Discipleship & Radical Renunciation',
+        'The Cosmic Renewal (Palingenesia) & Twelve Thrones',
+        'Rewards of Grace vs Legalistic Merit',
+        'First and Last: Reversal of Earthly Hierarchies'
+      ],
+      historicalContext: `In Second Temple Judaism, material prosperity was widely regarded by scribes and Pharisees as an infallible sign of divine favor. Jesus reverses this conventional wisdom after the rich young ruler departs in sorrow (Matt 19:16–26), prompting Peter’s candid apostolic query regarding what lies ahead for those who literally abandoned home, family, and livelihood for the Messianic mission.`,
+      lensPerspectives: {
+        catholic: `Root of the Evangelical Counsels (poverty, chastity, and obedience; CCC §914–915, §2544–2547): voluntary renunciation of earthly possessions for Christ’s sake participates in evangelical perfection, receiving a heavenly recompense and crown of glory through grace.`,
+        reformed: `Affirms that while no work can merit salvation (WCF 16.5–6), God graciously and freely rewards the sacrificial obedience of His saints out of covenantal fatherly love, ensuring that no cross borne for Christ goes unrewarded.`,
+        lutheran: `Distinguishes the Law from the Gospel promises: true discipleship is the fruit of faith clinging to Christ alone. The reward promised to Peter is not a wage won by human righteousness, but the gift of eternal life and heavenly fellowship with the King.`,
+        orthodox: `Understands total detachment and ascetic renunciation as the royal path to theosis (deification). Those who empty themselves of earthly attachments are filled with uncreated grace and will judge the twelve tribes of Israel in the cosmic resurrection and restoration.`,
+        wesleyan: `A summons to entire devotion and Christian perfection in love. St. Peter’s sacrifice reminds believers to surrender all idolized securities so that God’s holy love may reign supremely in the heart.`,
+        anglican: `Reflects upon the vocation of self-denial and stewardship in the following of Christ, honoring the apostolic witness and trusting God's generous providence in both this present life and the world to come.`,
+        baptist_evangelical: `Underscores personal surrender and radical discipleship: leaving earthly idols to follow Jesus Christ brings incomparable joy, eternal life, and true heavenly treasure far exceeding whatever was surrendered.`
+      },
+      originalLanguageInsights: [
+        {
+          term: 'Left / Forsaken Everything',
+          originalScript: 'ἀφήκαμεν πάντα',
+          transliteration: 'aphēkamen panta',
+          strongsRef: 'G863 / G3956',
+          nuance: 'Aorist active verb indicating a decisive, comprehensive abandonment of livelihood, nets, and family security to cling wholly to Jesus.'
+        },
+        {
+          term: 'Renewal / Regeneration',
+          originalScript: 'παλιγγενεσίᾳ',
+          transliteration: 'palingenesia',
+          strongsRef: 'G3824',
+          nuance: 'New birth, restoration, or cosmic renewal. Refers here to the messianic restoration of the cosmos and the establishment of the kingdom in power.'
+        },
+        {
+          term: 'Hundredfold',
+          originalScript: 'ἑκατονταπλασίονα',
+          transliteration: 'hekatontaplasiona',
+          strongsRef: 'G1542',
+          nuance: 'Immense superabundance—demonstrating that whatever is given up for the Lord is multiplied beyond measure by divine grace.'
+        }
+      ],
+      suggestedQuestions: [
+        `How does Peter's question in ${cleanPassageRef} reflect human anxiety about sacrifice, and how does Jesus tenderly correct and reorient it?`,
+        `What is the theological significance of the word palingenesia ("renewal of all things") for Christian hope and the resurrection?`,
+        `How does the promise of a "hundredfold reward" distinguish divine generosity from worldly transactional merit?`
+      ],
+      practicalApplication: `Examine what earthly attachments, securities, or ambitions you may be clinging to that hinder your wholehearted walk with Jesus Christ. Lay them down at His feet, trusting His abundant promise.`
+    };
+  }
+
   if (isElijahForerunnerLocus) {
     return {
       passageRef: cleanPassageRef,
