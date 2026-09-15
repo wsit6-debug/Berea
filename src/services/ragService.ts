@@ -81,9 +81,10 @@ export function searchDoctrinalCorpus(
     chapter?: number;
     verseNumber?: number;
     limit?: number;
+    minScore?: number;
   }
 ): RagSearchResult[] {
-  const { lens, book, chapter, verseNumber, limit = 2 } = options;
+  const { lens, book, chapter, verseNumber, limit = 2, minScore = 25 } = options;
   const queryTokens = tokenize(query);
   const passageQuery = book && chapter ? `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`.toLowerCase() : '';
 
@@ -92,7 +93,7 @@ export function searchDoctrinalCorpus(
 
   // Trigger background preloading for subsequent queries if not yet cached
   if (typeof window !== 'undefined' && !compiledCorpusCache.has(lens)) {
-    preloadUnabridgedCorpus(lens).catch(() => {});
+    preloadUnabridgedCorpus(lens).catch(() => { });
   }
 
   const scoredResults: RagSearchResult[] = corpusToSearch.map(entry => {
@@ -170,7 +171,7 @@ export function searchDoctrinalCorpus(
 
   // Sort descending by relevance score
   return scoredResults
-    .filter(r => r.score > 0)
+    .filter(r => r.score >= minScore)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }

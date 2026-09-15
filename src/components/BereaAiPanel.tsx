@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X, Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp, History } from 'lucide-react';
+import { Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X, Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp, History, Bookmark } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
@@ -7,14 +7,16 @@ import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage } from '../services/aiService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
-import { cleanApiText } from '../services/youversionService';
-import { StudyGuide, BereaAiTab } from '../types';
+import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
+import { StudyGuide, SupportingPassage, BereaAiTab } from '../types';
 import {
   getSavedStudyGuides,
   saveStudyGuide,
   deleteStudyGuide,
   generateStudyGuideContent,
-  formatStudyGuideForClipboard
+  formatStudyGuideForClipboard,
+  addSupportingPassageToGuide,
+  removeSupportingPassageFromGuide
 } from '../services/studyGuideService';
 import confetti from 'canvas-confetti';
 
@@ -100,10 +102,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [guideCopied, setGuideCopied] = useState(false);
   const [openSections, setOpenSections] = useState({
     context: true,
+    supportingPassages: true,
     icebreakers: true,
     deepPrompts: true,
     application: true
   });
+  const [newPassageRefInput, setNewPassageRefInput] = useState('');
+  const [isAddingPassage, setIsAddingPassage] = useState(false);
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -120,17 +125,63 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   }, [activeTab, currentVerseRef, savedGuides]);
 
   const handleGenerateStudyGuide = () => {
+    const isSamePassage = currentGuide?.passageRef === currentVerseRef;
     const guide = generateStudyGuideContent(
       currentBook,
       currentChapter,
       activeVerseNum,
       currentVerseText,
-      activeLens
+      activeLens,
+      selectedVerse?.greekHebrew,
+      isSamePassage ? currentGuide?.supportingPassages : undefined
     );
     const updated = saveStudyGuide(guide);
     setSavedGuides(updated);
     setCurrentGuide(guide);
     confetti({ particleCount: 35, spread: 55, origin: { y: 0.6 } });
+  };
+
+  const handleAddSupportingPassage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!currentGuide || !newPassageRefInput.trim()) return;
+    const cleanRef = newPassageRefInput.trim();
+    const parsed = parsePassageReference(cleanRef);
+
+    let text = '';
+    if (parsed) {
+      try {
+        setIsAddingPassage(true);
+        const verses = await fetchChapterFromYouVersion(parsed.bookId, parsed.chapterNum, activeTranslation);
+        if (parsed.verseNum) {
+          const exact = verses.find(v => v.verseNumber === parsed.verseNum);
+          if (exact) {
+            text = exact.text[activeTranslation] || Object.values(exact.text)[0] || '';
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch supporting verse text:', err);
+      } finally {
+        setIsAddingPassage(false);
+      }
+    }
+
+    const newPassage: SupportingPassage = {
+      ref: cleanRef,
+      text: text || undefined,
+      note: 'Cross-reference scripture'
+    };
+
+    const updated = addSupportingPassageToGuide(currentGuide, newPassage);
+    setCurrentGuide(updated);
+    setSavedGuides(getSavedStudyGuides());
+    setNewPassageRefInput('');
+  };
+
+  const handleRemoveSupportingPassage = (refToRemove: string) => {
+    if (!currentGuide) return;
+    const updated = removeSupportingPassageFromGuide(currentGuide, refToRemove);
+    setCurrentGuide(updated);
+    setSavedGuides(getSavedStudyGuides());
   };
 
   const handleCopyGuide = async () => {
@@ -167,6 +218,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           <div class="meta">Tradition: ${activeDenom.name} · Created: ${new Date(currentGuide.createdAt).toLocaleDateString()}</div>
           <h2>Context Snapshot</h2>
           <p>${currentGuide.contextSnapshot}</p>
+          ${currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? `
+            <h2>Supporting Scriptures & Cross-References</h2>
+            <ul style="padding-left: 20px;">
+              ${currentGuide.supportingPassages.map(p => `<li style="margin-bottom: 8px;"><strong>${p.ref}</strong>${p.note ? ` <em>(${p.note})</em>` : ''}${p.text ? `<br/><span style="color:#57524E; font-size: 13px;">"${p.text}"</span>` : ''}</li>`).join('')}
+            </ul>
+          ` : ''}
           <h2>Icebreaker Questions</h2>
           <ol>${currentGuide.icebreakers.map(q => `<li>${q}</li>`).join('')}</ol>
           <h2>Deep Discussion Prompts</h2>
@@ -513,7 +570,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <div className="space-y-1.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC]/80 shadow-2xs">
                     {currentGuide.theologicalThemes && currentGuide.theologicalThemes.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9.5px] uppercase font-bold text-[#A8A29E] tracking-wider">Loci:</span>
+                        <span className="text-[9.5px] uppercase font-bold text-[#A8A29E] tracking-wider">Themes:</span>
                         {currentGuide.theologicalThemes.map((theme, i) => (
                           <span key={i} className="text-[9.5px] font-medium bg-white text-[#B4793D] border border-[#EBE5DC] px-2 py-0.5 rounded-full shadow-2xs">
                             {theme}
@@ -549,7 +606,72 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   )}
                 </div>
 
-                {/* 2. Icebreaker Questions Accordion */}
+                {/* 2. Supporting Passages & Cross-References Accordion */}
+                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                  <button
+                    onClick={() => toggleSection('supportingPassages')}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                  >
+                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
+                      <Bookmark className="w-3.5 h-3.5 text-[#B4793D]" />
+                      Supporting Passages {currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? `(${currentGuide.supportingPassages.length})` : ''}
+                    </span>
+                    {openSections.supportingPassages ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
+                  </button>
+                  {openSections.supportingPassages && (
+                    <div className="p-3 bg-white space-y-2.5">
+                      {/* List of supporting passages */}
+                      {currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? (
+                        <div className="space-y-2">
+                          {currentGuide.supportingPassages.map((p, idx) => (
+                            <div key={idx} className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC]/80 space-y-1 text-xs">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="font-bold text-[#B4793D] font-mono">{p.ref}</span>
+                                <button
+                                  onClick={() => handleRemoveSupportingPassage(p.ref)}
+                                  className="text-[#A8A29E] hover:text-red-600 p-0.5 rounded transition-colors"
+                                  title={`Remove ${p.ref}`}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                              {p.note && (
+                                <p className="text-[11px] font-medium text-[#78716C] italic">{p.note}</p>
+                              )}
+                              {p.text && (
+                                <p className="text-[11.5px] text-[#44403C] leading-relaxed pl-2 border-l-2 border-[#D4A373]/50">
+                                  "{p.text}"
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#A8A29E] italic text-center py-1">No supporting passages added yet.</p>
+                      )}
+
+                      {/* Add new supporting passage form */}
+                      <form onSubmit={handleAddSupportingPassage} className="flex items-center gap-1.5 pt-1">
+                        <input
+                          type="text"
+                          value={newPassageRefInput}
+                          onChange={(e) => setNewPassageRefInput(e.target.value)}
+                          placeholder="Add passage (e.g. Malachi 4:5, Matt 11:14)..."
+                          className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-[#EBE5DC] focus:outline-none focus:border-[#B4793D] bg-[#FAF7F2]/50 text-[#26221F] placeholder:text-[#A8A29E]"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newPassageRefInput.trim() || isAddingPassage}
+                          className="ios-glass-btn !text-xs !py-1.5 !px-2.5 bg-white text-[#B4793D] font-medium border border-[#EBE5DC] hover:border-[#B4793D] disabled:opacity-50"
+                        >
+                          {isAddingPassage ? 'Adding...' : '+ Add'}
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Icebreaker Questions Accordion */}
                 <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
                   <button
                     onClick={() => toggleSection('icebreakers')}
