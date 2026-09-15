@@ -8,6 +8,7 @@ import { askBereaAssistant, ChatMessage } from '../services/aiService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 import { cleanApiText } from '../services/youversionService';
+import { AppliedAiLogo } from './AppliedAiLogo';
 
 const DEFAULT_WELCOME_TEXT = "Welcome to Berea. Ask any question about Scripture, theology, church history, or the active passage, or choose a prompt below to get started.";
 
@@ -350,6 +351,31 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             )}
 
+            {/* George Fox Applied AI Institute 'Be Known' 3-Tier Lens */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-br from-[#003057]/8 via-[#FAF7F2] to-[#D4AF37]/15 border border-[#003057]/20 space-y-2.5 shadow-xs">
+              <div className="flex items-center justify-between gap-2">
+                <AppliedAiLogo variant="lockup-navy" height={22} alt="George Fox University Applied AI Institute" />
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#003057] text-[#FAF7F2] uppercase tracking-wider flex-shrink-0">
+                  Be Known
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] text-[#57524E] leading-tight">
+                  Academic facts • Personal faith • Quiet prayer
+                </p>
+                <button
+                  onClick={() => {
+                    setActiveTab('chat');
+                    handleSendMessage(`Help me understand ${currentVerseRef} through the "Be Known" promise: 1) What it means (simple facts & words), 2) What it means for my life (God knows me), and 3) A simple prayer.`);
+                  }}
+                  className="clean-caramel-btn !bg-[#003057] hover:!bg-[#002240] !text-white !text-[10px] !py-1 !px-2.5 shadow-xs flex items-center gap-1 flex-shrink-0"
+                >
+                  <span>Explore</span>
+                  <ArrowUpRight className="w-3 h-3 text-[#D4AF37]" />
+                </button>
+              </div>
+            </div>
+
             {/* Suggested AI Prompts in Overview Tab */}
             <div className="space-y-1">
               <span className="text-[9.5px] font-bold text-[#78716C] uppercase tracking-wider block px-0.5">
@@ -475,7 +501,19 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               <span className="text-[9.5px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1 px-1">
                 <Sparkles className="w-2.5 h-2.5 text-[#B4793D]" /> Suggested Prompts for {currentVerseRef}
               </span>
-              <div className="space-y-1 max-h-[120px] overflow-y-auto custom-scrollbar">
+              <div className="space-y-1 max-h-[140px] overflow-y-auto custom-scrollbar">
+                {/* George Fox 'Be Known' Primary Prompt Pill */}
+                <button
+                  onClick={() => handleSendMessage(`Help me understand ${currentVerseRef} through the "Be Known" promise: 1) What it means (simple facts & words), 2) What it means for my life (God knows me), and 3) A simple prayer.`)}
+                  disabled={isAiThinking}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-[#003057]/10 to-[#FAF5ED] hover:from-[#003057]/20 border border-[#003057]/25 text-[11px] text-[#003057] font-semibold flex items-center justify-between group transition-all disabled:opacity-50 shadow-xs"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <AppliedAiLogo variant="icon-navy" height={13} className="flex-shrink-0" />
+                    <span className="truncate">"Be Known": Learn It • Live It • Pray It</span>
+                  </div>
+                  <ArrowUpRight className="w-3 h-3 text-[#003057] group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+                </button>
                 {insight.suggestedQuestions.map((q, idx) => (
                   <button
                     key={idx}
@@ -619,6 +657,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             </div>
           </div>
         )}
+      </div>
+
+      {/* AI Guide Sub-footer */}
+      <div className="px-3.5 py-2 bg-[#FAF7F2] border-t border-[#EBE5DC] flex items-center justify-between text-[10px] text-[#78716C] select-none flex-shrink-0">
+        <AppliedAiLogo variant="lockup-navy" height={16} alt="George Fox University Applied AI Institute" />
+        <span className="text-[9.5px] text-[#A8A29E] font-medium">Be Known</span>
       </div>
     </div>
   );

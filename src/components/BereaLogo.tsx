@@ -39,7 +39,7 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
               Berea
             </h2>
             <p className="text-xs text-[#B4793D] font-medium tracking-wide">
-              Acts 17:11 • Examining the Scriptures
+              Acts 17:11 • Examine Daily • Be Known
             </p>
           </div>
         )}
@@ -82,15 +82,20 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
 
       {/* Typography */}
       {showText && (
-        <div className="flex items-baseline gap-1.5">
-          <span
-            className="font-heading font-bold text-base sm:text-lg tracking-tight leading-none"
-            style={{ color: textColor }}
-          >
-            Berea
-          </span>
-          <span className="hidden sm:inline text-[10px] font-medium text-[#B4793D] bg-[#FAF5ED] px-1.5 py-0.5 rounded-full border border-[#EBE5DC]">
-            Acts 17:11
+        <div className="flex flex-col">
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className="font-heading font-bold text-base sm:text-lg tracking-tight leading-none"
+              style={{ color: textColor }}
+            >
+              Berea
+            </span>
+            <span className="hidden sm:inline text-[9.5px] font-medium text-[#B4793D] bg-[#FAF5ED] px-1.5 py-0.2 rounded-full border border-[#EBE5DC]">
+              Acts 17:11
+            </span>
+          </div>
+          <span className="text-[9px] tracking-wide text-[#8C827A] font-medium hidden md:inline leading-tight">
+            Examine Daily • Be Known
           </span>
         </div>
       )}

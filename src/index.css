@@ -14,6 +14,10 @@
   --clean-accent-caramel: #B4793D;
   --clean-accent-honey: #D4A373;
   --clean-highlight-cream: #FAF3E8;
+  /* George Fox University 'Be Known' Tokens */
+  --gfu-navy: #003057;
+  --gfu-gold: #D4AF37;
+  --gfu-navy-light: #F0F4F8;
 }
 
 * {
