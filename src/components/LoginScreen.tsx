@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
+import { AppliedAiLogo } from './AppliedAiLogo';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -238,20 +239,38 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           </button>
         </form>
 
-        {/* Footer Security Badge */}
+        {/* Footer Security & Brand Badge */}
         <div style={{
-          marginTop: '1.75rem',
+          marginTop: '1.5rem',
           paddingTop: '1rem',
           borderTop: '1px solid #F0EAE1',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.375rem',
-          color: '#A8A29E',
+          gap: '0.625rem',
           fontSize: '0.6875rem'
         }}>
-          <ShieldCheck style={{ width: '14px', height: '14px', color: '#B4793D' }} />
-          <span>Private Theological Study Access</span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.375rem',
+            color: '#A8A29E'
+          }}>
+            <ShieldCheck style={{ width: '14px', height: '14px', color: '#B4793D' }} />
+            <span>Private Theological Study Access</span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '0.25rem',
+            opacity: 0.88,
+            transition: 'opacity 0.2s ease'
+          }}>
+            <AppliedAiLogo variant="lockup-navy" height={20} alt="George Fox University Applied AI Institute" />
+          </div>
         </div>
       </div>
     </div>

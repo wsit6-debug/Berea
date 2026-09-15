@@ -97,7 +97,14 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [copiedVerseNum, setCopiedVerseNum] = useState<number | null>(null);
-  const [bookmarkedVerses, setBookmarkedVerses] = useState<number[]>([]);
+  const [bookmarkedVerses, setBookmarkedVerses] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('berea_bookmarked_verses');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>(() => getAvailableVoices());
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
     try {

@@ -77,7 +77,18 @@ CORE THEOLOGICAL INSTRUCTIONS:
    - In Luke 1:35, the Holy Spirit comes upon Mary and the power of the Most High overshadows her, so the child is called the Son of God. The angel Gabriel was a messenger sent by God, NOT the father of Jesus.
 
 3. FORMATTING:
-   - Format cleanly using markdown headers (###), bullet points, and blockquotes for verbatim quotes.`;
+   - Format cleanly using markdown headers (###), bullet points, and blockquotes for verbatim quotes.
+${prompt.toLowerCase().includes('be known') || prompt.toLowerCase().includes('george fox') ? `
+===================================================================
+GEORGE FOX "BE KNOWN" INSTRUCTION (KEEP IT SIMPLE):
+Keep language clear, short, and easy to read. Structure into 3 simple sections:
+### 1. 🎓 Learn the Meaning (Plain Facts & Word Meanings)
+- Explain what the passage means in plain words: background, history, and key words.
+### 2. 👤 Real Life (God Knows You Personally)
+- How does God see you and understand your daily life, feelings, and questions through this verse? (Psalm 139).
+### 3. 🕊️ Quiet Reflection (A Simple Prayer)
+- How does God's Spirit speak to your heart? Give a short, 2-sentence prayer.
+===================================================================` : ''}`;
 
   // 3. Assemble Conversation History for Contextual Continuity
   const formattedHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
@@ -218,6 +229,33 @@ ${insight.lensPerspectives[lens] || Object.values(insight.lensPerspectives)[0] |
   // 4. Devotional Reflection (FOURTH)
   const applicationBlock = `\n\n### 4. **Spiritual & Devotional Reflection**
 ${insight.practicalApplication || 'Reflecting on this divine truth draws our hearts into deeper reverence for God\'s holiness, covenant love, and the unshakeable sufficiency of Christ\'s grace.'}`;
+
+  // Special Synthesis for George Fox "Be Known" Lens Queries (KISS: Plain English)
+  const isBeKnownQuery = prompt.toLowerCase().includes('be known') || prompt.toLowerCase().includes('george fox');
+  if (isBeKnownQuery) {
+    const beKnownSynthesis = `### 🎓 1. **Learn the Meaning (Plain Facts & Words)**
+* **What this verse says (${currentPassageRef}):** ${verseText ? `*"${verseText}"*` : insight.conciseOverview}
+${confessionalBlock}
+${scriptureBlock}
+${languageBlock}
+
+---
+
+### 👤 2. **Real Life (God Knows You Personally)**
+* **God sees you:** As *Psalm 139:1–4* says, God knows everything about you—where you go, what you worry about, and what you need. In ${currentPassageRef}, God meets you right where you are today.
+* **For your day:** How does this truth help you with your family, friends, or work this week? God calls you by name (*Exodus 33:17*) and loves you completely.
+
+---
+
+### 🕊️ 3. **Quiet Reflection (A Simple Prayer)**
+* **Listening to God:** Faith is more than head knowledge—it is walking with Jesus day by day (*1 Corinthians 13:12*).
+* **A Short Prayer:** *Lord, thank You that You know me inside and out. Help me understand Your Word today, give me peace, and guide my next steps. Amen.*`;
+
+    return {
+      text: beKnownSynthesis,
+      primaryCitation: ragContext.primaryCitation
+    };
+  }
 
   const fullText = `${confessionalBlock}\n\n---\n\n${scriptureBlock}${languageBlock}\n\n---\n\n${applicationBlock}`;
 
