@@ -67,6 +67,36 @@ export const PitchDeckAboutModal: React.FC<PitchDeckAboutModalProps> = ({ isOpen
               </p>
             </div>
           </div>
+
+          {/* George Fox University 'Be Known' Ethos Card */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#003057]/5 via-[#FAF7F2] to-[#D4AF37]/10 border border-[#003057]/20 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[11px] font-bold text-[#003057] uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                The George Fox Promise: Be Known
+              </h4>
+              <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full bg-[#003057] text-[#FAF7F2] tracking-wider uppercase">
+                GFU Ethos
+              </span>
+            </div>
+            <p className="text-xs sm:text-[13px] text-[#2C3E50] leading-relaxed">
+              The Bible is not just a textbook—it is about knowing God and being known by Him. George Fox’s promise to <strong className="text-[#003057]">Be Known</strong> means reading Scripture in three simple ways:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-left">
+              <div className="p-3 rounded-xl bg-white/90 border border-[#003057]/15 shadow-xs">
+                <div className="text-[10.5px] font-bold text-[#003057] uppercase tracking-wide">Academically</div>
+                <div className="text-[11.5px] text-[#4A5568] mt-1 leading-snug">Understand the Bible clearly: word meanings, real history, and key facts.</div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/90 border border-[#003057]/15 shadow-xs">
+                <div className="text-[10.5px] font-bold text-[#003057] uppercase tracking-wide">Personally</div>
+                <div className="text-[11.5px] text-[#4A5568] mt-1 leading-snug">See how God knows you: your life story, your feelings, and your daily walk.</div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/90 border border-[#003057]/15 shadow-xs">
+                <div className="text-[10.5px] font-bold text-[#003057] uppercase tracking-wide">Spiritually</div>
+                <div className="text-[11.5px] text-[#4A5568] mt-1 leading-snug">Draw close to God: listen quietly for His voice and speak with Him in prayer.</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
