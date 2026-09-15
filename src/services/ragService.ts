@@ -100,42 +100,75 @@ export function searchDoctrinalCorpus(
     let score = 0;
     const matchReasons: string[] = [];
 
-    // 1. Scripture Reference Match (+50 points for exact chapter/verse mention)
+    // 1. Direct Scripture Reference Match (+60 points for exact chapter & verse, +30 for chapter context)
     let hasScriptureMatch = false;
-    if (passageQuery && entry.relatedScriptures && entry.relatedScriptures.some(ref => ref.toLowerCase().includes(passageQuery))) {
-      score += 50;
-      hasScriptureMatch = true;
-      matchReasons.push(`Scripture Citation Match (${passageQuery})`);
-    }
-
-    // 2. Exact Paragraph / Article Number Match (e.g. CCC 491, WCF 8.2)
-    const lowerQ = query.toLowerCase();
-    const cleanCit = entry.citation.toLowerCase().replace(/[^\w\d]/g, '');
-    const cleanSec = entry.sectionOrArticle.toLowerCase().replace(/[^\w\d]/g, '');
-    for (const token of queryTokens) {
-      if (cleanCit.includes(token) || cleanSec.includes(token)) {
-        score += 40;
-        matchReasons.push(`Exact Document Citation Match (${entry.citation})`);
-        break;
+    if (passageQuery && entry.relatedScriptures) {
+      if (entry.relatedScriptures.some(ref => ref.toLowerCase().replace(/\s+/g, ' ').includes(passageQuery))) {
+        score += 60;
+        hasScriptureMatch = true;
+        matchReasons.push(`Scripture Citation Match (${passageQuery})`);
+      } else if (book && chapter && entry.relatedScriptures.some(ref => ref.toLowerCase().includes(`${book.toLowerCase()} ${chapter}`))) {
+        score += 30;
+        hasScriptureMatch = true;
+        matchReasons.push(`Scripture Chapter Context Match (${book} ${chapter})`);
       }
     }
 
-    // 3. Keyword & Semantic Overlap
-    const entryKeywords = (entry.keywords || []).map(k => k.toLowerCase());
-    const entryTextTokens = tokenize(`${entry.documentTitle} ${entry.topic} ${entry.coreDoctrine} ${entry.fullExcerpt}`);
+    // 2. Explicit Citation Search (only if query explicitly specifies citation notation like "CCC 491", "WCF 8.2", "Art. 4")
+    const cleanCit = entry.citation.toLowerCase().replace(/[^\w\d]/g, '');
+    const cleanSec = entry.sectionOrArticle.toLowerCase().replace(/[^\w\d]/g, '');
+    const explicitCitationMatch = query.match(/\b(ccc\s*§?\s*\d+|wcf\s*\d+(\.\d+)?|art(icle)?\.?\s*[ivx\d]+)\b/i);
+    if (explicitCitationMatch) {
+      const normCitQuery = explicitCitationMatch[0].toLowerCase().replace(/[^\w\d]/g, '');
+      if (cleanCit.includes(normCitQuery) || cleanSec.includes(normCitQuery)) {
+        score += 50;
+        matchReasons.push(`Exact Document Citation Match (${entry.citation})`);
+      }
+    }
+
+    // 3. Whole Verse & Thematic Phrase Matching (+35 points for multi-word theological phrases)
+    const lowerQuery = query.toLowerCase();
+    const entryTopicLower = entry.topic.toLowerCase();
+    const entryCoreLower = entry.coreDoctrine.toLowerCase();
+    const entryExcerptLower = entry.fullExcerpt.toLowerCase();
+
+    const thematicPhrases = [
+      'son of man', 'handed over', 'delivered up', 'third day', 'kill him', 'prayer and fasting',
+      'keys of heaven', 'keys of the kingdom', 'faith alone', 'justified by faith', 'original sin',
+      'immaculate conception', 'full of grace', 'bread of life', 'this is my body', 'eternal life',
+      'holy spirit', 'born again', 'living sacrifice', 'suffering servant', 'purgatory'
+    ];
+    let phraseMatched = false;
+    for (const phrase of thematicPhrases) {
+      if (lowerQuery.includes(phrase)) {
+        if (entryTopicLower.includes(phrase) || entryCoreLower.includes(phrase) || entryExcerptLower.includes(phrase)) {
+          score += 35;
+          phraseMatched = true;
+          matchReasons.push(`Doctrinal Theme Match ("${phrase}")`);
+          break;
+        }
+      }
+    }
+
+    // 4. Word-Boundary Token & Keyword Overlap
+    const entryKeywords = new Set((entry.keywords || []).map(k => k.toLowerCase()));
+    const entryTopicTokens = new Set(tokenize(entry.topic));
+    const entryCoreTokens = new Set(tokenize(entry.coreDoctrine));
+    const entryTextTokens = new Set(tokenize(`${entry.documentTitle} ${entry.fullExcerpt}`));
 
     let keywordMatches = 0;
     queryTokens.forEach(token => {
-      if (entryKeywords.includes(token)) {
+      if (entryKeywords.has(token)) {
         score += 25;
         keywordMatches++;
-      } else if (entryKeywords.some(k => k.includes(token) || token.includes(k))) {
+      } else if (entryTopicTokens.has(token)) {
         score += 15;
         keywordMatches++;
-      }
-
-      if (entryTextTokens.includes(token)) {
-        score += 8;
+      } else if (entryCoreTokens.has(token)) {
+        score += 10;
+        keywordMatches++;
+      } else if (entryTextTokens.has(token)) {
+        score += 4;
       }
     });
 
@@ -143,24 +176,7 @@ export function searchDoctrinalCorpus(
       matchReasons.push(`${keywordMatches} Confessional Keyword Match(es)`);
     }
 
-    // 4. Document Title & Topic Semantic Matching
-    const docLower = entry.documentTitle.toLowerCase();
-    const topicLower = entry.topic.toLowerCase();
-    const coreLower = entry.coreDoctrine.toLowerCase();
-
-    for (const token of queryTokens) {
-      if (topicLower.includes(token)) {
-        score += 15;
-      }
-      if (docLower.includes(token)) {
-        score += 10;
-      }
-      if (coreLower.includes(token)) {
-        score += 5;
-      }
-    }
-
-    const hasSubstantiveMatch = keywordMatches > 0 || hasScriptureMatch || score >= 20;
+    const hasSubstantiveMatch = hasScriptureMatch || phraseMatched || (keywordMatches >= 2 && score >= 35);
 
     return {
       entry,

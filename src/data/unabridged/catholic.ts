@@ -195,5 +195,18 @@ export const UNABRIDGED_CATHOLIC_CORPUS: DoctrinalEntry[] = [
     fullExcerpt: 'All who die in God\'s grace and friendship, but still imperfectly purified, are indeed assured of their eternal salvation; but after death they undergo purification, so as to achieve the holiness necessary to enter the joy of heaven (CCC §1030). The Church gives the name Purgatory to this final purification of the elect, which is entirely different from the punishment of the damned. The Church formulated her doctrine of faith on Purgatory especially at the Councils of Florence and Trent (CCC §1031). From the beginning the Church has honored the memory of the dead and offered prayers in suffrage for them, above all the Eucharistic sacrifice, so that, thus purified, they may attain the beatific vision of God (CCC §1032; 2 Maccabees 12:46; 1 Cor. 3:15; 1 Pet. 1:7).',
     relatedScriptures: ['1 Corinthians 3:13-15', '2 Maccabees 12:46', 'Matthew 12:32', '1 Peter 1:7'],
     keywords: ['purgatory', 'purification', 'prayers for the dead', 'communion of saints', 'council of trent', 'afterlife', 'catholic']
+  },
+  {
+    id: 'ccc_christ_passion_resurrection',
+    tradition: 'catholic',
+    documentTitle: 'Catechism of the Catholic Church',
+    sectionOrArticle: 'Paragraphs 599–618',
+    citation: 'CCC §599–618',
+    yearOrEra: '1992',
+    topic: 'The Redemptive Passion, Death & Resurrection of Jesus Christ (Matthew 17:22–23, Mark 9:31, Luke 9:44, Isaiah 53)',
+    coreDoctrine: 'Jesus’ violent death was not the result of chance in an unfortunate coincidence of circumstances, but belongs to the mystery of God’s plan of salvation. Christ freely offered Himself in obedience to the Father, handed over for our sins and raised for our justification.',
+    fullExcerpt: 'Jesus\' violent death was not the result of chance in an unfortunate coincidence of circumstances, but belongs to the mystery of God\'s plan, as St. Peter explains to the Jews of Jerusalem in his first sermon on Pentecost: "This Jesus [was] delivered up according to the definite plan and foreknowledge of God" (Acts 2:23; CCC §599). By sending his own Son in the form of a slave, in the form of a fallen humanity, on account of sin, God "made him to be sin who knew no sin, so that in him we might become the righteousness of God" (2 Cor 5:21; CCC §602). Jesus did not experience reprobation as if he himself had sinned. But in the redeeming love that always united him to the Father, he assumed us in our estrangement from God, so that he could say in our name from the cross: "My God, my God, why have you forsaken me?" (Mark 15:34; CCC §603). At the Last Supper and upon the Cross, Christ handed himself over as the true Paschal Lamb, offering the one sacrifice that surpasses all others (CCC §613–618).',
+    relatedScriptures: ['Matthew 17:22-23', 'Matthew 17:22', 'Mark 9:30-32', 'Luke 9:43-45', 'Acts 2:23', 'Isaiah 53:5-6', 'Romans 8:32', '2 Corinthians 5:21'],
+    keywords: ['passion', 'son of man', 'handed over', 'delivered up', 'crucifixion', 'resurrection', 'atonement', 'redemption', 'sacrifice', 'christology', 'galilee']
   }
 ];

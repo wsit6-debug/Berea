@@ -12,7 +12,6 @@ export interface StudyGuide {
   deepPrompts: string[];
   application: string;
   createdAt: number;
-  theologicalThemes?: string[];
   confessionCited?: string;
   originalLanguageNote?: string;
   supportingPassages?: SupportingPassage[];

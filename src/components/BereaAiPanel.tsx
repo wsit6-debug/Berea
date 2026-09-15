@@ -565,25 +565,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             {/* Current Study Guide Content / Empty State */}
             {currentGuide ? (
               <div className="space-y-2.5">
-                {/* Theological Themes & Metadata Badges */}
-                {((currentGuide.theologicalThemes && currentGuide.theologicalThemes.length > 0) || currentGuide.originalLanguageNote) && (
-                  <div className="space-y-1.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC]/80 shadow-2xs">
-                    {currentGuide.theologicalThemes && currentGuide.theologicalThemes.length > 0 && (
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9.5px] uppercase font-bold text-[#A8A29E] tracking-wider">Themes:</span>
-                        {currentGuide.theologicalThemes.map((theme, i) => (
-                          <span key={i} className="text-[9.5px] font-medium bg-white text-[#B4793D] border border-[#EBE5DC] px-2 py-0.5 rounded-full shadow-2xs">
-                            {theme}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {currentGuide.originalLanguageNote && (
-                      <div className="text-[10px] text-[#57524E] flex items-center gap-1 bg-white p-1.5 rounded-lg border border-[#EBE5DC]/60">
-                        <span className="font-bold text-[#B4793D] font-mono">Original Language:</span>
-                        <span className="truncate">{currentGuide.originalLanguageNote}</span>
-                      </div>
-                    )}
+                {/* Original Language Badge */}
+                {currentGuide.originalLanguageNote && (
+                  <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC]/80 shadow-2xs">
+                    <div className="text-[10px] text-[#57524E] flex items-center gap-1 bg-white p-1.5 rounded-lg border border-[#EBE5DC]/60">
+                      <span className="font-bold text-[#B4793D] font-mono">Original Language:</span>
+                      <span className="truncate">{currentGuide.originalLanguageNote}</span>
+                    </div>
                   </div>
                 )}
 

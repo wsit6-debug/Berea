@@ -2535,6 +2535,13 @@ export function getTheologicalInsight(
     (normBook === 'mark' && chapter === 9 && vNum >= 14 && vNum <= 29) ||
     (normBook === 'ephesians' && chapter === 6 && vNum >= 10 && vNum <= 18) ||
     lowerText.includes('prayer and fasting') || lowerText.includes('fasting') || lowerText.includes('cast out') || lowerText.includes('demon') || lowerText.includes('devils') || lowerText.includes('unclean spirit') || lowerText.includes('goeth not out');
+  const isPassionPredictionLocus =
+    (normBook === 'matthew' && ((chapter === 17 && vNum >= 22 && vNum <= 23) || (chapter === 16 && vNum >= 21 && vNum <= 23) || (chapter === 20 && vNum >= 17 && vNum <= 19))) ||
+    (normBook === 'mark' && ((chapter === 9 && vNum >= 30 && vNum <= 32) || (chapter === 8 && vNum >= 31 && vNum <= 33) || (chapter === 10 && vNum >= 32 && vNum <= 34))) ||
+    (normBook === 'luke' && ((chapter === 9 && vNum >= 43 && vNum <= 45) || (chapter === 9 && vNum === 22) || (chapter === 18 && vNum >= 31 && vNum <= 34))) ||
+    lowerText.includes('handed over to men') || lowerText.includes('delivered into the hands of men') ||
+    lowerText.includes('son of man is to be handed over') || lowerText.includes('kill him, and on the third day') ||
+    lowerText.includes('killed, and after three days rise');
 
   // Topic-Aware Dynamic Resolution
   if (isElijahForerunnerLocus) {
@@ -2599,6 +2606,38 @@ export function getTheologicalInsight(
         `What areas of spiritual stagnation in our lives require intentional prayer and self-denial today?`
       ],
       practicalApplication: `Set aside intentional time this week to fast and pray over spiritual obstacles, placing total reliance upon Christ rather than your own strength.`
+    };
+  }
+
+  if (isPassionPredictionLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `Jesus explicitly foretells His impending betrayal, death, and third-day resurrection (${snippet}). The divine title "Son of Man" unites Daniel 7’s apocalyptic heavenly ruler with Isaiah 53’s Suffering Servant, establishing that redemptive glory is achieved only through sacrificial suffering and obedient self-giving.`,
+      theologicalThemes: [
+        'The Passion of Christ & Sovereign Divine Plan (Dei)',
+        'The Son of Man Handed Over (Traditio)',
+        'The Bodily Resurrection on the Third Day'
+      ],
+      historicalContext: `Gathering privately in Galilee before the journey toward Jerusalem, Jesus delivers the second passion prediction to instruct the Twelve on His approaching crucifixion. The disciples are deeply grieved because prevailing Second Temple messianic expectations anticipated an invincible political conqueror, unable to conceive of the Messiah executed at human hands.`,
+      lensPerspectives: {
+        catholic: `Proclaims the mystery of Christ’s voluntary Redemptive Passion and Resurrection (CCC §599–618): Christ freely offered Himself according to the Father’s eternal plan of salvation; His delivery into the hands of sinners achieves our redemption and justification.`,
+        orthodox: `Contemplates the holy kenosis (self-emptying) and voluntary Passion of Christ, who enters Hades and destroys death by His glorious third-day Resurrection.`,
+        reformed: `Highlights the covenantal necessity of Christ’s penal substitution as the sole Mediator (WCF 8.4–5): God did not spare His own Son, but handed Him over for our redemption according to eternal decree.`,
+        lutheran: `The supreme expression of the Theology of the Cross (Crux sola est nostra theologia): God reveals His righteousness not in human glory or power, but in Christ handed over to death for our justification.`,
+        wesleyan: `Proclaims universal redemption through the sacrificial death and victory of Jesus Christ, calling every believer to embrace the fellowship of His sufferings.`,
+        anglican: `Celebrates Christ’s full, perfect, and sufficient sacrifice for the sins of the whole world, commemorated centrally in the Holy Eucharist and the Creeds.`,
+        baptist_evangelical: `Anchors faith in the literal, substitutionary death and bodily resurrection of Jesus Christ as the immovable foundation of the Gospel (1 Cor 15:3–4).`
+      },
+      originalLanguageInsights: [
+        { term: 'Handed Over / Delivered', originalScript: 'παραδίδωμι', transliteration: 'paradidōmi', strongsRef: 'G3860', nuance: 'To deliver up or hand over into the custody of another—the theological term for God handing over His Son and Judas delivering Christ to the authorities.' },
+        { term: 'Son of Man', originalScript: 'υἱὸς τοῦ ἀνθρώπου', transliteration: 'huios tou anthrōpou', strongsRef: 'G5207 / G444', nuance: 'Christ\'s primary self-designation, drawing on Daniel 7:13 to declare His messianic identity and heavenly authority.' }
+      ],
+      suggestedQuestions: [
+        `Why were the disciples filled with deep distress when Jesus announced His death and resurrection (Matt 17:23)?`,
+        `How does the biblical term "handed over" (paradidōmi) connect human treachery with God's sovereign redemptive plan (Acts 2:23)?`,
+        `What does Christ's willing surrender teach us about the cost and nature of Christian discipleship today?`
+      ],
+      practicalApplication: `Surrender your own desire for control and earthly acclaim to Jesus Christ, trusting that God brings resurrection life out of apparent defeat and suffering.`
     };
   }
 
