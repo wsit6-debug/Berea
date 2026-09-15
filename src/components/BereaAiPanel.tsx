@@ -117,6 +117,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         book: currentBook,
         chapter: currentChapter,
         verseNumber: activeVerseNum,
+        activeVerseRef: currentVerseRef,
         verseText: (selectedVerse?.text && (selectedVerse.text[activeTranslation] || selectedVerse.text['KJV'] || Object.values(selectedVerse.text)[0])) || undefined,
         lens: activeLens,
         history: chatMessages,

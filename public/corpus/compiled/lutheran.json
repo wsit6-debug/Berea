@@ -22,7 +22,9 @@
       "augsburg confession",
       "art 1",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "The Divine Unity and Trinity of Persons"
   },
   {
     "id": "lutheran_ac_2_original_sin",
@@ -50,7 +52,9 @@
       "book of concord",
       "adam",
       "guilt"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "Original Sin, Concupiscence & Universal Condemnation"
   },
   {
     "id": "lutheran_ac_3_son_of_god",
@@ -78,7 +82,9 @@
       "art 3",
       "lutheran",
       "christology"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "The Incarnation, Two Natures, Virgin Birth & Reconciliation"
   },
   {
     "id": "lutheran_ac_4_justification",
@@ -107,7 +113,9 @@
       "augsburg confession",
       "art 4",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "Justification by Faith Alone (Sola Fide & Propter Christum)"
   },
   {
     "id": "lutheran_ac_5_ministry",
@@ -132,7 +140,9 @@
       "augsburg confession",
       "art 5",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "The Office of the Holy Ministry: Word and Sacraments as Means of Grace"
   },
   {
     "id": "lutheran_ac_9_10_baptism_supper",
@@ -161,7 +171,9 @@
       "augsburg confession",
       "art 9 10",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "Baptismal Regeneration, Infant Baptism & The Real Presence in the Lord’s Supper"
   },
   {
     "id": "lutheran_ac_18_21_free_will_saints",
@@ -189,7 +201,9 @@
       "augsburg confession",
       "art 18 21",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "Free Will in Civil Matters vs. Spiritual Inability; Memory of Saints vs. Invocation"
   },
   {
     "id": "lutheran_smalcald_chief_article_complete",
@@ -217,7 +231,9 @@
       "faith alone",
       "redemption",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "The Standing or Falling Article: Christ and Faith Alone"
   },
   {
     "id": "lutheran_formula_concord_8_solid_declaration",
@@ -245,7 +261,9 @@
       "formula of concord",
       "solid declaration",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "Person of Christ, Communication of Attributes & Mary as Theotokos"
   },
   {
     "id": "lutheran_small_catechism_creed_sacraments",
@@ -273,6 +291,8 @@
       "forgiveness of sins",
       "real presence",
       "lutheran"
-    ]
+    ],
+    "sourceFilename": "augsburg_confession.json",
+    "sectionHeader": "The Second Article of Creed, Power of Holy Baptism & Lord’s Supper"
   }
 ]
