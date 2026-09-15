@@ -263,6 +263,7 @@ export function App() {
         bookName={currentBook.name}
         chapterNumber={chapterNum}
         quizType={quizType}
+        chapterText={currentChapter.verses.map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ')}
       />
     </div>
   );

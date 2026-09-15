@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trophy, Loader2 } from 'lucide-react';
-import { generateQuiz, QuizQuestion } from '../services/aiService';
+import { generateQuiz, QuizQuestion, saveChapterQuizToHistory, getAccumulatedBookQuiz } from '../services/aiService';
 
 interface QuizModalProps {
   isOpen: boolean;
@@ -8,6 +8,7 @@ interface QuizModalProps {
   bookName: string;
   chapterNumber: number;
   quizType: 'chapter' | 'book';
+  chapterText?: string;
 }
 
 export const QuizModal: React.FC<QuizModalProps> = ({
@@ -15,7 +16,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   onClose,
   bookName,
   chapterNumber,
-  quizType
+  quizType,
+  chapterText
 }) => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -41,9 +43,20 @@ export const QuizModal: React.FC<QuizModalProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const numQuestions = quizType === 'chapter' ? 3 : 10;
-      const fetchedQuestions = await generateQuiz(bookName, chapterNumber, quizType, numQuestions);
-      setQuestions(fetchedQuestions);
+      if (quizType === 'book') {
+        const historyQuiz = getAccumulatedBookQuiz(bookName, 10);
+        if (historyQuiz.length === 0) {
+          setError('No chapter quizzes found for this book. Please read and complete chapter quizzes to build up your final book quiz!');
+        } else {
+          setQuestions(historyQuiz);
+        }
+      } else {
+        const numQuestions = 3;
+        const fetchedQuestions = await generateQuiz(bookName, chapterNumber, quizType, numQuestions, chapterText);
+        setQuestions(fetchedQuestions);
+        // Save to history so the book quiz can use it later
+        saveChapterQuizToHistory(bookName, chapterNumber, fetchedQuestions);
+      }
     } catch (err) {
       setError('Failed to generate quiz. Please try again.');
       console.error(err);
@@ -174,7 +187,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                 </h3>
 
                 <div className="space-y-3">
-                  {currentQuestion.options.map((option, idx) => {
+                  {(currentQuestion.options || []).map((option, idx) => {
                     const isSelected = selectedAnswers[currentQuestionIndex] === idx;
                     return (
                       <button
