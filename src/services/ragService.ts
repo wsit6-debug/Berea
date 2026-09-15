@@ -324,11 +324,10 @@ export function buildRagGroundingContext(
 
   if (retrievedEntries.length > 0) {
     systemPromptBlock += `
-### [RETRIEVED THEOLOGICAL CONTEXT CHUNKS - ${String(targetLens).toUpperCase()}]:
-${retrievedEntries.map((e, idx) => `
+### [CONFESSIONAL STANDARDS & DOGMA - ${String(targetLens).toUpperCase()}]:
+${retrievedEntries.map((e) => `
 ---
-[CONTEXT CHUNK ${idx + 1}] [Source: ${e.sourceFilename}, Section: ${e.sectionOrArticle}${e.sectionHeader ? `, Section Header: ${e.sectionHeader}` : ''}]:
-Document Title: ${e.documentTitle} (${e.citation} - ${e.yearOrEra})
+[Confessional Document: ${e.documentTitle} (${e.citation}${e.sectionOrArticle ? `, ${e.sectionOrArticle}` : ''})]:
 Topic: ${e.topic}
 Core Doctrine: "${e.coreDoctrine}"
 Verbatim Excerpt:
@@ -340,10 +339,10 @@ ${e.relatedScriptures && e.relatedScriptures.length > 0 ? `Scripture Cross-Refer
 
   if (scripturePassages.length > 0) {
     systemPromptBlock += `
-### [RETRIEVED SCRIPTURE CONTEXT CHUNKS - VERBATIM CANONICAL TEXT]:
-${scripturePassages.map((p, idx) => `
+### [CANONICAL SCRIPTURE FOUNDATIONS]:
+${scripturePassages.map((p) => `
 ---
-[SCRIPTURE CHUNK ${idx + 1}] [Source: Canonical_Scriptures_${p.translation}.json, Section: ${p.ref}]:
+[Scripture Passage: ${p.ref} (${p.translation})]:
 Verbatim Text: "${p.verbatimText}"
 Theological Topic: ${p.theologicalTopic}
 ${p.greekHebrew ? `Linguistic Data: ${p.greekHebrew.map(l => `${l.transliteration} (${l.term} - Strong's ${l.strongs}): ${l.meaning}`).join('; ')}` : ''}

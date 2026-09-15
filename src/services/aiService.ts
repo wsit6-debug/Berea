@@ -65,7 +65,7 @@ Your ONLY job is to synthesize the provided CONTEXT to answer the user.
 CRITICAL RULES:
 1. THEOLOGICAL PURITY: You MUST interpret the scriptures strictly through the ${USER_DENOMINATION} lens provided in the context. DO NOT import outside interpretations, secular views, or opposing denominational biases from your pre-training. 
 2. NO EXTERNAL KNOWLEDGE: If the context does not explain the verse, do not invent an explanation. 
-3. FORMAT: Write a natural, concise summary. Do not copy-paste raw formatting. Always include a [Source] citation.` 
+3. FORMAT: Write a natural, concise summary. Do not copy-paste raw formatting. Never refer to the text as "chunks" or output internal labels like "[scripture chunk]"—refer directly to the scripture passage (e.g. Matthew 16:18) or confessional document. Always include a [Source: Document/Passage] citation.` 
     },
     { role: 'user' as const, content: `CONTEXT:\n${ragContextText}\n\nQUESTION: ${prompt}` }
   ];
@@ -106,10 +106,14 @@ CRITICAL RULES:
     }
 
     const data = await response.json();
-    const content = data.message?.content || '';
+    const rawContent = data.message?.content || '';
+    const cleanedContent = rawContent
+      .replace(/\[\s*(?:scripture|context|doctrinal)\s+chunk\s*\d*\s*\]/gi, '')
+      .replace(/\b(?:scripture|context|doctrinal)\s+chunk\s+\d+\b/gi, 'passage')
+      .trim();
 
     return {
-      text: content,
+      text: cleanedContent,
       ragEntries: ragContext.retrievedEntries,
       primaryCitation: ragContext.primaryCitation,
       isLiveAi: true
