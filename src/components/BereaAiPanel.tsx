@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X, Trash2, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X, Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp, History } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
@@ -8,6 +8,15 @@ import { askBereaAssistant, ChatMessage } from '../services/aiService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 import { cleanApiText } from '../services/youversionService';
+import { StudyGuide, BereaAiTab } from '../types';
+import {
+  getSavedStudyGuides,
+  saveStudyGuide,
+  deleteStudyGuide,
+  generateStudyGuideContent,
+  formatStudyGuideForClipboard
+} from '../services/studyGuideService';
+import confetti from 'canvas-confetti';
 
 const DEFAULT_WELCOME_TEXT = "Welcome to Berea. Ask any question about Scripture, theology, church history, or the active passage, or choose a prompt below to get started.";
 
@@ -20,6 +29,8 @@ interface BereaAiPanelProps {
   activeTranslation: TranslationId;
   onTranslationChange: (t: TranslationId) => void;
   onClose?: () => void;
+  activeTab?: BereaAiTab;
+  onTabChange?: (tab: BereaAiTab) => void;
 }
 
 export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
@@ -30,9 +41,23 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   onLensChange,
   activeTranslation,
   onTranslationChange,
-  onClose
+  onClose,
+  activeTab: externalTab,
+  onTabChange
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'map' | 'compare' | 'chat'>('overview');
+  const [internalTab, setInternalTab] = useState<BereaAiTab>(externalTab || 'overview');
+
+  useEffect(() => {
+    if (externalTab) {
+      setInternalTab(externalTab);
+    }
+  }, [externalTab]);
+
+  const activeTab = externalTab || internalTab;
+  const setActiveTab = (t: BereaAiTab) => {
+    setInternalTab(t);
+    onTabChange?.(t);
+  };
   const [comparisonTranslations, setComparisonTranslations] = useState<TranslationId[]>(['ESV', 'KJV', 'NIV']);
   const [showDenomModal, setShowDenomModal] = useState(false);
 
@@ -67,6 +92,102 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
   const rawCurrentText = (selectedVerse?.text && (selectedVerse.text[activeTranslation] || selectedVerse.text['KJV'] || Object.values(selectedVerse.text)[0])) || undefined;
   const currentVerseText = rawCurrentText ? cleanApiText(rawCurrentText) : undefined;
+
+  // Study Guide Generator State
+  const [savedGuides, setSavedGuides] = useState<StudyGuide[]>(() => getSavedStudyGuides());
+  const [currentGuide, setCurrentGuide] = useState<StudyGuide | null>(null);
+  const [showSavedGuidesDrawer, setShowSavedGuidesDrawer] = useState(false);
+  const [guideCopied, setGuideCopied] = useState(false);
+  const [openSections, setOpenSections] = useState({
+    context: true,
+    icebreakers: true,
+    deepPrompts: true,
+    application: true
+  });
+
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  // Sync guide with active passage when switching to studyGuide
+  useEffect(() => {
+    if (activeTab === 'studyGuide') {
+      const existing = savedGuides.find(g => g.passageRef === currentVerseRef);
+      if (existing) {
+        setCurrentGuide(existing);
+      }
+    }
+  }, [activeTab, currentVerseRef, savedGuides]);
+
+  const handleGenerateStudyGuide = () => {
+    const guide = generateStudyGuideContent(
+      currentBook,
+      currentChapter,
+      activeVerseNum,
+      currentVerseText,
+      activeLens
+    );
+    const updated = saveStudyGuide(guide);
+    setSavedGuides(updated);
+    setCurrentGuide(guide);
+    confetti({ particleCount: 35, spread: 55, origin: { y: 0.6 } });
+  };
+
+  const handleCopyGuide = async () => {
+    if (!currentGuide) return;
+    try {
+      await navigator.clipboard.writeText(formatStudyGuideForClipboard(currentGuide));
+      setGuideCopied(true);
+      setTimeout(() => setGuideCopied(false), 2000);
+    } catch { }
+  };
+
+  const handlePrintGuide = () => {
+    if (!currentGuide) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Berea Study Guide - ${currentGuide.passageRef}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #26221F; line-height: 1.6; max-width: 760px; margin: 0 auto; }
+            h1 { font-size: 24px; border-bottom: 2px solid #B4793D; padding-bottom: 8px; margin-bottom: 4px; }
+            .meta { font-size: 13px; color: #78716C; margin-bottom: 24px; }
+            h2 { font-size: 15px; color: #B4793D; margin-top: 24px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #EBE5DC; padding-bottom: 4px; }
+            p { margin: 8px 0; font-size: 14px; }
+            ol { padding-left: 22px; }
+            li { margin-bottom: 8px; font-size: 14px; }
+            .footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid #EBE5DC; font-size: 12px; color: #A8A29E; }
+          </style>
+        </head>
+        <body>
+          <h1>Berea Study Guide: ${currentGuide.passageRef}</h1>
+          <div class="meta">Tradition: ${activeDenom.name} · Created: ${new Date(currentGuide.createdAt).toLocaleDateString()}</div>
+          <h2>Context Snapshot</h2>
+          <p>${currentGuide.contextSnapshot}</p>
+          <h2>Icebreaker Questions</h2>
+          <ol>${currentGuide.icebreakers.map(q => `<li>${q}</li>`).join('')}</ol>
+          <h2>Deep Discussion Prompts</h2>
+          <ol>${currentGuide.deepPrompts.map(q => `<li>${q}</li>`).join('')}</ol>
+          <h2>Actionable Takeaway</h2>
+          <p>${currentGuide.application}</p>
+          <div class="footer">Berea — Removing Friction in Faith (Acts 17:11)</div>
+          <script>window.print();<\/script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleDeleteGuide = (id: string) => {
+    const updated = deleteStudyGuide(id);
+    setSavedGuides(updated);
+    if (currentGuide?.id === id) {
+      setCurrentGuide(updated[0] || null);
+    }
+  };
 
   const insight = getTheologicalInsight(
     currentBook,
@@ -213,11 +334,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   onLensChange(denom.id);
                   setShowDenomModal(false);
                 }}
-                className={`text-left p-2 rounded-lg text-xs transition-all border ${
-                  activeLens === denom.id
-                    ? 'bg-[#FAF3E8] border-[#B4793D] text-[#78471F] font-semibold shadow-xs'
-                    : 'bg-white border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED]'
-                }`}
+                className={`text-left p-2 rounded-lg text-xs transition-all border ${activeLens === denom.id
+                  ? 'bg-[#FAF3E8] border-[#B4793D] text-[#78471F] font-semibold shadow-xs'
+                  : 'bg-white border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED]'
+                  }`}
               >
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-xs">{denom.icon}</span>
@@ -233,18 +353,29 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
       {/* Segmented Tab Capsule */}
       <div className="p-1.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex justify-center select-none flex-shrink-0">
-        <div className="ios-segmented-capsule w-full flex justify-between">
+        <div className="ios-segmented-capsule w-full flex justify-between gap-0.5">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`ios-segment-pill flex-1 !text-[11px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
+            title="Passage Overview"
           >
             <BookOpen className="w-3 h-3" />
             <span>Overview</span>
           </button>
 
           <button
+            onClick={() => setActiveTab('studyGuide')}
+            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'studyGuide' ? 'active' : ''}`}
+            title="Study Guide Generator"
+          >
+            <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
+            <span>Study Guide</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('chat')}
-            className={`ios-segment-pill flex-1 !text-[11px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
+            title="Ask AI Assistant"
           >
             <MessageSquare className="w-3 h-3" />
             <span>Ask AI</span>
@@ -252,7 +383,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('compare')}
-            className={`ios-segment-pill flex-1 !text-[11px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
+            title="Parallel Comparison"
           >
             <Columns className="w-3 h-3" />
             <span>Compare</span>
@@ -260,7 +392,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('map')}
-            className={`ios-segment-pill flex-1 !text-[11px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
+            title="Biblical Atlas"
           >
             <MapPin className="w-3 h-3" />
             <span>Atlas</span>
@@ -270,6 +403,287 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
       {/* Tab Contents */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-white">
+        {/* STUDY GUIDE TAB */}
+        {activeTab === 'studyGuide' && (
+          <div className="space-y-3 animate-fadeIn">
+            {/* Study Guide Header Bar */}
+            <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] flex items-center justify-between gap-2 shadow-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#FAF0E1] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
+                  <BookOpenCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-[#26221F]">{currentVerseRef}</span>
+                    <span className="text-[9.5px] text-[#B4793D] font-mono font-medium px-1.5 py-0.2 rounded bg-white border border-[#EBE5DC]">
+                      {activeDenom.name}
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-[#78716C] leading-none mt-0.5">Custom Small Group & Study Guide</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setShowSavedGuidesDrawer(!showSavedGuidesDrawer)}
+                  className={`ios-glass-btn !text-[10.5px] !py-1 !px-2 ${showSavedGuidesDrawer ? 'border-[#B4793D] text-[#B4793D]' : ''}`}
+                  title="View Saved Study Guides"
+                >
+                  <History className="w-3 h-3 text-[#B4793D]" />
+                  <span className="hidden sm:inline">Saved</span>
+                  <span className="text-[9px] font-bold px-1 rounded-full bg-white border border-[#EBE5DC]">
+                    {savedGuides.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={handleGenerateStudyGuide}
+                  className="clean-caramel-btn !text-[11px] !py-1 !px-2.5 shadow-xs"
+                  title="Generate or Refresh Study Guide"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
+                  <span>{currentGuide ? 'Regenerate' : 'Generate'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Saved Guides Drawer */}
+            {showSavedGuidesDrawer && (
+              <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC] space-y-2 animate-fadeIn shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-[#78716C] tracking-wider flex items-center gap-1">
+                    <History className="w-3 h-3 text-[#B4793D]" /> Saved Study Guides ({savedGuides.length})
+                  </span>
+                  <button
+                    onClick={() => setShowSavedGuidesDrawer(false)}
+                    className="ios-icon-btn !w-5 !h-5 text-[10px]"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {savedGuides.length === 0 ? (
+                  <p className="text-xs text-[#A8A29E] italic py-2 text-center">No saved guides yet. Click Generate to create one!</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar">
+                    {savedGuides.map((g) => {
+                      const isSelected = currentGuide?.id === g.id;
+                      return (
+                        <div
+                          key={g.id}
+                          onClick={() => {
+                            setCurrentGuide(g);
+                            setShowSavedGuidesDrawer(false);
+                          }}
+                          className={`p-2 rounded-lg text-xs flex items-center justify-between gap-2 cursor-pointer transition-all border ${isSelected
+                            ? 'bg-white border-[#B4793D] shadow-xs text-[#26221F]'
+                            : 'bg-white/80 border-[#EBE5DC] hover:bg-white text-[#57524E]'
+                            }`}
+                        >
+                          <div className="flex-1 truncate">
+                            <span className="font-semibold text-xs text-[#26221F] mr-2">{g.passageRef}</span>
+                            <span className="text-[10px] text-[#A8A29E]">
+                              {new Date(g.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteGuide(g.id);
+                            }}
+                            className="text-[#A8A29E] hover:text-red-600 p-1 rounded transition-colors"
+                            title="Delete guide"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Current Study Guide Content / Empty State */}
+            {currentGuide ? (
+              <div className="space-y-2.5">
+                {/* Theological Themes & Metadata Badges */}
+                {((currentGuide.theologicalThemes && currentGuide.theologicalThemes.length > 0) || currentGuide.originalLanguageNote) && (
+                  <div className="space-y-1.5 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC]/80 shadow-2xs">
+                    {currentGuide.theologicalThemes && currentGuide.theologicalThemes.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9.5px] uppercase font-bold text-[#A8A29E] tracking-wider">Loci:</span>
+                        {currentGuide.theologicalThemes.map((theme, i) => (
+                          <span key={i} className="text-[9.5px] font-medium bg-white text-[#B4793D] border border-[#EBE5DC] px-2 py-0.5 rounded-full shadow-2xs">
+                            {theme}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {currentGuide.originalLanguageNote && (
+                      <div className="text-[10px] text-[#57524E] flex items-center gap-1 bg-white p-1.5 rounded-lg border border-[#EBE5DC]/60">
+                        <span className="font-bold text-[#B4793D] font-mono">Original Language:</span>
+                        <span className="truncate">{currentGuide.originalLanguageNote}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 1. Context Snapshot Accordion */}
+                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                  <button
+                    onClick={() => toggleSection('context')}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                  >
+                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-[#B4793D]" />
+                      Context Snapshot
+                    </span>
+                    {openSections.context ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
+                  </button>
+                  {openSections.context && (
+                    <div className="p-3 bg-white text-xs text-[#44403C] leading-relaxed whitespace-pre-line space-y-2">
+                      {currentGuide.contextSnapshot}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Icebreaker Questions Accordion */}
+                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                  <button
+                    onClick={() => toggleSection('icebreakers')}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                  >
+                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-[#B4793D]" />
+                      Icebreaker Questions (2)
+                    </span>
+                    {openSections.icebreakers ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
+                  </button>
+                  {openSections.icebreakers && (
+                    <div className="p-3 bg-white space-y-2">
+                      {currentGuide.icebreakers.map((q, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC]/80 text-xs text-[#38332E] flex items-start gap-2">
+                          <span className="w-4 h-4 rounded-full bg-[#FAF0E1] text-[#B4793D] font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <span className="leading-relaxed">{q}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Deep Discussion Prompts Accordion */}
+                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                  <button
+                    onClick={() => toggleSection('deepPrompts')}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                  >
+                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#B4793D]" />
+                      Deep Discussion Prompts (3)
+                    </span>
+                    {openSections.deepPrompts ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
+                  </button>
+                  {openSections.deepPrompts && (
+                    <div className="p-3 bg-white space-y-2">
+                      {currentGuide.deepPrompts.map((p, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-[#FAF5ED] border border-[#EBE5DC] text-xs text-[#38332E] flex items-start gap-2">
+                          <span className="w-4 h-4 rounded-full bg-[#FAF0E1] text-[#B4793D] font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <span className="leading-relaxed">{p}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Actionable Takeaway Accordion */}
+                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                  <button
+                    onClick={() => toggleSection('application')}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                  >
+                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-[#B4793D]" />
+                      Actionable Takeaway
+                    </span>
+                    {openSections.application ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
+                  </button>
+                  {openSections.application && (
+                    <div className="p-3 bg-white text-xs text-[#44403C] leading-relaxed">
+                      {currentGuide.application}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions Bar */}
+                <div className="p-2 bg-[#FAF7F2] rounded-xl border border-[#EBE5DC] flex items-center justify-between gap-1.5">
+                  <button
+                    onClick={handleCopyGuide}
+                    className="ios-glass-btn text-xs !py-1 !px-2.5 text-[#57524E] hover:text-[#26221F] flex items-center gap-1"
+                    title="Copy formatted guide to clipboard"
+                  >
+                    {guideCopied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-green-600" />
+                        <span className="text-green-700 font-semibold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Guide</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={handlePrintGuide}
+                      className="ios-glass-btn text-xs !py-1 !px-2 text-[#57524E] hover:text-[#26221F] flex items-center gap-1"
+                      title="Print or Export as PDF"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Print</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteGuide(currentGuide.id)}
+                      className="ios-icon-btn !w-7 !h-7 text-xs text-[#A8A29E] hover:text-red-600 hover:bg-red-50"
+                      title="Delete this study guide"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Empty State */
+              <div className="p-6 rounded-2xl bg-[#FAF5ED] border border-[#EBE5DC] text-center space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#EBE5DC] flex items-center justify-center text-[#B4793D] mx-auto shadow-xs">
+                  <BookOpenCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-serif text-sm font-bold text-[#26221F]">Study Guide Generator</h4>
+                  <p className="text-xs text-[#78716C] max-w-xs mx-auto mt-1">
+                    Generate an organized discussion guide with context, icebreakers, deep theological prompts, and application for <strong className="text-[#26221F]">{currentVerseRef}</strong>.
+                  </p>
+                </div>
+                <button
+                  onClick={handleGenerateStudyGuide}
+                  className="clean-caramel-btn !py-1.5 !px-4 text-xs mx-auto shadow-xs flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-100 fill-amber-100" />
+                  <span>Generate Study Guide for {currentVerseRef}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'overview' && (
           <div key={`${currentBook}_${currentChapter}_${activeVerseNum}`} className="space-y-2.5 animate-fadeIn">
             {/* Main Overview Card */}
@@ -582,11 +996,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </span>
             </div>
 
-            <OpenFreeMapWidget 
+            <OpenFreeMapWidget
               currentBook={currentBook}
               currentChapter={currentChapter}
               activeVerseNumber={activeVerseNum}
-              height="230px" 
+              height="230px"
               onEventSelect={(ev) => setSelectedChapterEvent(ev)}
             />
 
@@ -601,7 +1015,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     {currentEvent.passageRef}
                   </span>
                 </div>
-                
+
                 <div className="text-[10px] text-[#78716C] font-medium">
                   Site: <strong className="text-[#26221F]">{currentEvent.locationName}</strong>
                 </div>

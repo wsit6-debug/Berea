@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  BIBLE_BOOKS, 
-  TranslationId, 
-  getBook, 
-  getChapter, 
-  Verse, 
+import {
+  BIBLE_BOOKS,
+  TranslationId,
+  getBook,
+  getChapter,
+  Verse,
   Chapter,
   getApprovedTranslationsForDenomination,
-  getDefaultTranslationForDenomination 
+  getDefaultTranslationForDenomination
 } from './data/bibleData';
 import { DenominationalLens } from './data/theologyData';
 import { Header } from './components/Header';
@@ -18,6 +18,7 @@ import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
+import { BereaAiTab } from './types';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -47,6 +48,7 @@ export function App() {
   const [activeLens, setActiveLens] = useState<DenominationalLens>('catholic');
   const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination('catholic'));
   const [isAiPanelOpen, setIsAiPanelOpen] = useState<boolean>(true);
+  const [aiPanelTab, setAiPanelTab] = useState<BereaAiTab>('overview');
 
   // Modals state
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
@@ -103,7 +105,7 @@ export function App() {
       ]));
       const fetched = await fetchFullMultiTranslationChapter(targetBookId, targetChapterNum, versionsToFetch);
       setCurrentChapter(fetched);
-      
+
       const desiredVerseNum = targetVerseRef.current || 1;
       const defaultV = fetched.verses.find(v => v.verseNumber === desiredVerseNum) || fetched.verses[0];
       if (defaultV) {
@@ -170,7 +172,7 @@ export function App() {
     targetVerseRef.current = vNum;
     setBookId(newBookId);
     setChapterNum(newChapterNum);
-    
+
     // Check locally available chapter data
     const localCh = getChapter(newBookId, newChapterNum);
     if (localCh && localCh.verses.length > 0) {
@@ -220,6 +222,11 @@ export function App() {
               isAiPanelOpen={isAiPanelOpen}
               isLoading={isLoadingChapter}
               onSelectPassage={handleSelectPassage}
+              onCreateStudyGuide={(verse) => {
+                setSelectedVerse(verse);
+                setIsAiPanelOpen(true);
+                setAiPanelTab('studyGuide');
+              }}
             />
           </div>
 
@@ -235,6 +242,8 @@ export function App() {
                 activeTranslation={activeTranslation}
                 onTranslationChange={setActiveTranslation}
                 onClose={() => setIsAiPanelOpen(false)}
+                activeTab={aiPanelTab}
+                onTabChange={setAiPanelTab}
               />
             </div>
           )}

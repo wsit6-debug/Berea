@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart } from 'lucide-react';
-import { 
-  TRANSLATIONS, 
-  TranslationId, 
-  TranslationInfo, 
-  getApprovedTranslationsForDenomination 
+import {
+  TRANSLATIONS,
+  TranslationId,
+  TranslationInfo,
+  getApprovedTranslationsForDenomination
 } from '../data/bibleData';
 import { DENOMINATIONS, DenominationConfig, DenominationalLens } from '../data/theologyData';
 
@@ -112,11 +112,10 @@ export const Header: React.FC<HeaderProps> = ({
                         backgroundColor: isSelected ? '#FAF3E8' : undefined,
                         borderColor: isSelected ? '#B4793D' : undefined
                       }}
-                      className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border ${
-                        isSelected
+                      className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border ${isSelected
                           ? 'bg-[#FAF3E8] border-[#B4793D] shadow-xs'
                           : 'border-transparent text-[#26221F] hover:bg-[#FAF5ED] hover:text-[#B4793D]'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start gap-2">
                         <span className="text-base flex-shrink-0 mt-0.5">{d.icon}</span>
@@ -188,18 +187,17 @@ export const Header: React.FC<HeaderProps> = ({
                         backgroundColor: isSelected ? '#26221F' : undefined,
                         color: isSelected ? '#FFFFFF' : undefined
                       }}
-                      className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors ${
-                        isSelected
+                      className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors ${isSelected
                           ? 'bg-[#26221F] text-white font-semibold shadow-xs'
                           : 'text-[#26221F] hover:bg-[#FAF5ED] hover:text-[#B4793D]'
-                      }`}
+                        }`}
                     >
                       <div className="flex-1 pr-2">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <span className="font-bold text-xs" style={{ color: isSelected ? '#FFFFFF' : undefined }}>
                             {t.id}
                           </span>
-                          <span 
+                          <span
                             style={{
                               backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : isApproved ? '#FAF3E8' : '#FAF5ED',
                               color: isSelected ? '#FFFFFF' : isApproved ? '#B4793D' : '#78716C',
