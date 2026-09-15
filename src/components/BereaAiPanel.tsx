@@ -183,13 +183,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Sync guide with active passage when switching to studyGuide
+  // Sync guide with active passage when switching to studyGuide or changing coordinates
   useEffect(() => {
     if (activeTab === 'studyGuide') {
       const existing = savedGuides.find(g => g.passageRef === activeRangeRef || g.passageRef === currentVerseRef);
-      if (existing) {
-        setCurrentGuide(existing);
-      }
+      setCurrentGuide(existing || null);
     }
   }, [activeTab, activeRangeRef, currentVerseRef, savedGuides]);
 
@@ -282,6 +280,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     if (!currentGuide) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
+    const audienceLabel = currentGuide.audience === 'deep_exegesis'
+      ? 'Pastoral & Deep Exegesis'
+      : currentGuide.audience === 'youth_family'
+        ? 'Youth & Family'
+        : 'Small Group Discipleship';
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -292,7 +296,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             h1 { font-size: 24px; border-bottom: 2px solid #B4793D; padding-bottom: 8px; margin-bottom: 4px; }
             .meta { font-size: 13px; color: #78716C; margin-bottom: 24px; }
             h2 { font-size: 15px; color: #B4793D; margin-top: 24px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #EBE5DC; padding-bottom: 4px; }
-            p { margin: 8px 0; font-size: 14px; }
+            p { margin: 8px 0; font-size: 14px; white-space: pre-line; }
             ol { padding-left: 22px; }
             li { margin-bottom: 8px; font-size: 14px; }
             .footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid #EBE5DC; font-size: 12px; color: #A8A29E; }
@@ -300,7 +304,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         </head>
         <body>
           <h1>Berea Study Guide: ${currentGuide.passageRef}</h1>
-          <div class="meta">Tradition: ${activeDenom.name} · Created: ${new Date(currentGuide.createdAt).toLocaleDateString()}</div>
+          <div class="meta">Tradition: ${activeDenom.name} · Depth: ${audienceLabel} · Created: ${new Date(currentGuide.createdAt).toLocaleDateString()}</div>
           <h2>Context Snapshot</h2>
           <p>${currentGuide.contextSnapshot}</p>
           ${currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? `
@@ -796,11 +800,31 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                             : 'bg-white/80 border-[#EBE5DC] hover:bg-white text-[#57524E]'
                             }`}
                         >
-                          <div className="flex-1 truncate">
-                            <span className="font-semibold text-xs text-[#26221F] mr-2">{g.passageRef}</span>
-                            <span className="text-[10px] text-[#A8A29E]">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-xs text-[#26221F]">{g.passageRef}</span>
+                              <span className="text-[9px] font-medium leading-none px-1.5 py-0.5 rounded-full bg-[#FAF0E1] text-[#B4793D] border border-[#D4A373]/30 inline-flex items-center gap-1">
+                                {g.audience === 'deep_exegesis' ? (
+                                  <>
+                                    <GraduationCap className="w-2 h-2 shrink-0" />
+                                    <span>Exegesis</span>
+                                  </>
+                                ) : g.audience === 'youth_family' ? (
+                                  <>
+                                    <Baby className="w-2 h-2 shrink-0" />
+                                    <span>Youth</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Users className="w-2 h-2 shrink-0" />
+                                    <span>Small Group</span>
+                                  </>
+                                )}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-[#A8A29E] mt-0.5">
                               {new Date(g.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                            </span>
+                            </div>
                           </div>
 
                           <button
