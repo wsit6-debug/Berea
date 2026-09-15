@@ -25,7 +25,9 @@
       "incarnation",
       "hypostatic union",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "The Holy Virgin as Theotokos (God-Bearer) & Hypostatic Union"
   },
   {
     "id": "orthodox_chalcedon_451_two_natures",
@@ -53,7 +55,9 @@
       "without sin",
       "christology",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "The Two Natures of Christ: Without Confusion, Without Change, Without Division, Without Separation"
   },
   {
     "id": "orthodox_nicaea_ii_787_holy_icons",
@@ -82,7 +86,9 @@
       "theotokos",
       "st john of damascus",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "Veneration of Holy Icons (Proskynesis vs. Latreia) & Incarnational Reality"
   },
   {
     "id": "orthodox_athanasius_theosis",
@@ -110,7 +116,9 @@
       "incarnation",
       "partakers of divine nature",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "The Incarnation & Theosis (Deification by Grace)"
   },
   {
     "id": "orthodox_palamas_essence_energies",
@@ -138,7 +146,9 @@
       "transfiguration",
       "theosis",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "The Transcendent Divine Essence vs. Uncreated Divine Energies"
   },
   {
     "id": "orthodox_damascus_panagia_theotokos",
@@ -166,7 +176,9 @@
       "sinless",
       "intercession",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "The All-Holy (Panagia) Ever-Virgin Mother of God & The Dormition (Koimisis)"
   },
   {
     "id": "orthodox_dositheus_1672_complete",
@@ -196,7 +208,9 @@
       "metousiosis",
       "real presence",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "Ancestral Sin, Holy Baptism & The Mystical Transformation (Metousiosis) of the Eucharist"
   },
   {
     "id": "orthodox_chrysostom_liturgy_epiklesis",
@@ -223,14 +237,16 @@
       "body and blood",
       "real presence",
       "orthodox"
-    ]
+    ],
+    "sourceFilename": "ecumenical_councils_orthodox.json",
+    "sectionHeader": "The Holy Eucharist as the True Body and Blood of Christ via the Epiklesis"
   },
   {
     "id": "orthodox_council_of_chalcedon_definition_1",
     "tradition": "orthodox",
     "documentTitle": "Council of Chalcedon Definition",
     "sectionOrArticle": "Article / Section 1",
-    "citation": "Council of Chalcedon Definition",
+    "citation": "Council of Chalcedon Definition §1",
     "yearOrEra": "451",
     "topic": "Council of Chalcedon Definition",
     "coreDoctrine": "Therefore, following the holy fathers, we all with one accord teach men to acknowledge one and the same Son, our Lord Jesus Christ, at once complete in Godhead and complete in manhood, truly God and truly man, consisting also of a reasonable soul ...",
@@ -252,18 +268,20 @@
       "jesus",
       "christ",
       "once"
-    ]
+    ],
+    "sourceFilename": "chalcedonian_definition.json",
+    "sectionHeader": "Council of Chalcedon Definition"
   },
   {
-    "id": "orthodox_nicene_constantinopolitan_creed_1",
+    "id": "orthodox_nicene_constantinopolitan_creed_1_p1",
     "tradition": "orthodox",
     "documentTitle": "Nicene-Constantinopolitan Creed",
-    "sectionOrArticle": "Article / Section 1",
-    "citation": "Nicene-Constantinopolitan Creed",
+    "sectionOrArticle": "Article / Section 1 (Part 1/2)",
+    "citation": "Nicene-Constantinopolitan Creed §1 (Part 1/2)",
     "yearOrEra": "381",
     "topic": "Nicene-Constantinopolitan Creed",
     "coreDoctrine": "We believe in one God, the Father Almighty, Maker of heaven and earth, and of all things visible and invisible.\n\nAnd in one Lord Jesus Christ, the only-begotten Son of God, begotten of the Father before all worlds; God of God, Light of Light, very...",
-    "fullExcerpt": "We believe in one God, the Father Almighty, Maker of heaven and earth, and of all things visible and invisible.\n\nAnd in one Lord Jesus Christ, the only-begotten Son of God, begotten of the Father before all worlds; God of God, Light of Light, very God of very God; begotten, not made, being of one substance with the Father, by whom all things were made.\n\nWho, for us men and for our salvation, came down from heaven, and was incarnate by the Holy Spirit of the virgin Mary, and was made man; and was crucified also for us under Pontius Pilate; He suffered and was buried; and the third day He rose again, according to the Scriptures; and ascended into heaven, and sits on the right hand of the Father; and He shall come again, with glory, to judge the quick and the dead; whose kingdom shall have no end.\n\nAnd we believe in the Holy Ghost, the Lord and Giver of Life; who proceeds from the Father and the Son; who with the Father and the Son together is worshipped and glorified; who spoke by the prophets.\n\nAnd we believe in one holy catholic and apostolic Church. We acknowledge one baptism for the remission of sins; and we look for the resurrection of the dead, and the life of the world to come. Amen.",
+    "fullExcerpt": "We believe in one God, the Father Almighty, Maker of heaven and earth, and of all things visible and invisible.\n\nAnd in one Lord Jesus Christ, the only-begotten Son of God, begotten of the Father before all worlds; God of God, Light of Light, very God of very God; begotten, not made, being of one substance with the Father, by whom all things were made.\n\nWho, for us men and for our salvation, came down from heaven, and was incarnate by the Holy Spirit of the virgin Mary, and was made man; and was crucified also for us under Pontius Pilate; He suffered and was buried; and the third day He rose again, according to the Scriptures; and ascended into heaven, and sits on the right hand of the Father; and He shall come again, with glory, to judge the quick and the dead; whose kingdom shall have no end.\n\nAnd we believe in the Holy Ghost, the Lord and Giver of Life; who proceeds from the Father and the Son; who with the Father and the Son together is worshipped and glorified; who spoke by the prophets.",
     "relatedScriptures": [],
     "keywords": [
       "nicene",
@@ -281,18 +299,51 @@
       "lord",
       "jesus",
       "christ"
-    ]
+    ],
+    "sourceFilename": "nicene_creed.json",
+    "sectionHeader": "Nicene-Constantinopolitan Creed"
   },
   {
-    "id": "orthodox_athanasian_creed__quicumque_vult__1",
+    "id": "orthodox_nicene_constantinopolitan_creed_1_p2",
+    "tradition": "orthodox",
+    "documentTitle": "Nicene-Constantinopolitan Creed",
+    "sectionOrArticle": "Article / Section 1 (Part 2/2)",
+    "citation": "Nicene-Constantinopolitan Creed §1 (Part 2/2)",
+    "yearOrEra": "381",
+    "topic": "Nicene-Constantinopolitan Creed",
+    "coreDoctrine": "And we believe in one holy catholic and apostolic Church. We acknowledge one baptism for the remission of sins; and we look for the resurrection of the dead, and the life of the world to come. Amen.",
+    "fullExcerpt": "And we believe in one holy catholic and apostolic Church. We acknowledge one baptism for the remission of sins; and we look for the resurrection of the dead, and the life of the world to come. Amen.",
+    "relatedScriptures": [],
+    "keywords": [
+      "nicene",
+      "constantinopolitan",
+      "creed",
+      "believe",
+      "holy",
+      "catholic",
+      "apostolic",
+      "church",
+      "acknowledge",
+      "baptism",
+      "remission",
+      "sins",
+      "look",
+      "resurrection",
+      "dead"
+    ],
+    "sourceFilename": "nicene_creed.json",
+    "sectionHeader": "Nicene-Constantinopolitan Creed"
+  },
+  {
+    "id": "orthodox_athanasian_creed__quicumque_vult__1_p1",
     "tradition": "orthodox",
     "documentTitle": "Athanasian Creed (Quicumque Vult)",
-    "sectionOrArticle": "Article / Section 1",
-    "citation": "Athanasian Creed (Quicumque Vult)",
+    "sectionOrArticle": "Article / Section 1 (Part 1/4)",
+    "citation": "Athanasian Creed (Quicumque Vult) §1 (Part 1/4)",
     "yearOrEra": "c. 500",
     "topic": "Athanasian Creed (Quicumque Vult)",
     "coreDoctrine": "Whosoever will be saved, before all things it is necessary that he hold the catholic faith. Which faith unless every one do keep whole and undefiled, without doubt he shall perish everlastingly. And the catholic faith is this: that we worship one ...",
-    "fullExcerpt": "Whosoever will be saved, before all things it is necessary that he hold the catholic faith. Which faith unless every one do keep whole and undefiled, without doubt he shall perish everlastingly. And the catholic faith is this: that we worship one God in Trinity, and Trinity in Unity; neither confounding the Persons, nor dividing the Essence. For there is one Person of the Father; another of the Son; and another of the Holy Ghost. But the Godhead of the Father, of the Son, and of the Holy Ghost, is all one; the Glory equal, the Majesty coeternal. Such as the Father is; such is the Son; and such is the Holy Ghost. The Father uncreated; the Son uncreated; and the Holy Ghost uncreated. The Father unlimited; the Son unlimited; and the Holy Ghost unlimited. The Father eternal; the Son eternal; and the Holy Ghost eternal. And yet they are not three eternals; but one eternal. As also there are not three uncreated; nor three infinites, but one uncreated; and one infinite. So likewise the Father is Almighty; the Son Almighty; and the Holy Ghost Almighty. And yet they are not three Almighties; but one Almighty. So the Father is God; the Son is God; and the Holy Ghost is God. And yet they are not three Gods; but one God. So likewise the Father is Lord; the Son Lord; and the Holy Ghost Lord. And yet not three Lords; but one Lord. For like as we are compelled by the Christian verity; to acknowledge every Person by himself to be God and Lord; So are we forbidden by the catholic religion; to say, There are three Gods, or three Lords. The Father is made of none; neither created, nor begotten. The Son is of the Father alone; not made, nor created; but begotten. The Holy Ghost is of the Father and of the Son; neither made, nor created, nor begotten; but proceeding. So there is one Father, not three Fathers; one Son, not three Sons; one Holy Ghost, not three Holy Ghosts. And in this Trinity none is before, or after another; none is greater, or less than another. But the whole three Persons are coeternal, and coequal. So that in all things, as aforesaid; the Unity in Trinity, and the Trinity in Unity, is to be worshipped. He therefore that will be saved, let him thus think of the Trinity.\n\nFurthermore it is necessary to everlasting salvation; that he also believe faithfully the Incarnation of our Lord Jesus Christ. For the right Faith is, that we believe and confess; that our Lord Jesus Christ, the Son of God, is God and Man; God, of the Essence of the Father; begotten before the worlds; and Man, of the Essence of his Mother, born in the world. Perfect God; and perfect Man, of a reasonable soul and human flesh subsisting. Equal to the Father, as touching his Godhead; and inferior to the Father as touching his Manhood. Who although he is God and Man; yet he is not two, but one Christ. One; not by conversion of the Godhead into flesh; but by assumption of the Manhood by God. One altogether; not by confusion of Essence; but by unity of Person. For as the reasonable soul and flesh is one man; so God and Man is one Christ; Who suffered for our salvation; descended into hell; rose again the third day from the dead. He ascended into heaven, he sitteth on the right hand of the God the Father Almighty, from whence he will come to judge the living and the dead. At whose coming all men will rise again with their bodies; And shall give account for their own works. And they that have done good shall go into life everlasting; and they that have done evil, into everlasting fire. This is the catholic faith; which except a man believe truly and firmly, he cannot be saved.",
+    "fullExcerpt": "Whosoever will be saved, before all things it is necessary that he hold the catholic faith. Which faith unless every one do keep whole and undefiled, without doubt he shall perish everlastingly. And the catholic faith is this: that we worship one God in Trinity, and Trinity in Unity; neither confounding the Persons, nor dividing the Essence. For there is one Person of the Father; another of the Son; and another of the Holy Ghost. But the Godhead of the Father, of the Son, and of the Holy Ghost, is all one; the Glory equal, the Majesty coeternal. Such as the Father is; such is the Son; and such is the Holy Ghost. The Father uncreated; the Son uncreated; and the Holy Ghost uncreated. The Father unlimited; the Son unlimited; and the Holy Ghost unlimited. The Father eternal; the Son eternal; and the Holy Ghost eternal. And yet they are not three eternals; but one eternal. As also there are not three uncreated; nor three infinites, but one uncreated; and one infinite. So likewise the Father is Almighty; the Son Almighty; and the Holy Ghost Almighty. And yet they are not three Almighties; but one Almighty. So the Father is God; the Son is God; and the Holy Ghost is God.",
     "relatedScriptures": [],
     "keywords": [
       "athanasian",
@@ -310,14 +361,109 @@
       "faith",
       "unless",
       "every"
-    ]
+    ],
+    "sourceFilename": "athanasian_creed.json",
+    "sectionHeader": "Athanasian Creed (Quicumque Vult)"
+  },
+  {
+    "id": "orthodox_athanasian_creed__quicumque_vult__1_p2",
+    "tradition": "orthodox",
+    "documentTitle": "Athanasian Creed (Quicumque Vult)",
+    "sectionOrArticle": "Article / Section 1 (Part 2/4)",
+    "citation": "Athanasian Creed (Quicumque Vult) §1 (Part 2/4)",
+    "yearOrEra": "c. 500",
+    "topic": "Athanasian Creed (Quicumque Vult)",
+    "coreDoctrine": "And yet they are not three Gods; but one God. So likewise the Father is Lord; the Son Lord; and the Holy Ghost Lord. And yet not three Lords; but one Lord. For like as we are compelled by the Christian verity; to acknowledge every Person by himsel...",
+    "fullExcerpt": "And yet they are not three Gods; but one God. So likewise the Father is Lord; the Son Lord; and the Holy Ghost Lord. And yet not three Lords; but one Lord. For like as we are compelled by the Christian verity; to acknowledge every Person by himself to be God and Lord; So are we forbidden by the catholic religion; to say, There are three Gods, or three Lords. The Father is made of none; neither created, nor begotten. The Son is of the Father alone; not made, nor created; but begotten. The Holy Ghost is of the Father and of the Son; neither made, nor created, nor begotten; but proceeding. So there is one Father, not three Fathers; one Son, not three Sons; one Holy Ghost, not three Holy Ghosts. And in this Trinity none is before, or after another; none is greater, or less than another. But the whole three Persons are coeternal, and coequal. So that in all things, as aforesaid; the Unity in Trinity, and the Trinity in Unity, is to be worshipped. He therefore that will be saved, let him thus think of the Trinity.",
+    "relatedScriptures": [],
+    "keywords": [
+      "athanasian",
+      "creed",
+      "quicumque",
+      "vult",
+      "three",
+      "gods",
+      "likewise",
+      "father",
+      "lord",
+      "holy",
+      "ghost",
+      "lords",
+      "like",
+      "compelled",
+      "christian"
+    ],
+    "sourceFilename": "athanasian_creed.json",
+    "sectionHeader": "Athanasian Creed (Quicumque Vult)"
+  },
+  {
+    "id": "orthodox_athanasian_creed__quicumque_vult__1_p3",
+    "tradition": "orthodox",
+    "documentTitle": "Athanasian Creed (Quicumque Vult)",
+    "sectionOrArticle": "Article / Section 1 (Part 3/4)",
+    "citation": "Athanasian Creed (Quicumque Vult) §1 (Part 3/4)",
+    "yearOrEra": "c. 500",
+    "topic": "Athanasian Creed (Quicumque Vult)",
+    "coreDoctrine": "Furthermore it is necessary to everlasting salvation; that he also believe faithfully the Incarnation of our Lord Jesus Christ. For the right Faith is, that we believe and confess; that our Lord Jesus Christ, the Son of God, is God and Man; God, o...",
+    "fullExcerpt": "Furthermore it is necessary to everlasting salvation; that he also believe faithfully the Incarnation of our Lord Jesus Christ. For the right Faith is, that we believe and confess; that our Lord Jesus Christ, the Son of God, is God and Man; God, of the Essence of the Father; begotten before the worlds; and Man, of the Essence of his Mother, born in the world. Perfect God; and perfect Man, of a reasonable soul and human flesh subsisting. Equal to the Father, as touching his Godhead; and inferior to the Father as touching his Manhood. Who although he is God and Man; yet he is not two, but one Christ. One; not by conversion of the Godhead into flesh; but by assumption of the Manhood by God. One altogether; not by confusion of Essence; but by unity of Person. For as the reasonable soul and flesh is one man; so God and Man is one Christ; Who suffered for our salvation; descended into hell; rose again the third day from the dead. He ascended into heaven, he sitteth on the right hand of the God the Father Almighty, from whence he will come to judge the living and the dead. At whose coming all men will rise again with their bodies; And shall give account for their own works.",
+    "relatedScriptures": [],
+    "keywords": [
+      "athanasian",
+      "creed",
+      "quicumque",
+      "vult",
+      "furthermore",
+      "necessary",
+      "everlasting",
+      "salvation",
+      "believe",
+      "faithfully",
+      "incarnation",
+      "lord",
+      "jesus",
+      "christ",
+      "right"
+    ],
+    "sourceFilename": "athanasian_creed.json",
+    "sectionHeader": "Athanasian Creed (Quicumque Vult)"
+  },
+  {
+    "id": "orthodox_athanasian_creed__quicumque_vult__1_p4",
+    "tradition": "orthodox",
+    "documentTitle": "Athanasian Creed (Quicumque Vult)",
+    "sectionOrArticle": "Article / Section 1 (Part 4/4)",
+    "citation": "Athanasian Creed (Quicumque Vult) §1 (Part 4/4)",
+    "yearOrEra": "c. 500",
+    "topic": "Athanasian Creed (Quicumque Vult)",
+    "coreDoctrine": "And they that have done good shall go into life everlasting; and they that have done evil, into everlasting fire. This is the catholic faith; which except a man believe truly and firmly, he cannot be saved.",
+    "fullExcerpt": "And they that have done good shall go into life everlasting; and they that have done evil, into everlasting fire. This is the catholic faith; which except a man believe truly and firmly, he cannot be saved.",
+    "relatedScriptures": [],
+    "keywords": [
+      "athanasian",
+      "creed",
+      "quicumque",
+      "vult",
+      "done",
+      "good",
+      "life",
+      "everlasting",
+      "evil",
+      "fire",
+      "catholic",
+      "faith",
+      "except",
+      "believe",
+      "truly"
+    ],
+    "sourceFilename": "athanasian_creed.json",
+    "sectionHeader": "Athanasian Creed (Quicumque Vult)"
   },
   {
     "id": "orthodox_apostles__creed_1",
     "tradition": "orthodox",
     "documentTitle": "Apostles’ Creed",
     "sectionOrArticle": "Article / Section 1",
-    "citation": "Apostles’ Creed",
+    "citation": "Apostles’ Creed §1",
     "yearOrEra": "c. 200",
     "topic": "Apostles’ Creed",
     "coreDoctrine": "I believe in God, the Father almighty, creator of heaven and earth.\n\nI believe in Jesus Christ, God's only Son, our Lord, who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died, and was bu...",
@@ -339,6 +485,8 @@
       "conceived",
       "holy",
       "spirit"
-    ]
+    ],
+    "sourceFilename": "apostles_creed.json",
+    "sectionHeader": "Apostles’ Creed"
   }
 ]

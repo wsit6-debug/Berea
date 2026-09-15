@@ -18,6 +18,7 @@ import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
+import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -44,8 +45,11 @@ export function App() {
 
   const [bookId, setBookId] = useState<string>(() => savedPassage?.bookId || 'genesis');
   const [chapterNum, setChapterNum] = useState<number>(() => savedPassage?.chapterNum || 1);
-  const [activeLens, setActiveLens] = useState<DenominationalLens>('catholic');
-  const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination('catholic'));
+  const [activeLens, setActiveLens] = useState<DenominationalLens>(() => {
+    const pref = getUserDenominationPreference();
+    return (pref === 'all' || pref === 'none') ? 'catholic' : pref;
+  });
+  const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination(activeLens));
   const [isAiPanelOpen, setIsAiPanelOpen] = useState<boolean>(true);
 
   // Modals state
@@ -82,9 +86,10 @@ export function App() {
     }
   }, [bookId, chapterNum, selectedVerse]);
 
-  // Handle Denomination Change with Automatic Approved Translation Enforcement
+  // Handle Denomination Change with Automatic Approved Translation Enforcement & Persistence
   const handleSelectLens = (newLens: DenominationalLens) => {
     setActiveLens(newLens);
+    setUserDenominationPreference(newLens);
     const approved = getApprovedTranslationsForDenomination(newLens);
     if (!approved.some(t => t.id === activeTranslation)) {
       const defaultTrans = getDefaultTranslationForDenomination(newLens);

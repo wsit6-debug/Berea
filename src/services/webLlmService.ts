@@ -76,19 +76,51 @@ export async function generateLocalAiResponse(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   onProgress?: (progress: { text: string; progress: number }) => void
 ): Promise<string> {
-  const engine = await getOrInitLocalEngine(onProgress);
+  // 1. Try local Ollama server if available (e.g. http://localhost:11434)
+  try {
+    let ollamaRes: Response;
+    try {
+      ollamaRes = await fetch('http://localhost:11434/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3.1',
+          messages,
+          stream: false,
+          options: {
+            temperature: 0.1,
+            top_p: 0.1
+          }
+        })
+      });
+    } catch (_directErr) {
+      // In-browser fallback to Vite proxy in case of direct CORS or network error
+      ollamaRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3.1',
+          messages,
+          stream: false,
+          options: {
+            temperature: 0.1,
+            top_p: 0.1
+          }
+        })
+      });
+    }
 
-  const reply = await engine.chat.completions.create({
-    messages,
-    temperature: 0.6,
-    top_p: 0.9,
-    frequency_penalty: 0.5,
-    presence_penalty: 0.4,
-    max_tokens: 1200
-  });
-
-  const rawContent = reply.choices[0]?.message?.content || '';
-  return deduplicateRepetitions(rawContent);
+    if (ollamaRes.ok) {
+      const data = await ollamaRes.json();
+      if (data.message?.content) {
+        return deduplicateRepetitions(data.message.content);
+      }
+    }
+    throw new Error(`Ollama generation failed: ${ollamaRes.status} ${ollamaRes.statusText}`);
+  } catch (ollamaErr) {
+    console.error('Ollama connection failed:', ollamaErr);
+    throw ollamaErr;
+  }
 }
 
 export function isLocalEngineReady(): boolean {

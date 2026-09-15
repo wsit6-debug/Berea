@@ -23,6 +23,8 @@ export interface DoctrinalEntry {
   fullExcerpt: string;
   relatedScriptures: string[];
   keywords: string[];
+  sourceFilename?: string;
+  sectionHeader?: string;
 }
 
 export {

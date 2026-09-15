@@ -28,10 +28,79 @@ function extractKeywords(text: string): string[] {
   ).slice(0, 15);
 }
 
+function extractScripturesFromText(text: string): string[] {
+  const refs: string[] = [];
+  const regex = /\b(?:[123]\s+)?(?:Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|[12]\s+Samuel|[12]\s+Kings|[12]\s+Chronicles|Ezra|Nehemiah|Esther|Job|Psalms?|Proverbs|Ecclesiastes|Song\s+of\s+Solomon|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|[12]\s+Corinthians?|Galatians|Ephesians|Philippians|Colossians|[12]\s+Thessalonians?|[12]\s+Timothy|Titus|Philemon|Hebrews|James|[12]\s+Peter|[123]\s+John|Jude|Revelation|Matt|Mk|Lk|Jn|Rom|1\s*Cor|2\s*Cor|Heb|Rev)\s+\d+(?::\d+(?:[-–]\d+)?)?/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    refs.push(match[0].trim());
+  }
+  return Array.from(new Set(refs));
+}
+
+/**
+ * Semantic chunker: breaks text along natural paragraph (\n\n) or sentence boundaries,
+ * never slicing arbitrarily across words or character counts.
+ */
+function splitIntoSemanticParagraphs(text: string, maxParagraphLen: number = 1200): string[] {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxParagraphLen) return [trimmed];
+
+  const naturalParas = trimmed.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  if (naturalParas.length > 1) {
+    const chunks: string[] = [];
+    let current = '';
+    for (const p of naturalParas) {
+      if ((current + '\n\n' + p).length <= maxParagraphLen) {
+        current = current ? current + '\n\n' + p : p;
+      } else {
+        if (current) chunks.push(current);
+        if (p.length <= maxParagraphLen) {
+          current = p;
+        } else {
+          // split long paragraph by sentences
+          const sentences = p.split(/(?<=[.?!])\s+/).filter(Boolean);
+          let sChunk = '';
+          for (const s of sentences) {
+            if ((sChunk + ' ' + s).length <= maxParagraphLen) {
+              sChunk = sChunk ? sChunk + ' ' + s : s;
+            } else {
+              if (sChunk) chunks.push(sChunk);
+              sChunk = s;
+            }
+          }
+          current = sChunk;
+        }
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+  }
+
+  // Fallback to sentence boundaries
+  const sentences = trimmed.split(/(?<=[.?!])\s+/).filter(Boolean);
+  const chunks: string[] = [];
+  let current = '';
+  for (const s of sentences) {
+    if ((current + ' ' + s).length <= maxParagraphLen) {
+      current = current ? current + ' ' + s : s;
+    } else {
+      if (current) chunks.push(current);
+      current = s;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks.length > 0 ? chunks : [trimmed];
+}
+
 // 1. Process CCC (Catechism of the Catholic Church - all 2,865 paragraphs)
 function buildCatholicCorpus(): DoctrinalEntry[] {
   const cccRaw = JSON.parse(fs.readFileSync(path.join(PUBLIC_CORPUS_DIR, 'catholic', 'catechism.json'), 'utf-8'));
-  const entries: DoctrinalEntry[] = [...UNABRIDGED_CATHOLIC_CORPUS];
+  const entries: DoctrinalEntry[] = UNABRIDGED_CATHOLIC_CORPUS.map(e => ({
+    ...e,
+    sourceFilename: e.sourceFilename || 'catholic_councils.json',
+    sectionHeader: e.sectionHeader || e.topic
+  }));
 
   for (const item of cccRaw) {
     const pNum = item.id;
@@ -51,20 +120,31 @@ function buildCatholicCorpus(): DoctrinalEntry[] {
     else if (pNum >= 2052 && pNum <= 2557) topic = 'The Ten Commandments & Christian Morality';
     else if (pNum >= 2558 && pNum <= 2865) topic = 'Christian Prayer & The Lord\'s Prayer';
 
-    const core = cleanText.length > 250 ? cleanText.slice(0, 247) + '...' : cleanText;
+    // Semantic chunking: ensure paragraphs exceeding reasonable context length are split along sentence boundaries
+    const semanticChunks = splitIntoSemanticParagraphs(cleanText, 1000);
 
-    entries.push({
-      id: `ccc_${pNum}`,
-      tradition: 'catholic',
-      documentTitle: 'Catechism of the Catholic Church',
-      sectionOrArticle: `Paragraph ${pNum}`,
-      citation: `CCC §${pNum}`,
-      yearOrEra: '1992',
-      topic: topic,
-      coreDoctrine: core,
-      fullExcerpt: cleanText,
-      relatedScriptures: [],
-      keywords: extractKeywords(`ccc catechism ${topic} ${cleanText}`)
+    semanticChunks.forEach((chunkText, idx) => {
+      const isSubChunk = semanticChunks.length > 1;
+      const subLabel = isSubChunk ? ` (Part ${idx + 1}/${semanticChunks.length})` : '';
+      const core = chunkText.length > 250 ? chunkText.slice(0, 247) + '...' : chunkText;
+
+      const detectedScriptures = extractScripturesFromText(chunkText);
+
+      entries.push({
+        id: `ccc_${pNum}${isSubChunk ? `_p${idx + 1}` : ''}`,
+        tradition: 'catholic',
+        documentTitle: 'Catechism of the Catholic Church',
+        sectionOrArticle: `Paragraph ${pNum}${subLabel}`,
+        citation: `CCC §${pNum}${subLabel}`,
+        yearOrEra: '1992',
+        topic: topic,
+        coreDoctrine: core,
+        fullExcerpt: chunkText,
+        relatedScriptures: detectedScriptures,
+        keywords: extractKeywords(`ccc catechism ${topic} ${chunkText} ${detectedScriptures.join(' ')}`),
+        sourceFilename: 'catechism.json',
+        sectionHeader: topic
+      });
     });
   }
 
@@ -81,6 +161,7 @@ function processCreedFile(
   if (!fs.existsSync(filePath)) return [];
   const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   const entries: DoctrinalEntry[] = [];
+  const sourceFilename = path.basename(filePath);
 
   const dataList = Array.isArray(raw.Data) ? raw.Data : (raw.Data ? [raw.Data] : (Array.isArray(raw.content) ? raw.content : []));
   for (const item of dataList) {
@@ -103,39 +184,56 @@ function processCreedFile(
 
         const secLabel = chNum ? `Chapter ${chNum}, Paragraph ${secNum}` : `Section ${secNum}`;
         const citation = chNum ? `${docTitle} ${chNum}.${secNum}` : `${docTitle} §${secNum}`;
-        const core = content.length > 250 ? content.slice(0, 247) + '...' : content;
 
-        entries.push({
-          id: `${tradition}_${docTitle.toLowerCase().replace(/[^\w]/g, '_')}_ch${chNum}_sec${secNum}`,
-          tradition,
-          documentTitle: docTitle,
-          sectionOrArticle: secLabel,
-          citation: citation,
-          yearOrEra: year,
-          topic: chTitle,
-          coreDoctrine: core,
-          fullExcerpt: content,
-          relatedScriptures: proofs.slice(0, 6),
-          keywords: extractKeywords(`${docTitle} ${chTitle} ${content}`)
+        const chunks = splitIntoSemanticParagraphs(content, 1200);
+        chunks.forEach((chunkText, idx) => {
+          const isSub = chunks.length > 1;
+          const subLabel = isSub ? ` (Part ${idx + 1}/${chunks.length})` : '';
+          const core = chunkText.length > 250 ? chunkText.slice(0, 247) + '...' : chunkText;
+
+          entries.push({
+            id: `${tradition}_${docTitle.toLowerCase().replace(/[^\w]/g, '_')}_ch${chNum}_sec${secNum}${isSub ? `_p${idx + 1}` : ''}`,
+            tradition,
+            documentTitle: docTitle,
+            sectionOrArticle: `${secLabel}${subLabel}`,
+            citation: `${citation}${subLabel}`,
+            yearOrEra: year,
+            topic: chTitle,
+            coreDoctrine: core,
+            fullExcerpt: chunkText,
+            relatedScriptures: proofs.slice(0, 6),
+            keywords: extractKeywords(`${docTitle} ${chTitle} ${chunkText}`),
+            sourceFilename,
+            sectionHeader: chTitle
+          });
         });
       }
     } else if (item.Content || item.content || item.Text || item.text) {
       const content = item.Content || item.content || item.Text || item.text;
       const secNum = item.Section || item.section || chNum || '1';
-      const core = content.length > 250 ? content.slice(0, 247) + '...' : content;
+      const chunks = splitIntoSemanticParagraphs(content, 1200);
 
-      entries.push({
-        id: `${tradition}_${docTitle.toLowerCase().replace(/[^\w]/g, '_')}_${secNum}`,
-        tradition,
-        documentTitle: docTitle,
-        sectionOrArticle: `Article / Section ${secNum}`,
-        citation: `${docTitle}`,
-        yearOrEra: year,
-        topic: chTitle,
-        coreDoctrine: core,
-        fullExcerpt: content,
-        relatedScriptures: [],
-        keywords: extractKeywords(`${docTitle} ${chTitle} ${content}`)
+      chunks.forEach((chunkText, idx) => {
+        const isSub = chunks.length > 1;
+        const subLabel = isSub ? ` (Part ${idx + 1}/${chunks.length})` : '';
+        const core = chunkText.length > 250 ? chunkText.slice(0, 247) + '...' : chunkText;
+        const detectedScriptures = extractScripturesFromText(chunkText);
+
+        entries.push({
+          id: `${tradition}_${docTitle.toLowerCase().replace(/[^\w]/g, '_')}_${secNum}${isSub ? `_p${idx + 1}` : ''}`,
+          tradition,
+          documentTitle: docTitle,
+          sectionOrArticle: `Article / Section ${secNum}${subLabel}`,
+          citation: `${docTitle} §${secNum}${subLabel}`,
+          yearOrEra: year,
+          topic: chTitle,
+          coreDoctrine: core,
+          fullExcerpt: chunkText,
+          relatedScriptures: detectedScriptures,
+          keywords: extractKeywords(`${docTitle} ${chTitle} ${chunkText} ${detectedScriptures.join(' ')}`),
+          sourceFilename,
+          sectionHeader: chTitle
+        });
       });
     }
   }
@@ -153,6 +251,7 @@ function processQaFile(
   if (!fs.existsSync(filePath)) return [];
   const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   const entries: DoctrinalEntry[] = [];
+  const sourceFilename = path.basename(filePath);
 
   const dataList = Array.isArray(raw.Data) ? raw.Data : (raw.content || []);
   for (const item of dataList) {
@@ -163,6 +262,7 @@ function processQaFile(
 
     const fullText = `Question ${qNum}: ${question}\nAnswer: ${answer}`;
     const core = `Q: ${question} A: ${answer.length > 180 ? answer.slice(0, 177) + '...' : answer}`;
+    const detectedScriptures = extractScripturesFromText(fullText);
 
     entries.push({
       id: `${tradition}_${docTitle.toLowerCase().replace(/[^\w]/g, '_')}_q${qNum}`,
@@ -174,12 +274,22 @@ function processQaFile(
       topic: question,
       coreDoctrine: core,
       fullExcerpt: fullText,
-      relatedScriptures: [],
-      keywords: extractKeywords(`${docTitle} ${question} ${answer}`)
+      relatedScriptures: detectedScriptures,
+      keywords: extractKeywords(`${docTitle} ${question} ${answer} ${detectedScriptures.join(' ')}`),
+      sourceFilename,
+      sectionHeader: question
     });
   }
 
   return entries;
+}
+
+function tagStaticEntries(entries: DoctrinalEntry[], defaultFilename: string): DoctrinalEntry[] {
+  return entries.map(e => ({
+    ...e,
+    sourceFilename: e.sourceFilename || defaultFilename,
+    sectionHeader: e.sectionHeader || e.topic || e.sectionOrArticle
+  }));
 }
 
 async function compileAll() {
@@ -214,15 +324,18 @@ async function compileAll() {
 
   // 4. Lutheran: Augsburg Confession 28 Articles, Small Catechism, Smalcald, Formula of Concord
   console.log('Compiling complete Lutheran unabridged corpus...');
-  fs.writeFileSync(path.join(COMPILED_DIR, 'lutheran.json'), JSON.stringify(UNABRIDGED_LUTHERAN_CORPUS, null, 2), 'utf-8');
+  const lutheranEntries = tagStaticEntries(UNABRIDGED_LUTHERAN_CORPUS, 'augsburg_confession.json');
+  fs.writeFileSync(path.join(COMPILED_DIR, 'lutheran.json'), JSON.stringify(lutheranEntries, null, 2), 'utf-8');
 
   // 5. Anglican: 39 Articles in full, 1662 BCP Catechism, Chicago-Lambeth Quadrilateral
   console.log('Compiling complete Anglican unabridged corpus...');
-  fs.writeFileSync(path.join(COMPILED_DIR, 'anglican.json'), JSON.stringify(UNABRIDGED_ANGLICAN_CORPUS, null, 2), 'utf-8');
+  const anglicanEntries = tagStaticEntries(UNABRIDGED_ANGLICAN_CORPUS, 'thirty_nine_articles.json');
+  fs.writeFileSync(path.join(COMPILED_DIR, 'anglican.json'), JSON.stringify(anglicanEntries, null, 2), 'utf-8');
 
   // 6. Wesleyan: 25 Articles in full, Standard Sermons, Explanatory Notes
   console.log('Compiling complete Wesleyan unabridged corpus...');
-  fs.writeFileSync(path.join(COMPILED_DIR, 'wesleyan.json'), JSON.stringify(UNABRIDGED_WESLEYAN_CORPUS, null, 2), 'utf-8');
+  const wesleyanEntries = tagStaticEntries(UNABRIDGED_WESLEYAN_CORPUS, 'twenty_five_articles_wesleyan.json');
+  fs.writeFileSync(path.join(COMPILED_DIR, 'wesleyan.json'), JSON.stringify(wesleyanEntries, null, 2), 'utf-8');
 
   // 7. Orthodox: Ecumenical Councils, Confession of Dositheus, Damascus, Palamas, Liturgy
   console.log('Compiling complete Orthodox unabridged corpus...');
@@ -232,16 +345,16 @@ async function compileAll() {
     ...processCreedFile(path.join(PUBLIC_CORPUS_DIR, 'orthodox', 'athanasian_creed.json'), 'orthodox', 'Athanasian Creed (Quicumque Vult)', 'c. 500'),
     ...processCreedFile(path.join(PUBLIC_CORPUS_DIR, 'orthodox', 'apostles_creed.json'), 'orthodox', 'Apostles’ Creed', 'c. 200')
   ];
-  const orthodoxAll = [...UNABRIDGED_ORTHODOX_CORPUS, ...orthodoxCreeds];
+  const orthodoxAll = [...tagStaticEntries(UNABRIDGED_ORTHODOX_CORPUS, 'ecumenical_councils_orthodox.json'), ...orthodoxCreeds];
   fs.writeFileSync(path.join(COMPILED_DIR, 'orthodox.json'), JSON.stringify(orthodoxAll, null, 2), 'utf-8');
 
   console.log(`\n=== ALL 7 UNABRIDGED DATASETS COMPILED SUCCESSFULLY ===`);
   console.log(`- Catholic: ${catholicEntries.length} full paragraphs (All 2,865 CCC paragraphs + Councils)`);
   console.log(`- Reformed: ${reformedEntries.length} full sections & Q&As (WCF, Heidelberg, WLC, WSC, Dort, Belgic, 2nd Helvetic)`);
   console.log(`- Baptist: ${baptistEntries.length} full sections & Q&As (1689 LBCF, Inerrancy, Baptist Catechism)`);
-  console.log(`- Lutheran: ${UNABRIDGED_LUTHERAN_CORPUS.length} full articles & confessions`);
-  console.log(`- Anglican: ${UNABRIDGED_ANGLICAN_CORPUS.length} full articles & standards`);
-  console.log(`- Wesleyan: ${UNABRIDGED_WESLEYAN_CORPUS.length} full articles & sermons`);
+  console.log(`- Lutheran: ${lutheranEntries.length} full articles & confessions`);
+  console.log(`- Anglican: ${anglicanEntries.length} full articles & standards`);
+  console.log(`- Wesleyan: ${wesleyanEntries.length} full articles & sermons`);
   console.log(`- Orthodox: ${orthodoxAll.length} full ecumenical decrees & patristic standards`);
 }
 

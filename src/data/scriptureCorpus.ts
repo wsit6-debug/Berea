@@ -248,6 +248,25 @@ export const CANONICAL_SCRIPTURE_CORPUS: ScripturePassage[] = [
     greekHebrew: [
       { term: 'ἀντίτυπον', transliteration: 'Antitypon', strongs: 'G499', meaning: 'Antitype, fulfillment corresponding to a biblical type' }
     ]
+  },
+
+  // =========================================================================
+  // PETRINE OFFICE & THE KEYS OF THE KINGDOM
+  // =========================================================================
+  {
+    ref: 'Matthew 16:18–19',
+    book: 'Matthew',
+    chapter: 16,
+    verseRange: '18-19',
+    verbatimText: 'And I tell you, you are Peter, and on this rock I will build my church, and the gates of hell shall not prevail against it. I will give you the keys of the kingdom of heaven, and whatever you bind on earth shall be bound in heaven, and whatever you loose on earth shall be loosed in heaven.',
+    translation: 'ESV',
+    theologicalTopic: 'The Confession of Peter, The Rock & The Keys of the Kingdom',
+    keywords: ['matthew 16', 'matthew 16:18', 'matthew 16:19', 'peter', 'petros', 'petra', 'rock', 'gates of hell', 'keys of the kingdom', 'bind and loose', 'church'],
+    greekHebrew: [
+      { term: 'Πέτρος', transliteration: 'Petros', strongs: 'G4074', meaning: 'Peter, stone, isolated boulder' },
+      { term: 'πέτρᾳ', transliteration: 'Petra', strongs: 'G4073', meaning: 'Rock, bedrock, solid foundational stone (Matthew 16:18)' },
+      { term: 'κλεῖδας', transliteration: 'Kleidas', strongs: 'G2807', meaning: 'Keys, authority of stewardship and government (Matthew 16:19)' }
+    ]
   }
 ];
 
