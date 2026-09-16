@@ -12,19 +12,27 @@
 ### Prerequisites
 * **Node.js**: Version 18.0 or higher ([Download Node.js](https://nodejs.org/))
 * **npm**: Version 9.0 or higher (comes bundled with Node.js)
+* **Ollama (Optional Manual Setup)**: The dev server will **automatically install Ollama**, launch `ollama serve`, and download `llama3.1` if not found. If you prefer to install it manually ahead of time, grab it from [ollama.com](https://ollama.com) or run `brew install ollama`.
 
 ### 1. Installation
 Clone the repository and install all dependencies:
 ```bash
-cd /Users/wsit6/Berea
+git clone <repo-url> Berea
+cd Berea
 npm install
 ```
 
 ### 2. Run the Local Development Server
-Start Vite's ultra-fast development server:
+Start the local development server:
 ```bash
 npm run dev
 ```
+
+> **Automated Ollama Setup:** When you run `npm run dev`, Berea's startup pipeline (`scripts/ensure-ollama.mjs`) automatically:
+> 1. Detects whether Ollama is installed on your system (`PATH` or standard user app locations).
+> 2. Automatically installs Ollama if not present (using the official standalone package for macOS/Linux/Windows).
+> 3. Spawns `ollama serve` in the background if the local server isn't already active.
+> 4. Ensures the target model (`llama3.1`) is downloaded and ready for AI exegetical analysis.
 
 Once started, open your browser and navigate to:
 ```
