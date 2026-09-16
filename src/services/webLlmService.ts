@@ -130,14 +130,9 @@ export async function generateLocalAiResponse(
       max_tokens: 1200
     });
 
-<<<<<<< HEAD
     const rawContent = reply.choices[0]?.message?.content || '';
     return skipDeduplication ? rawContent : deduplicateRepetitions(rawContent);
   }
-=======
-  const rawContent = reply.choices[0]?.message?.content || '';
-  return skipDeduplication ? rawContent : deduplicateRepetitions(rawContent);
->>>>>>> 44f932969afc7c1ccb02918198df651b23f1e7eb
 }
 
 export function isLocalEngineReady(): boolean {
