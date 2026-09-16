@@ -80,13 +80,20 @@ export function searchDoctrinalCorpus(
     book?: string;
     chapter?: number;
     verseNumber?: number;
+    endVerseNumber?: number;
     limit?: number;
     minScore?: number;
   }
 ): RagSearchResult[] {
-  const { lens, book, chapter, verseNumber, limit = 2, minScore = 25 } = options;
+  const { lens, book, chapter, verseNumber, endVerseNumber, limit = 2, minScore = 25 } = options;
   const queryTokens = tokenize(query);
-  const passageQuery = book && chapter ? `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`.toLowerCase() : '';
+  const isMulti = Boolean(endVerseNumber && verseNumber && endVerseNumber > verseNumber);
+  const passageQuery = book && chapter
+    ? (isMulti
+        ? `${book} ${chapter}:${verseNumber}`
+        : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`
+      ).toLowerCase()
+    : '';
 
   // Use full unabridged compiled corpus if cached, otherwise fallback to in-memory baseline
   const corpusToSearch = compiledCorpusCache.get(lens) || getConfessionsForLens(lens) || DOCTRINAL_CORPUS;
@@ -201,6 +208,7 @@ export function buildRagGroundingContext(
     book: string;
     chapter: number;
     verseNumber?: number;
+    endVerseNumber?: number;
     verseText?: string;
     lens: DenominationalLens;
   }
@@ -210,6 +218,7 @@ export function buildRagGroundingContext(
     book: context.book,
     chapter: context.chapter,
     verseNumber: context.verseNumber,
+    endVerseNumber: context.endVerseNumber,
     limit: 2
   });
 

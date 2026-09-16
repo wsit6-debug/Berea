@@ -70,6 +70,7 @@ export function App() {
       text: { KJV: 'Loading scripture...' }
     };
   });
+  const [selectedVerseRange, setSelectedVerseRange] = useState<{ start: number; end: number } | null>(null);
 
   // Save current passage coordinates to local storage on navigation
   useEffect(() => {
@@ -141,6 +142,7 @@ export function App() {
 
   const handleNextChapter = () => {
     targetVerseRef.current = 1;
+    setSelectedVerseRange(null);
     if (chapterNum < currentBook.chaptersCount) {
       setChapterNum(prev => prev + 1);
     } else {
@@ -155,6 +157,7 @@ export function App() {
 
   const handlePrevChapter = () => {
     targetVerseRef.current = 1;
+    setSelectedVerseRange(null);
     if (chapterNum > 1) {
       setChapterNum(prev => prev - 1);
     } else {
@@ -170,6 +173,7 @@ export function App() {
   const handleSelectPassage = (newBookId: string, newChapterNum: number, targetVerseNum?: number) => {
     const vNum = targetVerseNum || 1;
     targetVerseRef.current = vNum;
+    setSelectedVerseRange(null);
     setBookId(newBookId);
     setChapterNum(newChapterNum);
 
@@ -213,7 +217,17 @@ export function App() {
               chapter={currentChapter}
               activeTranslation={activeTranslation}
               selectedVerseNumber={selectedVerse.verseNumber}
-              onSelectVerse={setSelectedVerse}
+              onSelectVerse={(v) => {
+                setSelectedVerse(v);
+                setSelectedVerseRange(null);
+              }}
+              selectedVerseRange={selectedVerseRange}
+              onSelectVerseRange={(range, primaryVerse) => {
+                setSelectedVerseRange(range);
+                if (primaryVerse) {
+                  setSelectedVerse(primaryVerse);
+                }
+              }}
               onNextChapter={handleNextChapter}
               onPrevChapter={handlePrevChapter}
               isFirstChapter={bookId === BIBLE_BOOKS[0].id && chapterNum === 1}
@@ -222,8 +236,11 @@ export function App() {
               isAiPanelOpen={isAiPanelOpen}
               isLoading={isLoadingChapter}
               onSelectPassage={handleSelectPassage}
-              onCreateStudyGuide={(verse) => {
+              onCreateStudyGuide={(verse, range) => {
                 setSelectedVerse(verse);
+                if (range && range.start !== range.end) {
+                  setSelectedVerseRange(range);
+                }
                 setIsAiPanelOpen(true);
                 setAiPanelTab('studyGuide');
               }}
@@ -237,6 +254,8 @@ export function App() {
                 currentBook={currentBook.name}
                 currentChapter={chapterNum}
                 selectedVerse={selectedVerse}
+                selectedVerseRange={selectedVerseRange}
+                onVerseRangeChange={setSelectedVerseRange}
                 chapterVerses={currentChapter?.verses}
                 activeLens={activeLens}
                 onLensChange={handleSelectLens}

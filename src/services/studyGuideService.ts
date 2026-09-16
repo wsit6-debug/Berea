@@ -253,20 +253,24 @@ export function generateStudyGuideContent(
   endVerseNumber?: number
 ): StudyGuide {
   const isMultiVerse = endVerseNumber && verseNumber && endVerseNumber > verseNumber;
+  const isWholeChapter = !verseNumber && !endVerseNumber;
   const passageRef = isMultiVerse
     ? `${book} ${chapter}:${verseNumber}–${endVerseNumber}`
-    : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
+    : isWholeChapter
+      ? `${book} ${chapter}`
+      : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
 
   const denom = DENOMINATIONS.find(d => d.id === lens) || DENOMINATIONS[0];
-  const insight = getTheologicalInsight(book, chapter, verseNumber, verseText, verseLemmas);
+  const insight = getTheologicalInsight(book, chapter, verseNumber, verseText, verseLemmas, endVerseNumber);
   const lensPerspective = insight.lensPerspectives[lens] || Object.values(insight.lensPerspectives)[0] || '';
 
   // 1. Retrieve matching confessional document via RAG with strict relevance filter
-  const ragMatches = searchDoctrinalCorpus(`${passageRef} ${verseText || ''} ${insight.conciseOverview}`, {
+  const ragMatches = searchDoctrinalCorpus(`${passageRef} ${verseText ? verseText.slice(0, 300) : ''} ${insight.conciseOverview}`, {
     lens,
     book,
     chapter,
     verseNumber,
+    endVerseNumber,
     limit: 1,
     minScore: 35
   });
@@ -291,7 +295,11 @@ export function generateStudyGuideContent(
 
   // 3. Rich, Multilayered Context Snapshot tailored to Audience
   const contextSnapshot = [
-    verseText && verseText.trim().length > 0 ? `Text: "${verseText.trim()}"` : null,
+    verseText && verseText.trim().length > 0
+      ? (isWholeChapter
+          ? `Passage Scope: Complete Chapter (${book} ${chapter})`
+          : `Text: "${verseText.trim().slice(0, 300)}${verseText.trim().length > 300 ? '...' : ''}"`)
+      : null,
     insight.historicalContext ? `Historical & Literary Setting: ${insight.historicalContext}` : null,
     `Theological Core: ${insight.conciseOverview}`,
     `${denom.name} Confessional Stance (${confessionName}): ${doctrinalDoc ? `"${doctrinalDoc.coreDoctrine}" ` : ''}${lensPerspective}`
@@ -301,18 +309,28 @@ export function generateStudyGuideContent(
   let icebreakers: string[] = [];
   if (audience === 'youth_family') {
     icebreakers = [
-      `If you had to summarize what happens in ${passageRef} as a 10-second headline or video, what would you say?`,
-      `Imagine you were right there in the crowd when this happened in ${book} ${chapter}—how would you have felt, and what question would you ask?`
+      isWholeChapter
+        ? `If you had to summarize what happens across ${passageRef} as a 10-second headline or video, what would you say?`
+        : `If you had to summarize what happens in ${passageRef} as a 10-second headline or video, what would you say?`,
+      isWholeChapter
+        ? `Imagine you were right there seeing all the events unfold in ${book} ${chapter}—how would you have felt, and what question would you ask?`
+        : `Imagine you were right there in the crowd when this happened in ${book} ${chapter}—how would you have felt, and what question would you ask?`
     ];
   } else if (audience === 'deep_exegesis') {
     icebreakers = [
-      `Literary Structure: As you examine ${passageRef}, what key grammatical pivot, repetition, or theological tension frames this pericope?`,
-      `Canonical Context: How does the immediate literary and covenantal context of ${book} ${chapter} shape the doctrinal locus at stake?`
+      isWholeChapter
+        ? `Literary Architecture: As you examine the complete chapter of ${passageRef}, how does the literary architecture develop from the opening setting to the theological conclusion?`
+        : `Literary Structure: As you examine ${passageRef}, what key grammatical pivot, repetition, or theological tension frames this pericope?`,
+      isWholeChapter
+        ? `Canonical Context: How does the overarching narrative and covenantal movement of ${book} ${chapter} anchor the doctrinal locus at stake?`
+        : `Canonical Context: How does the immediate literary and covenantal context of ${book} ${chapter} shape the doctrinal locus at stake?`
     ];
   } else {
     // Default: Small Group
     icebreakers = [
-      `When you reflect on this specific passage (${passageRef}${verseText ? `: "${verseText.trim()}"` : ''}), what word or phrase strikes you most directly, and why?`,
+      isWholeChapter
+        ? `When you read through ${passageRef} as a whole, what section, theme, or encounter resonates most deeply with you, and why?`
+        : `When you reflect on this specific passage (${passageRef}${verseText && verseText.length < 120 ? `: "${verseText.trim()}"` : ''}), what word or phrase strikes you most directly, and why?`,
       `What makes the reality declared in ${passageRef} challenging—or deeply reassuring—in your everyday discipleship?`
     ];
   }
@@ -322,20 +340,26 @@ export function generateStudyGuideContent(
 
   if (audience === 'youth_family') {
     deepPrompts.push(
-      `Story & Who Jesus Is: In ${passageRef}${verseText ? `, the text tells us: "${verseText.trim()}"` : ''}. What does this passage show us about who God is and how much He cares, and why should that amaze us?`,
-      `Real-Life Scenario: Think about school, home, or hanging out with friends. When is it hard to trust or obey God the way this passage describes, and how can remembering God's promises help you?`,
+      isWholeChapter
+        ? `Big Story of ${book} ${chapter}: What does this entire chapter show us about who God is and how much He cares for His people, and why should that amaze us?`
+        : `Story & Who Jesus Is: In ${passageRef}${verseText && verseText.length < 120 ? `, the text tells us: "${verseText.trim()}"` : ''}. What does this passage show us about who God is and how much He cares, and why should that amaze us?`,
+      isWholeChapter
+        ? `Real-Life Scenario: Think about school, home, or hanging out with friends. When is it hard to trust or obey God the way the people in ${passageRef} were called to, and how can remembering God's promises help you?`
+        : `Real-Life Scenario: Think about school, home, or hanging out with friends. When is it hard to trust or obey God the way this passage describes, and how can remembering God's promises help you?`,
       `Following Jesus: What is one practical way Jesus is inviting you to follow Him or show His love to someone in your life this week?`
     );
   } else if (audience === 'deep_exegesis') {
     // Tier 1: Textual & Linguistic Exegesis
-    if (insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0) {
+    if (insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0 && !isWholeChapter) {
       const l = insight.originalLanguageInsights[0];
       deepPrompts.push(
         `Textual & Linguistic Exegesis: Note the key biblical term "${l.term}" (${l.originalScript}, ${l.transliteration} ${l.strongsRef ? `[${l.strongsRef}]` : ''}), which highlights ${l.nuance}. How does understanding this linguistic weight sharpen our reading of ${passageRef}? What divine truths or actions does the inspired text emphasize?`
       );
     } else {
       deepPrompts.push(
-        `Textual & Literary Exegesis: In ${passageRef}${verseText ? `, the text states: "${verseText.trim()}"` : ''}. Examine the key verbs, the speaker, and the immediate audience in ${book} ${chapter}. What divine truth, command, or prophetic purpose is being communicated here, and how does it challenge conventional human assumptions?`
+        isWholeChapter
+          ? `Textual & Literary Architecture: Examine the overall movement and literary structure of ${passageRef}. What divine truth, command, or covenantal purpose binds this chapter together, and how does it challenge conventional human assumptions?`
+          : `Textual & Literary Exegesis: In ${passageRef}${verseText && verseText.length < 120 ? `, the text states: "${verseText.trim()}"` : ''}. Examine the key verbs, the speaker, and the immediate audience in ${book} ${chapter}. What divine truth, command, or prophetic purpose is being communicated here, and how does it challenge conventional human assumptions?`
       );
     }
 
@@ -357,7 +381,9 @@ export function generateStudyGuideContent(
   } else {
     // Default: Small Group Discipleship
     deepPrompts.push(
-      `Heart of the Text: Looking closely at ${passageRef}${verseText ? ` ("${verseText.trim()}")` : ''}, what is the main truth God wants us to grasp? How does it challenge our human instinct to rely on our own strength or understanding?`,
+      isWholeChapter
+        ? `Heart of the Chapter: Taking in ${passageRef} as a cohesive passage, what is the central truth God wants us to grasp? How does it challenge our human instinct to rely on our own strength or understanding?`
+        : `Heart of the Text: Looking closely at ${passageRef}${verseText && verseText.length < 120 ? ` ("${verseText.trim()}")` : ''}, what is the main truth God wants us to grasp? How does it challenge our human instinct to rely on our own strength or understanding?`,
       `Grounded in Truth (${denom.name}): Historic faith (${confessionName}) reminds us that God’s Word is steadfast. How does understanding ${passageRef} through the lens of ${denom.tagline} give you fresh confidence in God's promises?`,
       `Everyday Walk: If our group truly lived out the reality revealed in ${passageRef} this week, what would look different in our attitudes, our prayers, and how we treat others?`
     );

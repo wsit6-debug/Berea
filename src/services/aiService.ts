@@ -30,14 +30,18 @@ export async function askBereaAssistant(
     book: string;
     chapter: number;
     verseNumber?: number;
+    endVerseNumber?: number;
     verseText?: string;
     lens: DenominationalLens;
     history?: ChatMessage[];
     onProgress?: (progress: { text: string; progress: number }) => void;
   }
 ): Promise<{ text: string; ragEntries: DoctrinalEntry[]; primaryCitation?: string; isLiveAi?: boolean }> {
-  const { book, chapter, verseNumber, verseText, lens, history = [], onProgress } = context;
-  const currentPassageRef = `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
+  const { book, chapter, verseNumber, endVerseNumber, verseText, lens, history = [], onProgress } = context;
+  const isMultiVerse = Boolean(endVerseNumber && verseNumber && endVerseNumber > verseNumber);
+  const currentPassageRef = isMultiVerse
+    ? `${book} ${chapter}:${verseNumber}–${endVerseNumber}`
+    : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
   const activeDenom = DENOMINATIONS.find(d => d.id === lens) || DENOMINATIONS[0];
   const lensLabel = activeDenom.name;
 
@@ -46,6 +50,7 @@ export async function askBereaAssistant(
     book,
     chapter,
     verseNumber,
+    endVerseNumber,
     verseText,
     lens
   });

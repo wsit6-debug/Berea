@@ -2501,26 +2501,39 @@ export function getTheologicalInsight(
   chapter: number,
   verseNum?: number,
   verseText?: string,
-  verseLemmas?: { word: string; transliteration: string; strongs?: string; definition?: string }[]
+  verseLemmas?: { word: string; transliteration: string; strongs?: string; definition?: string }[],
+  endVerseNum?: number
 ): TheologicalInsight {
   const normBook = bookId.toLowerCase().trim();
+  const isExplicitVerse = Boolean(verseNum);
   const vNum = verseNum || 1;
-  const exactKey = `${normBook}_${chapter}_${vNum}`;
+  const isMulti = Boolean(endVerseNum && verseNum && endVerseNum > verseNum);
+  const cleanBookName = formatBookDisplayName(normBook);
+  const cleanPassageRef = isMulti
+    ? `${cleanBookName} ${chapter}:${verseNum}–${endVerseNum}`
+    : isExplicitVerse
+      ? `${cleanBookName} ${chapter}:${verseNum}`
+      : `${cleanBookName} ${chapter}`;
+
+  const exactKey = isExplicitVerse ? `${normBook}_${chapter}_${vNum}` : `${normBook}_${chapter}_1`;
 
   // 1. Direct exact key match for curated flagship verses
   if (THEOLOGICAL_INSIGHTS[exactKey]) {
-    return THEOLOGICAL_INSIGHTS[exactKey];
+    const base = THEOLOGICAL_INSIGHTS[exactKey];
+    return {
+      ...base,
+      passageRef: cleanPassageRef
+    };
   }
 
   // 2. Canonical & Thematic Theological Loci Classifier
-  const cleanBookName = formatBookDisplayName(normBook);
-  const cleanPassageRef = `${cleanBookName} ${chapter}:${vNum}`;
   const lowerText = (verseText || '').toLowerCase();
   const snippet = verseText ? `"${verseText.slice(0, 120)}${verseText.length > 120 ? '...' : ''}"` : `this passage`;
+  const checkVNum = vNum || 1;
 
   // Detect specific contentious theological loci
-  const isElijahForerunnerLocus = (normBook === 'matthew' && chapter === 17 && vNum >= 10 && vNum <= 13) ||
-    (normBook === 'mark' && chapter === 9 && vNum >= 11 && vNum <= 13) ||
+  const isElijahForerunnerLocus = (normBook === 'matthew' && chapter === 17 && checkVNum >= 10 && checkVNum <= 13) ||
+    (normBook === 'mark' && chapter === 9 && checkVNum >= 11 && checkVNum <= 13) ||
     (normBook === 'malachi' && (chapter === 3 || chapter === 4)) ||
     lowerText.includes('elijah must come') || lowerText.includes('elias must first') || lowerText.includes('elijah has already come');
   const isPapacyLocus = (normBook === 'matthew' && chapter === 16) || (normBook === 'john' && chapter === 21 && vNum >= 15) || lowerText.includes('keys of heaven') || lowerText.includes('rock i will build');
