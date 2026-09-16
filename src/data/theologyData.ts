@@ -2535,7 +2535,6 @@ export function getTheologicalInsight(
   const snippet = verseText ? `"${verseText.slice(0, 120)}${verseText.length > 120 ? '...' : ''}"` : `this passage`;
   const checkVNum = vNum || 1;
 
-  // Detect specific contentious theological loci
   const isElijahForerunnerLocus = (normBook === 'matthew' && chapter === 17 && checkVNum >= 10 && checkVNum <= 13) ||
     (normBook === 'mark' && chapter === 9 && checkVNum >= 11 && checkVNum <= 13) ||
     (normBook === 'malachi' && (chapter === 3 || chapter === 4)) ||
@@ -2567,7 +2566,116 @@ export function getTheologicalInsight(
     lowerText.includes('what will there be for us') || lowerText.includes('hundredfold') ||
     lowerText.includes('renewal of all things') || lowerText.includes('first will be last');
 
+  const isMarriageDivorceLocus =
+    (normBook === 'matthew' && chapter === 19 && vNum >= 1 && vNum <= 12) ||
+    (normBook === 'mark' && chapter === 10 && vNum >= 1 && vNum <= 12) ||
+    lowerText.includes('lawful to divorce') || lowerText.includes('put away his wife') ||
+    lowerText.includes('joined together') || lowerText.includes('what god has joined') ||
+    lowerText.includes('two shall become one flesh') || lowerText.includes('eunuchs for the sake of');
+
+  const isKingdomChildrenLocus =
+    (normBook === 'matthew' && chapter === 19 && vNum >= 13 && vNum <= 15) ||
+    (normBook === 'mark' && chapter === 10 && vNum >= 13 && vNum <= 16) ||
+    (normBook === 'luke' && chapter === 18 && vNum >= 15 && vNum <= 17) ||
+    lowerText.includes('little children') || lowerText.includes('suffer little children') ||
+    lowerText.includes('belongs the kingdom of heaven') || lowerText.includes('kingdom of god as a little child');
+
   // Topic-Aware Dynamic Resolution
+  if (isMarriageDivorceLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `When Pharisees test Jesus concerning the legality of divorce, Christ roots marriage in the eternal creation order of Genesis 1:27 and 2:24 (${snippet}). He proclaims the sacred indissolubility of the marital covenant ('What therefore God has joined together, let not man put asunder'), explaining that Moses permitted divorce only due to human hardness of heart, while commending kingdom celibacy for those called.`,
+      theologicalThemes: [
+        'Covenant Indissolubility of Holy Matrimony',
+        'Creation Order vs Fallen Concessions (Genesis 1:27, 2:24)',
+        'Hardness of Heart (Sklerokardia) & Biblical Law',
+        'Kingdom Celibacy & Sacred Consecration'
+      ],
+      historicalContext: `In first-century Second Temple Judaism, intense rabbinic debate pitted the strict School of Shammai (permitting divorce only for marital unfaithfulness) against the lenient School of Hillel (permitting divorce for virtually any displeasing cause). Jesus transcends rabbinic disputes by re-anchoring marital ethics in God's primordial creation purpose before the Fall.`,
+      lensPerspectives: {
+        catholic: `Dogmatic foundation for the Sacrament of Holy Matrimony (CCC §1601–1666): marriage is an indissoluble covenant sealed by God that cannot be dissolved by any human power, imaging the eternal union between Christ and the Church.`,
+        orthodox: `Views holy matrimony as a sacred mystery (mysterion) crowned with martyrdom and eternal communion, reflecting the Trinitarian love and calling spouses to reciprocal self-emptying and mutual theosis.`,
+        reformed: `Affirms marriage as a holy ordinance instituted by God in creation (WCF 24), grounded in covenant fidelity and mutual help, strictly warning against breaking sacred vows while recognizing biblical exceptions for adultery and willful abandonment.`,
+        lutheran: `Distinguishes marriage as an honorable civic and holy estate ordained by God under the Law, blessed by Christ's Word, and sustained by daily forgiveness and mutual sacrificial love.`,
+        wesleyan: `Emphasizes marital faithfulness as a reflection of sanctifying grace and holy love, urging spouses to foster Christlike patience, self-giving sacrifice, and spiritual purity.`,
+        anglican: `Honors holy matrimony as an honorable estate instituted of God in the time of man's innocency, signifying the mystical union between Christ and His Church (Book of Common Prayer).`,
+        baptist_evangelical: `Affirms the biblical definition and sanctity of marriage as the lifelong covenant union between one man and one woman, calling couples to mirror Christ's sacrificial love for the Church.`
+      },
+      originalLanguageInsights: [
+        {
+          term: 'Joined Together / Yoked',
+          originalScript: 'συνέζευξεν',
+          transliteration: 'synezeuxen',
+          strongsRef: 'G4801',
+          nuance: 'To yoke together as one indivisible pair. Signifies God Himself forging the sacred marital bond.'
+        },
+        {
+          term: 'Hardness of Heart',
+          originalScript: 'σκληροκαρδίαν',
+          transliteration: 'sklērokardian',
+          strongsRef: 'G4641',
+          nuance: 'Spiritual obstinacy, callousness, and rebellion against God\'s holy will and original creation design.'
+        },
+        {
+          term: 'From the Beginning',
+          originalScript: 'ἀπ\' ἀρχῆς',
+          transliteration: 'ap\' archēs',
+          strongsRef: 'G575 / G746',
+          nuance: 'Points back to God\'s unfallen primordial design in Genesis prior to human sin and legal compromises.'
+        }
+      ],
+      suggestedQuestions: [
+        `Why did Jesus answer the Pharisees' question about the Law of Moses by appealing back to Genesis 1 and 2?`,
+        `How does Jesus' phrase 'What God has joined together, let not man separate' redefine the nature of marital commitment?`,
+        `What is the spiritual significance of Jesus' teaching on celibacy 'for the sake of the kingdom of heaven' (Matt 19:12)?`
+      ],
+      practicalApplication: `Uphold the sacred covenant of marriage with reverence, sacrificial loyalty, and daily forgiveness, guarding your heart against hardness and self-centeredness.`
+    };
+  }
+
+  if (isKingdomChildrenLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `When disciples rebuke parents for bringing small children to Jesus, Christ indignantly welcomes the little ones (${snippet}), declaring that the kingdom of heaven belongs to such as these and laying His hands upon them in holy blessing.`,
+      theologicalThemes: [
+        'Childlike Humility & Reception of the Kingdom',
+        'Christ’s Compassion for the Vulnerable & Lowly',
+        'Covenant Blessing & Welcome of Little Children'
+      ],
+      historicalContext: `In the Greco-Roman and ancient Near Eastern world, children possessed low social standing and zero legal autonomy, often viewed as economic burdens or liabilities. Jesus radically inverts cultural hierarchies by presenting children as the supreme paradigm of kingdom readiness.`,
+      lensPerspectives: {
+        catholic: `Biblical foundation for infant baptism and parental duty to bring infants to Christ for regeneration and sacramental blessing (CCC §1261).`,
+        orthodox: `Witness to the sacramental participation of infants and children in the life of the Church (Chrismation and Eucharist), receiving uncreated grace from early infancy.`,
+        reformed: `Strong support for the covenantal status of believers' children (Heidelberg Catechism Q74, WCF 28.4), who belong to God's covenant community and are entitled to the covenant sign.`,
+        lutheran: `Testimony that saving faith is purely a receptive gift of the Holy Spirit, not an intellectual achievement, comforting parents that Christ welcomes the youngest.`,
+        wesleyan: `Illustrates prevenient grace embracing the vulnerable and innocent, calling the church to nurture every child in the fear and admonition of the Lord.`,
+        anglican: `Central Gospel reading in the Book of Common Prayer rite for the Public Baptism of Infants, showing Christ's loving will to embrace the little ones.`,
+        baptist_evangelical: `Illustrates the necessity of childlike faith, humble dependence, and the sacred responsibility of parents to lead children to personal faith in Christ.`
+      },
+      originalLanguageInsights: [
+        {
+          term: 'Let / Suffer',
+          originalScript: 'Ἄφετε',
+          transliteration: 'Aphete',
+          strongsRef: 'G863',
+          nuance: 'Imperative command: permit, release, do not hinder or obstruct.'
+        },
+        {
+          term: 'Little Children',
+          originalScript: 'παιδία',
+          transliteration: 'paidia',
+          strongsRef: 'G3813',
+          nuance: 'Young children or toddlers characterized by dependence, vulnerability, and trust.'
+        }
+      ],
+      suggestedQuestions: [
+        `Why did the disciples attempt to keep little children from approaching Jesus?`,
+        `What specific qualities of a little child does Jesus hold up as necessary for receiving the kingdom of God?`
+      ],
+      practicalApplication: `Approach God today with childlike trust, casting aside intellectual pride, self-sufficiency, and cynical doubt.`
+    };
+  }
+
   if (isDiscipleshipRewardLocus) {
     return {
       passageRef: cleanPassageRef,

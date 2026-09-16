@@ -17,6 +17,7 @@ import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
+import { QuizModal } from './components/QuizModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
 import { BereaAiTab } from './types';
@@ -58,6 +59,8 @@ export function App() {
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [quizType, setQuizType] = useState<'chapter' | 'book'>('chapter');
 
   // Dynamic Chapter State fetched from YouVersion Scripture API
   const currentBook = getBook(bookId) || BIBLE_BOOKS[0];
@@ -249,6 +252,11 @@ export function App() {
                 setIsAiPanelOpen(true);
                 setAiPanelTab('studyGuide');
               }}
+              isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
+              onOpenQuiz={(type) => {
+                setQuizType(type);
+                setIsQuizModalOpen(true);
+              }}
             />
           </div>
 
@@ -269,6 +277,10 @@ export function App() {
                 onClose={() => setIsAiPanelOpen(false)}
                 activeTab={aiPanelTab}
                 onTabChange={setAiPanelTab}
+                onOpenQuiz={(type) => {
+                  setQuizType(type);
+                  setIsQuizModalOpen(true);
+                }}
               />
             </div>
           )}
@@ -297,6 +309,16 @@ export function App() {
         onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
         activeTranslation={activeTranslation}
         activeLens={activeLens}
+      />
+
+      {/* Quiz Modal */}
+      <QuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        bookName={currentBook.name}
+        chapterNumber={chapterNum}
+        quizType={quizType}
+        chapterText={currentChapter.verses.map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ')}
       />
     </div>
   );
