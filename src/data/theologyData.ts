@@ -123,6 +123,8 @@ export const THEOLOGICAL_INSIGHTS: Record<string, TheologicalInsight> = {
       wesleyan: 'Shows God’s prevenient grace awakening hunger in the heart of an earnest religious leader seeking truth in humility.',
       anglican: 'A pastoral depiction of the soul’s gradual pilgrimage from darkness and confusion into the illumination of Christ.',
       catholic: 'Highlights the mystery of encounter between the Old Covenant priesthood and the incarnate Logos.',
+      orthodox: 'Emphasizes that being born of water and the Spirit initiates the lifelong liturgical and sacramental journey of theosis.',
+      lutheran: 'The mystery of regeneration is enacted through the Word and the Sacrament of Holy Baptism, conferring grace and faith upon the sinner.',
       baptist_evangelical: 'Shows that sincerity and moral standing are not enough; every person must personally encounter and receive Christ.'
     },
     originalLanguageInsights: [
