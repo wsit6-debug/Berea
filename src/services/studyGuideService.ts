@@ -1,5 +1,5 @@
 import { StudyGuide, SupportingPassage, StudyGuideAudience } from '../types';
-import { DenominationalLens, DENOMINATIONS, getTheologicalInsight } from '../data/theologyData';
+import { DenominationalLens, DENOMINATIONS, getTheologicalInsight, formatBookDisplayName } from '../data/theologyData';
 import { searchDoctrinalCorpus } from './ragService';
 import { findMatchingScriptures } from '../data/scriptureCorpus';
 
@@ -238,6 +238,93 @@ function getCuratedSupportingPassages(book: string, chapter: number, verseNum?: 
 }
 
 /**
+ * Cleans extracted confessional excerpts so quotes never end mid-word or with broken ellipsis
+ */
+function cleanDoctrinalExcerpt(core: string, full?: string): string {
+  let text = (core || '').trim().replace(/^["']|["']$/g, '');
+
+  // If text was cut off with an ellipsis or mid-word e.g. "His prayer, t..."
+  if (/\b\w+,\s*[a-z]\.{2,}$/i.test(text) || /\b[a-z]{1,2}\.{3}$/i.test(text) || text.endsWith('...')) {
+    if (full) {
+      const cleanFull = full.replace(/^["']|["']$/g, '').trim();
+      const sentences = cleanFull.match(/[^.!?]+[.!?]+/g);
+      if (sentences && sentences.length > 0) {
+        let accumulated = '';
+        for (const s of sentences) {
+          if ((accumulated + s).length > 280 && accumulated.length > 0) break;
+          accumulated += (accumulated ? ' ' : '') + s.trim();
+        }
+        if (accumulated) return accumulated;
+      }
+    }
+    text = text.replace(/,?\s*\b\w*\.{2,}$/, '.');
+  }
+  return text.replace(/\.{3,}$/, '.').trim();
+}
+
+/**
+ * Ensures legacy or newly loaded context snapshots display with clean markdown architecture
+ */
+export function formatContextSnapshotForDisplay(raw: string): string {
+  if (!raw) return '';
+  if (raw.includes('### ')) return raw;
+
+  // Transform legacy unformatted plain-text snapshot
+  let formatted = raw.trim();
+  // Remove raw verse chunk snippets in parentheses if present, e.g. ("[1] Now king David...")
+  formatted = formatted.replace(/\s*\(\s*["']?\[\s*\d+\s*\].*?["']?\s*\)/g, '');
+  // Clean lowercase book names e.g. "1 kings" -> "1 Kings"
+  formatted = formatted
+    .replace(/\b1 kings\b/gi, '1 Kings')
+    .replace(/\b2 kings\b/gi, '2 Kings')
+    .replace(/\b1 samuel\b/gi, '1 Samuel')
+    .replace(/\b2 samuel\b/gi, '2 Samuel')
+    .replace(/\b1 corinthians\b/gi, '1 Corinthians')
+    .replace(/\b2 corinthians\b/gi, '2 Corinthians');
+
+  // Clean raw theme casings & ampersands
+  formatted = formatted
+    .replace(/\s*&\s*/g, ' and ')
+    .replace(/\breign of god\b/gi, 'reign of God')
+    .replace(/\bkingdom of god\b/gi, 'Kingdom of God');
+
+  // Parse sections
+  const settingMatch = formatted.match(/Historical\s*(?:&|and)\s*Literary Setting:\s*(.*?)(?=Theological Core:|$)/is);
+  const coreMatch = formatted.match(/Theological Core:\s*(.*?)(?=[A-Za-z ]+ Confessional (?:Stance|Heritage)|$)/is);
+  const confMatch = formatted.match(/([A-Za-z ]+ Confessional (?:Stance|Heritage)(?:\s*\([^)]*(?:\([^)]*\)[^)]*)*\))?):\s*(.*)$/is);
+
+  if (settingMatch || coreMatch || confMatch) {
+    const blocks: string[] = [];
+    if (settingMatch && settingMatch[1].trim()) {
+      blocks.push(`### 📖 Historical & Canonical Setting\n${settingMatch[1].trim()}`);
+    }
+    if (coreMatch && coreMatch[1].trim()) {
+      blocks.push(`### ⚖️ Theological Core\n${coreMatch[1].trim()}`);
+    }
+    if (confMatch) {
+      const header = confMatch[1].replace(/Confessional Stance/, 'Confessional Heritage').trim();
+      let body = confMatch[2].trim();
+      const quoteMatch = body.match(/^"([\s\S]*?(?:\.{2,3}|[a-z]\.{2,3}))"\s*([\s\S]*)$/);
+      if (quoteMatch) {
+        let quote = quoteMatch[1].trim().replace(/,?\s*\b\w*\.{2,}$/, '.').replace(/\.{3,}$/, '.').trim();
+        const sentences = quote.match(/[^.!?]+[.!?]+/g);
+        if (sentences && sentences.length > 1) {
+          if (sentences[sentences.length - 1].trim().length < 25) {
+            quote = sentences.slice(0, -1).join(' ').trim();
+          }
+        }
+        const reception = quoteMatch[2].trim();
+        body = `> "${quote}"${reception ? `\n\n${reception}` : ''}`;
+      }
+      blocks.push(`### 🕊️ ${header}\n${body}`);
+    }
+    if (blocks.length > 0) return blocks.join('\n\n');
+  }
+
+  return formatted;
+}
+
+/**
  * Generates an accurate, exegesis-driven, confessionally grounded study guide
  * for any biblical passage and theological tradition.
  */
@@ -252,13 +339,14 @@ export function generateStudyGuideContent(
   audience: StudyGuideAudience = 'small_group',
   endVerseNumber?: number
 ): StudyGuide {
-  const isMultiVerse = endVerseNumber && verseNumber && endVerseNumber > verseNumber;
+  const cleanBook = formatBookDisplayName(book);
+  const isMultiVerse = Boolean(endVerseNumber && verseNumber && endVerseNumber > verseNumber);
   const isWholeChapter = !verseNumber && !endVerseNumber;
   const passageRef = isMultiVerse
-    ? `${book} ${chapter}:${verseNumber}–${endVerseNumber}`
+    ? `${cleanBook} ${chapter}:${verseNumber}–${endVerseNumber}`
     : isWholeChapter
-      ? `${book} ${chapter}`
-      : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
+      ? `${cleanBook} ${chapter}`
+      : `${cleanBook} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
 
   const denom = DENOMINATIONS.find(d => d.id === lens) || DENOMINATIONS[0];
   const insight = getTheologicalInsight(book, chapter, verseNumber, verseText, verseLemmas, endVerseNumber);
@@ -294,15 +382,17 @@ export function generateStudyGuideContent(
   }
 
   // 3. Rich, Multilayered Context Snapshot tailored to Audience
+  const cleanDoctrinalQuote = doctrinalDoc
+    ? cleanDoctrinalExcerpt(doctrinalDoc.coreDoctrine, doctrinalDoc.fullExcerpt)
+    : '';
+
   const contextSnapshot = [
-    verseText && verseText.trim().length > 0
-      ? (isWholeChapter
-          ? `Passage Scope: Complete Chapter (${book} ${chapter})`
-          : `Text: "${verseText.trim().slice(0, 300)}${verseText.trim().length > 300 ? '...' : ''}"`)
-      : null,
-    insight.historicalContext ? `Historical & Literary Setting: ${insight.historicalContext}` : null,
-    `Theological Core: ${insight.conciseOverview}`,
-    `${denom.name} Confessional Stance (${confessionName}): ${doctrinalDoc ? `"${doctrinalDoc.coreDoctrine}" ` : ''}${lensPerspective}`
+    `### 📖 Historical & Canonical Setting\n${insight.historicalContext}`,
+    `### ⚖️ Theological Core\n${insight.conciseOverview}`,
+    `### 🕊️ ${denom.name} Confessional Heritage\n` +
+      `**${confessionName}**\n` +
+      (cleanDoctrinalQuote ? `> "${cleanDoctrinalQuote}"\n\n` : '') +
+      `${lensPerspective}`
   ].filter(Boolean).join('\n\n');
 
   // 4. Audience-Tailored Icebreakers
