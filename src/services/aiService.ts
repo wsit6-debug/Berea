@@ -10,13 +10,7 @@ export interface QuizQuestion {
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
-}
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswerIndex: number;
-  explanation: string;
+  reference?: string;
 }
 
 export interface ChatMessage {
@@ -171,7 +165,8 @@ export function shuffleQuizQuestion(q: QuizQuestion): QuizQuestion {
   return {
     ...q,
     options: shuffled,
-    correctAnswerIndex: newIndex >= 0 ? newIndex : 0
+    correctAnswerIndex: newIndex >= 0 ? newIndex : 0,
+    reference: q.reference
   };
 }
 
@@ -609,25 +604,17 @@ export async function generateQuiz(
     prompt = `You are a distinguished biblical scholar creating an engaging multiple-choice quiz.
 Based EXCLUSIVELY on the text for ${book} ${chapter}, create exactly ${numQuestions} multiple-choice questions.
 
-CRITICAL INSTRUCTIONS:
-1. Make the questions specific, insightful, and thought-provoking.
-2. VARY THE CORRECT ANSWER: Randomly place the correct answer among A, B, C, and D. DO NOT put the correct answer as A for every question.
-3. Provide realistic, thoughtful distractor options rather than absurd answers.
-4. Do NOT mention Genesis unless the book is Genesis.
+Output ONLY a JSON array of objects. Each object must have these exact keys:
+- "question": string
+- "options": string array of exactly 4 choices (DO NOT use "All of the above", "None of the above", or "Both A and B". Options will be shuffled!)
+- "correctAnswerText": string (must exactly match one of the options)
+- "explanation": string
+- "reference": string (exact scripture reference, e.g. ${book} ${chapter}:1)
+
+DO NOT include markdown formatting like \`\`\`json. Output raw JSON only.
 
 PASSAGE:
-${contextPassage}
-
-Required format for each question:
-QUESTION: [Engaging question about ${book} ${chapter}]
-A) [Option]
-B) [Option]
-C) [Option]
-D) [Option]
-CORRECT: [A, B, C, or D - MIX IT UP!]
-EXPLANATION: [Insightful explanation citing the passage]
-
-Generate ${numQuestions} questions now:`;
+${contextPassage}`;
   } else {
     prompt = `You are a distinguished biblical scholar creating a book review quiz for the book of ${book}.
 Canonical Theme: ${bookTheme}.
@@ -635,20 +622,14 @@ Major theological themes: ${insight.theologicalThemes.join(', ')}.
 
 Create exactly ${numQuestions} comprehensive multiple-choice questions about the major themes, author, structure, and message of ${book}.
 
-CRITICAL INSTRUCTIONS:
-1. VARY THE CORRECT ANSWER: Randomly place the correct answer among A, B, C, and D. DO NOT always make A the correct answer.
-2. Provide plausible biblical alternatives for wrong options.
+Output ONLY a JSON array of objects. Each object must have these exact keys:
+- "question": string
+- "options": string array of exactly 4 choices (DO NOT use "All of the above", "None of the above", or "Both A and B". Options will be shuffled!)
+- "correctAnswerText": string (must exactly match one of the options)
+- "explanation": string
+- "reference": string (relevant scripture reference)
 
-Required format for each question:
-QUESTION: [Clear question about ${book}]
-A) [Option]
-B) [Option]
-C) [Option]
-D) [Option]
-CORRECT: [A, B, C, or D - MIX IT UP!]
-EXPLANATION: [Brief explanation]
-
-Generate ${numQuestions} questions now:`;
+DO NOT include markdown formatting like \`\`\`json. Output raw JSON only.`;
   }
 
   try {
@@ -656,73 +637,42 @@ Generate ${numQuestions} questions now:`;
     const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], undefined, true);
     let rawText = responseText.trim();
 
-    // Parse the plain text format with resilient regex
-    const quizArray: QuizQuestion[] = [];
-    const splitText = rawText.split(/(?:^|\n)(?=QUESTION:)/i);
+    try {
+      const match = rawText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      const jsonStr = match ? match[0] : rawText;
+      const parsedArray = JSON.parse(jsonStr) as any[];
 
-    for (const block of splitText) {
-      if (!block.toLowerCase().includes('question:')) continue;
-      try {
-        const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-        const qLine = lines.find(l => /^QUESTION:/i.test(l));
-        if (!qLine) continue;
-        const questionText = qLine.replace(/^QUESTION:\s*/i, '').trim();
-
-        const aLine = lines.find(l => /^A[\).]/i.test(l));
-        const bLine = lines.find(l => /^B[\).]/i.test(l));
-        const cLine = lines.find(l => /^C[\).]/i.test(l));
-        const dLine = lines.find(l => /^D[\).]/i.test(l));
-
-        if (!aLine || !bLine) continue;
-
-        const optA = aLine.replace(/^A[\).]\s*/i, '').trim();
-        const optB = bLine.replace(/^B[\).]\s*/i, '').trim();
-        const optC = cLine ? cLine.replace(/^C[\).]\s*/i, '').trim() : 'None of the above';
-        const optD = dLine ? dLine.replace(/^D[\).]\s*/i, '').trim() : 'All of the above';
-
-        const correctLine = lines.find(l => /^CORRECT:/i.test(l)) || '';
-        const explLine = lines.find(l => /^EXPLANATION:/i.test(l)) || '';
-
-        let correctIdx = 0;
-        const correctMatch = correctLine.match(/(?:CORRECT:\s*)([A-Da-d])/i);
-        if (correctMatch) {
-          const letter = correctMatch[1].toUpperCase();
-          if (letter === 'B') correctIdx = 1;
-          else if (letter === 'C') correctIdx = 2;
-          else if (letter === 'D') correctIdx = 3;
-        } else {
-          if (correctLine.includes('B') || correctLine.includes('b')) correctIdx = 1;
-          else if (correctLine.includes('C') || correctLine.includes('c')) correctIdx = 2;
-          else if (correctLine.includes('D') || correctLine.includes('d')) correctIdx = 3;
-        }
-
-        const explanation = explLine ? explLine.replace(/^EXPLANATION:\s*/i, '').trim() : 'Based on scripture.';
-
-        // Guard against generic template echo
-        if (questionText.length > 5 && (!questionText.includes('In the beginning') || book.toLowerCase() === 'genesis')) {
-          const rawQ: QuizQuestion = {
-            question: questionText,
-            options: [optA, optB, optC, optD],
-            correctAnswerIndex: correctIdx,
-            explanation: explanation
-          };
-          // Always shuffle options to guarantee unpredictable letter distribution
-          quizArray.push(shuffleQuizQuestion(rawQ));
-        }
-      } catch (e) {
-        console.warn("Failed to parse question block", block);
+      if (!Array.isArray(parsedArray)) {
+        throw new Error('AI did not return a valid array of questions.');
       }
-    }
 
-    if (quizArray.length >= 2) {
-      return quizArray;
+      const quizArray = parsedArray.map((q: any) => {
+        let index = q.options.indexOf(q.correctAnswerText);
+        if (index === -1) {
+          // Fallback if LLM altered text slightly
+          index = q.options.findIndex((opt: string) => opt.includes(q.correctAnswerText) || q.correctAnswerText.includes(opt));
+          if (index === -1) index = 0; // Absolute fallback
+        }
+        
+        return shuffleQuizQuestion({
+          question: q.question,
+          options: q.options,
+          correctAnswerIndex: index,
+          explanation: q.explanation,
+          reference: q.reference
+        });
+      });
+
+      if (quizArray.length >= 1) {
+        return quizArray;
+      }
+      throw new Error('AI generated insufficient or malformed questions. Please try again.');
+    } catch (parseError: any) {
+      console.error("Parse Error:", parseError, "Raw output:", rawText);
+      throw new Error('Failed to parse AI quiz format. Please try again.');
     }
-    console.warn('AI generated insufficient or malformed questions, falling back to curated theological quiz.');
-    return getCuratedFallbackQuiz(book, chapter, type, chapterText, numQuestions);
   } catch (err: any) {
-    console.warn('WebLLM generation error, utilizing verified curated quiz:', err);
-    return getCuratedFallbackQuiz(book, chapter, type, chapterText, numQuestions);
+    throw new Error(`AI generation error: ${err.message || String(err)}`);
   }
 }
 
@@ -767,7 +717,7 @@ export async function getAccumulatedBookQuiz(book: string, numQuestions: number 
 
   // If still no chapter history, guarantee the book questions are returned
   if (finalQuestions.length === 0) {
-    finalQuestions = getCuratedFallbackQuiz(book, 1, 'book');
+    throw new Error('Unable to generate book quiz at this time.');
   }
 
   // Shuffle options and questions lightly

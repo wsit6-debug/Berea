@@ -25,6 +25,21 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let interval: any;
+    if (isLoading) {
+      setProgress(0);
+      // It takes about 45 seconds on average, so 45000ms / 100 = 450ms per 1%
+      interval = setInterval(() => {
+        setProgress(p => (p < 95 ? p + 1 : p));
+      }, 450);
+    } else {
+      setProgress(100);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,6 +66,23 @@ export const QuizModal: React.FC<QuizModalProps> = ({
           setQuestions(historyQuiz);
         }
       } else {
+        const historyKey = `berea_quiz_pregen_${bookName}_${chapterNumber}`;
+        const cachedStr = localStorage.getItem(historyKey);
+        if (cachedStr) {
+          try {
+            const parsed = JSON.parse(cachedStr);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setQuestions(parsed);
+              setIsLoading(false);
+              // Clear pregen so next time we get a fresh quiz
+              localStorage.removeItem(historyKey);
+              return;
+            }
+          } catch (e) {
+            console.warn('Failed to parse cached quiz', e);
+          }
+        }
+        
         const numQuestions = 3;
         const fetchedQuestions = await generateQuiz(bookName, chapterNumber, quizType, numQuestions, chapterText);
         setQuestions(fetchedQuestions);
@@ -115,11 +147,23 @@ export const QuizModal: React.FC<QuizModalProps> = ({
 
         <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <Loader2 className="w-8 h-8 text-[#B4793D] animate-spin" />
-              <p className="text-[#78716C] text-sm font-medium animate-pulse">
-                Generating your {quizType} quiz...
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 space-y-6">
+              <div className="relative w-12 h-12">
+                <div className="absolute w-full h-full border-4 border-[#EBE5DC] rounded-full"></div>
+                <div className="absolute w-full h-full border-4 border-[#B4793D] rounded-full border-t-transparent animate-spin"></div>
+              </div>
+              <div className="text-center w-full max-w-[200px]">
+                <p className="text-[#78716C] text-sm font-medium animate-pulse mb-3">
+                  Generating your {quizType} quiz...
+                </p>
+                <div className="w-full bg-[#EBE5DC] rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="bg-[#B4793D] h-1.5 rounded-full transition-all duration-1000 ease-out" 
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-[#A8A29E] mt-2 font-medium">{progress}% (Est. 45s)</p>
+              </div>
             </div>
           ) : error ? (
             <div className="text-center py-8">
@@ -162,6 +206,11 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                             <p className="text-green-700 font-medium">Correct answer: {q.options[q.correctAnswerIndex]}</p>
                           )}
                           <p className="text-[#78716C] italic mt-2 text-[11px]">{q.explanation}</p>
+                          {q.reference && (
+                            <p className="text-[#B4793D] font-medium mt-1 text-xs">
+                              Scripture: {q.reference}
+                            </p>
+                          )}
                         </div>
                       </div>
                     );
