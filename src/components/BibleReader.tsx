@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Verse, Chapter, TranslationId } from '../data/bibleData';
+<<<<<<< HEAD
 import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers } from 'lucide-react';
+=======
+import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, Trophy } from 'lucide-react';
+>>>>>>> 44f932969afc7c1ccb02918198df651b23f1e7eb
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
 import {
@@ -69,7 +73,12 @@ interface BibleReaderProps {
   isAiPanelOpen?: boolean;
   isLoading?: boolean;
   onSelectPassage?: (bookId: string, chapterNum: number, verseNum?: number) => void;
+<<<<<<< HEAD
   onCreateStudyGuide?: (verse: Verse, range?: { start: number; end: number }) => void;
+=======
+  onOpenQuiz?: (type: 'chapter' | 'book') => void;
+  isLastChapterOfBook?: boolean;
+>>>>>>> 44f932969afc7c1ccb02918198df651b23f1e7eb
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -88,7 +97,12 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   isAiPanelOpen = true,
   isLoading = false,
   onSelectPassage,
+<<<<<<< HEAD
   onCreateStudyGuide
+=======
+  onOpenQuiz,
+  isLastChapterOfBook = false
+>>>>>>> 44f932969afc7c1ccb02918198df651b23f1e7eb
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
@@ -982,6 +996,28 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
+            
+            {/* Quiz Buttons */}
+            {onOpenQuiz && (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3 animate-fadeIn">
+                <button
+                  onClick={() => onOpenQuiz('chapter')}
+                  className="px-4 py-2 bg-[#FAF5ED] text-[#B4793D] border border-[#D4A373] hover:bg-[#F5EFE6] rounded-full text-xs font-semibold flex items-center gap-2 transition-all shadow-sm"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Finish Chapter
+                </button>
+                {isLastChapterOfBook && (
+                  <button
+                    onClick={() => onOpenQuiz('book')}
+                    className="px-4 py-2 bg-[#B4793D] text-white hover:bg-[#9A632E] rounded-full text-xs font-semibold flex items-center gap-2 transition-all shadow-sm"
+                  >
+                    <Trophy className="w-3.5 h-3.5" />
+                    Finished Book
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 

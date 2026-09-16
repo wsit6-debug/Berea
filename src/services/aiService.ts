@@ -12,6 +12,13 @@ export interface QuizQuestion {
   explanation: string;
 }
 
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'assistant' | 'system';
@@ -765,4 +772,178 @@ export async function getAccumulatedBookQuiz(book: string, numQuestions: number 
 
   // Shuffle options and questions lightly
   return finalQuestions.slice(0, numQuestions);
+}
+
+export async function generateQuiz(
+  book: string,
+  chapter: number,
+  type: 'chapter' | 'book',
+  numQuestions: number = 3,
+  chapterText?: string
+): Promise<QuizQuestion[]> {
+  const scope = type === 'chapter' ? `chapter ${chapter} of the book of ${book}` : `the entire book of ${book}`;
+  
+  let prompt = `Generate exactly ${numQuestions} multiple-choice questions about ${scope}.
+Focus on specific details and themes so it is unique. (seed: ${Math.random()})
+Do NOT output JSON. You MUST use exactly this plain text format for each question. 
+
+Here is an example of what a good question looks like:
+QUESTION: In the beginning, what did God create?
+A) The sun and moon
+B) The heavens and the earth
+C) The animals
+D) Man and woman
+CORRECT: B
+EXPLANATION: Genesis 1:1 states God created the heavens and the earth.
+
+Generate ${numQuestions} new questions now:`;
+
+  if (chapterText && type === 'chapter') {
+    prompt = `Based ONLY on the following scripture text, generate exactly ${numQuestions} multiple-choice questions. 
+Do not use outside knowledge. (seed: ${Math.random()})
+Do NOT output JSON. You MUST use exactly this plain text format for each question.
+
+Here is an example of what a good question looks like:
+QUESTION: In the beginning, what did God create?
+A) The sun and moon
+B) The heavens and the earth
+C) The animals
+D) Man and woman
+CORRECT: B
+EXPLANATION: Genesis 1:1 states God created the heavens and the earth.
+
+Now, generate ${numQuestions} new questions based ONLY on this text:
+SCRIPTURE TEXT:
+${chapterText}`;
+  } else if (type === 'book') {
+    prompt = `Generate exactly ${numQuestions} broad, overarching multiple-choice questions about the major theological themes and grand narrative of the entire book of ${book}.
+Do NOT output JSON. You MUST use exactly this plain text format for each question.
+
+Here is an example of what a good question looks like:
+QUESTION: What is the primary overarching theme of the book of Genesis?
+A) The conquest of the promised land
+B) The establishment of the Levitical priesthood
+C) God's creation and the beginnings of His covenant with humanity
+D) The rebuilding of the temple
+CORRECT: C
+EXPLANATION: Genesis covers the origins of the world and the patriarchs of Israel.
+
+Generate ${numQuestions} new questions now:`;
+  }
+
+  try {
+    const { generateLocalAiResponse } = await import('./webLlmService');
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], undefined, true);
+    let rawText = responseText.trim();
+    
+    // Parse the plain text format
+    const quizArray: QuizQuestion[] = [];
+    const splitText = rawText.split('QUESTION:');
+    
+    // The first element is always the text BEFORE the first "QUESTION:", which is usually intro chatter.
+    // We only want the actual question blocks (index 1 and onwards).
+    const questionBlocks = splitText.slice(1).filter(b => b.trim().length > 10);
+    
+    for (const block of questionBlocks) {
+      try {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        
+        const questionText = lines[0];
+        
+        // Find the option lines robustly
+        const aLine = lines.find(l => l.startsWith('A)'));
+        const bLine = lines.find(l => l.startsWith('B)'));
+        const cLine = lines.find(l => l.startsWith('C)'));
+        const dLine = lines.find(l => l.startsWith('D)'));
+        
+        // Skip this block entirely if it doesn't even have options (e.g. malformed generation)
+        if (!aLine || !bLine) continue;
+        
+        const optA = aLine.substring(2).trim();
+        const optB = bLine.substring(2).trim();
+        const optC = cLine ? cLine.substring(2).trim() : 'Option C';
+        const optD = dLine ? dLine.substring(2).trim() : 'Option D';
+        
+        const correctLine = lines.find(l => l.startsWith('CORRECT:')) || '';
+        const explLine = lines.find(l => l.startsWith('EXPLANATION:')) || '';
+        
+        let correctIdx = 0;
+        if (correctLine.includes('B') || correctLine.includes('b)')) correctIdx = 1;
+        if (correctLine.includes('C') || correctLine.includes('c)')) correctIdx = 2;
+        if (correctLine.includes('D') || correctLine.includes('d)')) correctIdx = 3;
+        
+        const explanation = explLine.length > 12 ? explLine.substring(12).trim() : 'Correct answer.';
+        
+        if (questionText.length > 5 && !questionText.includes('In the beginning, what did God create') && !questionText.includes('What is the primary overarching theme')) {
+          quizArray.push({
+            question: questionText,
+            options: [optA, optB, optC, optD],
+            correctAnswerIndex: correctIdx,
+            explanation: explanation
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to parse a question block", block);
+      }
+    }
+    
+    if (quizArray.length > 0) {
+      return quizArray;
+    } else {
+      throw new Error(`AI failed to generate valid questions. Raw output: ${rawText.substring(0, 1000)}...`);
+    }
+  } catch (err: any) {
+    console.error('Error generating quiz:', err);
+    throw err;
+  }
+}
+
+// Local Storage Keys for Quiz Accumulation
+const QUIZ_HISTORY_KEY_PREFIX = 'berea_quiz_history_';
+
+export function saveChapterQuizToHistory(book: string, chapter: number, questions: QuizQuestion[]) {
+  try {
+    const key = `${QUIZ_HISTORY_KEY_PREFIX}${book}_${chapter}`;
+    localStorage.setItem(key, JSON.stringify(questions));
+  } catch (e) {
+    console.warn('Failed to save quiz history to local storage', e);
+  }
+}
+
+export async function getAccumulatedBookQuiz(book: string, numQuestions: number = 10): Promise<QuizQuestion[]> {
+  let allQuestions: QuizQuestion[] = [];
+  
+  // Search local storage for all chapter quizzes for this book
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(`${QUIZ_HISTORY_KEY_PREFIX}${book}_`)) {
+      try {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const parsed = JSON.parse(data) as QuizQuestion[];
+          allQuestions = allQuestions.concat(parsed);
+        }
+      } catch (e) {
+        // ignore invalid json
+      }
+    }
+  }
+
+  // Deduplicate questions based on question text
+  const uniqueQuestions = Array.from(new Map(allQuestions.map(q => [q.question, q])).values());
+  
+  // The user requested we use ALL questions from previous chapter quizzes.
+  let finalQuestions: QuizQuestion[] = [...uniqueQuestions];
+  
+  // Generate broad book questions dynamically to supplement
+  try {
+    // Generate 3 broad book questions
+    const broadQuestions = await generateQuiz(book, 1, 'book', 3);
+    finalQuestions = finalQuestions.concat(broadQuestions);
+  } catch (e) {
+    console.warn("Failed to generate broad book questions");
+  }
+
+  // Final shuffle of the combined quiz
+  return finalQuestions;
 }

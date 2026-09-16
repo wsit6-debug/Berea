@@ -16,7 +16,10 @@ import { BereaAiPanel } from './components/BereaAiPanel';
 import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
+<<<<<<< HEAD
 import { LoginScreen } from './components/LoginScreen';
+=======
+>>>>>>> 44f932969afc7c1ccb02918198df651b23f1e7eb
 import { QuizModal } from './components/QuizModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
@@ -244,6 +247,7 @@ export function App() {
               isAiPanelOpen={isAiPanelOpen}
               isLoading={isLoadingChapter}
               onSelectPassage={handleSelectPassage}
+<<<<<<< HEAD
               onCreateStudyGuide={(verse, range) => {
                 setSelectedVerse(verse);
                 if (range && range.start !== range.end) {
@@ -251,6 +255,12 @@ export function App() {
                 }
                 setIsAiPanelOpen(true);
                 setAiPanelTab('studyGuide');
+=======
+              isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
+              onOpenQuiz={(type) => {
+                setQuizType(type);
+                setIsQuizModalOpen(true);
+>>>>>>> 44f932969afc7c1ccb02918198df651b23f1e7eb
               }}
             />
           </div>
