@@ -74,7 +74,8 @@ export function deduplicateRepetitions(text: string): string {
 
 export async function generateLocalAiResponse(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-  onProgress?: (progress: { text: string; progress: number }) => void
+  onProgress?: (progress: { text: string; progress: number }) => void,
+  skipDeduplication: boolean = false
 ): Promise<string> {
   // 1. Try local Ollama server if available (e.g. http://localhost:11434)
   try {
@@ -113,13 +114,24 @@ export async function generateLocalAiResponse(
     if (ollamaRes.ok) {
       const data = await ollamaRes.json();
       if (data.message?.content) {
-        return deduplicateRepetitions(data.message.content);
+        return skipDeduplication ? data.message.content : deduplicateRepetitions(data.message.content);
       }
     }
     throw new Error(`Ollama generation failed: ${ollamaRes.status} ${ollamaRes.statusText}`);
   } catch (ollamaErr) {
-    console.error('Ollama connection failed:', ollamaErr);
-    throw ollamaErr;
+    // Fall back to in-browser WebLLM engine
+    const engine = await getOrInitLocalEngine(onProgress);
+    const reply = await engine.chat.completions.create({
+      messages,
+      temperature: 0.6,
+      top_p: 0.9,
+      frequency_penalty: 0.5,
+      presence_penalty: 0.4,
+      max_tokens: 1200
+    });
+
+    const rawContent = reply.choices[0]?.message?.content || '';
+    return skipDeduplication ? rawContent : deduplicateRepetitions(rawContent);
   }
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, Trophy, HelpCircle
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
@@ -41,6 +41,7 @@ interface BereaAiPanelProps {
   onClose?: () => void;
   activeTab?: BereaAiTab;
   onTabChange?: (tab: BereaAiTab) => void;
+  onOpenQuiz?: (type: 'chapter' | 'book') => void;
 }
 
 export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
@@ -56,7 +57,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   onTranslationChange,
   onClose,
   activeTab: externalTab,
-  onTabChange
+  onTabChange,
+  onOpenQuiz
 }) => {
   const [internalTab, setInternalTab] = useState<BereaAiTab>(externalTab || 'overview');
 
@@ -619,6 +621,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           >
             <MapPin className="w-3 h-3" />
             <span>Atlas</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('quiz')}
+            className={`ios-segment-pill flex-1 !text-[11px] !py-0.5 ${activeTab === 'quiz' ? 'active' : ''}`}
+          >
+            <HelpCircle className="w-3 h-3" />
+            <span>Quiz</span>
           </button>
         </div>
       </div>
@@ -1592,6 +1602,70 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <p className="leading-snug">{currentEvent.theologicalSignificance}</p>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quiz Tab */}
+        {activeTab === 'quiz' && (
+          <div className="space-y-3 animate-fadeIn">
+            {/* Header Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-[#FAF5ED] to-white border border-[#EBE5DC] shadow-xs space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#FAF0E2] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-[#26221F]">Scripture & Theology Quiz</h4>
+                  <p className="text-[10.5px] text-[#78716C]">
+                    Test your comprehension and theology for {currentBook} {currentChapter}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Chapter Quiz Trigger */}
+            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
+                    <HelpCircle className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span>{currentBook} {currentChapter} Chapter Quiz</span>
+                  </div>
+                  <p className="text-[11px] text-[#78716C] mt-0.5">
+                    3 grounded multiple-choice questions with theological explanations based on the active passage.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onOpenQuiz ? onOpenQuiz('chapter') : undefined}
+                className="w-full py-2 px-3 bg-[#FAF5ED] hover:bg-[#F5EFE6] text-[#B4793D] border border-[#D4A373] rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99]"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Start Chapter {currentChapter} Quiz</span>
+              </button>
+            </div>
+
+            {/* Book Review Quiz Trigger */}
+            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span>{currentBook} Comprehensive Book Quiz</span>
+                  </div>
+                  <p className="text-[11px] text-[#78716C] mt-0.5">
+                    Comprehensive questions covering major themes, canonical structure, and accumulated chapters.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onOpenQuiz ? onOpenQuiz('book') : undefined}
+                className="w-full py-2 px-3 bg-[#B4793D] hover:bg-[#9A632E] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99]"
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Start {currentBook} Book Quiz</span>
+              </button>
             </div>
           </div>
         )}
