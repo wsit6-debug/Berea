@@ -272,6 +272,10 @@ export function App() {
                 onClose={() => setIsAiPanelOpen(false)}
                 activeTab={aiPanelTab}
                 onTabChange={setAiPanelTab}
+                onOpenQuiz={(type) => {
+                  setQuizType(type);
+                  setIsQuizModalOpen(true);
+                }}
               />
             </div>
           )}
