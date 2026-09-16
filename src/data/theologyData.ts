@@ -1,4 +1,4 @@
-export type DenominationalLens = 
+export type DenominationalLens =
   | 'catholic'
   | 'orthodox'
   | 'reformed'
@@ -2497,28 +2497,45 @@ function formatBookDisplayName(raw: string): string {
  * perspectives and authentic Greek/Hebrew lemmas for ANY passage.
  */
 export function getTheologicalInsight(
-  bookId: string, 
-  chapter: number, 
+  bookId: string,
+  chapter: number,
   verseNum?: number,
   verseText?: string,
-  verseLemmas?: { word: string; transliteration: string; strongs?: string; definition?: string }[]
+  verseLemmas?: { word: string; transliteration: string; strongs?: string; definition?: string }[],
+  endVerseNum?: number
 ): TheologicalInsight {
   const normBook = bookId.toLowerCase().trim();
+  const isExplicitVerse = Boolean(verseNum);
   const vNum = verseNum || 1;
-  const exactKey = `${normBook}_${chapter}_${vNum}`;
+  const isMulti = Boolean(endVerseNum && verseNum && endVerseNum > verseNum);
+  const cleanBookName = formatBookDisplayName(normBook);
+  const cleanPassageRef = isMulti
+    ? `${cleanBookName} ${chapter}:${verseNum}–${endVerseNum}`
+    : isExplicitVerse
+      ? `${cleanBookName} ${chapter}:${verseNum}`
+      : `${cleanBookName} ${chapter}`;
+
+  const exactKey = isExplicitVerse ? `${normBook}_${chapter}_${vNum}` : `${normBook}_${chapter}_1`;
 
   // 1. Direct exact key match for curated flagship verses
   if (THEOLOGICAL_INSIGHTS[exactKey]) {
-    return THEOLOGICAL_INSIGHTS[exactKey];
+    const base = THEOLOGICAL_INSIGHTS[exactKey];
+    return {
+      ...base,
+      passageRef: cleanPassageRef
+    };
   }
 
   // 2. Canonical & Thematic Theological Loci Classifier
-  const cleanBookName = formatBookDisplayName(normBook);
-  const cleanPassageRef = `${cleanBookName} ${chapter}:${vNum}`;
   const lowerText = (verseText || '').toLowerCase();
   const snippet = verseText ? `"${verseText.slice(0, 120)}${verseText.length > 120 ? '...' : ''}"` : `this passage`;
+  const checkVNum = vNum || 1;
 
   // Detect specific contentious theological loci
+  const isElijahForerunnerLocus = (normBook === 'matthew' && chapter === 17 && checkVNum >= 10 && checkVNum <= 13) ||
+    (normBook === 'mark' && chapter === 9 && checkVNum >= 11 && checkVNum <= 13) ||
+    (normBook === 'malachi' && (chapter === 3 || chapter === 4)) ||
+    lowerText.includes('elijah must come') || lowerText.includes('elias must first') || lowerText.includes('elijah has already come');
   const isPapacyLocus = (normBook === 'matthew' && chapter === 16) || (normBook === 'john' && chapter === 21 && vNum >= 15) || lowerText.includes('keys of heaven') || lowerText.includes('rock i will build');
   const isJustificationLocus = (normBook === 'james' && chapter === 2) || (normBook === 'romans' && (chapter === 3 || chapter === 4 || chapter === 5)) || (normBook === 'galatians' && chapter === 2) || lowerText.includes('justifi') || lowerText.includes('faith alone') || lowerText.includes('impute');
   const isPredestinationLocus = (normBook === 'romans' && (chapter === 8 || chapter === 9)) || (normBook === 'ephesians' && chapter === 1) || (normBook === '1timothy' && chapter === 2 && vNum === 4) || lowerText.includes('predestin') || lowerText.includes('elect') || lowerText.includes('foreknew') || lowerText.includes('mercy on whom');
@@ -2527,8 +2544,175 @@ export function getTheologicalInsight(
   const isTraditionLocus = (normBook === '2thessalonians' && chapter === 2) || (normBook === '1timothy' && chapter === 3 && vNum === 15) || (normBook === '2timothy' && chapter === 3 && vNum >= 15) || lowerText.includes('tradition') || lowerText.includes('pillar and ground');
   const isSecurityLocus = (normBook === 'hebrews' && (chapter === 6 || chapter === 10)) || (normBook === 'john' && chapter === 10 && vNum >= 27) || lowerText.includes('fall away') || lowerText.includes('pluck them out') || lowerText.includes('never perish');
   const isMariologyLocus = (normBook === 'luke' && chapter === 1 && (vNum === 28 || vNum === 42 || vNum === 48)) || lowerText.includes('full of grace') || lowerText.includes('blessed art thou among');
+  const isSpiritualWarfareLocus = (normBook === 'matthew' && chapter === 17 && vNum >= 14 && vNum <= 21) ||
+    (normBook === 'mark' && chapter === 9 && vNum >= 14 && vNum <= 29) ||
+    (normBook === 'ephesians' && chapter === 6 && vNum >= 10 && vNum <= 18) ||
+    lowerText.includes('prayer and fasting') || lowerText.includes('fasting') || lowerText.includes('cast out') || lowerText.includes('demon') || lowerText.includes('devils') || lowerText.includes('unclean spirit') || lowerText.includes('goeth not out');
+  const isPassionPredictionLocus =
+    (normBook === 'matthew' && ((chapter === 17 && vNum >= 22 && vNum <= 23) || (chapter === 16 && vNum >= 21 && vNum <= 23) || (chapter === 20 && vNum >= 17 && vNum <= 19))) ||
+    (normBook === 'mark' && ((chapter === 9 && vNum >= 30 && vNum <= 32) || (chapter === 8 && vNum >= 31 && vNum <= 33) || (chapter === 10 && vNum >= 32 && vNum <= 34))) ||
+    (normBook === 'luke' && ((chapter === 9 && vNum >= 43 && vNum <= 45) || (chapter === 9 && vNum === 22) || (chapter === 18 && vNum >= 31 && vNum <= 34))) ||
+    lowerText.includes('handed over to men') || lowerText.includes('delivered into the hands of men') ||
+    lowerText.includes('son of man is to be handed over') || lowerText.includes('kill him, and on the third day') ||
+    lowerText.includes('killed, and after three days rise');
+  const isDiscipleshipRewardLocus =
+    (normBook === 'matthew' && chapter === 19 && vNum >= 16 && vNum <= 30) ||
+    (normBook === 'mark' && chapter === 10 && vNum >= 17 && vNum <= 31) ||
+    (normBook === 'luke' && chapter === 18 && vNum >= 18 && vNum <= 30) ||
+    lowerText.includes('given up everything') || lowerText.includes('left everything and followed') ||
+    lowerText.includes('what will there be for us') || lowerText.includes('hundredfold') ||
+    lowerText.includes('renewal of all things') || lowerText.includes('first will be last');
 
   // Topic-Aware Dynamic Resolution
+  if (isDiscipleshipRewardLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `Following the departure of the rich young ruler who prioritized wealth over the kingdom, Peter asks what reward awaits the disciples who left everything to follow Jesus (${snippet}). Christ responds by affirming the eternal value of sacrificial discipleship, promising the cosmic renewal (*palingenesia*), apostolic authority, and a hundredfold reward in this life and the next.`,
+      theologicalThemes: [
+        'Cost of Discipleship & Radical Renunciation',
+        'The Cosmic Renewal (Palingenesia) & Twelve Thrones',
+        'Rewards of Grace vs Legalistic Merit',
+        'First and Last: Reversal of Earthly Hierarchies'
+      ],
+      historicalContext: `In Second Temple Judaism, material prosperity was widely regarded by scribes and Pharisees as an infallible sign of divine favor. Jesus reverses this conventional wisdom after the rich young ruler departs in sorrow (Matt 19:16–26), prompting Peter’s candid apostolic query regarding what lies ahead for those who literally abandoned home, family, and livelihood for the Messianic mission.`,
+      lensPerspectives: {
+        catholic: `Root of the Evangelical Counsels (poverty, chastity, and obedience; CCC §914–915, §2544–2547): voluntary renunciation of earthly possessions for Christ’s sake participates in evangelical perfection, receiving a heavenly recompense and crown of glory through grace.`,
+        reformed: `Affirms that while no work can merit salvation (WCF 16.5–6), God graciously and freely rewards the sacrificial obedience of His saints out of covenantal fatherly love, ensuring that no cross borne for Christ goes unrewarded.`,
+        lutheran: `Distinguishes the Law from the Gospel promises: true discipleship is the fruit of faith clinging to Christ alone. The reward promised to Peter is not a wage won by human righteousness, but the gift of eternal life and heavenly fellowship with the King.`,
+        orthodox: `Understands total detachment and ascetic renunciation as the royal path to theosis (deification). Those who empty themselves of earthly attachments are filled with uncreated grace and will judge the twelve tribes of Israel in the cosmic resurrection and restoration.`,
+        wesleyan: `A summons to entire devotion and Christian perfection in love. St. Peter’s sacrifice reminds believers to surrender all idolized securities so that God’s holy love may reign supremely in the heart.`,
+        anglican: `Reflects upon the vocation of self-denial and stewardship in the following of Christ, honoring the apostolic witness and trusting God's generous providence in both this present life and the world to come.`,
+        baptist_evangelical: `Underscores personal surrender and radical discipleship: leaving earthly idols to follow Jesus Christ brings incomparable joy, eternal life, and true heavenly treasure far exceeding whatever was surrendered.`
+      },
+      originalLanguageInsights: [
+        {
+          term: 'Left / Forsaken Everything',
+          originalScript: 'ἀφήκαμεν πάντα',
+          transliteration: 'aphēkamen panta',
+          strongsRef: 'G863 / G3956',
+          nuance: 'Aorist active verb indicating a decisive, comprehensive abandonment of livelihood, nets, and family security to cling wholly to Jesus.'
+        },
+        {
+          term: 'Renewal / Regeneration',
+          originalScript: 'παλιγγενεσίᾳ',
+          transliteration: 'palingenesia',
+          strongsRef: 'G3824',
+          nuance: 'New birth, restoration, or cosmic renewal. Refers here to the messianic restoration of the cosmos and the establishment of the kingdom in power.'
+        },
+        {
+          term: 'Hundredfold',
+          originalScript: 'ἑκατονταπλασίονα',
+          transliteration: 'hekatontaplasiona',
+          strongsRef: 'G1542',
+          nuance: 'Immense superabundance—demonstrating that whatever is given up for the Lord is multiplied beyond measure by divine grace.'
+        }
+      ],
+      suggestedQuestions: [
+        `How does Peter's question in ${cleanPassageRef} reflect human anxiety about sacrifice, and how does Jesus tenderly correct and reorient it?`,
+        `What is the theological significance of the word palingenesia ("renewal of all things") for Christian hope and the resurrection?`,
+        `How does the promise of a "hundredfold reward" distinguish divine generosity from worldly transactional merit?`
+      ],
+      practicalApplication: `Examine what earthly attachments, securities, or ambitions you may be clinging to that hinder your wholehearted walk with Jesus Christ. Lay them down at His feet, trusting His abundant promise.`
+    };
+  }
+
+  if (isElijahForerunnerLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `Following the Transfiguration, the disciples question the scribal consensus on Malachi 4:5–6 regarding the return of Elijah before the Messiah. Jesus reveals that the prophecy was fulfilled typologically in John the Baptist, whose rejection and death foreshadow the Son of Man’s own suffering.`,
+      theologicalThemes: [
+        'Prophetic Fulfillment & The Forerunner (Malachi 4:5–6)',
+        'Typological Fulfillment in John the Baptist',
+        'The Suffering Servant & The Transfigured Christ'
+      ],
+      historicalContext: `Descending Mount Hermon immediately after witnessing the Transfiguration (Matt 17:1–9), Peter, James, and John struggle with scribal apocalyptic expectations. Scribes taught that Elijah would literally reappear before the Day of the Lord to restore Israel.`,
+      lensPerspectives: {
+        catholic: `Teaches the harmony of Old and New Testaments through biblical typology (CCC §523, §718): John the Baptist precedes Christ "in the spirit and power of Elijah," inaugurating the Messianic advent and prefiguring the sacrificial Passion of the Lord.`,
+        orthodox: `Celebrates the prophetic continuity of the Forerunner (Prodromos), who bridged the prophetic era and the mystery of the Theophany, bearing witness that the Messiah must enter His glory through suffering.`,
+        reformed: `Exemplifies covenantal unity and Christocentric fulfillment of redemptive history: Old Testament prophecies find their true substance in Christ and His forerunner rather than in earthly political restoration (WCF 7–8).`,
+        lutheran: `Distinguishes the Theology of the Cross from a theology of glory: as John the Baptist suffered execution under Herod, so the Son of Man must suffer at the hands of men; God's Kingdom advances through suffering rather than human acclaim.`,
+        wesleyan: `Focuses on the heart-turning ministry of repentance prefigured by Elijah and preached by John, preparing souls to receive the sanctifying grace of Christ through genuine faith.`,
+        anglican: `Reflects on the prophetic preparation of the way of the Lord through repentance and baptism, seeing John the Baptist as the great bridge between the Old and New Covenants.`,
+        baptist_evangelical: `Affirms the literal fulfillment of God's Word: Jesus directly confirms that John the Baptist came in the prophetic spirit of Elijah to call individuals to personal repentance in preparation for the Savior.`
+      },
+      originalLanguageInsights: [
+        { term: 'Elijah', originalScript: 'Ἠλίας', transliteration: 'Ēlias', strongsRef: 'G2243', nuance: 'The Hebrew prophet Elijah, whose return as forerunner was prophesied in Malachi 4:5.' },
+        { term: 'Scribes', originalScript: 'γραμματεῖς', transliteration: 'grammateis', strongsRef: 'G1122', nuance: 'Torah scholars and official interpreters of the law in Second Temple Judaism.' },
+        { term: 'Must / Necessary', originalScript: 'δεῖ', transliteration: 'dei', strongsRef: 'G1163', nuance: 'Divine theological necessity according to God’s sovereign redemptive decree.' }
+      ],
+      suggestedQuestions: [
+        `Why did seeing Elijah at the Transfiguration (Matt 17:3) trigger the disciples' question about scribal teaching in ${cleanPassageRef}?`,
+        `How does Jesus' identification of John the Baptist as the fulfillment of Malachi 4:5 reshape our understanding of Old Testament prophecy?`,
+        `What is the theological connection between the suffering of John the Baptist and the impending suffering of the Son of Man (Matt 17:12)?`
+      ],
+      practicalApplication: `Recognize that God frequently fulfills His divine promises in unexpected spiritual ways and through sacrificial faithfulness, rather than earthly comfort or political triumph.`
+    };
+  }
+
+  if (isSpiritualWarfareLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `Jesus addresses the disciples' inability to cast out a persistent demonic affliction, establishing that overcoming severe spiritual oppression requires genuine faith, deep prayer, and self-denying fasting rather than casual self-reliance (${snippet}).`,
+      theologicalThemes: [
+        'Spiritual Warfare & Christ’s Authority Over Evil',
+        'Prayer & Fasting as Vital Spiritual Disciplines',
+        'The Power of Living Faith vs. Human Self-Sufficiency'
+      ],
+      historicalContext: `Following the Transfiguration, Jesus descends the mountain to find His disciples publicly confounded by an aggressive demonic affliction in an epileptic boy. In first-century Second Temple Judaism, exorcisms often involved ritual incantations; Christ reveals that genuine spiritual authority flows from living communion with the Father through prayer and self-denial.`,
+      lensPerspectives: {
+        catholic: `Teaches that prayer and fasting are essential penitential disciplines (CCC §1434, §2043) that purify the soul, strengthen believers against demonic temptation, and unite suffering with Christ.`,
+        orthodox: `Emphasizes the ascetic struggle (podvig) against demonic passions, viewing prayer and fasting as the two wings of the soul in spiritual combat as taught by the Desert Fathers and Philokalia.`,
+        reformed: `Affirms that all authority over demonic forces belongs solely to Jesus Christ; prayer and fasting are solemn duties of humiliation under trial (WCF 21.5), demonstrating total reliance on sovereign grace.`,
+        lutheran: `Distinguishes the Law's demand from living faith in the Gospel: bodily fasting is a wholesome Christian discipline, while spiritual victory is won solely through Christ’s Word and promises.`,
+        wesleyan: `Views fasting and prayer as instituted means of grace that subdue the flesh, heighten spiritual sensitivity, and foster wholehearted sanctification and reliance on the Spirit.`,
+        anglican: `Maintains prayer and fasting within the liturgical calendar (e.g. Lent, Ember Days) as biblical habits of spiritual self-examination, penitence, and divine petition.`,
+        baptist_evangelical: `Emphasizes fervent personal prayer and fasting as an expression of spiritual dependence, trusting in the power of the Holy Spirit to shatter spiritual bondages.`
+      },
+      originalLanguageInsights: [
+        { term: 'Prayer', originalScript: 'προσευχή', transliteration: 'proseuchē', strongsRef: 'G4335', nuance: 'Earnest, reverent communion and petition addressed specifically to the living God.' },
+        { term: 'Fasting', originalScript: 'νηστεία', transliteration: 'nēsteia', strongsRef: 'G3521', nuance: 'Voluntary abstinence from food to seek God’s presence, humble oneself, and focus spiritual desire.' }
+      ],
+      suggestedQuestions: [
+        `Why did the disciples fail to heal the boy despite having previously cast out demons (Matt 17:19–20)?`,
+        `How do prayer and fasting deepen our reliance on God rather than serving as legalistic merit?`,
+        `What areas of spiritual stagnation in our lives require intentional prayer and self-denial today?`
+      ],
+      practicalApplication: `Set aside intentional time this week to fast and pray over spiritual obstacles, placing total reliance upon Christ rather than your own strength.`
+    };
+  }
+
+  if (isPassionPredictionLocus) {
+    return {
+      passageRef: cleanPassageRef,
+      conciseOverview: `Jesus explicitly foretells His impending betrayal, death, and third-day resurrection (${snippet}). The divine title "Son of Man" unites Daniel 7’s apocalyptic heavenly ruler with Isaiah 53’s Suffering Servant, establishing that redemptive glory is achieved only through sacrificial suffering and obedient self-giving.`,
+      theologicalThemes: [
+        'The Passion of Christ & Sovereign Divine Plan (Dei)',
+        'The Son of Man Handed Over (Traditio)',
+        'The Bodily Resurrection on the Third Day'
+      ],
+      historicalContext: `Gathering privately in Galilee before the journey toward Jerusalem, Jesus delivers the second passion prediction to instruct the Twelve on His approaching crucifixion. The disciples are deeply grieved because prevailing Second Temple messianic expectations anticipated an invincible political conqueror, unable to conceive of the Messiah executed at human hands.`,
+      lensPerspectives: {
+        catholic: `Proclaims the mystery of Christ’s voluntary Redemptive Passion and Resurrection (CCC §599–618): Christ freely offered Himself according to the Father’s eternal plan of salvation; His delivery into the hands of sinners achieves our redemption and justification.`,
+        orthodox: `Contemplates the holy kenosis (self-emptying) and voluntary Passion of Christ, who enters Hades and destroys death by His glorious third-day Resurrection.`,
+        reformed: `Highlights the covenantal necessity of Christ’s penal substitution as the sole Mediator (WCF 8.4–5): God did not spare His own Son, but handed Him over for our redemption according to eternal decree.`,
+        lutheran: `The supreme expression of the Theology of the Cross (Crux sola est nostra theologia): God reveals His righteousness not in human glory or power, but in Christ handed over to death for our justification.`,
+        wesleyan: `Proclaims universal redemption through the sacrificial death and victory of Jesus Christ, calling every believer to embrace the fellowship of His sufferings.`,
+        anglican: `Celebrates Christ’s full, perfect, and sufficient sacrifice for the sins of the whole world, commemorated centrally in the Holy Eucharist and the Creeds.`,
+        baptist_evangelical: `Anchors faith in the literal, substitutionary death and bodily resurrection of Jesus Christ as the immovable foundation of the Gospel (1 Cor 15:3–4).`
+      },
+      originalLanguageInsights: [
+        { term: 'Handed Over / Delivered', originalScript: 'παραδίδωμι', transliteration: 'paradidōmi', strongsRef: 'G3860', nuance: 'To deliver up or hand over into the custody of another—the theological term for God handing over His Son and Judas delivering Christ to the authorities.' },
+        { term: 'Son of Man', originalScript: 'υἱὸς τοῦ ἀνθρώπου', transliteration: 'huios tou anthrōpou', strongsRef: 'G5207 / G444', nuance: 'Christ\'s primary self-designation, drawing on Daniel 7:13 to declare His messianic identity and heavenly authority.' }
+      ],
+      suggestedQuestions: [
+        `Why were the disciples filled with deep distress when Jesus announced His death and resurrection (Matt 17:23)?`,
+        `How does the biblical term "handed over" (paradidōmi) connect human treachery with God's sovereign redemptive plan (Acts 2:23)?`,
+        `What does Christ's willing surrender teach us about the cost and nature of Christian discipleship today?`
+      ],
+      practicalApplication: `Surrender your own desire for control and earthly acclaim to Jesus Christ, trusting that God brings resurrection life out of apparent defeat and suffering.`
+    };
+  }
+
   if (isPapacyLocus) {
     return {
       passageRef: cleanPassageRef,
@@ -2636,48 +2820,108 @@ export function getTheologicalInsight(
   }
 
   // 3. General Fallback with Contextual Canonical Wisdom
+  // STRICT ZERO-HALLUCINATION POLICY: If no verified lemmas exist for this specific verse,
+  // do NOT invent fake Greek/Hebrew terms or arbitrary Strong's numbers. Return empty array.
   const lemmas = (verseLemmas && verseLemmas.length > 0)
     ? verseLemmas.slice(0, 3).map(l => ({
-        term: l.word,
-        originalScript: l.word,
-        transliteration: l.transliteration || l.word,
-        strongsRef: l.strongs || 'G/H',
-        nuance: l.definition || `Key linguistic root in ${cleanPassageRef} illuminating divine meaning.`
-      }))
-    : [
-        {
-          term: 'Divine Truth / Grace',
-          originalScript: 'χάρις / אֱמֶת',
-          transliteration: 'Charis / Emet',
-          strongsRef: 'G5485 / H571',
-          nuance: `Covenant faithfulness, unmerited grace, and steadfast truth in ${cleanPassageRef}.`
-        }
-      ];
+      term: l.word,
+      originalScript: l.word,
+      transliteration: l.transliteration || l.word,
+      strongsRef: l.strongs || '',
+      nuance: l.definition || `Key linguistic root in ${cleanPassageRef} illuminating divine meaning.`
+    }))
+    : [];
+
+  // Dynamic Theme Extraction directly from the actual text of the verse
+  const extractedThemes: string[] = [];
+  if (/pray|prayer|petition|intercession|supplication|crying/i.test(lowerText)) {
+    extractedThemes.push('Prayer & Fervent Communion with God');
+  }
+  if (/faith|believe|trust|believ/i.test(lowerText)) {
+    extractedThemes.push('Living Faith & Trust in God’s Promises');
+  }
+  if (/grace|merc|compassion|steadfast love|hesed|kindness/i.test(lowerText)) {
+    extractedThemes.push('The Sovereignty of Divine Grace & Mercy');
+  }
+  if (/consecrat|living sacrifice|reasonable service|holy|holiness|sanctif/i.test(lowerText)) {
+    extractedThemes.push('Consecration, Holiness & Spiritual Worship');
+  }
+  if (/love|charity|agape|commandment/i.test(lowerText)) {
+    extractedThemes.push('The Call to Love God and Neighbor');
+  }
+  if (/righteous|justice|judgment|law|statute/i.test(lowerText)) {
+    extractedThemes.push('God’s Holy Righteousness & Moral Law');
+  }
+  if (/sin|repent|iniquity|forgive|pardon|cleanse|confess/i.test(lowerText)) {
+    extractedThemes.push('Repentance, Cleansing & Remission of Sins');
+  }
+  if (/peace|rest|comfort|hope|refuge|shield/i.test(lowerText)) {
+    extractedThemes.push('Divine Peace & Eternal Hope in Christ');
+  }
+  if (/kingdom|king|reign|throne|dominion|glory|exalt/i.test(lowerText)) {
+    extractedThemes.push('The Sovereign Kingdom & Reign of God');
+  }
+  if (/spirit|holy ghost|anoint|wisdom|understand/i.test(lowerText)) {
+    extractedThemes.push('The Indwelling Power & Wisdom of the Holy Spirit');
+  }
+  if (/suffer|cross|crucif|slain|aton/i.test(lowerText) || (lowerText.includes('sacrifice') && !lowerText.includes('living sacrifice'))) {
+    extractedThemes.push('The Atoning Sacrifice & Theology of the Cross');
+  }
+  if (/resurrection|alive|raised|life|eternal|immortal/i.test(lowerText)) {
+    extractedThemes.push('The Resurrection Hope & Eternal Life');
+  }
+
+  // Ensure 2-3 specific, relevant themes are always present
+  if (extractedThemes.length === 0) {
+    if (['psalms', 'proverbs', 'ecclesiastes', 'job'].includes(normBook)) {
+      extractedThemes.push('Wisdom for Holy Living', 'Praise & Reverence in the Fear of the Lord');
+    } else if (['matthew', 'mark', 'luke', 'john'].includes(normBook)) {
+      extractedThemes.push('Gospel Proclamation of the Kingdom', 'Discipleship & Following Christ');
+    } else if (normBook.includes('romans') || normBook.includes('corinthians') || normBook.includes('galatians') || normBook.includes('ephesians')) {
+      extractedThemes.push('Apostolic Doctrine & Church Maturity', 'Walking in Step with the Gospel');
+    } else {
+      extractedThemes.push('Covenant Fidelity to the Living God', 'Hearing & Obeying the Inspired Word');
+    }
+  }
+
+  const isGospel = ['matthew', 'mark', 'luke', 'john'].includes(normBook);
+  const isEpistle = ['romans', '1corinthians', '2corinthians', 'galatians', 'ephesians', 'philippians', 'colossians', '1thessalonians', '2thessalonians', '1timothy', '2timothy', 'titus', 'philemon', 'hebrews', 'james', '1peter', '2peter', '1john', '2john', '3john', 'jude'].includes(normBook);
+  const isWisdom = ['psalms', 'proverbs', 'ecclesiastes', 'job', 'song of solomon'].includes(normBook);
+  const isProphet = ['isaiah', 'jeremiah', 'lamentations', 'ezekiel', 'daniel', 'hosea', 'joel', 'amos', 'obadiah', 'jonah', 'micah', 'nahum', 'habakkuk', 'zephaniah', 'haggai', 'zechariah', 'malachi', 'revelation'].includes(normBook);
+
+  const contextSetting = isGospel
+    ? `Recorded in the Gospel of ${cleanBookName} as part of the inspired witness to Jesus Christ’s life, teaching, and kingdom ministry.`
+    : isEpistle
+      ? `Composed within the apostolic epistle of ${cleanBookName} to instruct, correct, and encourage the church in sound doctrine and holy conduct.`
+      : isWisdom
+        ? `Preserved in the wisdom and worship corpus of ${cleanBookName}, articulating prayer, praise, and ethical reflection in the fear of the Lord.`
+        : isProphet
+          ? `Proclaimed in the prophetic witness of ${cleanBookName}, calling God's people to covenant faithfulness and unveiling divine redemptive purposes.`
+          : `Situated within the canonical history of ${cleanBookName}, recounting God’s covenantal dealings and sovereign guidance of His people.`;
+
+  const conciseOverview = verseText && verseText.trim().length > 0
+    ? `In ${cleanPassageRef} (${snippet}), the text centers upon ${extractedThemes[0].toLowerCase()}, calling hearers to genuine faith, spiritual discernment, and obedience.`
+    : `In ${cleanPassageRef}, the inspired text provides foundational biblical instruction on ${extractedThemes[0].toLowerCase()}.`;
 
   return {
     passageRef: cleanPassageRef,
-    conciseOverview: `A focused theological examination of ${cleanPassageRef}. ${verseText ? `In this verse (${snippet}), the inspired text communicates vital truths regarding God’s holy character, redemptive covenant, and direct spiritual calling for believers.` : `This passage articulates divine wisdom and guidance for faithful discipleship.`}`,
-    theologicalThemes: [
-      `Covenant Revelation in ${cleanPassageRef}`,
-      'The Authority and Truth of God’s Word',
-      'Personal Faith and Spiritual Discernment'
-    ],
-    historicalContext: `Authored in the canonical context of ${cleanBookName} to address the spiritual life, theological understanding, and covenant faithfulness of God's people.`,
+    conciseOverview,
+    theologicalThemes: extractedThemes.slice(0, 3),
+    historicalContext: contextSetting,
     lensPerspectives: {
-      catholic: `Reflects on the patristic tradition, sacred mysteries, and spiritual formation conveyed through ${cleanPassageRef}.`,
-      orthodox: `Views ${cleanPassageRef} through the consensus of the Holy Fathers, liturgical mystery, and theosis.`,
-      reformed: `Highlights God's sovereign covenant faithfulness, the sufficiency of Scripture, and the glory of God revealed in ${cleanPassageRef}.`,
-      lutheran: `Distinguishes Law and Gospel in ${cleanPassageRef}, pointing to justification by faith alone in Christ.`,
-      wesleyan: `Focuses on God's pursuing, transforming grace in ${cleanPassageRef}, calling the hearer to responsive faith and holy love.`,
-      anglican: `Considers how ${cleanPassageRef} is received in the historic worship, lectionary, and pastoral heritage of the Church.`,
-      baptist_evangelical: `Draws clear, practical application for daily discipleship, personal prayer, and living faith from ${cleanPassageRef}.`
+      catholic: `Examines how ${cleanPassageRef} is received in Sacred Tradition, the liturgical life of the Church, and personal moral sanctification (CCC §1700–1876).`,
+      orthodox: `Interprets ${cleanPassageRef} through patristic consensus, sacramental grace, and the pursuit of theosis (union with God).`,
+      reformed: `Emphasizes God's sovereign covenant faithfulness, the supreme authority of the Word, and salvation by grace alone in ${cleanPassageRef}.`,
+      lutheran: `Examines ${cleanPassageRef} through the biblical distinction between Law and Gospel, anchoring assurance in Christ’s promise.`,
+      wesleyan: `Focuses on the transforming power of the Holy Spirit in ${cleanPassageRef}, calling the believer to responsive faith and holy love.`,
+      anglican: `Considers ${cleanPassageRef} within the historic lectionary, common prayer, and apostolic order of the Church.`,
+      baptist_evangelical: `Draws clear, practical application for personal faith, prayer, and obedient discipleship from ${cleanPassageRef}.`
     },
     originalLanguageInsights: lemmas,
     suggestedQuestions: [
-      `What is the primary spiritual truth emphasized in ${cleanPassageRef}?`,
-      `How does ${cleanPassageRef} connect with the broader message of ${cleanBookName} chapter ${chapter}?`,
-      `What step of obedience or prayer does ${cleanPassageRef} prompt in your life today?`
+      `How does ${cleanPassageRef} deepen your understanding of ${extractedThemes[0].toLowerCase()}?`,
+      `What practical obedience or prayerful reflection does this verse demand in your daily life?`
     ],
-    practicalApplication: `Take time to meditate on ${cleanPassageRef} today. Allow God's specific word to shape your thoughts, prayers, and interactions with others.`
+    practicalApplication: `Take time to meditate on the truth of ${cleanPassageRef} today, asking God to conform your heart and actions to His revealed Word.`
   };
 }

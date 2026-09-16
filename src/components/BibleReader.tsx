@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Verse, Chapter, TranslationId } from '../data/bibleData';
-import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X } from 'lucide-react';
+import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
-import { 
-  speakScripturePassage, 
-  stopScripturePlayback, 
-  playAuditoryCue, 
-  getAvailableVoices, 
+import {
+  speakScripturePassage,
+  stopScripturePlayback,
+  playAuditoryCue,
+  getAvailableVoices,
   subscribeVoicesLoaded,
-  VoiceOption 
+  VoiceOption
 } from '../services/audioNarrationService';
 import { cleanApiText } from '../services/youversionService';
 
@@ -59,6 +59,8 @@ interface BibleReaderProps {
   activeTranslation: TranslationId;
   selectedVerseNumber: number;
   onSelectVerse: (verse: Verse) => void;
+  selectedVerseRange?: { start: number; end: number } | null;
+  onSelectVerseRange?: (range: { start: number; end: number } | null, primaryVerse?: Verse) => void;
   onNextChapter: () => void;
   onPrevChapter: () => void;
   isFirstChapter: boolean;
@@ -67,6 +69,7 @@ interface BibleReaderProps {
   isAiPanelOpen?: boolean;
   isLoading?: boolean;
   onSelectPassage?: (bookId: string, chapterNum: number, verseNum?: number) => void;
+  onCreateStudyGuide?: (verse: Verse, range?: { start: number; end: number }) => void;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -75,6 +78,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   activeTranslation,
   selectedVerseNumber,
   onSelectVerse,
+  selectedVerseRange,
+  onSelectVerseRange,
   onNextChapter,
   onPrevChapter,
   isFirstChapter,
@@ -82,7 +87,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onOpenBereaAi,
   isAiPanelOpen = true,
   isLoading = false,
-  onSelectPassage
+  onSelectPassage,
+  onCreateStudyGuide
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
@@ -114,6 +120,14 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     }
   });
   const [ttsProgress, setTtsProgress] = useState<{ text: string; progress: number } | null>(null);
+
+  // Click-and-drag multi-verse selection state
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [tempDragRange, setTempDragRange] = useState<{ start: number; end: number } | null>(null);
+  const dragStartVerseRef = useRef<number | null>(null);
+
+  const activeRange = isDragging ? tempDragRange : (selectedVerseRange || (selectedVerseNumber ? { start: selectedVerseNumber, end: selectedVerseNumber } : null));
+  const isMultiSelect = Boolean(activeRange && activeRange.start !== activeRange.end);
 
   // Subscribe to asynchronously loaded system voices
   useEffect(() => {
@@ -229,7 +243,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
       const nextVal = !prev;
       try {
         localStorage.setItem('berea_show_red_letters', String(nextVal));
-      } catch {}
+      } catch { }
       return nextVal;
     });
   };
@@ -256,9 +270,86 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         : [...prev, verseNumber];
       try {
         localStorage.setItem('berea_bookmarked_verses', JSON.stringify(next));
-      } catch {}
+      } catch { }
       return next;
     });
+  };
+
+  const handleVerseMouseDown = (verseNum: number, e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    dragStartVerseRef.current = verseNum;
+    setIsDragging(true);
+    setTempDragRange({ start: verseNum, end: verseNum });
+  };
+
+  const handleVerseMouseEnter = (verseNum: number) => {
+    if (!isDragging || dragStartVerseRef.current === null) return;
+    const start = Math.min(dragStartVerseRef.current, verseNum);
+    const end = Math.max(dragStartVerseRef.current, verseNum);
+    setTempDragRange(prev => (prev && prev.start === start && prev.end === end ? prev : { start, end }));
+  };
+
+  const handleContainerMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || dragStartVerseRef.current === null) return;
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      selection.removeAllRanges();
+    }
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const verseEl = el?.closest('[data-verse-number]');
+    if (verseEl) {
+      const vNum = Number(verseEl.getAttribute('data-verse-number'));
+      if (vNum && !isNaN(vNum)) {
+        const start = Math.min(dragStartVerseRef.current, vNum);
+        const end = Math.max(dragStartVerseRef.current, vNum);
+        setTempDragRange(prev => (prev && prev.start === start && prev.end === end ? prev : { start, end }));
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging && dragStartVerseRef.current !== null && tempDragRange) {
+        const finalRange = tempDragRange;
+        const targetVerse = (chapter?.verses || []).find(v => v.verseNumber === finalRange.start) || chapter?.verses[0];
+
+        if (finalRange.start === finalRange.end) {
+          if (targetVerse) {
+            handleSelectVerseWithAudio(targetVerse);
+          }
+          if (onSelectVerseRange) {
+            onSelectVerseRange({ start: finalRange.start, end: finalRange.end }, targetVerse);
+          }
+        } else {
+          if (targetVerse) {
+            onSelectVerse(targetVerse);
+          }
+          if (onSelectVerseRange) {
+            onSelectVerseRange(finalRange, targetVerse);
+          }
+        }
+        setIsDragging(false);
+        setTempDragRange(null);
+        dragStartVerseRef.current = null;
+      }
+    };
+
+    if (isDragging) {
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, tempDragRange, chapter, onSelectVerse, onSelectVerseRange]);
+
+  const handleCopyRange = (start: number, end: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const rangeVerses = (chapter?.verses || []).filter(v => v.verseNumber >= start && v.verseNumber <= end);
+    const text = `${bookName} ${chapter.chapterNumber}:${start}–${end} (${activeTranslation})\n\n` +
+      rangeVerses.map(v => `[${v.verseNumber}] ${getVerseDisplayText(v, activeTranslation)}`).join('\n');
+    navigator.clipboard.writeText(text);
+    setCopiedVerseNum(-1);
+    setTimeout(() => setCopiedVerseNum(null), 2000);
   };
 
   const activeVerse = chapter.verses.find(v => v.verseNumber === selectedVerseNumber) || chapter.verses[0];
@@ -322,11 +413,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           {/* Audio Player Pill with Real Web Speech API */}
           <button
             onClick={handleToggleAudio}
-            className={`text-xs py-1 px-2.5 rounded-full border flex items-center gap-1.5 transition-all shadow-xs active:scale-95 ${
-              isPlayingAudio
+            className={`text-xs py-1 px-2.5 rounded-full border flex items-center gap-1.5 transition-all shadow-xs active:scale-95 ${isPlayingAudio
                 ? 'bg-[#B4793D] text-white border-[#B4793D] font-medium shadow-[0_2px_8px_rgba(180,121,61,0.25)]'
                 : 'bg-white text-[#26221F] border-[#EBE5DC] hover:border-[#D4A373]'
-            }`}
+              }`}
             title={isPlayingAudio ? 'Pause Narration' : 'Listen to Audio Narration'}
           >
             {isPlayingAudio ? (
@@ -445,11 +535,16 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             {layoutMode === 'paragraph' ? (
               <div
                 style={{ fontSize: `${fontSize}px`, lineHeight: '1.8' }}
-                className="font-scripture text-[#38332E] text-justify space-y-3"
+                className={`font-scripture text-[#38332E] text-justify space-y-3 ${isDragging ? 'select-none cursor-text' : ''}`}
+                onMouseMove={handleContainerMouseMove}
               >
                 <p className="leading-relaxed">
                   {(chapter?.verses || []).map((verse) => {
-                    const isSelected = selectedVerseNumber === verse.verseNumber;
+                    const isSelected = activeRange
+                      ? (verse.verseNumber >= activeRange.start && verse.verseNumber <= activeRange.end)
+                      : (selectedVerseNumber === verse.verseNumber);
+                    const isRangeStart = activeRange?.start === verse.verseNumber;
+                    const isRangeEnd = activeRange?.end === verse.verseNumber;
                     const isBookmarked = bookmarkedVerses.includes(verse.verseNumber);
                     const verseText = getVerseDisplayText(verse, activeTranslation);
                     const isWordOfJesus = Boolean(
@@ -460,12 +555,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     return (
                       <span
                         key={verse.verseNumber}
-                        onClick={() => handleSelectVerseWithAudio(verse)}
-                        className={`cursor-pointer transition-all duration-100 rounded px-1 py-0.5 inline ${
-                          isSelected
-                            ? 'bg-[#FAF3E8] text-[#26221F] font-normal shadow-xs ring-1 ring-[#B4793D]/30'
-                            : 'hover:bg-[#FAF9F5]'
-                        }`}
+                        data-verse-number={verse.verseNumber}
+                        onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
+                        onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
+                        className={`cursor-pointer transition-all duration-100 px-1 py-0.5 inline ${isSelected
+                            ? `bg-[#FAF3E8] text-[#26221F] font-normal shadow-2xs ${isRangeStart ? 'rounded-l-md pl-1.5' : ''} ${isRangeEnd ? 'rounded-r-md pr-1.5' : ''} ${isMultiSelect ? 'border-y border-[#B4793D]/30' : 'rounded ring-1 ring-[#B4793D]/30'}`
+                            : 'hover:bg-[#FAF9F5] rounded'
+                          }`}
                       >
                         <sup className={`text-[10px] select-none font-bold mr-1 ${isSelected ? 'text-[#B4793D]' : 'text-[#A8A29E]'}`}>
                           {verse.verseNumber}
@@ -477,30 +573,27 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   })}
                 </p>
 
-                {/* Floating Contextual Pill for Selected Verse in Flow Mode */}
-                {activeVerse && (
-                  <div className="mt-3 p-2.5 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none text-xs">
+                {/* Contextual Pill: Multi-Verse Range Selection */}
+                {isMultiSelect && activeRange ? (
+                  <div className="mt-3 p-2.5 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none text-xs shadow-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-[#B4793D] font-heading">
-                        v{activeVerse.verseNumber}
+                      <span className="font-bold text-[#B4793D] font-heading flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5" />
+                        vv. {activeRange.start}–{activeRange.end}
                       </span>
-                      {activeVerse.greekHebrew && activeVerse.greekHebrew.length > 0 && (
-                        <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#78716C] truncate max-w-[200px]">
-                          <span>Lemma:</span>
-                          <span className="font-medium text-[#26221F] bg-white px-1.5 py-0.2 rounded border border-[#EBE5DC]">
-                            {activeVerse.greekHebrew[0].word} <em>({activeVerse.greekHebrew[0].transliteration})</em>
-                          </span>
-                        </div>
-                      )}
+                      <span className="text-[10.5px] font-medium text-[#78716C] bg-white px-2 py-0.5 rounded-full border border-[#EBE5DC]">
+                        {activeRange.end - activeRange.start + 1} verses selected for AI
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-1.5 ml-auto">
                       <button
-                        onClick={(e) => handleCopyVerse(activeVerse, e)}
-                        className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white"
-                        title="Copy Verse"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => handleCopyRange(activeRange.start, activeRange.end, e)}
+                        className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white flex items-center gap-1"
+                        title="Copy selected verses"
                       >
-                        {copiedVerseNum === activeVerse.verseNumber ? (
+                        {copiedVerseNum === -1 ? (
                           <>
                             <Check className="w-3 h-3 text-emerald-600" />
                             <span className="text-emerald-700">Copied</span>
@@ -513,42 +606,150 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                         )}
                       </button>
 
-                      <button
-                        onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
-                        className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${
-                          bookmarkedVerses.includes(activeVerse.verseNumber)
-                            ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
-                            : 'bg-white hover:border-[#D4A373]'
-                        }`}
-                        title={bookmarkedVerses.includes(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
-                      >
-                        <Bookmark className={`w-3 h-3 ${bookmarkedVerses.includes(activeVerse.verseNumber) ? 'fill-[#B4793D] text-[#B4793D]' : 'text-[#78716C]'}`} />
-                        <span>{bookmarkedVerses.includes(activeVerse.verseNumber) ? 'Bookmarked' : 'Bookmark'}</span>
-                      </button>
-
-                      {!isAiPanelOpen && (
+                      {onCreateStudyGuide && (
                         <button
+                          onMouseDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onSelectVerse(activeVerse);
-                            onOpenBereaAi();
+                            onCreateStudyGuide(activeVerse, activeRange);
                           }}
-                          className="clean-caramel-btn !py-0.5 !px-2.5 text-xs shadow-xs"
-                          title="Open in AI Guide"
+                          className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[#EBE5DC] text-[#78716C] hover:text-[#B4793D] hover:border-[#D4A373] shadow-xs flex items-center gap-1"
+                          title="Generate Study Guide for selected range"
                         >
-                          <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-                          <span>Insights</span>
+                          <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
+                          <span>Study Guide</span>
                         </button>
                       )}
+
+                      <button
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenBereaAi();
+                        }}
+                        className="clean-caramel-btn !py-0.5 !px-2.5 text-xs shadow-xs flex items-center gap-1"
+                        title="Analyze selected passage with Berea AI"
+                      >
+                        <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
+                        <span>Ask AI</span>
+                      </button>
+
+                      <button
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onSelectVerseRange) {
+                            onSelectVerseRange(null);
+                          }
+                        }}
+                        className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F]"
+                        title="Clear multi-verse selection"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </div>
+                ) : (
+                  /* Floating Contextual Pill for Single Selected Verse in Flow Mode */
+                  activeVerse && (
+                    <div className="mt-3 p-2.5 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-[#B4793D] font-heading">
+                          v{activeVerse.verseNumber}
+                        </span>
+                        {activeVerse.greekHebrew && activeVerse.greekHebrew.length > 0 && (
+                          <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#78716C] truncate max-w-[200px]">
+                            <span>Lemma:</span>
+                            <span className="font-medium text-[#26221F] bg-white px-1.5 py-0.2 rounded border border-[#EBE5DC]">
+                              {activeVerse.greekHebrew[0].word} <em>({activeVerse.greekHebrew[0].transliteration})</em>
+                            </span>
+                          </div>
+                        )}
+                        <span className="hidden md:inline text-[10px] text-[#A8A29E] italic">
+                          (Click & drag to select multiple verses)
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 ml-auto">
+                        <button
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => handleCopyVerse(activeVerse, e)}
+                          className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white"
+                          title="Copy Verse"
+                        >
+                          {copiedVerseNum === activeVerse.verseNumber ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-600" />
+                              <span className="text-emerald-700">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3 text-[#78716C]" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
+                          className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${bookmarkedVerses.includes(activeVerse.verseNumber)
+                              ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
+                              : 'bg-white hover:border-[#D4A373]'
+                            }`}
+                          title={bookmarkedVerses.includes(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
+                        >
+                          <Bookmark className={`w-3 h-3 ${bookmarkedVerses.includes(activeVerse.verseNumber) ? 'fill-[#B4793D] text-[#B4793D]' : 'text-[#78716C]'}`} />
+                          <span>{bookmarkedVerses.includes(activeVerse.verseNumber) ? 'Bookmarked' : 'Bookmark'}</span>
+                        </button>
+
+                        {onCreateStudyGuide && (
+                          <button
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectVerse(activeVerse);
+                              onCreateStudyGuide(activeVerse);
+                            }}
+                            className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[#EBE5DC] text-[#78716C] hover:text-[#B4793D] hover:border-[#D4A373] shadow-xs"
+                            title="Generate Study Guide for this passage"
+                          >
+                            <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
+                            <span>Study Guide</span>
+                          </button>
+                        )}
+
+                        {!isAiPanelOpen && (
+                          <button
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectVerse(activeVerse);
+                              onOpenBereaAi();
+                            }}
+                            className="clean-caramel-btn !py-0.5 !px-2.5 text-xs shadow-xs"
+                            title="Open in AI Guide"
+                          >
+                            <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
+                            <span>Insights</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
                 )}
               </div>
             ) : (
               /* Verse by Verse Mode */
-              <div className="space-y-1">
+              <div
+                className={`space-y-1 ${isDragging ? 'select-none cursor-text' : ''}`}
+                onMouseMove={handleContainerMouseMove}
+              >
                 {(chapter?.verses || []).map((verse) => {
-                  const isSelected = selectedVerseNumber === verse.verseNumber;
+                  const isSelected = activeRange
+                    ? (verse.verseNumber >= activeRange.start && verse.verseNumber <= activeRange.end)
+                    : (selectedVerseNumber === verse.verseNumber);
+                  const isRangeEnd = activeRange?.end === verse.verseNumber;
                   const isBookmarked = bookmarkedVerses.includes(verse.verseNumber);
                   const verseText = getVerseDisplayText(verse, activeTranslation);
                   const isWordOfJesus = Boolean(
@@ -559,23 +760,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   return (
                     <div
                       key={verse.verseNumber}
-                      onClick={() => handleSelectVerseWithAudio(verse)}
-                      className={`group relative px-2.5 py-1.5 rounded-lg cursor-pointer transition-all duration-150 ${
-                        isSelected
-                          ? 'bg-[#FAF3E8] border-l-2 border-[#B4793D] shadow-xs'
+                      data-verse-number={verse.verseNumber}
+                      onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
+                      onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
+                      className={`group relative px-2.5 py-1.5 rounded-lg cursor-pointer transition-all duration-150 ${isSelected
+                          ? 'bg-[#FAF3E8] border-l-3 border-[#B4793D] shadow-xs'
                           : showRedLetter && isWordOfJesus
-                          ? 'bg-red-50/20 border-l-2 border-red-500 hover:bg-red-50/40'
-                          : 'hover:bg-[#FAF9F5] border-l-2 border-transparent'
-                      }`}
+                            ? 'bg-red-50/20 border-l-2 border-red-500 hover:bg-red-50/40'
+                            : 'hover:bg-[#FAF9F5] border-l-2 border-transparent'
+                        }`}
                     >
                       <div className="flex items-baseline gap-2">
-                        <span className={`text-[10.5px] select-none font-semibold flex-shrink-0 w-4 text-right ${
-                          isSelected 
-                            ? 'text-[#B4793D] font-bold' 
-                            : showRedLetter && isWordOfJesus 
-                            ? 'text-red-600 font-bold' 
-                            : 'text-[#A8A29E]'
-                        }`}>
+                        <span className={`text-[10.5px] select-none font-semibold flex-shrink-0 w-4 text-right ${isSelected
+                            ? 'text-[#B4793D] font-bold'
+                            : showRedLetter && isWordOfJesus
+                              ? 'text-red-600 font-bold'
+                              : 'text-[#A8A29E]'
+                          }`}>
                           {verse.verseNumber}
                         </span>
 
@@ -587,8 +788,86 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                             {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected)}
                           </p>
 
-                          {/* Selected Verse Compact Actions */}
-                          {isSelected && (
+                          {/* Multi-Verse Action Banner when at the end of the range in Verse Mode */}
+                          {isMultiSelect && activeRange && isRangeEnd && (
+                            <div className="mt-2 pt-2 border-t border-[#EBE5DC] flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] font-bold text-[#B4793D] flex items-center gap-1">
+                                  <Layers className="w-3 h-3" />
+                                  vv. {activeRange.start}–{activeRange.end}
+                                </span>
+                                <span className="text-[9.5px] font-medium text-[#78716C] bg-white px-1.5 py-0.2 rounded border border-[#EBE5DC]">
+                                  {activeRange.end - activeRange.start + 1} verses for AI
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 ml-auto">
+                                <button
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onClick={(e) => handleCopyRange(activeRange.start, activeRange.end, e)}
+                                  className="ios-glass-btn text-xs !py-0.5 !px-2 bg-white flex items-center gap-1"
+                                  title="Copy selected verses"
+                                >
+                                  {copiedVerseNum === -1 ? (
+                                    <>
+                                      <Check className="w-3 h-3 text-emerald-600" />
+                                      <span className="text-emerald-700">Copied</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="w-3 h-3 text-[#78716C]" />
+                                      <span>Copy</span>
+                                    </>
+                                  )}
+                                </button>
+
+                                {onCreateStudyGuide && (
+                                  <button
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onCreateStudyGuide(activeVerse, activeRange);
+                                    }}
+                                    className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[#EBE5DC] text-[#78716C] hover:text-[#B4793D] hover:border-[#D4A373] shadow-xs flex items-center gap-1"
+                                    title="Generate Study Guide for selected range"
+                                  >
+                                    <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
+                                    <span>Study Guide</span>
+                                  </button>
+                                )}
+
+                                <button
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenBereaAi();
+                                  }}
+                                  className="clean-caramel-btn text-xs !py-0.5 !px-2.5 shadow-xs flex items-center gap-1"
+                                  title="Analyze selected verses in Berea AI"
+                                >
+                                  <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
+                                  <span>Ask AI</span>
+                                </button>
+
+                                <button
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onSelectVerseRange) {
+                                      onSelectVerseRange(null);
+                                    }
+                                  }}
+                                  className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F]"
+                                  title="Clear range selection"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Selected Verse Compact Actions (Single Verse Selection) */}
+                          {!isMultiSelect && isSelected && (
                             <div className="mt-2 pt-1.5 border-t border-[#EBE5DC] flex items-center justify-between animate-fadeIn select-none">
                               {verse.greekHebrew && verse.greekHebrew.length > 0 ? (
                                 <div className="flex items-center gap-1 text-[10.5px] text-[#78716C] truncate max-w-[200px]">
@@ -601,6 +880,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
                               <div className="flex items-center gap-1.5 ml-auto">
                                 <button
+                                  onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => handleCopyVerse(verse, e)}
                                   className="ios-glass-btn text-xs !py-0.5 !px-2 bg-white"
                                   title="Copy Verse"
@@ -619,20 +899,37 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                 </button>
 
                                 <button
+                                  onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => handleToggleBookmark(verse.verseNumber, e)}
-                                  className={`ios-glass-btn text-xs !py-0.5 !px-2.5 transition-all ${
-                                    isBookmarked
+                                  className={`ios-glass-btn text-xs !py-0.5 !px-2.5 transition-all ${isBookmarked
                                       ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
                                       : 'bg-white hover:border-[#D4A373]'
-                                  }`}
+                                    }`}
                                   title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Verse'}
                                 >
                                   <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-[#B4793D] text-[#B4793D]' : 'text-[#78716C]'}`} />
                                   <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
                                 </button>
 
+                                {onCreateStudyGuide && (
+                                  <button
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSelectVerse(verse);
+                                      onCreateStudyGuide(verse);
+                                    }}
+                                    className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[#EBE5DC] text-[#78716C] hover:text-[#B4793D] hover:border-[#D4A373] shadow-xs"
+                                    title="Generate Study Guide for this passage"
+                                  >
+                                    <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
+                                    <span>Study Guide</span>
+                                  </button>
+                                )}
+
                                 {!isAiPanelOpen && (
                                   <button
+                                    onMouseDown={(e) => e.stopPropagation()}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onSelectVerse(verse);
@@ -750,7 +1047,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     try {
                       if (newVoice) localStorage.setItem('berea_preferred_voice', newVoice);
                       else localStorage.removeItem('berea_preferred_voice');
-                    } catch {}
+                    } catch { }
                     if (isPlayingAudio) {
                       playVerseAudio(selectedVerseNumber, playbackSpeed, newVoice);
                     }
@@ -776,11 +1073,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       setPlaybackSpeed(rate);
                       playVerseAudio(selectedVerseNumber, rate, selectedVoiceId);
                     }}
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono transition-all ${
-                      playbackSpeed === rate
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono transition-all ${playbackSpeed === rate
                         ? 'bg-[#B4793D] text-white font-bold'
                         : 'text-[#A8A29E] hover:text-white'
-                    }`}
+                      }`}
                   >
                     {rate === 1.0 ? '1x' : `${rate}x`}
                   </button>

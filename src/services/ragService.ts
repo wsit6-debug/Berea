@@ -94,16 +94,23 @@ export function searchDoctrinalCorpus(
     book?: string;
     chapter?: number;
     verseNumber?: number;
+    endVerseNumber?: number;
     activeVerseRef?: string;
     limit?: number;
+    minScore?: number;
   }
 ): RagSearchResult[] {
   // Resolve denomination: parameter -> stored global config -> default
   const targetDenom: UserDenominationSetting = options.lens || getUserDenominationPreference();
-  const { book, chapter, verseNumber, activeVerseRef, limit = 8 } = options;
+  const { book, chapter, verseNumber, endVerseNumber, activeVerseRef, limit = 8, minScore = 0 } = options;
+  const isMulti = Boolean(endVerseNumber && verseNumber && endVerseNumber > verseNumber);
 
   // Determine active verse reference from context
-  const fallbackActiveVerseRef = activeVerseRef || (book && chapter ? `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}` : '');
+  const fallbackActiveVerseRef = activeVerseRef || (book && chapter
+    ? (isMulti
+        ? `${book} ${chapter}:${verseNumber}–${endVerseNumber}`
+        : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`)
+    : '');
 
   // 1. Check if user's prompt explicitly contains a scripture reference
   const extractedRefs = extractScriptureReferences(query);
@@ -163,7 +170,8 @@ export function searchDoctrinalCorpus(
     let hasScriptureMatch = false;
     const related = (entry.relatedScriptures || []).map(r => r.toLowerCase());
     const lowerExcerpt = entry.fullExcerpt.toLowerCase();
-    const entryKeywords = (entry.keywords || []).map(k => k.toLowerCase());
+    const entryKeywords = new Set((entry.keywords || []).map(k => k.toLowerCase()));
+    const entryKeywordsArr = (entry.keywords || []).map(k => k.toLowerCase());
 
     const checkScriptureMatch = (targetRef: string, bonus: number) => {
       if (!targetRef) return false;
@@ -174,7 +182,7 @@ export function searchDoctrinalCorpus(
 
       // Direct string containment
       if (related.some(ref => ref.includes(targetRef) || targetRef.includes(ref)) ||
-          entryKeywords.some(kw => kw.includes(targetRef) || targetRef.includes(kw))) {
+          entryKeywordsArr.some(kw => kw.includes(targetRef) || targetRef.includes(kw))) {
         score += bonus;
         matchReasons.push(`Scripture Citation Match (${targetRef})`);
         return true;
@@ -202,6 +210,14 @@ export function searchDoctrinalCorpus(
       }
     }
 
+    if (isMulti && book && chapter && verseNumber && endVerseNumber) {
+      for (let v = verseNumber; v <= endVerseNumber; v++) {
+        if (checkScriptureMatch(`${book} ${chapter}:${v}`.toLowerCase(), 100)) {
+          hasScriptureMatch = true;
+        }
+      }
+    }
+
     for (const ref of extractedRefs) {
       if (checkScriptureMatch(ref.toLowerCase(), 90)) {
         hasScriptureMatch = true;
@@ -209,7 +225,6 @@ export function searchDoctrinalCorpus(
     }
 
     // 2. Exact Paragraph / Article Number Match (e.g. CCC 491, WCF 8.2)
-    const lowerQ = query.toLowerCase();
     const cleanCit = entry.citation.toLowerCase().replace(/[^\w\d]/g, '');
     const cleanSec = entry.sectionOrArticle.toLowerCase().replace(/[^\w\d]/g, '');
     for (const token of queryTokens) {
@@ -220,21 +235,48 @@ export function searchDoctrinalCorpus(
       }
     }
 
-    // 3. Keyword & Semantic Overlap
-    const entryTextTokens = tokenize(`${entry.documentTitle} ${entry.topic} ${entry.coreDoctrine} ${entry.fullExcerpt}`);
+    // 3. Whole Verse & Thematic Phrase Matching (+35 points for multi-word theological phrases)
+    const lowerQuery = query.toLowerCase();
+    const entryTopicLower = entry.topic.toLowerCase();
+    const entryCoreLower = entry.coreDoctrine.toLowerCase();
+    const entryExcerptLower = entry.fullExcerpt.toLowerCase();
+
+    const thematicPhrases = [
+      'son of man', 'handed over', 'delivered up', 'third day', 'kill him', 'prayer and fasting',
+      'keys of heaven', 'keys of the kingdom', 'faith alone', 'justified by faith', 'original sin',
+      'immaculate conception', 'full of grace', 'bread of life', 'this is my body', 'eternal life',
+      'holy spirit', 'born again', 'living sacrifice', 'suffering servant', 'purgatory'
+    ];
+    let phraseMatched = false;
+    for (const phrase of thematicPhrases) {
+      if (lowerQuery.includes(phrase)) {
+        if (entryTopicLower.includes(phrase) || entryCoreLower.includes(phrase) || entryExcerptLower.includes(phrase)) {
+          score += 35;
+          phraseMatched = true;
+          matchReasons.push(`Doctrinal Theme Match ("${phrase}")`);
+          break;
+        }
+      }
+    }
+
+    // 4. Word-Boundary Token & Keyword Overlap
+    const entryTopicTokens = new Set(tokenize(entry.topic));
+    const entryCoreTokens = new Set(tokenize(entry.coreDoctrine));
+    const entryTextTokens = new Set(tokenize(`${entry.documentTitle} ${entry.fullExcerpt}`));
 
     let keywordMatches = 0;
     queryTokens.forEach(token => {
-      if (entryKeywords.includes(token)) {
+      if (entryKeywords.has(token)) {
         score += 25;
         keywordMatches++;
-      } else if (entryKeywords.some(k => k.includes(token) || token.includes(k))) {
+      } else if (entryTopicTokens.has(token)) {
         score += 15;
         keywordMatches++;
-      }
-
-      if (entryTextTokens.includes(token)) {
-        score += 8;
+      } else if (entryCoreTokens.has(token)) {
+        score += 10;
+        keywordMatches++;
+      } else if (entryTextTokens.has(token)) {
+        score += 4;
       }
     });
 
@@ -242,24 +284,7 @@ export function searchDoctrinalCorpus(
       matchReasons.push(`${keywordMatches} Confessional Keyword Match(es)`);
     }
 
-    // 4. Document Title & Topic Semantic Matching
-    const docLower = entry.documentTitle.toLowerCase();
-    const topicLower = entry.topic.toLowerCase();
-    const coreLower = entry.coreDoctrine.toLowerCase();
-
-    for (const token of queryTokens) {
-      if (topicLower.includes(token)) {
-        score += 15;
-      }
-      if (docLower.includes(token)) {
-        score += 10;
-      }
-      if (coreLower.includes(token)) {
-        score += 5;
-      }
-    }
-
-    const hasSubstantiveMatch = keywordMatches > 0 || hasScriptureMatch || score >= 20;
+    const hasSubstantiveMatch = hasScriptureMatch || phraseMatched || (keywordMatches >= 2 && score >= 35);
 
     return {
       entry,
@@ -270,7 +295,7 @@ export function searchDoctrinalCorpus(
 
   // Sort descending by relevance score
   return scoredResults
-    .filter(r => r.score > 0)
+    .filter(r => r.score >= minScore)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }
@@ -296,13 +321,19 @@ export function buildRagGroundingContext(
     book: string;
     chapter: number;
     verseNumber?: number;
+    endVerseNumber?: number;
     activeVerseRef?: string;
     verseText?: string;
     lens?: UserDenominationSetting;
   }
 ): RagGroundingContext {
   const targetLens: UserDenominationSetting = context.lens || getUserDenominationPreference();
-  const fallbackActiveVerseRef = context.activeVerseRef || (context.book && context.chapter ? `${context.book} ${context.chapter}${context.verseNumber ? `:${context.verseNumber}` : ''}` : '');
+  const isMulti = Boolean(context.endVerseNumber && context.verseNumber && context.endVerseNumber > context.verseNumber);
+  const fallbackActiveVerseRef = context.activeVerseRef || (context.book && context.chapter
+    ? (isMulti
+        ? `${context.book} ${context.chapter}:${context.verseNumber}–${context.endVerseNumber}`
+        : `${context.book} ${context.chapter}${context.verseNumber ? `:${context.verseNumber}` : ''}`)
+    : '');
 
   const extractedRefs = extractScriptureReferences(query);
   const effectiveScriptureQuery = extractedRefs.length > 0 ? query : (fallbackActiveVerseRef ? `${fallbackActiveVerseRef} ${query}` : query);
@@ -312,7 +343,8 @@ export function buildRagGroundingContext(
     book: context.book,
     chapter: context.chapter,
     verseNumber: context.verseNumber,
-    activeVerseRef: context.activeVerseRef,
+    endVerseNumber: context.endVerseNumber,
+    activeVerseRef: context.activeVerseRef || fallbackActiveVerseRef,
     limit: 8
   });
 

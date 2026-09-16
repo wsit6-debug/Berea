@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  BIBLE_BOOKS, 
-  TranslationId, 
-  getBook, 
-  getChapter, 
-  Verse, 
+import {
+  BIBLE_BOOKS,
+  TranslationId,
+  getBook,
+  getChapter,
+  Verse,
   Chapter,
   getApprovedTranslationsForDenomination,
-  getDefaultTranslationForDenomination 
+  getDefaultTranslationForDenomination
 } from './data/bibleData';
 import { DenominationalLens } from './data/theologyData';
 import { Header } from './components/Header';
@@ -19,6 +19,7 @@ import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
+import { BereaAiTab } from './types';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -51,6 +52,7 @@ export function App() {
   });
   const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination(activeLens));
   const [isAiPanelOpen, setIsAiPanelOpen] = useState<boolean>(true);
+  const [aiPanelTab, setAiPanelTab] = useState<BereaAiTab>('overview');
 
   // Modals state
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
@@ -72,6 +74,7 @@ export function App() {
       text: { KJV: 'Loading scripture...' }
     };
   });
+  const [selectedVerseRange, setSelectedVerseRange] = useState<{ start: number; end: number } | null>(null);
 
   // Save current passage coordinates to local storage on navigation
   useEffect(() => {
@@ -108,7 +111,7 @@ export function App() {
       ]));
       const fetched = await fetchFullMultiTranslationChapter(targetBookId, targetChapterNum, versionsToFetch);
       setCurrentChapter(fetched);
-      
+
       const desiredVerseNum = targetVerseRef.current || 1;
       const defaultV = fetched.verses.find(v => v.verseNumber === desiredVerseNum) || fetched.verses[0];
       if (defaultV) {
@@ -144,6 +147,7 @@ export function App() {
 
   const handleNextChapter = () => {
     targetVerseRef.current = 1;
+    setSelectedVerseRange(null);
     if (chapterNum < currentBook.chaptersCount) {
       setChapterNum(prev => prev + 1);
     } else {
@@ -158,6 +162,7 @@ export function App() {
 
   const handlePrevChapter = () => {
     targetVerseRef.current = 1;
+    setSelectedVerseRange(null);
     if (chapterNum > 1) {
       setChapterNum(prev => prev - 1);
     } else {
@@ -173,9 +178,10 @@ export function App() {
   const handleSelectPassage = (newBookId: string, newChapterNum: number, targetVerseNum?: number) => {
     const vNum = targetVerseNum || 1;
     targetVerseRef.current = vNum;
+    setSelectedVerseRange(null);
     setBookId(newBookId);
     setChapterNum(newChapterNum);
-    
+
     // Check locally available chapter data
     const localCh = getChapter(newBookId, newChapterNum);
     if (localCh && localCh.verses.length > 0) {
@@ -216,7 +222,17 @@ export function App() {
               chapter={currentChapter}
               activeTranslation={activeTranslation}
               selectedVerseNumber={selectedVerse.verseNumber}
-              onSelectVerse={setSelectedVerse}
+              onSelectVerse={(v) => {
+                setSelectedVerse(v);
+                setSelectedVerseRange(null);
+              }}
+              selectedVerseRange={selectedVerseRange}
+              onSelectVerseRange={(range, primaryVerse) => {
+                setSelectedVerseRange(range);
+                if (primaryVerse) {
+                  setSelectedVerse(primaryVerse);
+                }
+              }}
               onNextChapter={handleNextChapter}
               onPrevChapter={handlePrevChapter}
               isFirstChapter={bookId === BIBLE_BOOKS[0].id && chapterNum === 1}
@@ -225,6 +241,14 @@ export function App() {
               isAiPanelOpen={isAiPanelOpen}
               isLoading={isLoadingChapter}
               onSelectPassage={handleSelectPassage}
+              onCreateStudyGuide={(verse, range) => {
+                setSelectedVerse(verse);
+                if (range && range.start !== range.end) {
+                  setSelectedVerseRange(range);
+                }
+                setIsAiPanelOpen(true);
+                setAiPanelTab('studyGuide');
+              }}
             />
           </div>
 
@@ -235,11 +259,16 @@ export function App() {
                 currentBook={currentBook.name}
                 currentChapter={chapterNum}
                 selectedVerse={selectedVerse}
+                selectedVerseRange={selectedVerseRange}
+                onVerseRangeChange={setSelectedVerseRange}
+                chapterVerses={currentChapter?.verses}
                 activeLens={activeLens}
                 onLensChange={handleSelectLens}
                 activeTranslation={activeTranslation}
                 onTranslationChange={setActiveTranslation}
                 onClose={() => setIsAiPanelOpen(false)}
+                activeTab={aiPanelTab}
+                onTabChange={setAiPanelTab}
               />
             </div>
           )}

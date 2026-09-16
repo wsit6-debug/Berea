@@ -30,6 +30,7 @@ export async function askBereaAssistant(
     book: string;
     chapter: number;
     verseNumber?: number;
+    endVerseNumber?: number;
     activeVerseRef?: string;
     verseText?: string;
     lens?: UserDenominationSetting;
@@ -37,8 +38,11 @@ export async function askBereaAssistant(
     onProgress?: (progress: { text: string; progress: number }) => void;
   }
 ): Promise<{ text: string; ragEntries: DoctrinalEntry[]; primaryCitation?: string; isLiveAi?: boolean }> {
-  const { book, chapter, verseNumber, activeVerseRef, verseText, history = [], onProgress } = context;
-  const currentPassageRef = activeVerseRef || `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
+  const { book, chapter, verseNumber, endVerseNumber, activeVerseRef, verseText, history = [], onProgress } = context;
+  const isMultiVerse = Boolean(endVerseNumber && verseNumber && endVerseNumber > verseNumber);
+  const currentPassageRef = activeVerseRef || (isMultiVerse
+    ? `${book} ${chapter}:${verseNumber}–${endVerseNumber}`
+    : `${book} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`);
   
   // Resolve active denomination preference
   const activeSetting: UserDenominationSetting = context.lens || getUserDenominationPreference();
@@ -49,6 +53,7 @@ export async function askBereaAssistant(
     book,
     chapter,
     verseNumber,
+    endVerseNumber,
     activeVerseRef: currentPassageRef,
     verseText,
     lens: activeSetting
