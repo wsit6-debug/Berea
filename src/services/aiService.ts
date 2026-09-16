@@ -606,7 +606,7 @@ Based EXCLUSIVELY on the text for ${book} ${chapter}, create exactly ${numQuesti
 
 Output ONLY a JSON array of objects. Each object must have these exact keys:
 - "question": string
-- "options": string array of exactly 4 choices (Ensure ONLY ONE correct answer. The other 3 MUST FACTUALLY CONTRADICT the text and be UNEQUIVOCALLY FALSE. Do not use plausible distractors or partial truths. DO NOT use "All of the above" or "Both A and B".)
+- "options": string array of exactly 4 choices (DO NOT use "All of the above", "None of the above", or "Both A and B". Options will be shuffled!)
 - "correctAnswerText": string (must exactly match one of the options)
 - "explanation": string
 - "reference": string (exact scripture reference, e.g. ${book} ${chapter}:1)
@@ -624,7 +624,7 @@ Create exactly ${numQuestions} comprehensive multiple-choice questions about the
 
 Output ONLY a JSON array of objects. Each object must have these exact keys:
 - "question": string
-- "options": string array of exactly 4 choices (Ensure ONLY ONE correct answer. The other 3 MUST FACTUALLY CONTRADICT the text and be UNEQUIVOCALLY FALSE. Do not use plausible distractors or partial truths. DO NOT use "All of the above" or "Both A and B".)
+- "options": string array of exactly 4 choices (DO NOT use "All of the above", "None of the above", or "Both A and B". Options will be shuffled!)
 - "correctAnswerText": string (must exactly match one of the options)
 - "explanation": string
 - "reference": string (relevant scripture reference)
@@ -651,11 +651,7 @@ DO NOT include markdown formatting like \`\`\`json. Output raw JSON only.`;
         if (index === -1) {
           // Fallback if LLM altered text slightly
           index = q.options.findIndex((opt: string) => opt.includes(q.correctAnswerText) || q.correctAnswerText.includes(opt));
-          if (index === -1) {
-            // Absolute fallback: if it hallucinates text not in options, force it in
-            q.options[0] = q.correctAnswerText;
-            index = 0;
-          }
+          if (index === -1) index = 0; // Absolute fallback
         }
         
         return shuffleQuizQuestion({
