@@ -20,6 +20,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { QuizModal } from './components/QuizModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
+import { generateQuiz } from './services/aiService';
 import { BereaAiTab } from './types';
 
 export function App() {
@@ -131,6 +132,27 @@ export function App() {
   useEffect(() => {
     loadChapterFromApi(bookId, chapterNum, activeTranslation);
   }, [bookId, chapterNum, activeTranslation, loadChapterFromApi]);
+
+  // Background debounced quiz pre-generation
+  useEffect(() => {
+    if (!currentChapter || currentChapter.verses.length === 0) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const chapterText = currentChapter.verses.map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ');
+        const numQuestions = 3;
+        const fetchedQuestions = await generateQuiz(bookId, chapterNum, 'chapter', numQuestions, chapterText);
+        
+        // Save as a pre-generated disposable quiz
+        const historyKey = `berea_quiz_pregen_${currentBook.name}_${chapterNum}`;
+        localStorage.setItem(historyKey, JSON.stringify(fetchedQuestions));
+      } catch (e) {
+        // Ignore background generation errors
+      }
+    }, 2000); // 2 second debounce prevents firing while rapidly flipping chapters
+
+    return () => clearTimeout(timer);
+  }, [bookId, chapterNum, currentChapter, activeTranslation]);
 
   // Keyboard shortcut for Cmd+K and Cmd+I
   useEffect(() => {
