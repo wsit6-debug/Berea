@@ -1,3 +1,4 @@
+import { getTheologicalInsight } from "../data/theologyData";
 import { DenominationalLens } from '../data/theologyData';
 import { buildRagGroundingContext, DoctrinalEntry } from './ragService';
 import { getUserDenominationPreference, getDenominationLabel, UserDenominationSetting } from './configService';
