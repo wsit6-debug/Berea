@@ -581,10 +581,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
       {/* Segmented Tab Capsule */}
       <div className="p-1.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex justify-center select-none flex-shrink-0">
-        <div className="ios-segmented-capsule w-full flex justify-between gap-0.5">
+        <div className="ios-segmented-capsule w-full flex-wrap justify-center gap-1">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
             title="Passage Overview"
           >
             <BookOpen className="w-3 h-3" />
@@ -593,7 +593,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('studyGuide')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'studyGuide' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'studyGuide' ? 'active' : ''}`}
             title="Study Guide Generator"
           >
             <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
@@ -602,7 +602,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('chat')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
             title="Ask AI Assistant"
           >
             <MessageSquare className="w-3 h-3" />
@@ -611,7 +611,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('compare')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
             title="Parallel Comparison"
           >
             <Columns className="w-3 h-3" />
@@ -620,7 +620,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('map')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
             title="Biblical Atlas"
           >
             <MapPin className="w-3 h-3" />
@@ -629,7 +629,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`ios-segment-pill flex-1 !text-[11px] !py-0.5 ${activeTab === 'quiz' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[11px] !py-0.5 ${activeTab === 'quiz' ? 'active' : ''}`}
           >
             <HelpCircle className="w-3 h-3" />
             <span>Quiz</span>
