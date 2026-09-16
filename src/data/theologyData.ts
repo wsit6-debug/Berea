@@ -2481,14 +2481,18 @@ export const THEOLOGICAL_INSIGHTS: Record<string, TheologicalInsight> = {
 };
 
 /**
- * Capitalizes book name properly (e.g. "1john" -> "1 John", "john" -> "John")
+ * Capitalizes book name properly (e.g. "1kings" -> "1 Kings", "1 kings" -> "1 Kings", "john" -> "John")
  */
-function formatBookDisplayName(raw: string): string {
-  const clean = raw.toLowerCase().trim();
-  if (clean.startsWith('1')) return `1 ${clean.slice(1).charAt(0).toUpperCase() + clean.slice(2)}`;
-  if (clean.startsWith('2')) return `2 ${clean.slice(1).charAt(0).toUpperCase() + clean.slice(2)}`;
-  if (clean.startsWith('3')) return `3 ${clean.slice(1).charAt(0).toUpperCase() + clean.slice(2)}`;
-  return clean.charAt(0).toUpperCase() + clean.slice(1);
+export function formatBookDisplayName(raw: string): string {
+  if (!raw) return '';
+  const clean = raw.toLowerCase().trim().replace(/^([123])\s*/, '$1 ');
+  return clean
+    .split(/\s+/)
+    .map((word, idx) => {
+      if (['of', 'and', 'the'].includes(word) && idx > 0) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
 }
 
 /**
@@ -2684,7 +2688,7 @@ export function getTheologicalInsight(
   if (isPassionPredictionLocus) {
     return {
       passageRef: cleanPassageRef,
-      conciseOverview: `Jesus explicitly foretells His impending betrayal, death, and third-day resurrection (${snippet}). The divine title "Son of Man" unites Daniel 7’s apocalyptic heavenly ruler with Isaiah 53’s Suffering Servant, establishing that redemptive glory is achieved only through sacrificial suffering and obedient self-giving.`,
+      conciseOverview: `Jesus explicitly foretells His impending betrayal, sacrificial death, and third-day bodily resurrection. The divine title "Son of Man" unites Daniel 7’s apocalyptic heavenly ruler with Isaiah 53’s Suffering Servant, revealing that eternal redemptive glory is achieved through self-giving love.`,
       theologicalThemes: [
         'The Passion of Christ & Sovereign Divine Plan (Dei)',
         'The Son of Man Handed Over (Traditio)',
@@ -2716,7 +2720,7 @@ export function getTheologicalInsight(
   if (isPapacyLocus) {
     return {
       passageRef: cleanPassageRef,
-      conciseOverview: `A crucial ecclesiological passage on apostolic authority, the foundation of the Church, and the keys of the kingdom (${snippet}).`,
+      conciseOverview: `A crucial ecclesiological passage on apostolic authority, the rock-solid foundation of the Church, and the keys of the kingdom of heaven.`,
       theologicalThemes: ['Petrine Primacy vs Conciliarity', 'The Authority of the Keys (Claves Regni)', 'The Indefectibility of the Church'],
       historicalContext: `Addressed by Christ in the apostolic era to establish the order, governance, and doctrinal fidelity of His Church against the gates of hell.`,
       lensPerspectives: {
@@ -2743,7 +2747,7 @@ export function getTheologicalInsight(
   if (isJustificationLocus) {
     return {
       passageRef: cleanPassageRef,
-      conciseOverview: `A foundational passage on justification, faith, grace, and good works in the Christian life (${snippet}).`,
+      conciseOverview: `A foundational revelation on justification, grace, living faith, and the transformative fruit of the Spirit in the Christian life.`,
       theologicalThemes: ['Justification by Faith (Sola Fide)', 'The Role of Good Works in Salvation', 'Forensic Imputation vs Interior Renewal'],
       historicalContext: `Pauline and apostolic epistles defending the purity of the Gospel of grace against both legalistic moralism and antinomian license.`,
       lensPerspectives: {
@@ -2770,7 +2774,7 @@ export function getTheologicalInsight(
   if (isPredestinationLocus) {
     return {
       passageRef: cleanPassageRef,
-      conciseOverview: `A profound revelation of God's eternal purposes, divine sovereignty, foreknowledge, and the mystery of election (${snippet}).`,
+      conciseOverview: `A profound contemplation of God's eternal purposes, sovereign mercy, divine foreknowledge, and the mystery of redemptive election.`,
       theologicalThemes: ['Sovereign Election & Divine Decrees', 'Prevenient Grace vs Irresistible Grace', 'Universal Salvific Will vs Particular Redemption'],
       historicalContext: `Authored to unveil the majestic eternal plan of God who works all things after the counsel of His own will across redemptive history.`,
       lensPerspectives: {
@@ -2797,7 +2801,7 @@ export function getTheologicalInsight(
   if (isBaptismLocus) {
     return {
       passageRef: cleanPassageRef,
-      conciseOverview: `An essential sacramental passage on the meaning, efficacy, and role of baptism in the life of the covenant community (${snippet}).`,
+      conciseOverview: `An essential passage on the theological significance, cleansing efficacy, and covenantal role of holy baptism in the body of Christ.`,
       theologicalThemes: ['Sacramental Regeneration vs Memorial Ordinance', 'The Washing Away of Sins in Christ', 'Infant Baptism (Paedobaptism) vs Believer’s Baptism (Credobaptism)'],
       historicalContext: `The apostolic establishment of Christian baptism as the inaugural covenant sign connecting the believer to Christ's death and resurrection.`,
       lensPerspectives: {
@@ -2884,24 +2888,52 @@ export function getTheologicalInsight(
     }
   }
 
-  const isGospel = ['matthew', 'mark', 'luke', 'john'].includes(normBook);
-  const isEpistle = ['romans', '1corinthians', '2corinthians', 'galatians', 'ephesians', 'philippians', 'colossians', '1thessalonians', '2thessalonians', '1timothy', '2timothy', 'titus', 'philemon', 'hebrews', 'james', '1peter', '2peter', '1john', '2john', '3john', 'jude'].includes(normBook);
-  const isWisdom = ['psalms', 'proverbs', 'ecclesiastes', 'job', 'song of solomon'].includes(normBook);
-  const isProphet = ['isaiah', 'jeremiah', 'lamentations', 'ezekiel', 'daniel', 'hosea', 'joel', 'amos', 'obadiah', 'jonah', 'micah', 'nahum', 'habakkuk', 'zephaniah', 'haggai', 'zechariah', 'malachi', 'revelation'].includes(normBook);
+  function formatTheologicalTheme(theme: string): string {
+    return theme
+      .replace(/\s*&\s*/g, ' and ')
+      .replace(/\bgod\b/gi, 'God')
+      .replace(/\bchrist\b/gi, 'Christ')
+      .replace(/\bjesus\b/gi, 'Jesus')
+      .replace(/\bholy spirit\b/gi, 'Holy Spirit')
+      .replace(/\blord\b/gi, 'Lord')
+      .replace(/\bfather\b/gi, 'Father');
+  }
+
+  const bookKey = normBook.replace(/\s+/g, '');
+  const isTorah = ['genesis', 'exodus', 'leviticus', 'numbers', 'deuteronomy'].includes(bookKey);
+  const isHistory = ['joshua', 'judges', 'ruth', '1samuel', '2samuel', '1kings', '2kings', '1chronicles', '2chronicles', 'ezra', 'nehemiah', 'esther'].includes(bookKey);
+  const isWisdom = ['psalms', 'proverbs', 'ecclesiastes', 'job', 'songofsolomon', 'songofsongs'].includes(bookKey);
+  const isProphet = ['isaiah', 'jeremiah', 'lamentations', 'ezekiel', 'daniel', 'hosea', 'joel', 'amos', 'obadiah', 'jonah', 'micah', 'nahum', 'habakkuk', 'zephaniah', 'haggai', 'zechariah', 'malachi'].includes(bookKey);
+  const isGospel = ['matthew', 'mark', 'luke', 'john'].includes(bookKey);
+  const isActs = bookKey === 'acts';
+  const isEpistle = ['romans', '1corinthians', '2corinthians', 'galatians', 'ephesians', 'philippians', 'colossians', '1thessalonians', '2thessalonians', '1timothy', '2timothy', 'titus', 'philemon', 'hebrews', 'james', '1peter', '2peter', '1john', '2john', '3john', 'jude'].includes(bookKey);
+  const isApocalypse = bookKey === 'revelation';
 
   const contextSetting = isGospel
-    ? `Recorded in the Gospel of ${cleanBookName} as part of the inspired witness to Jesus Christ’s life, teaching, and kingdom ministry.`
+    ? `Set within the Gospel of ${cleanBookName}, capturing the eyewitness testimony to Jesus Christ’s incarnate life, redemptive kingdom teaching, and holy passion.`
+    : isActs
+      ? `Recorded in the Acts of the Apostles, chronicling the explosive advance of the early Church as the Holy Spirit empowers the apostolic witness from Jerusalem to the ends of the earth.`
     : isEpistle
-      ? `Composed within the apostolic epistle of ${cleanBookName} to instruct, correct, and encourage the church in sound doctrine and holy conduct.`
-      : isWisdom
-        ? `Preserved in the wisdom and worship corpus of ${cleanBookName}, articulating prayer, praise, and ethical reflection in the fear of the Lord.`
-        : isProphet
-          ? `Proclaimed in the prophetic witness of ${cleanBookName}, calling God's people to covenant faithfulness and unveiling divine redemptive purposes.`
-          : `Situated within the canonical history of ${cleanBookName}, recounting God’s covenantal dealings and sovereign guidance of His people.`;
+      ? `Composed within the apostolic epistle of ${cleanBookName}, delivering vital doctrinal grounding, pastoral correction, and practical ethics to build up the body of Christ.`
+    : isWisdom
+      ? `Preserved in the wisdom literature and psalmody of ${cleanBookName}, voicing prayer, penitence, worship, and profound contemplation of God’s eternal ways.`
+    : isProphet
+      ? `Proclaimed through the prophetic herald of ${cleanBookName}, confronting spiritual apathy, declaring covenant accountability, and pointing ahead to messianic restoration.`
+    : isTorah
+      ? `Anchored in the foundational Torah narrative of ${cleanBookName}, unveiling the genesis of creation, the patriarchs, and the covenant bond formed between Yahweh and His redeemed people.`
+    : isHistory
+      ? `Situated within the sacred history of ${cleanBookName}, chronicling the unfolding drama of Israel’s monarchy, human succession, and covenant faithfulness under God’s sovereign providential governance.`
+    : isApocalypse
+      ? `Unveiled in the apocalyptic vision of Revelation, displaying the sovereign victory of the Slain Lamb over the powers of darkness and the renewal of all creation.`
+    : `Situated within the canonical Scriptures of ${cleanBookName}, recounting God’s steadfast covenant dealings and sovereign guidance of His people.`;
 
-  const conciseOverview = verseText && verseText.trim().length > 0
-    ? `In ${cleanPassageRef} (${snippet}), the text centers upon ${extractedThemes[0].toLowerCase()}, calling hearers to genuine faith, spiritual discernment, and obedience.`
-    : `In ${cleanPassageRef}, the inspired text provides foundational biblical instruction on ${extractedThemes[0].toLowerCase()}.`;
+  const primaryTheme = formatTheologicalTheme(extractedThemes[0].toLowerCase());
+  const secondaryTheme = extractedThemes[1] ? formatTheologicalTheme(extractedThemes[1].toLowerCase()) : null;
+
+  const isWholePassageChapter = !isExplicitVerse && !isMulti;
+  const conciseOverview = isWholePassageChapter
+    ? `Across ${cleanPassageRef}, the inspired text centers upon ${primaryTheme}${secondaryTheme ? `, unveiling ${secondaryTheme}` : ''}. The passage calls the church to spiritual discernment, courageous faith, and wholehearted alignment with God’s eternal purpose.`
+    : `In ${cleanPassageRef}, the text directly illuminates ${primaryTheme}${secondaryTheme ? ` alongside ${secondaryTheme}` : ''}. It invites hearers to discern the work of God’s grace, cling to His promises, and walk in authentic discipleship.`;
 
   return {
     passageRef: cleanPassageRef,
@@ -2909,18 +2941,18 @@ export function getTheologicalInsight(
     theologicalThemes: extractedThemes.slice(0, 3),
     historicalContext: contextSetting,
     lensPerspectives: {
-      catholic: `Examines how ${cleanPassageRef} is received in Sacred Tradition, the liturgical life of the Church, and personal moral sanctification (CCC §1700–1876).`,
-      orthodox: `Interprets ${cleanPassageRef} through patristic consensus, sacramental grace, and the pursuit of theosis (union with God).`,
-      reformed: `Emphasizes God's sovereign covenant faithfulness, the supreme authority of the Word, and salvation by grace alone in ${cleanPassageRef}.`,
-      lutheran: `Examines ${cleanPassageRef} through the biblical distinction between Law and Gospel, anchoring assurance in Christ’s promise.`,
-      wesleyan: `Focuses on the transforming power of the Holy Spirit in ${cleanPassageRef}, calling the believer to responsive faith and holy love.`,
-      anglican: `Considers ${cleanPassageRef} within the historic lectionary, common prayer, and apostolic order of the Church.`,
-      baptist_evangelical: `Draws clear, practical application for personal faith, prayer, and obedient discipleship from ${cleanPassageRef}.`
+      catholic: `Contemplates ${cleanPassageRef} through Sacred Tradition, liturgical life, and personal moral sanctification, seeking docility to the Holy Spirit and communion with Christ the King (CCC §1700–1876).`,
+      orthodox: `Interprets ${cleanPassageRef} through patristic consensus, uncreated divine energies, and the lifelong journey of theosis (transformative union with God).`,
+      reformed: `Highlights God's sovereign covenant faithfulness, the supreme authority of the Word, and salvation by grace alone through faith in ${cleanPassageRef}.`,
+      lutheran: `Examines ${cleanPassageRef} through the biblical distinction between Law and Gospel, driving the soul to repentant humility and resting in the free promise of Christ.`,
+      wesleyan: `Focuses on the transforming power of the Holy Spirit in ${cleanPassageRef}, awakening prevenient grace and calling the believer to holy love and active discipleship.`,
+      anglican: `Receives ${cleanPassageRef} within the rhythm of common prayer, the historic lectionary, and pastoral care across the broad heritage of the Church.`,
+      baptist_evangelical: `Draws clear, Christ-centered convictions from ${cleanPassageRef} for personal faith, fervent prayer, and bold obedience in daily life.`
     },
     originalLanguageInsights: lemmas,
     suggestedQuestions: [
-      `How does ${cleanPassageRef} deepen your understanding of ${extractedThemes[0].toLowerCase()}?`,
-      `What practical obedience or prayerful reflection does this verse demand in your daily life?`
+      `How does ${cleanPassageRef} deepen your understanding of ${primaryTheme.toLowerCase()}?`,
+      `What practical obedience or prayerful reflection does this passage demand in your daily walk with the Lord?`
     ],
     practicalApplication: `Take time to meditate on the truth of ${cleanPassageRef} today, asking God to conform your heart and actions to His revealed Word.`
   };

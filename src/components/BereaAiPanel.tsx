@@ -21,7 +21,8 @@ import {
   generateStudyGuideContent,
   formatStudyGuideForClipboard,
   addSupportingPassageToGuide,
-  removeSupportingPassageFromGuide
+  removeSupportingPassageFromGuide,
+  formatContextSnapshotForDisplay
 } from '../services/studyGuideService';
 import confetti from 'canvas-confetti';
 
@@ -372,7 +373,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           <h1>Berea Study Guide: ${currentGuide.passageRef}</h1>
           <div class="meta">Tradition: ${activeDenom.name} · Depth: ${audienceLabel} · Created: ${new Date(currentGuide.createdAt).toLocaleDateString()}</div>
           <h2>Context Snapshot</h2>
-          <p>${currentGuide.contextSnapshot}</p>
+          <div>${formatContextSnapshotForDisplay(currentGuide.contextSnapshot)
+            .replace(/^### (.*)$/gm, '<h3 style="color:#B4793D; font-size:14px; margin:16px 0 6px; border-bottom:1px solid #EBE5DC; padding-bottom:3px;">$1</h3>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^> (.*)$/gm, '<blockquote style="margin:8px 0; padding:6px 12px; border-left:3px solid #B4793D; background:#FAF7F2; font-style:italic; color:#57524E;">$1</blockquote>')}</div>
           ${currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? `
             <h2>Supporting Scriptures & Cross-References</h2>
             <ul style="padding-left: 20px;">
@@ -1007,8 +1011,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     {openSections.context ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
                   </button>
                   {openSections.context && (
-                    <div className="p-3 bg-white text-xs text-[#44403C] leading-relaxed whitespace-pre-line space-y-2">
-                      {currentGuide.contextSnapshot}
+                    <div className="p-3.5 bg-white text-xs text-[#44403C] leading-relaxed">
+                      <MarkdownTheologyRenderer content={formatContextSnapshotForDisplay(currentGuide.contextSnapshot)} />
                     </div>
                   )}
                 </div>
