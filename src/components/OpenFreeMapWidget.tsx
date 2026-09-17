@@ -228,7 +228,7 @@ function escapeHtml(str: string | number | undefined): string {
               pointer-events: none;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             ">
-              ${escapeHtml(placeLabel)}
+              ${escapeHtml(placeLabel)} ${ev.isEducatedGuess ? '<span title="Educated Guess">⚠️</span>' : ''}
             </div>
           </div>
         `,
@@ -243,10 +243,11 @@ function escapeHtml(str: string | number | undefined): string {
 
       marker.bindPopup(`
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #26221F; padding: 4px; max-width: 250px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 4px; flex-wrap: wrap;">
+            <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D; flex-shrink: 0;">
               Event ${escapeHtml(ev.stepNumber)} • ${escapeHtml(ev.passageRef)}
             </span>
+            ${ev.isEducatedGuess ? `<span style="font-size: 9px; font-weight: 700; background: #FFF3CD; color: #856404; padding: 2px 4px; border-radius: 4px; border: 1px solid #FFEEBA; white-space: nowrap;">⚠️ Educated Guess</span>` : ''}
           </div>
           <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: #78471F;">${escapeHtml(ev.title)}</h4>
           <p style="margin: 0 0 4px 0; font-size: 10.5px; color: #78716C; font-weight: 500;">📍 ${escapeHtml(ev.locationName)}</p>
