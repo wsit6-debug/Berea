@@ -17,7 +17,7 @@ import { useBookmarkedVerses, toggleBookmark, isVerseBookmarked } from '../servi
 /**
  * Universal extractor for verse display text across all translation keys & data shapes
  */
-export function getVerseDisplayText(
+function getVerseDisplayText(
   verse: Verse | undefined | null,
   activeTranslation?: string
 ): string {
@@ -60,6 +60,7 @@ interface BibleReaderProps {
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
   isLastChapterOfBook?: boolean;
   onOpenBookmarks?: () => void;
+  onSelectCharacter?: (charId: string) => void;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -82,7 +83,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onCreateStudyGuide,
   onOpenQuiz,
   isLastChapterOfBook = false,
-  onOpenBookmarks
+  onOpenBookmarks,
+  onSelectCharacter
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
@@ -575,7 +577,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           {verse.verseNumber}
                           {isBookmarked && <span className="text-[#B4793D] ml-0.5">★</span>}
                         </sup>{' '}
-                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected)}{' '}
+                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter)}{' '}
                       </span>
                     );
                   })}
@@ -793,7 +795,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                             style={{ fontSize: `${fontSize}px`, lineHeight: '1.75' }}
                             className="font-scripture tracking-normal"
                           >
-                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected)}
+                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter)}
                           </p>
 
                           {/* Multi-Verse Action Banner when at the end of the range in Verse Mode */}

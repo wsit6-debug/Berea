@@ -18,6 +18,7 @@ import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { BookmarksModal } from './components/BookmarksModal';
+import { CharacterPanel } from './components/CharacterPanel';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
 import { scheduleBackgroundQuizPreGeneration } from './services/quizService';
@@ -62,6 +63,7 @@ export function App() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
   const [quizType, setQuizType] = useState<'chapter' | 'book' | null>(null);
   const bookmarks = useBookmarkedVerses();
 
@@ -165,6 +167,7 @@ export function App() {
   const handleNextChapter = () => {
     targetVerseRef.current = 1;
     setSelectedVerseRange(null);
+    setSelectedCharacter(null);
     if (chapterNum < currentBook.chaptersCount) {
       setChapterNum(prev => prev + 1);
     } else {
@@ -180,6 +183,7 @@ export function App() {
   const handlePrevChapter = () => {
     targetVerseRef.current = 1;
     setSelectedVerseRange(null);
+    setSelectedCharacter(null);
     if (chapterNum > 1) {
       setChapterNum(prev => prev - 1);
     } else {
@@ -196,6 +200,7 @@ export function App() {
     const vNum = targetVerseNum || 1;
     targetVerseRef.current = vNum;
     setSelectedVerseRange(null);
+    setSelectedCharacter(null);
     setBookId(newBookId);
     setChapterNum(newChapterNum);
 
@@ -233,7 +238,7 @@ export function App() {
 
       {/* Main App Workspace: Clean Scripture Reading + Berea AI Guide */}
       <main className="flex-1 max-w-7xl 2xl:max-w-[1536px] w-full mx-auto p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden">
-        <div className={`flex-1 grid grid-cols-1 ${isAiPanelOpen ? 'lg:grid-cols-12' : 'max-w-4xl mx-auto w-full'} gap-3 h-full min-h-0 overflow-hidden`}>
+        <div className={`flex-1 grid grid-cols-1 ${isAiPanelOpen ? 'lg:grid-cols-12' : 'max-w-4xl mx-auto w-full'} gap-3 h-full min-h-0 overflow-hidden relative`}>
           {/* Bible Reader Pane */}
           <div className={`${isAiPanelOpen ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
             <BibleReader
@@ -276,6 +281,7 @@ export function App() {
                 setAiPanelTab('quiz');
                 setIsAiPanelOpen(true);
               }}
+              onSelectCharacter={setSelectedCharacter}
             />
           </div>
 
@@ -306,6 +312,14 @@ export function App() {
               />
             </div>
           )}
+
+          {/* Character Profile Overlay Panel */}
+          <CharacterPanel 
+            charId={selectedCharacter} 
+            onClose={() => setSelectedCharacter(null)} 
+            bookName={currentBook.name}
+            chapter={currentChapter}
+          />
         </div>
       </main>
 

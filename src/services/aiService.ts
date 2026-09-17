@@ -2,6 +2,8 @@ import { getTheologicalInsight } from "../data/theologyData";
 import { DenominationalLens } from '../data/theologyData';
 import { buildRagGroundingContext, DoctrinalEntry } from './ragService';
 import { getUserDenominationPreference, getDenominationLabel, UserDenominationSetting } from './configService';
+import { MLCEngine } from '@mlc-ai/web-llm';
+import { generateLocalAiResponse } from './webLlmService';
 import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
 
@@ -789,5 +791,30 @@ export async function getAccumulatedBookQuiz(
 
   // Shuffle options and questions lightly
   return finalQuestions.slice(0, numQuestions);
+}
+
+export async function generateCharacterProfile(
+  characterName: string, 
+  book: string, 
+  chapter: number, 
+  textContext: string,
+  onProgress?: (progress: { text: string; progress: number }) => void
+): Promise<string> {
+  const prompt = `You are a biblical scholar. The user wants to learn about "${characterName}".
+Context: They are reading ${book} Chapter ${chapter}.
+
+Task: Write a concise, theological, and historical biography of ${characterName}.
+Include:
+1. Who they are broadly in the biblical narrative.
+2. What their specific role or action is in ${book} Chapter ${chapter}.
+
+Format as 2-3 short, readable paragraphs. Do not use markdown headers, just plain text paragraphs.`;
+
+  try {
+    const response = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress);
+    return response || 'No profile generated.';
+  } catch (err: any) {
+    throw new Error('Failed to generate character profile: ' + err.message);
+  }
 }
 
