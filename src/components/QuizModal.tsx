@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Trophy, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Trophy, Loader2, GripHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateQuiz, QuizQuestion, saveChapterQuizToHistory, getAccumulatedBookQuiz } from '../services/aiService';
 
 interface QuizModalProps {
@@ -26,24 +26,45 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [isMinimized, setIsMinimized] = useState(false);
 
-  useEffect(() => {
-    let interval: any;
-    if (isLoading) {
-      setProgress(0);
-      // It takes about 45 seconds on average, so 45000ms / 100 = 450ms per 1%
-      interval = setInterval(() => {
-        setProgress(p => (p < 95 ? p + 1 : p));
-      }, 450);
-    } else {
-      setProgress(100);
-    }
-    return () => clearInterval(interval);
-  }, [isLoading]);
+  const [generationCheckpoint, setGenerationCheckpoint] = useState<{ current: number; total: number } | null>(null);
+
+  const handleProgress = (current: number, total: number) => {
+    const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+    setProgress(pct);
+    setGenerationCheckpoint({ current, total });
+  };
+
+  // Movable / Draggable Pop-out state
+  const modalRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ startX: 0, startY: 0, initialPosX: 0, initialPosY: 0 });
+
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const width = Math.min(480, window.innerWidth - 32);
+    const initialX = window.innerWidth >= 1024
+      ? Math.max(16, window.innerWidth - width - 36)
+      : Math.max(16, Math.round((window.innerWidth - width) / 2));
+    return { x: initialX, y: 84 };
+  });
 
   useEffect(() => {
     if (isOpen) {
       loadQuiz();
+      // Ensure pop-out is on-screen
+      if (position) {
+        const width = modalRef.current?.offsetWidth || 480;
+        const maxX = Math.max(0, window.innerWidth - width - 8);
+        const maxY = Math.max(0, window.innerHeight - 60);
+        if (position.x > maxX || position.y > maxY) {
+          setPosition({
+            x: Math.min(Math.max(8, position.x), maxX),
+            y: Math.min(Math.max(8, position.y), maxY),
+          });
+        }
+      }
     } else {
       // Reset state on close
       setQuestions([]);
@@ -51,15 +72,60 @@ export const QuizModal: React.FC<QuizModalProps> = ({
       setSelectedAnswers({});
       setIsSubmitted(false);
       setError(null);
+      setIsMinimized(false);
+      setProgress(0);
+      setGenerationCheckpoint(null);
     }
   }, [isOpen, bookName, chapterNumber, quizType]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('button')) return;
+
+    isDraggingRef.current = true;
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialPosX: position?.x ?? 0,
+      initialPosY: position?.y ?? 0,
+    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+
+    const deltaX = e.clientX - dragStartRef.current.startX;
+    const deltaY = e.clientY - dragStartRef.current.startY;
+
+    const modalWidth = modalRef.current?.offsetWidth || 480;
+    const maxX = Math.max(0, window.innerWidth - modalWidth - 8);
+    const maxY = Math.max(0, window.innerHeight - 60);
+
+    const nextX = Math.min(Math.max(8, dragStartRef.current.initialPosX + deltaX), maxX);
+    const nextY = Math.min(Math.max(8, dragStartRef.current.initialPosY + deltaY), maxY);
+
+    setPosition({ x: nextX, y: nextY });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {
+        // Ignore
+      }
+    }
+  };
 
   const loadQuiz = async () => {
     setIsLoading(true);
     setError(null);
     try {
       if (quizType === 'book') {
-        const historyQuiz = await getAccumulatedBookQuiz(bookName, 10);
+        handleProgress(0, 10);
+        const historyQuiz = await getAccumulatedBookQuiz(bookName, 10, handleProgress);
         if (historyQuiz.length === 0) {
           setError('No chapter quizzes found for this book. Please read and complete chapter quizzes to build up your final book quiz!');
         } else {
@@ -84,7 +150,15 @@ export const QuizModal: React.FC<QuizModalProps> = ({
         }
         
         const numQuestions = 3;
-        const fetchedQuestions = await generateQuiz(bookName, chapterNumber, quizType, numQuestions, chapterText);
+        handleProgress(0, numQuestions);
+        const fetchedQuestions = await generateQuiz(
+          bookName,
+          chapterNumber,
+          quizType,
+          numQuestions,
+          chapterText,
+          handleProgress
+        );
         setQuestions(fetchedQuestions);
         // Save to history so the book quiz can use it later
         saveChapterQuizToHistory(bookName, chapterNumber, fetchedQuestions);
@@ -127,23 +201,66 @@ export const QuizModal: React.FC<QuizModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
-      <div 
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-[#EBE5DC] flex flex-col relative"
-        style={{ maxHeight: '90vh' }}
+    <div
+      ref={modalRef}
+      className="fixed z-50 bg-white/98 backdrop-blur-md rounded-2xl shadow-2xl border border-[#DCD5C9] flex flex-col overflow-hidden animate-fadeIn select-auto transition-[max-height] duration-200"
+      style={{
+        left: position ? `${position.x}px` : undefined,
+        top: position ? `${position.y}px` : undefined,
+        width: 'min(480px, calc(100vw - 32px))',
+        maxHeight: isMinimized ? 'auto' : 'min(640px, calc(100vh - 90px))',
+      }}
+    >
+      {/* Movable Drag Header */}
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        title="Drag to reposition quiz"
+        className="p-3.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
+        style={{ touchAction: 'none' }}
       >
-        <div className="p-4 border-b border-[#EBE5DC] bg-[#FAF7F2] flex items-center justify-between">
-          <h2 className="font-heading font-bold text-[#26221F] flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-[#B4793D]" />
+        <div className="flex items-center gap-2 min-w-0 pr-2">
+          <GripHorizontal className="w-4 h-4 text-[#A8A29E] shrink-0" />
+          <Trophy className="w-4 h-4 text-[#B4793D] shrink-0" />
+          <h2 className="font-heading font-bold text-[#26221F] text-sm md:text-base truncate">
             {quizType === 'chapter' ? `Chapter ${chapterNumber} Quiz` : `${bookName} Book Quiz`}
           </h2>
+          {isMinimized && questions.length > 0 && !isSubmitted && (
+            <span className="ml-1 px-2 py-0.5 text-xs font-semibold bg-[#FAF5ED] text-[#B4793D] border border-[#D4A373]/30 rounded-full shrink-0">
+              Q {currentQuestionIndex + 1}/{questions.length}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-white text-[#78716C] hover:text-[#26221F] transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(prev => !prev);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            title={isMinimized ? "Expand quiz" : "Minimize quiz"}
+            className="p-1.5 rounded-lg hover:bg-white text-[#78716C] hover:text-[#26221F] transition-colors"
           >
-            <X className="w-5 h-5" />
+            {isMinimized ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            title="Close quiz"
+            className="p-1.5 rounded-lg hover:bg-white text-[#78716C] hover:text-[#26221F] transition-colors"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
+      </div>
+
+      {!isMinimized && (
+        <>
 
         <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
           {isLoading ? (
@@ -152,17 +269,21 @@ export const QuizModal: React.FC<QuizModalProps> = ({
                 <div className="absolute w-full h-full border-4 border-[#EBE5DC] rounded-full"></div>
                 <div className="absolute w-full h-full border-4 border-[#B4793D] rounded-full border-t-transparent animate-spin"></div>
               </div>
-              <div className="text-center w-full max-w-[200px]">
+              <div className="text-center w-full max-w-[220px]">
                 <p className="text-[#78716C] text-sm font-medium animate-pulse mb-3">
                   Generating your {quizType} quiz...
                 </p>
-                <div className="w-full bg-[#EBE5DC] rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-[#EBE5DC] rounded-full h-2 overflow-hidden">
                   <div 
-                    className="bg-[#B4793D] h-1.5 rounded-full transition-all duration-1000 ease-out" 
+                    className="bg-[#B4793D] h-2 rounded-full transition-all duration-300 ease-out" 
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-[#A8A29E] mt-2 font-medium">{progress}% (Est. 45s)</p>
+                <p className="text-xs text-[#78716C] mt-2 font-medium">
+                  {generationCheckpoint 
+                    ? `Question ${generationCheckpoint.current} of ${generationCheckpoint.total} (${progress}%)` 
+                    : `${progress}%`}
+                </p>
               </div>
             </div>
           ) : error ? (
@@ -283,7 +404,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({
             </button>
           </div>
         )}
-      </div>
+        </>
+      )}
     </div>
   );
 };
