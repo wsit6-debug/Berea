@@ -37,6 +37,7 @@ interface BereaAiPanelProps {
   selectedVerse: Verse | null;
   selectedVerseRange?: { start: number; end: number } | null;
   onVerseRangeChange?: (range: { start: number; end: number } | null) => void;
+  onNavigateToChapterAndVerse?: (chapterNum: number, verseNum: number) => void;
   chapterVerses?: Verse[];
   activeLens: DenominationalLens;
   onLensChange: (lens: DenominationalLens) => void;
@@ -58,6 +59,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   selectedVerse,
   selectedVerseRange,
   onVerseRangeChange,
+  onNavigateToChapterAndVerse,
   chapterVerses,
   activeLens,
   onLensChange,
@@ -820,14 +822,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('small_group')}
-                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
-                  style={{
-                    backgroundColor: selectedAudience === 'small_group' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                    borderColor: selectedAudience === 'small_group' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                    color: selectedAudience === 'small_group' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                    fontWeight: selectedAudience === 'small_group' ? 700 : 600,
-                    boxShadow: selectedAudience === 'small_group' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'small_group'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
                   title="Practical small group discussion, fellowship, and personal application"
                 >
                   <Users className="w-3.5 h-3.5" style={{ color: selectedAudience === 'small_group' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -837,14 +835,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('deep_exegesis')}
-                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
-                  style={{
-                    backgroundColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                    borderColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                    color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                    fontWeight: selectedAudience === 'deep_exegesis' ? 700 : 600,
-                    boxShadow: selectedAudience === 'deep_exegesis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'deep_exegesis'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
                   title="Pastoral exegesis, linguistic grammar, confessional dogmatics, and historical setting"
                 >
                   <GraduationCap className="w-3.5 h-3.5" style={{ color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -854,14 +848,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('youth_family')}
-                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
-                  style={{
-                    backgroundColor: selectedAudience === 'youth_family' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                    borderColor: selectedAudience === 'youth_family' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                    color: selectedAudience === 'youth_family' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                    fontWeight: selectedAudience === 'youth_family' ? 700 : 600,
-                    boxShadow: selectedAudience === 'youth_family' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'youth_family'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
                   title="Engaging storytelling, real-world scenarios, and family discussion prompts"
                 >
                   <Baby className="w-3.5 h-3.5" style={{ color: selectedAudience === 'youth_family' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -904,14 +894,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('chapter')}
-                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
-                    style={{
-                      backgroundColor: studyGuideScope === 'chapter' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                      borderColor: studyGuideScope === 'chapter' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                      color: studyGuideScope === 'chapter' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                      fontWeight: studyGuideScope === 'chapter' ? 700 : 600,
-                      boxShadow: studyGuideScope === 'chapter' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
+                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'chapter'
+                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                        : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
                     title="Default: Complete chapter study guide"
                   >
                     <BookOpen className="w-3 h-3" style={{ color: studyGuideScope === 'chapter' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -921,14 +907,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('verse')}
-                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
-                    style={{
-                      backgroundColor: studyGuideScope === 'verse' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                      borderColor: studyGuideScope === 'verse' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                      color: studyGuideScope === 'verse' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                      fontWeight: studyGuideScope === 'verse' ? 700 : 600,
-                      boxShadow: studyGuideScope === 'verse' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
+                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'verse'
+                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                        : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
                     title="Focus on an individual verse"
                   >
                     <FileText className="w-3 h-3" style={{ color: studyGuideScope === 'verse' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -943,14 +925,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setEndVerseNum(Math.min(manualStartVerseNum + 1, maxChapterVerses));
                       }
                     }}
-                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
-                    style={{
-                      backgroundColor: studyGuideScope === 'range' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                      borderColor: studyGuideScope === 'range' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                      color: studyGuideScope === 'range' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                      fontWeight: studyGuideScope === 'range' ? 700 : 600,
-                      boxShadow: studyGuideScope === 'range' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
+                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'range'
+                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                        : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
                     title="Custom verse range"
                   >
                     <Layers className="w-3 h-3" style={{ color: studyGuideScope === 'range' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -2296,29 +2274,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {/* Map Tab */}
         {activeTab === 'map' && (
           <div className="space-y-3 animate-fadeIn">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4
-                  className="text-xs font-bold flex items-center gap-1.5"
-                  style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
-                >
-                  <span>{currentBook.toUpperCase()} Chapter {currentChapter} Topography</span>
-                </h4>
-                <p className="text-[10px] text-[#78716C]">
-                  {chapterData.region} • {chapterData.events.length} Chapter Event{chapterData.events.length > 1 ? 's' : ''}
-                </p>
-              </div>
-              <span
-                className="text-[9.5px] font-semibold px-2 py-0.5 rounded-full border"
-                style={{
-                  color: 'var(--clean-accent-dark, #8C5E2E)',
-                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                }}
-              >
-                Event Topography
-              </span>
-            </div>
+
 
             <OpenFreeMapWidget
               currentBook={currentBook}
@@ -2346,8 +2302,21 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   >
                     <span>📍 Event {currentEvent.stepNumber}:</span> {currentEvent.title}
                   </span>
-                  <button 
+                  <button
                     onClick={() => {
+                      if (onNavigateToChapterAndVerse && currentEvent.passageRef) {
+                        try {
+                          const match = currentEvent.passageRef.match(/(\d+):(\d+)/);
+                          if (match) {
+                            const chapterNum = parseInt(match[1], 10);
+                            const verseNum = parseInt(match[2], 10);
+                            if (!isNaN(chapterNum) && !isNaN(verseNum)) {
+                              onNavigateToChapterAndVerse(chapterNum, verseNum);
+                              return;
+                            }
+                          }
+                        } catch(e) {}
+                      }
                       if (onVerseRangeChange && currentEvent.verseRange) {
                         onVerseRangeChange({ start: currentEvent.verseRange[0], end: currentEvent.verseRange[1] });
                       }

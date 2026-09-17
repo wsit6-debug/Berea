@@ -19,7 +19,7 @@ export interface ChapterGeoEvent {
   stepNumber: number;
   title: string;
   passageRef: string;
-  verseRange: [number, number];
+  verseRange: number[];
   locationName: string;
   shortPlaceName?: string;
   modernLocation: string;
@@ -29,6 +29,8 @@ export interface ChapterGeoEvent {
   theologicalSignificance: string;
   icon?: string;
   isEducatedGuess?: boolean;
+  isReferencedOnly?: boolean;
+  distanceFromPrevious?: number;
 }
 
 export function getShortPlaceName(ev: { shortPlaceName?: string; locationName: string; title?: string }): string {
@@ -1116,25 +1118,43 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
   if (BOOK_CACHE[bookId]) return BOOK_CACHE[bookId];
 
   const allEvents: ChapterGeoEvent[] = [];
-  const uniquePlaces = new Set<string>();
+  const uniquePhysical = new Set<string>();
+  const uniqueRef = new Set<string>();
 
   const targetPrefix = `${bookId.toLowerCase()}_`;
 
-  Object.keys(CHAPTER_MICRO_EVENTS).forEach(key => {
-    if (key.startsWith(targetPrefix)) {
+  const matchingKeys = Object.keys(CHAPTER_MICRO_EVENTS).filter(k => k.startsWith(targetPrefix));
+  matchingKeys.sort((a, b) => {
+    const numA = parseInt(a.split('_')[1] || '0', 10);
+    const numB = parseInt(b.split('_')[1] || '0', 10);
+    return numA - numB;
+  });
+
+  matchingKeys.forEach(key => {
       const chapterData = CHAPTER_MICRO_EVENTS[key];
       chapterData.events.forEach(ev => {
-        if (!uniquePlaces.has(ev.locationName)) {
-          uniquePlaces.add(ev.locationName);
-          allEvents.push({
-            ...ev,
-            stepNumber: uniquePlaces.size,
-            id: `book_${bookId}_${uniquePlaces.size}`,
-            passageRef: ev.passageRef // Keep the first passage ref as a reference
-          });
+        if (ev.isReferencedOnly) {
+          if (!uniqueRef.has(ev.locationName)) {
+            uniqueRef.add(ev.locationName);
+            allEvents.push({
+              ...ev,
+              stepNumber: uniqueRef.size,
+              id: `book_${bookId}_ref_${uniqueRef.size}`,
+              passageRef: ev.passageRef
+            });
+          }
+        } else {
+          if (!uniquePhysical.has(ev.locationName)) {
+            uniquePhysical.add(ev.locationName);
+            allEvents.push({
+              ...ev,
+              stepNumber: uniquePhysical.size,
+              id: `book_${bookId}_phys_${uniquePhysical.size}`,
+              passageRef: ev.passageRef
+            });
+          }
         }
       });
-    }
   });
 
   if (allEvents.length === 0) return null;

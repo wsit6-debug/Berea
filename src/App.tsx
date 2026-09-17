@@ -442,6 +442,7 @@ export function App() {
                 selectedVerse={selectedVerse}
                 selectedVerseRange={selectedVerseRange}
                 onVerseRangeChange={setSelectedVerseRange}
+                onNavigateToChapterAndVerse={(c, v) => handleSelectPassage(currentBook.id, c, v)}
                 chapterVerses={currentChapter?.verses}
                 activeLens={activeLens}
                 onLensChange={handleSelectLens}
