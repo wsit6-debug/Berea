@@ -622,7 +622,8 @@ export async function generateQuiz(
   type: 'chapter' | 'book',
   numQuestions: number = 3,
   chapterText?: string,
-  onProgress?: (generated: number, total: number) => void
+  onProgress?: (generated: number, total: number) => void,
+  abortSignal?: AbortSignal
 ): Promise<QuizQuestion[]> {
   const bibleBook = getBook(book);
   const bookTheme = bibleBook?.theme || 'God’s revelation and redemptive history';
@@ -639,6 +640,9 @@ export async function generateQuiz(
   onProgress?.(0, numQuestions);
 
   for (let i = 0; i < numQuestions; i++) {
+    if (abortSignal?.aborted) {
+      throw new Error('Quiz generation aborted');
+    }
     const previousTopics = questions.length > 0
       ? `\nPrevious questions already created for this quiz (DO NOT repeat or duplicate these questions or topics):\n` +
         questions.map((q, idx) => `${idx + 1}. ${q.question}`).join('\n')
@@ -735,7 +739,8 @@ export function saveChapterQuizToHistory(book: string, chapter: number, question
 export async function getAccumulatedBookQuiz(
   book: string,
   numQuestions: number = 10,
-  onProgress?: (generated: number, total: number) => void
+  onProgress?: (generated: number, total: number) => void,
+  abortSignal?: AbortSignal
 ): Promise<QuizQuestion[]> {
   let allQuestions: QuizQuestion[] = [];
 
@@ -763,6 +768,7 @@ export async function getAccumulatedBookQuiz(
 
   const needed = Math.max(0, numQuestions - finalQuestions.length);
   if (needed > 0) {
+    if (abortSignal?.aborted) throw new Error('Book quiz generation aborted');
     const bookQuestions = await generateQuiz(
       book,
       1,
@@ -771,7 +777,8 @@ export async function getAccumulatedBookQuiz(
       undefined,
       (currentGen) => {
         onProgress?.(Math.min(numQuestions, initialCount + currentGen), numQuestions);
-      }
+      },
+      abortSignal
     );
     finalQuestions = finalQuestions.concat(bookQuestions);
   }
