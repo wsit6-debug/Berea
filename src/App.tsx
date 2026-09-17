@@ -17,8 +17,11 @@ import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
+import { BookmarksModal } from './components/BookmarksModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
+import { scheduleBackgroundQuizPreGeneration } from './services/quizService';
+import { useBookmarkedVerses } from './services/bookmarkService';
 import { BereaAiTab } from './types';
 
 export function App() {
@@ -58,6 +61,9 @@ export function App() {
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false);
+  const [quizType, setQuizType] = useState<'chapter' | 'book' | null>(null);
+  const bookmarks = useBookmarkedVerses();
 
   // Dynamic Chapter State fetched from YouVersion Scripture API
   const currentBook = getBook(bookId) || BIBLE_BOOKS[0];
@@ -129,7 +135,14 @@ export function App() {
     loadChapterFromApi(bookId, chapterNum, activeTranslation);
   }, [bookId, chapterNum, activeTranslation, loadChapterFromApi]);
 
-  // Keyboard shortcut for Cmd+K and Cmd+I
+  // Background debounced quiz pre-generation (sequential & auto-aborted when foreground requested)
+  useEffect(() => {
+    if (!currentChapter || currentChapter.verses.length === 0) return;
+    const chapterText = currentChapter.verses.map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ');
+    scheduleBackgroundQuizPreGeneration(currentBook.name, chapterNum, chapterText);
+  }, [bookId, chapterNum, currentChapter, activeTranslation]);
+
+  // Keyboard shortcut for Cmd+K, Cmd+I, and Cmd+B
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -139,6 +152,10 @@ export function App() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
         e.preventDefault();
         setIsAiPanelOpen(prev => !prev);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setIsBookmarksModalOpen(prev => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -207,18 +224,21 @@ export function App() {
         onSelectTranslation={setActiveTranslation}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onOpenSearch={() => setIsSearchModalOpen(true)}
+        onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+        bookmarkCount={bookmarks.length}
         isAiPanelOpen={isAiPanelOpen}
         onToggleAiPanel={() => setIsAiPanelOpen(prev => !prev)}
         onLogout={handleLogout}
       />
 
       {/* Main App Workspace: Clean Scripture Reading + Berea AI Guide */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden">
+      <main className="flex-1 max-w-7xl 2xl:max-w-[1536px] w-full mx-auto p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden">
         <div className={`flex-1 grid grid-cols-1 ${isAiPanelOpen ? 'lg:grid-cols-12' : 'max-w-4xl mx-auto w-full'} gap-3 h-full min-h-0 overflow-hidden`}>
           {/* Bible Reader Pane */}
-          <div className={`${isAiPanelOpen ? 'lg:col-span-7' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
+          <div className={`${isAiPanelOpen ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
             <BibleReader
               bookName={currentBook.name}
+              bookId={bookId}
               chapter={currentChapter}
               activeTranslation={activeTranslation}
               selectedVerseNumber={selectedVerse.verseNumber}
@@ -249,12 +269,19 @@ export function App() {
                 setIsAiPanelOpen(true);
                 setAiPanelTab('studyGuide');
               }}
+              isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
+              onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+              onOpenQuiz={(type) => {
+                setQuizType(type);
+                setAiPanelTab('quiz');
+                setIsAiPanelOpen(true);
+              }}
             />
           </div>
 
           {/* Berea AI Inspector Sidebar */}
           {isAiPanelOpen && (
-            <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
               <BereaAiPanel
                 currentBook={currentBook.name}
                 currentChapter={chapterNum}
@@ -269,6 +296,13 @@ export function App() {
                 onClose={() => setIsAiPanelOpen(false)}
                 activeTab={aiPanelTab}
                 onTabChange={setAiPanelTab}
+                activeQuizType={quizType}
+                onQuizTypeChange={setQuizType}
+                onOpenQuiz={(type) => {
+                  setQuizType(type);
+                  setAiPanelTab('quiz');
+                  setIsAiPanelOpen(true);
+                }}
               />
             </div>
           )}
@@ -297,6 +331,13 @@ export function App() {
         onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
         activeTranslation={activeTranslation}
         activeLens={activeLens}
+      />
+
+      {/* Bookmarked Verses Modal */}
+      <BookmarksModal
+        isOpen={isBookmarksModalOpen}
+        onClose={() => setIsBookmarksModalOpen(false)}
+        onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
       />
     </div>
   );

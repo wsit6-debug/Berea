@@ -1,4 +1,5 @@
 import React from 'react';
+import bereaLogoUrl from '../assets/berea-logo.jpg';
 
 interface BereaLogoProps {
   className?: string;
@@ -28,7 +29,7 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
           className="rounded-2xl overflow-hidden shadow-[0_12px_32px_rgba(180,121,61,0.22)] border-2 border-[#D4A373]/50 bg-[#FAF7F2] p-2 transition-all duration-300 hover:scale-105 hover:shadow-[0_16px_40px_rgba(180,121,61,0.3)]"
         >
           <img
-            src="/berea-logo.jpg"
+            src={bereaLogoUrl}
             alt="Berea Gold Monogram"
             className="w-full h-full object-contain rounded-xl"
           />
@@ -55,7 +56,7 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
         className={`rounded-xl overflow-hidden shadow-xs border border-[#EBE5DC] bg-[#FAF7F2] p-0.5 flex-shrink-0 transition-transform duration-200 hover:scale-105 ${onClick ? 'cursor-pointer' : ''} ${className}`}
       >
         <img
-          src="/berea-logo.jpg"
+          src={bereaLogoUrl}
           alt="Berea Emblem"
           className="w-full h-full object-contain"
         />
@@ -74,7 +75,7 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
         className="rounded-xl overflow-hidden shadow-sm border border-[#EBE5DC] bg-[#FAF7F2] p-0.5 flex-shrink-0 transition-transform duration-200 hover:scale-105 flex items-center justify-center"
       >
         <img
-          src="/berea-logo.jpg"
+          src={bereaLogoUrl}
           alt="Berea Monogram"
           className="w-full h-full object-contain"
         />

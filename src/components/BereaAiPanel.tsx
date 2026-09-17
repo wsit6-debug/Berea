@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, Trophy, HelpCircle
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
-import { askBereaAssistant, ChatMessage } from '../services/aiService';
+import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
+import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
@@ -42,6 +43,9 @@ interface BereaAiPanelProps {
   onClose?: () => void;
   activeTab?: BereaAiTab;
   onTabChange?: (tab: BereaAiTab) => void;
+  activeQuizType?: 'chapter' | 'book' | null;
+  onQuizTypeChange?: (type: 'chapter' | 'book' | null) => void;
+  onOpenQuiz?: (type: 'chapter' | 'book') => void;
 }
 
 export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
@@ -57,7 +61,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   onTranslationChange,
   onClose,
   activeTab: externalTab,
-  onTabChange
+  onTabChange,
+  activeQuizType,
+  onQuizTypeChange,
+  onOpenQuiz
 }) => {
   const [internalTab, setInternalTab] = useState<BereaAiTab>(externalTab || 'overview');
 
@@ -72,6 +79,90 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     setInternalTab(t);
     onTabChange?.(t);
   };
+
+  // Embedded Quiz State (runs inline at bottom of tab)
+  const [internalQuizType, setInternalQuizType] = useState<'chapter' | 'book' | null>(activeQuizType || null);
+  const currentQuizType = activeQuizType !== undefined ? activeQuizType : internalQuizType;
+
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizSelectedAnswers, setQuizSelectedAnswers] = useState<Record<number, number>>({});
+  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
+  const [generatingQuizType, setGeneratingQuizType] = useState<'chapter' | 'book' | null>(null);
+  const [quizError, setQuizError] = useState<string | null>(null);
+  const [quizProgress, setQuizProgress] = useState(0);
+  const [quizCheckpoint, setQuizCheckpoint] = useState<{ current: number; total: number } | null>(null);
+
+  // Track pre-generated cached state
+  const [hasCachedChapter, setHasCachedChapter] = useState(false);
+  const [hasCachedBook, setHasCachedBook] = useState(false);
+
+  // User-configurable quiz length
+  const [chapterQuizLength, setChapterQuizLength] = useState<number>(3);
+  const [bookQuizLength, setBookQuizLength] = useState<number>(10);
+
+  useEffect(() => {
+    const updateCacheStatus = () => {
+      setHasCachedChapter(Boolean(getCachedChapterQuiz(currentBook, currentChapter, chapterQuizLength)));
+      setHasCachedBook(Boolean(getCachedBookQuiz(currentBook, bookQuizLength)));
+    };
+
+    updateCacheStatus();
+
+    window.addEventListener('berea_quiz_cache_updated', updateCacheStatus);
+    return () => window.removeEventListener('berea_quiz_cache_updated', updateCacheStatus);
+  }, [currentBook, currentChapter, chapterQuizLength, bookQuizLength]);
+
+  const startQuiz = async (type: 'chapter' | 'book', overrideCount?: number) => {
+    const requestedCount = overrideCount || (type === 'chapter' ? chapterQuizLength : bookQuizLength);
+    setInternalQuizType(type);
+    onQuizTypeChange?.(type);
+    setQuizQuestions([]);
+    setQuizIndex(0);
+    setQuizSelectedAnswers({});
+    setIsQuizSubmitted(false);
+    setQuizError(null);
+    setIsQuizLoading(true);
+    setGeneratingQuizType(type);
+    setQuizProgress(0);
+    setQuizCheckpoint(null);
+
+    const handleProgress = (current: number, total: number) => {
+      const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+      setQuizProgress(pct);
+      setQuizCheckpoint({ current, total });
+    };
+
+    try {
+      const chapterText = (chapterVerses || []).map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ');
+      const questions = await requestForegroundQuiz(
+        type,
+        currentBook,
+        currentChapter,
+        chapterText,
+        handleProgress,
+        requestedCount
+      );
+
+      if (type === 'book' && questions.length === 0) {
+        setQuizError('No chapter quizzes found for this book yet. Please complete chapter quizzes first to build up your comprehensive book quiz!');
+      } else {
+        setQuizQuestions(questions);
+      }
+    } catch (err: any) {
+      setQuizError(`Failed to generate quiz: ${err.message || String(err)}`);
+    } finally {
+      setIsQuizLoading(false);
+      setGeneratingQuizType(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeQuizType && activeQuizType !== currentQuizType) {
+      startQuiz(activeQuizType);
+    }
+  }, [activeQuizType, currentBook, currentChapter]);
   const [comparisonTranslations, setComparisonTranslations] = useState<TranslationId[]>(['ESV', 'KJV', 'NIV']);
   const [showDenomModal, setShowDenomModal] = useState(false);
 
@@ -579,10 +670,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
       {/* Segmented Tab Capsule */}
       <div className="p-1.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex justify-center select-none flex-shrink-0">
-        <div className="ios-segmented-capsule w-full flex justify-between gap-0.5">
+        <div className="ios-segmented-capsule w-full flex-wrap justify-center gap-1">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
             title="Passage Overview"
           >
             <BookOpen className="w-3 h-3" />
@@ -591,7 +682,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('studyGuide')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'studyGuide' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'studyGuide' ? 'active' : ''}`}
             title="Study Guide Generator"
           >
             <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
@@ -600,7 +691,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('chat')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
             title="Ask AI Assistant"
           >
             <MessageSquare className="w-3 h-3" />
@@ -609,7 +700,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('compare')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
             title="Parallel Comparison"
           >
             <Columns className="w-3 h-3" />
@@ -618,11 +709,19 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('map')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
             title="Biblical Atlas"
           >
             <MapPin className="w-3 h-3" />
             <span>Atlas</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('quiz')}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[11px] !py-0.5 ${activeTab === 'quiz' ? 'active' : ''}`}
+          >
+            <HelpCircle className="w-3 h-3" />
+            <span>Quiz</span>
           </button>
         </div>
       </div>
@@ -1597,6 +1696,338 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Quiz Tab */}
+        {activeTab === 'quiz' && (
+          <div className="flex-1 flex flex-col space-y-3 animate-fadeIn min-h-0">
+            {/* Header Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-[#FAF5ED] to-white border border-[#EBE5DC] shadow-xs space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#FAF0E2] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-[#26221F]">Scripture & Theology Quiz</h4>
+                  <p className="text-[10.5px] text-[#78716C]">
+                    Test your comprehension and theology for {currentBook} {currentChapter}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Chapter Quiz Trigger */}
+            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
+                    <HelpCircle className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span>{currentBook} {currentChapter} Chapter Quiz</span>
+                    {hasCachedChapter && (
+                      <span className="px-1.5 py-0.2 text-[9.5px] font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] rounded-full">
+                        Ready
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#78716C] mt-0.5">
+                    Grounded multiple-choice questions with theological explanations based on the active passage.
+                  </p>
+                </div>
+              </div>
+
+              {/* Length selector for Chapter Quiz */}
+              <div className="flex items-center gap-2.5 text-[11px] pt-0.5">
+                <span className="text-[#78716C] font-medium">Number of Questions:</span>
+                <div className="flex items-center gap-1 bg-[#FAF5ED] p-0.5 rounded-lg border border-[#EBE5DC]">
+                  {[3, 5].map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setChapterQuizLength(count)}
+                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer ${
+                        chapterQuizLength === count
+                          ? 'bg-[#B4793D] text-white shadow-xs'
+                          : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => startQuiz('chapter')}
+                disabled={generatingQuizType === 'chapter'}
+                className={`w-full py-2 px-3 ${currentQuizType === 'chapter' ? 'bg-[#FAF0E2] text-[#B4793D] border-[#B4793D]' : 'bg-[#FAF5ED] hover:bg-[#F5EFE6] text-[#B4793D] border-[#D4A373]'} border rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70`}
+              >
+                {generatingQuizType === 'chapter' ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-[#B4793D] border-t-transparent rounded-full animate-spin" />
+                    <span>Generating Chapter Quiz ({quizProgress}%)...</span>
+                  </>
+                ) : (
+                  <>
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    <span>{currentQuizType === 'chapter' ? `Restart (${chapterQuizLength} Questions)` : `Start Chapter ${currentChapter} Quiz (${chapterQuizLength} Questions)`}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Book Review Quiz Trigger */}
+            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span>{currentBook} Comprehensive Book Quiz</span>
+                    {hasCachedBook && (
+                      <span className="px-1.5 py-0.2 text-[9.5px] font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] rounded-full">
+                        Ready
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#78716C] mt-0.5">
+                    Comprehensive questions covering major themes, canonical structure, and accumulated chapters.
+                  </p>
+                </div>
+              </div>
+
+              {/* Length selector for Book Quiz */}
+              <div className="flex items-center gap-2.5 text-[11px] pt-0.5">
+                <span className="text-[#78716C] font-medium">Number of Questions:</span>
+                <div className="flex items-center gap-1 bg-[#FAF5ED] p-0.5 rounded-lg border border-[#EBE5DC]">
+                  {[10, 20].map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setBookQuizLength(count)}
+                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer ${
+                        bookQuizLength === count
+                          ? 'bg-[#B4793D] text-white shadow-xs'
+                          : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => startQuiz('book')}
+                disabled={generatingQuizType === 'book'}
+                className={`w-full py-2 px-3 ${currentQuizType === 'book' ? 'bg-[#9A632E] text-white' : 'bg-[#B4793D] hover:bg-[#9A632E] text-white'} rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70`}
+              >
+                {generatingQuizType === 'book' ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Generating Book Quiz ({quizProgress}%)...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trophy className="w-3.5 h-3.5" />
+                    <span>{currentQuizType === 'book' ? `Restart (${bookQuizLength} Questions)` : `Start ${currentBook} Book Quiz (${bookQuizLength} Questions)`}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Quiz active below generation buttons */}
+            {currentQuizType && (
+              <div className="bg-white rounded-xl border border-[#EBE5DC] p-3.5 space-y-3.5 shadow-xs flex flex-col flex-1 animate-fadeIn mt-1">
+                {/* Embedded Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-[#EBE5DC]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-heading font-bold text-xs text-[#26221F]">
+                      {currentQuizType === 'chapter' ? `${currentBook} ${currentChapter} Quiz` : `${currentBook} Book Quiz`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {quizQuestions.length > 0 && !isQuizSubmitted && (
+                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-[#FAF5ED] text-[#B4793D] border border-[#D4A373]/30 rounded-full">
+                        Q {quizIndex + 1}/{quizQuestions.length}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => {
+                        setInternalQuizType(null);
+                        onQuizTypeChange?.(null);
+                      }}
+                      className="p-1 rounded-md text-[#78716C] hover:text-[#26221F] hover:bg-[#FAF5ED] transition-colors text-xs font-medium flex items-center gap-1 cursor-pointer"
+                      title="Close quiz"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {isQuizLoading ? (
+                  <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                    <div className="w-8 h-8 rounded-full border-2 border-[#FAF0E2] border-t-[#B4793D] animate-spin" />
+                    <div className="text-center w-full max-w-[200px]">
+                      <p className="text-[#78716C] text-xs font-medium animate-pulse mb-2">
+                        Generating {currentQuizType} quiz...
+                      </p>
+                      <div className="w-full bg-[#EBE5DC] rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-[#B4793D] h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: `${quizProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-[#A8A29E] mt-1.5 font-medium">
+                        {quizCheckpoint ? `Question ${quizCheckpoint.current} of ${quizCheckpoint.total} (${quizProgress}%)` : `${quizProgress}%`}
+                      </p>
+                    </div>
+                  </div>
+                ) : quizError ? (
+                  <div className="text-center py-6 space-y-2">
+                    <p className="text-xs text-red-600">{quizError}</p>
+                    <button
+                      onClick={() => startQuiz(currentQuizType)}
+                      className="px-3 py-1.5 bg-[#FAF5ED] text-[#B4793D] rounded-lg text-xs font-semibold hover:bg-[#F5EFE6] transition-colors cursor-pointer"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : quizQuestions.length > 0 ? (
+                  isQuizSubmitted ? (
+                    <div className="space-y-4 animate-fadeIn">
+                      {/* Score Card */}
+                      <div className="text-center p-4 rounded-xl bg-[#FAF5ED] border border-[#D4A373]/30 space-y-2">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white border-2 border-[#B4793D] text-[#B4793D] font-bold text-lg shadow-xs">
+                          {Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0)}/{quizQuestions.length}
+                        </div>
+                        <h4 className="font-heading font-bold text-sm text-[#26221F]">Quiz Complete!</h4>
+                        <p className="text-xs text-[#78716C]">
+                          {Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0) === quizQuestions.length
+                            ? 'Outstanding! Perfect comprehension.'
+                            : Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0) >= quizQuestions.length / 2
+                            ? 'Well done! Great theological retention.'
+                            : 'Good effort. Review passage to strengthen insights.'}
+                        </p>
+                      </div>
+
+                      {/* Answers Review */}
+                      <div className="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
+                        {quizQuestions.map((q, qIdx) => {
+                          const userAns = quizSelectedAnswers[qIdx];
+                          const isCorrect = userAns === q.correctAnswerIndex;
+                          return (
+                            <div key={qIdx} className={`p-3 rounded-lg border text-xs space-y-1.5 ${isCorrect ? 'bg-emerald-50/60 border-emerald-200' : 'bg-red-50/60 border-red-200'}`}>
+                              <p className="font-semibold text-[#26221F]">{q.question}</p>
+                              <p className={isCorrect ? 'text-emerald-700 font-medium' : 'text-red-700 line-through'}>
+                                Your answer: {userAns !== undefined ? q.options[userAns] : 'None'}
+                              </p>
+                              {!isCorrect && (
+                                <p className="text-emerald-700 font-medium">
+                                  Correct answer: {q.options[q.correctAnswerIndex]}
+                                </p>
+                              )}
+                              <p className="text-[#78716C] text-[11px] italic leading-relaxed pt-1 border-t border-black/5">
+                                {q.explanation}
+                              </p>
+                              {q.reference && (
+                                <p className="text-[#B4793D] font-medium text-[10.5px]">
+                                  Scripture: {q.reference}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center justify-between pt-2 border-t border-[#EBE5DC]">
+                        <button
+                          onClick={() => {
+                            setInternalQuizType(null);
+                            onQuizTypeChange?.(null);
+                          }}
+                          className="px-3 py-1.5 text-xs text-[#78716C] hover:text-[#26221F] font-medium transition-colors cursor-pointer"
+                        >
+                          Back to Quizzes
+                        </button>
+                        <button
+                          onClick={() => startQuiz(currentQuizType)}
+                          className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                        >
+                          Retake Quiz
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Active Question View */
+                    <div className="flex-1 flex flex-col justify-between space-y-3 animate-fadeIn">
+                      <div>
+                        <h4 className="font-heading font-semibold text-xs sm:text-sm text-[#26221F] leading-snug mb-3">
+                          {quizQuestions[quizIndex].question}
+                        </h4>
+
+                        <div className="space-y-2">
+                          {quizQuestions[quizIndex].options.map((opt, optIdx) => {
+                            const isSelected = quizSelectedAnswers[quizIndex] === optIdx;
+                            return (
+                              <button
+                                key={optIdx}
+                                onClick={() => {
+                                  setQuizSelectedAnswers(prev => ({
+                                    ...prev,
+                                    [quizIndex]: optIdx,
+                                  }));
+                                }}
+                                className={`w-full text-left p-2.5 rounded-lg border transition-all text-xs flex items-center justify-between gap-2 cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#FAF5ED] border-[#B4793D] text-[#78471F] font-medium shadow-xs'
+                                    : 'bg-white border-[#EBE5DC] text-[#26221F] hover:border-[#D4A373] hover:bg-[#FAF9F6]'
+                                }`}
+                              >
+                                <span className="leading-snug">{opt}</span>
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-[#B4793D] bg-[#B4793D]' : 'border-[#DCD5C9]'}`}>
+                                  {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Navigation Row at bottom */}
+                      <div className="pt-3 border-t border-[#EBE5DC] flex items-center justify-between">
+                        <button
+                          onClick={() => setQuizIndex(prev => Math.max(0, prev - 1))}
+                          disabled={quizIndex === 0}
+                          className="px-3 py-1.5 text-xs text-[#78716C] hover:text-[#26221F] disabled:opacity-30 font-medium transition-colors cursor-pointer"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (quizIndex < quizQuestions.length - 1) {
+                              setQuizIndex(prev => prev + 1);
+                            } else {
+                              setIsQuizSubmitted(true);
+                              const totalCorrect = Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => {
+                                return acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0);
+                              }, 0);
+                              if (totalCorrect >= quizQuestions.length / 2) {
+                                confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+                              }
+                            }
+                          }}
+                          disabled={quizSelectedAnswers[quizIndex] === undefined}
+                          className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer"
+                        >
+                          {quizIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                ) : null}
+              </div>
+            )}
           </div>
         )}
       </div>

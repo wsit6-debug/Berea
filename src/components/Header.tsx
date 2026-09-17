@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart } from 'lucide-react';
+import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, Bookmark } from 'lucide-react';
 import {
   TRANSLATIONS,
   TranslationId,
@@ -21,6 +21,8 @@ interface HeaderProps {
   onSelectTranslation: (t: TranslationId) => void;
   onOpenAbout: () => void;
   onOpenSearch: () => void;
+  onOpenBookmarks?: () => void;
+  bookmarkCount?: number;
   isAiPanelOpen?: boolean;
   onToggleAiPanel?: () => void;
   onLogout?: () => void;
@@ -36,6 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTranslation,
   onOpenAbout,
   onOpenSearch,
+  onOpenBookmarks,
+  bookmarkCount = 0,
   isAiPanelOpen = true,
   onToggleAiPanel,
   onLogout
@@ -49,8 +53,8 @@ export const Header: React.FC<HeaderProps> = ({
   const displayedTranslations: TranslationInfo[] = showAllTranslations ? TRANSLATIONS : approvedTranslations;
 
   return (
-    <header className="berea-header sticky top-0 z-40 bg-[#FAF7F2]/90 backdrop-blur-xl border-b border-[#EBE5DC] px-3 sm:px-6 py-2 transition-colors select-none">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+    <header className="sticky top-0 z-40 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#EBE5DC] px-3 sm:px-5 py-2.5 shadow-xs select-none">
+      <div className="max-w-7xl 2xl:max-w-[1536px] mx-auto flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Brand & Navigation */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
           <div
@@ -235,6 +239,26 @@ export const Header: React.FC<HeaderProps> = ({
               ⌘K
             </kbd>
           </button>
+
+          {/* Bookmarks Button */}
+          {onOpenBookmarks && (
+            <button
+              onClick={onOpenBookmarks}
+              className="ios-glass-btn text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC] hover:border-[#D4A373] !px-2.5 !py-1 transition-all"
+              title="View Bookmarked Verses (⌘B)"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${bookmarkCount > 0 ? 'fill-[#B4793D] text-[#B4793D]' : 'text-[#B4793D]'}`} />
+              <span className="text-xs font-semibold text-[#26221F] hidden sm:inline">Bookmarks</span>
+              {bookmarkCount > 0 && (
+                <span className="px-1.5 py-0.2 bg-[#FAF5ED] text-[#B4793D] border border-[#D4A373]/40 rounded-full text-[10px] font-bold">
+                  {bookmarkCount}
+                </span>
+              )}
+              <kbd className="hidden md:inline-block text-[9.5px] font-mono bg-white px-1.5 py-0.5 rounded text-[#78716C] border border-[#EBE5DC]">
+                ⌘B
+              </kbd>
+            </button>
+          )}
 
           {/* Clergy & Pastor Feedback Link (Launches Google Form directly) */}
           <a
