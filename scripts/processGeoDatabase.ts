@@ -35,7 +35,7 @@ async function processGeoData() {
   // 1. Load modern locations into a lookup table
   const modernData = fs.readFileSync(MODERN_JSONL, 'utf-8').split('\n').filter(l => l.trim());
   const modernLookup: Record<string, { lat: number; lng: number, name: string }> = {};
-  
+
   for (const line of modernData) {
     const mod = JSON.parse(line);
     if (mod.lonlat) {
@@ -46,7 +46,7 @@ async function processGeoData() {
 
   // 2. Load ancient locations
   const ancientData = fs.readFileSync(ANCIENT_JSONL, 'utf-8').split('\n').filter(l => l.trim());
-  
+
   const hashmap: Record<string, any> = {};
 
   let existingData: Record<string, any> = {};
@@ -56,11 +56,11 @@ async function processGeoData() {
 
   for (const line of ancientData) {
     const anc = JSON.parse(line);
-    
+
     // Find highest scoring modern identification
     let bestModId = null;
     let bestScore = 0;
-    
+
     if (anc.modern_associations) {
       for (const [modId, assoc] of Object.entries(anc.modern_associations) as [string, any][]) {
         if (assoc.score > bestScore) {
@@ -69,9 +69,9 @@ async function processGeoData() {
         }
       }
     }
-    
+
     if (!bestModId || !modernLookup[bestModId]) continue;
-    
+
     const modern = modernLookup[bestModId];
     const lat = modern.lat;
     const lng = modern.lng;
@@ -84,7 +84,7 @@ async function processGeoData() {
       // OSIS e.g., "Gen.12.8" or "1Kgs.5.12"
       const parts = verseObj.osis.split('.');
       if (parts.length < 3) continue;
-      
+
       const bookRaw = parts[0];
       const chapter = parts[1];
       const verse = parts[2];
@@ -93,7 +93,7 @@ async function processGeoData() {
       if (!bookId) continue;
 
       const key = `${bookId}_${chapter}`;
-      
+
       // Keep manual seeds (like matthew_19)
       if (existingData[key] && existingData[key].chapterTitle && key === "matthew_19") continue;
 
@@ -112,7 +112,7 @@ async function processGeoData() {
       }
 
       const existingEvent = hashmap[key].events.find((e: any) => e.locationName === placeName);
-      
+
       if (!existingEvent) {
         const stepNum = hashmap[key].events.length + 1;
         hashmap[key].events.push({
@@ -131,7 +131,7 @@ async function processGeoData() {
           isEducatedGuess
         });
         hashmap[key].routeCoordinates.push([lat, lng]);
-        
+
         if (stepNum === 1) {
           hashmap[key].centerLat = lat;
           hashmap[key].centerLng = lng;

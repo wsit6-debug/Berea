@@ -2346,16 +2346,16 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   >
                     <span>📍 Event {currentEvent.stepNumber}:</span> {currentEvent.title}
                   </span>
-                  <span
-                    className="text-[9.5px] font-mono px-1.5 py-0.2 rounded font-semibold border shadow-2xs"
-                    style={{
-                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                      color: 'var(--clean-accent-dark, #8C5E2E)',
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  <button 
+                    onClick={() => {
+                      if (onVerseRangeChange && currentEvent.verseRange) {
+                        onVerseRangeChange({ start: currentEvent.verseRange[0], end: currentEvent.verseRange[1] });
+                      }
                     }}
+                    className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold hover:bg-[#F2E8D5] transition-colors shadow-sm cursor-pointer"
                   >
-                    {currentEvent.passageRef}
-                  </span>
+                    Mentioned in {currentEvent.passageRef}
+                  </button>
                 </div>
 
                 <div 
@@ -2372,28 +2372,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   {currentEvent.description}
                 </p>
 
-                <div
-                  className="p-2 rounded-lg border text-[10.5px] space-y-0.5 mt-1 shadow-2xs"
-                  style={{ 
-                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                    borderLeftWidth: '3px',
-                    borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
-                  }}
-                >
-                  <strong
-                    className="text-[10px] block uppercase tracking-wider font-bold"
-                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
-                  >
-                    Theological Significance
-                  </strong>
-                  <p 
-                    className="leading-snug"
-                    style={{ color: 'var(--clean-text-secondary, #57524E)' }}
-                  >
-                    {currentEvent.theologicalSignificance}
-                  </p>
-                </div>
+                {currentEvent.theologicalSignificance && currentEvent.theologicalSignificance !== "" && (
+                  <div className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-[10.5px] text-[#57524E] space-y-0.5 mt-1">
+                    <strong className="text-[#78471F] text-[10px] block uppercase tracking-wider">Theological Significance</strong>
+                    <p className="leading-snug">{currentEvent.theologicalSignificance}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
