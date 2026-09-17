@@ -140,7 +140,26 @@ async function processGeoData() {
     }
   }
 
-  const finalMap = { ...hashmap, ...existingData };
+  // 3. Sort events chronologically by verse order
+  for (const key in hashmap) {
+    hashmap[key].events.sort((a: any, b: any) => a.verseRange[0] - b.verseRange[0]);
+    // Reassign step numbers and rebuild routeCoordinates after sorting
+    hashmap[key].routeCoordinates = [];
+    hashmap[key].events.forEach((ev: any, index: number) => {
+      ev.stepNumber = index + 1;
+      ev.id = `${key}_event${ev.stepNumber}`;
+      hashmap[key].routeCoordinates.push([ev.lat, ev.lng]);
+      if (index === 0) {
+        hashmap[key].centerLat = ev.lat;
+        hashmap[key].centerLng = ev.lng;
+      }
+    });
+  }
+
+  const finalMap = { ...hashmap };
+  if (existingData['matthew_19']) {
+    finalMap['matthew_19'] = existingData['matthew_19'];
+  }
 
   fs.writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(finalMap, null, 2));
   console.log(`JSONL database successfully processed! Saved ${Object.keys(finalMap).length} chapters to src/data/geoDatabase.json`);

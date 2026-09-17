@@ -49,6 +49,17 @@ export function getShortPlaceName(ev: { shortPlaceName?: string; locationName: s
   return name || ev.locationName.split(" ")[0] || "Biblical Site";
 }
 
+export function calculateDistanceMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3958.8; // Radius of the Earth in miles
+  const rlat1 = lat1 * (Math.PI/180);
+  const rlat2 = lat2 * (Math.PI/180);
+  const difflat = rlat2 - rlat1;
+  const difflon = (lon2 - lon1) * (Math.PI/180);
+  
+  const a = 2 * Math.asin(Math.sqrt(Math.sin(difflat/2)*Math.sin(difflat/2) + Math.cos(rlat1)*Math.cos(rlat2)*Math.sin(difflon/2)*Math.sin(difflon/2)));
+  return Math.round(R * a);
+}
+
 export interface ChapterGeoData {
   bookId: string;
   chapterNumber: number;
@@ -1096,6 +1107,46 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
     routeCoordinates: [
       [fallbackLoc.lat, fallbackLoc.lng]
     ]
+  };
+}
+
+export function getBookGeoData(bookId: string): ChapterGeoData | null {
+  const allEvents: ChapterGeoEvent[] = [];
+  const uniquePlaces = new Set<string>();
+
+  const targetPrefix = `${bookId.toLowerCase()}_`;
+  
+  Object.keys(CHAPTER_MICRO_EVENTS).forEach(key => {
+    if (key.startsWith(targetPrefix)) {
+      const chapterData = CHAPTER_MICRO_EVENTS[key];
+      chapterData.events.forEach(ev => {
+        if (!uniquePlaces.has(ev.locationName)) {
+          uniquePlaces.add(ev.locationName);
+          allEvents.push({ 
+            ...ev, 
+            stepNumber: uniquePlaces.size, 
+            id: `book_${bookId}_${uniquePlaces.size}`,
+            passageRef: ev.passageRef // Keep the first passage ref as a reference
+          });
+        }
+      });
+    }
+  });
+
+  if (allEvents.length === 0) return null;
+
+  const cleanBook = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
+
+  return {
+    bookId: bookId.toLowerCase(),
+    chapterNumber: 0,
+    chapterTitle: `All Places in ${cleanBook}`,
+    region: "Biblical World",
+    centerLat: allEvents[0].lat,
+    centerLng: allEvents[0].lng,
+    defaultZoom: 6,
+    events: allEvents,
+    routeCoordinates: [] // Disable connecting lines for book overview
   };
 }
 

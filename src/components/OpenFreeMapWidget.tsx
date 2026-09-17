@@ -4,9 +4,11 @@ import {
   ANCIENT_BIBLICAL_REGIONS, 
   ChapterGeoEvent, 
   getChapterGeoData,
-  getShortPlaceName
+  getBookGeoData,
+  getShortPlaceName,
+  calculateDistanceMiles
 } from '../data/geoData';
-import { Maximize2, Minimize2, Compass, Mountain } from 'lucide-react';
+import { Maximize2, Minimize2, Compass, Mountain, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface OpenFreeMapWidgetProps {
   currentBook?: string;
@@ -35,9 +37,13 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
   const [mapStyle, setMapStyle] = useState<'relief' | 'physical' | 'satellite'>('relief');
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeEventIndex, setActiveEventIndex] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<'chapter' | 'book'>('chapter');
 
-  // Chapter-specific events for the currently viewed chapter
-  const chapterData = getChapterGeoData(currentBook, currentChapter);
+  // Fetch either the specific chapter or the aggregated book data
+  const chapterData = viewMode === 'book' 
+    ? getBookGeoData(currentBook) || getChapterGeoData(currentBook, currentChapter)
+    : getChapterGeoData(currentBook, currentChapter);
+    
   const chapterEvents = chapterData.events;
   const activeEvent = chapterEvents[activeEventIndex] || chapterEvents[0];
 
@@ -391,32 +397,60 @@ function escapeHtml(str: string | number | undefined): string {
       />
 
       {/* Chapter Event Sequence Timeline Bar (Shows ONLY events in this chapter) */}
-      <div 
-        style={{
-          backgroundColor: 'var(--clean-surface, #FFFFFF)',
-          borderTopColor: 'var(--clean-accent-border, #EBE5DC)'
-        }}
-        className="backdrop-blur-md p-2 border-t z-20 space-y-1.5"
-      >
-        <div className="flex items-center justify-between text-[10px] px-1 font-medium">
-          <span 
-            className="flex items-center gap-1 font-bold"
-            style={{ color: 'var(--clean-accent-dark, #78471F)' }}
-          >
-            <span>📜</span> Chapter {currentChapter} Storyline:
+      <div className="bg-white/95 backdrop-blur-md p-2 border-t border-[#EBE5DC] z-20 space-y-1.5">
+        <div className="flex items-center justify-between text-[10px] text-[#78716C] px-1 font-medium">
+          <span className="flex items-center gap-1 font-bold text-[#78471F]">
+            <span>📜</span> {viewMode === 'book' ? `All Places in Book` : `Chapter ${currentChapter} Storyline:`}
           </span>
-          <span 
-            className="text-[9.5px]"
-            style={{ color: 'var(--clean-text-secondary, #A8A29E)' }}
-          >
-            Step {activeEventIndex + 1} of {chapterEvents.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => { setViewMode(viewMode === 'chapter' ? 'book' : 'chapter'); setActiveEventIndex(0); }}
+              className="text-[9px] px-1.5 py-0.5 rounded border border-[#D4A373] bg-[#FAF3E8] text-[#78471F] hover:bg-[#F2E8D5] transition-colors shadow-sm"
+            >
+              {viewMode === 'chapter' ? 'View Entire Book' : 'View Chapter'}
+            </button>
+            <div className="flex items-center bg-[#FAF3E8] rounded border border-[#D4A373] shadow-sm overflow-hidden">
+              <button 
+                onClick={() => {
+                  const newIdx = Math.max(0, activeEventIndex - 1);
+                  setActiveEventIndex(newIdx);
+                  if (onEventSelect) onEventSelect(chapterEvents[newIdx]);
+                }}
+                disabled={activeEventIndex === 0}
+                className="p-0.5 text-[#78471F] hover:bg-[#F2E8D5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              >
+                <ChevronLeft size={12} />
+              </button>
+              <span className="text-[9.5px] text-[#78471F] font-bold px-1.5 min-w-[36px] text-center border-x border-[#D4A373]/30">
+                {activeEventIndex + 1} / {chapterEvents.length}
+              </span>
+              <button 
+                onClick={() => {
+                  const newIdx = Math.min(chapterEvents.length - 1, activeEventIndex + 1);
+                  setActiveEventIndex(newIdx);
+                  if (onEventSelect) onEventSelect(chapterEvents[newIdx]);
+                }}
+                disabled={activeEventIndex === chapterEvents.length - 1}
+                className="p-0.5 text-[#78471F] hover:bg-[#F2E8D5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              >
+                <ChevronRight size={12} />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Step Buttons for Each Event in Chapter */}
         <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5">
           {chapterEvents.map((ev, idx) => {
             const isSelected = idx === activeEventIndex;
+            
+            let distanceStr = '';
+            if (idx > 0) {
+              const prev = chapterEvents[idx - 1];
+              const dist = calculateDistanceMiles(prev.lat, prev.lng, ev.lat, ev.lng);
+              if (dist > 0) distanceStr = ` • ${dist} mi`;
+            }
+
             return (
               <button
                 key={ev.id}
@@ -443,17 +477,20 @@ function escapeHtml(str: string | number | undefined): string {
                   {ev.stepNumber}
                 </span>
                 <div className="truncate max-w-[140px]">
-                  <span 
-                    className="text-[11px] font-bold block truncate leading-tight"
-                    style={{ color: isSelected ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)' }}
-                  >
-                    {getShortPlaceName(ev)}
+                  <span className="text-[11px] font-bold text-[#26221F] truncate leading-tight flex items-center gap-1">
+                    <span className="truncate">{getShortPlaceName(ev)}</span>
+                    {ev.isEducatedGuess && (
+                      <span className="text-[8px] font-bold bg-[#FFF3CD] text-[#856404] px-1 py-px rounded border border-[#FFEEBA] flex-shrink-0" title="Educated Guess">
+                        Estimate
+                      </span>
+                    )}
                   </span>
                   <span 
                     className="text-[9.5px] truncate block leading-none mt-0.5"
                     style={{ color: 'var(--clean-text-secondary, #78716C)' }}
                   >
                     {ev.title}
+                    <span className="text-[#A8A29E]">{distanceStr}</span>
                   </span>
                 </div>
               </button>
