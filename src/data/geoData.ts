@@ -1110,7 +1110,11 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
   };
 }
 
+const BOOK_CACHE: Record<string, ChapterGeoData> = {};
+
 export function getBookGeoData(bookId: string): ChapterGeoData | null {
+  if (BOOK_CACHE[bookId]) return BOOK_CACHE[bookId];
+
   const allEvents: ChapterGeoEvent[] = [];
   const uniquePlaces = new Set<string>();
 
@@ -1137,7 +1141,7 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
 
   const cleanBook = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
 
-  return {
+  const result = {
     bookId: bookId.toLowerCase(),
     chapterNumber: 0,
     chapterTitle: `All Places in ${cleanBook}`,
@@ -1148,6 +1152,9 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
     events: allEvents,
     routeCoordinates: [] // Disable connecting lines for book overview
   };
+
+  BOOK_CACHE[bookId] = result;
+  return result;
 }
 
 export function getLocationForPassage(bookId: string, chapterNum: number): GeoLocation {

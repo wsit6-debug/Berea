@@ -52,7 +52,10 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
   }, [currentBook, currentChapter]);
 
   // Auto-sync active event index when a specific verse is selected in the chapter
+  // (Disable this auto-sync in 'book' mode since activeVerseNumber lacks chapter context)
   useEffect(() => {
+    if (viewMode === 'book') return;
+    
     if (activeVerseNumber !== undefined && activeVerseNumber > 0) {
       const matchIdx = chapterEvents.findIndex(
         ev => activeVerseNumber >= ev.verseRange[0] && activeVerseNumber <= ev.verseRange[1]
@@ -62,7 +65,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         if (onEventSelect) onEventSelect(chapterEvents[matchIdx]);
       }
     }
-  }, [activeVerseNumber, chapterEvents]);
+  }, [activeVerseNumber, chapterEvents, viewMode]);
 
   // Verified 100% Free, Zero-API-Key, ZERO-Roads, ZERO-Buildings Topographic Layers
   const tileProviders = {
@@ -298,7 +301,7 @@ function escapeHtml(str: string | number | undefined): string {
       map.invalidateSize();
     }, 200);
 
-  }, [currentBook, currentChapter, activeEventIndex, mapStyle, showJourneys]);
+  }, [currentBook, currentChapter, activeEventIndex, mapStyle, showJourneys, viewMode]);
 
   return (
     <div 
