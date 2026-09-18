@@ -739,7 +739,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
       {/* Tab Contents */}
       <div className="flex-1 overflow-y-auto p-0 flex flex-col custom-scrollbar bg-white">
-        <div className="p-3 space-y-2.5 flex-1">
+        <div className={activeTab === 'characters' ? 'hidden' : 'p-3 space-y-2.5 flex-1'}>
           {/* STUDY GUIDE TAB */}
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
