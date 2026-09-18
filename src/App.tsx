@@ -313,6 +313,7 @@ export function App() {
                   setIsAiPanelOpen(true);
                 }}
                 selectedCharacter={selectedCharacter}
+                onNavigateToPassage={handleSelectPassage}
               />
             </div>
           )}

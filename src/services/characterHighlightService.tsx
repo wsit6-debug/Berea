@@ -1,10 +1,14 @@
 import React from 'react';
 import { characterMap } from '../data/characterData';
 
+// Common English words that happen to be obscure biblical names
+const IGNORED_NAMES = new Set(['put', 'so', 'on', 'no', 'do', 'as', 'let', 'us', 'or', 'are', 'will', 'some', 'all', 'any']);
+
 // Sort names by length descending so longer names match first
 const sortedNames = Object.values(characterMap)
   .map(c => c.name)
   .filter(n => n.length > 2) // Ignore tiny 1-2 letter names to avoid false positives
+  .filter(n => !IGNORED_NAMES.has(n.toLowerCase())) // Ignore common English words
   .sort((a, b) => b.length - a.length);
 
 function escapeRegExp(string: string) {
@@ -12,7 +16,8 @@ function escapeRegExp(string: string) {
 }
 
 const namesPattern = sortedNames.map(escapeRegExp).join('|');
-const characterRegex = new RegExp(`(?<![a-zA-Z\\-])(${namesPattern})(?![a-zA-Z\\-])`, 'gi');
+// Using 'g' instead of 'gi' for case-sensitive matching so we don't highlight lowercase verbs (e.g. "mark", "job")
+const characterRegex = new RegExp(`(?<![a-zA-Z\\-])(${namesPattern})(?![a-zA-Z\\-])`, 'g');
 
 export function renderWithCharacters(
   text: string,

@@ -818,3 +818,36 @@ Format as 2-3 short, readable paragraphs. Do not use markdown headers, just plai
   }
 }
 
+export async function generateDailyVerseAndReflection(
+  dateString: string,
+  lens: string,
+  onProgress?: (progress: { text: string; progress: number }) => void
+): Promise<{ text: string; reference: string; reflection: string }> {
+  const prompt = `You are a pastoral theologian from the ${lens} tradition. 
+Task: Curate a Verse of the Day for ${dateString} and write a short, 3-sentence devotional reflection on it strictly from a ${lens} theological perspective.
+Pick a pseudo-random verse based on the seed "${dateString}" so it changes daily.
+Respond ONLY with a valid JSON object in exactly this format, with no markdown wrappers or additional text:
+{
+  "reference": "Book Chapter:Verse",
+  "text": "The bible verse text...",
+  "reflection": "Your 3-sentence devotional reflection..."
+}`;
+
+  try {
+    const response = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress);
+    if (!response) throw new Error('Empty response');
+    
+    // Extract JSON block if it wrapped it in markdown
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : response;
+    const data = JSON.parse(jsonStr);
+    
+    if (!data.reference || !data.text || !data.reflection) {
+      throw new Error('Invalid format returned by AI');
+    }
+    
+    return data;
+  } catch (err: any) {
+    throw new Error('Failed to generate daily verse: ' + err.message);
+  }
+}

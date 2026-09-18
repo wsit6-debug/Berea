@@ -13,6 +13,7 @@ import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 import { CharacterPanel } from './CharacterPanel';
+import { VerseOfTheDay } from './VerseOfTheDay';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
 import { AppliedAiLogo } from './AppliedAiLogo';
 import { StudyGuide, SupportingPassage, BereaAiTab, StudyGuideAudience } from '../types';
@@ -48,6 +49,7 @@ interface BereaAiPanelProps {
   onQuizTypeChange?: (type: 'chapter' | 'book' | null) => void;
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
   selectedCharacter?: string | null;
+  onNavigateToPassage?: (bookId: string, chapterNum: number, verseNum?: number) => void;
 }
 
 export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
@@ -67,6 +69,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   onQuizTypeChange,
   onOpenQuiz,
   selectedCharacter,
+  onNavigateToPassage,
   onClose
 }) => {
   const [internalTab, setInternalTab] = useState<BereaAiTab>(externalTab || 'overview');
@@ -680,7 +683,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             title="Passage Overview"
           >
             <BookOpen className="w-3 h-3" />
-            <span>Overview</span>
+            <span>Home</span>
           </button>
 
           <button
@@ -1330,6 +1333,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
         {activeTab === 'overview' && (
           <div key={`${currentBook}_${currentChapter}_${isRangeActive ? `${selectedVerseRange!.start}_${selectedVerseRange!.end}` : activeVerseNum}`} className="space-y-2.5 animate-fadeIn">
+            <VerseOfTheDay 
+              activeTranslation={activeTranslation} 
+              activeLens={activeLens}
+              onNavigateToPassage={onNavigateToPassage || (() => {})} 
+            />
             {/* Main Overview Card */}
             <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
