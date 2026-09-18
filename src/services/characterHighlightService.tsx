@@ -12,7 +12,7 @@ function escapeRegExp(string: string) {
 }
 
 const namesPattern = sortedNames.map(escapeRegExp).join('|');
-const characterRegex = new RegExp(`\\b(${namesPattern})\\b`, 'gi');
+const characterRegex = new RegExp(`(?<![a-zA-Z\\-])(${namesPattern})(?![a-zA-Z\\-])`, 'gi');
 
 export function renderWithCharacters(
   text: string,
