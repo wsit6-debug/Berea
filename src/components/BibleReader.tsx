@@ -91,6 +91,16 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onCreateStudyGuide
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
+  const [isEditingFontSize, setIsEditingFontSize] = useState<boolean>(false);
+  const [fontSizeInput, setFontSizeInput] = useState<string>('17');
+
+  const commitFontSizeChange = () => {
+    const parsed = parseFloat(fontSizeInput);
+    if (!isNaN(parsed) && parsed >= 10 && parsed <= 40) {
+      setFontSize(Math.round(parsed * 2) / 2);
+    }
+    setIsEditingFontSize(false);
+  };
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('berea_show_red_letters');
@@ -459,17 +469,45 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           {/* Font Size Controls */}
           <div className="hidden md:flex items-center bg-[#FAF5ED] rounded-full p-0.5 border border-[#EBE5DC]">
             <button
-              onClick={() => setFontSize(prev => Math.max(14, prev - 1))}
+              onClick={() => setFontSize(prev => Math.max(12, Math.round((prev - 1) * 2) / 2))}
               className="p-1 rounded-full text-[#78716C] hover:text-[#26221F] hover:bg-white transition-all"
-              title="Smaller font"
+              title="Smaller font (-1px)"
             >
               <ZoomOut className="w-3 h-3" />
             </button>
-            <span className="px-1 text-[10px] font-mono text-[#78716C]">{fontSize}px</span>
+            {isEditingFontSize ? (
+              <input
+                type="number"
+                step="0.5"
+                min="10"
+                max="40"
+                autoFocus
+                value={fontSizeInput}
+                onChange={(e) => setFontSizeInput(e.target.value)}
+                onBlur={commitFontSizeChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitFontSizeChange();
+                  if (e.key === 'Escape') setIsEditingFontSize(false);
+                }}
+                className="w-12 text-center text-[10px] font-mono text-[#26221F] bg-white border border-[#B4793D] rounded px-0.5 py-0 outline-none shadow-2xs"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setFontSizeInput(String(fontSize));
+                  setIsEditingFontSize(true);
+                }}
+                className="px-1 text-[10px] font-mono text-[#78716C] hover:text-[#26221F] hover:bg-white/80 rounded transition-colors cursor-text"
+                title="Click to manually type font size (e.g. 17.5)"
+              >
+                {fontSize}px
+              </button>
+            )}
             <button
-              onClick={() => setFontSize(prev => Math.min(24, prev + 1))}
+              onClick={() => setFontSize(prev => Math.min(32, Math.round((prev + 1) * 2) / 2))}
               className="p-1 rounded-full text-[#78716C] hover:text-[#26221F] hover:bg-white transition-all"
-              title="Larger font"
+              title="Larger font (+1px)"
             >
               <ZoomIn className="w-3 h-3" />
             </button>
@@ -964,13 +1002,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                 <span>Previous Chapter</span>
               </button>
 
-              <div className="flex items-center gap-2.5 opacity-85 hover:opacity-100 transition-opacity">
+              <div className="flex items-center opacity-85 hover:opacity-100 transition-opacity">
                 <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#EBE5DC] bg-[#FAF7F2] p-0.5 shadow-xs flex items-center justify-center">
                   <img src="/berea-logo.jpg" alt="Berea" className="w-full h-full object-contain" />
                 </div>
-                <span className="font-heading font-semibold text-xs text-[#78716C]">
-                  Berea <span className="font-sans font-normal text-[10px] text-[#A8A29E]">• Acts 17:11</span>
-                </span>
               </div>
 
               <button

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
@@ -73,7 +73,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     onTabChange?.(t);
   };
   const [comparisonTranslations, setComparisonTranslations] = useState<TranslationId[]>(['ESV', 'KJV', 'NIV']);
-  const [showDenomModal, setShowDenomModal] = useState(false);
 
   const activeVerseNum = selectedVerse?.verseNumber || 1;
   const currentVerseRef = `${currentBook} ${currentChapter}:${activeVerseNum}`;
@@ -135,13 +134,40 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     }
   });
 
-  // Study Guide Scope: default is whole chapter, individual verse and range are options
-  type StudyGuideScope = 'chapter' | 'verse' | 'range';
+  // Study Guide Scope: whole chapter, individual verse, range, or custom specific verses
+  type StudyGuideScope = 'chapter' | 'verse' | 'range' | 'custom';
   const [studyGuideScope, setStudyGuideScope] = useState<StudyGuideScope>('chapter');
 
   // Start Verse & Multi-Verse Range State
   const [manualStartVerseNum, setManualStartVerseNum] = useState<number>(activeVerseNum);
   const [endVerseNum, setEndVerseNum] = useState<number>(activeVerseNum);
+
+  // Custom Specific Verses State (e.g. 1, 12, 23)
+  const [customVerseNumbers, setCustomVerseNumbers] = useState<number[]>([activeVerseNum]);
+  const [customVerseInput, setCustomVerseInput] = useState<string>(String(activeVerseNum));
+
+  const handleCustomVerseInputChange = (val: string) => {
+    setCustomVerseInput(val);
+    const parsed = val
+      .split(/[\s,]+/)
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n >= 1 && n <= maxChapterVerses);
+    const uniqueSorted = Array.from(new Set(parsed)).sort((a, b) => a - b);
+    setCustomVerseNumbers(uniqueSorted);
+  };
+
+  const toggleCustomVerseNumber = (vNum: number) => {
+    setCustomVerseNumbers(prev => {
+      let next: number[];
+      if (prev.includes(vNum)) {
+        next = prev.filter(x => x !== vNum);
+      } else {
+        next = [...prev, vNum].sort((a, b) => a - b);
+      }
+      setCustomVerseInput(next.join(', '));
+      return next;
+    });
+  };
 
   // Sync manualStartVerseNum with activeVerseNum or selectedVerseRange on external navigation
   useEffect(() => {
@@ -209,10 +235,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     if (studyGuideScope === 'verse') {
       return `${currentBook} ${currentChapter}:${manualStartVerseNum}`;
     }
+    if (studyGuideScope === 'custom') {
+      const sorted = [...customVerseNumbers].sort((a, b) => a - b);
+      if (sorted.length === 0) return `${currentBook} ${currentChapter}`;
+      return `${currentBook} ${currentChapter}:${sorted.join(', ')}`;
+    }
     return effectiveEndVerse > effectiveStartVerse
       ? `${currentBook} ${currentChapter}:${effectiveStartVerse}–${effectiveEndVerse}`
       : `${currentBook} ${currentChapter}:${effectiveStartVerse}`;
-  }, [studyGuideScope, currentBook, currentChapter, manualStartVerseNum, effectiveStartVerse, effectiveEndVerse]);
+  }, [studyGuideScope, currentBook, currentChapter, manualStartVerseNum, customVerseNumbers, effectiveStartVerse, effectiveEndVerse]);
 
   // Text content analyzed for Study Guide
   const studyGuideTextToAnalyze = useMemo(() => {
@@ -229,8 +260,18 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       }
       return currentVerseText;
     }
+    if (studyGuideScope === 'custom') {
+      if (!chapterVerses || chapterVerses.length === 0) return currentVerseText;
+      const sorted = [...customVerseNumbers].sort((a, b) => a - b);
+      const matched = chapterVerses.filter(v => sorted.includes(v.verseNumber));
+      if (matched.length === 0) return currentVerseText;
+      return matched.map(v => {
+        const raw = v.text[activeTranslation] || v.text['KJV'] || Object.values(v.text)[0] || '';
+        return `[${v.verseNumber}] ${cleanApiText(raw)}`;
+      }).join(' ');
+    }
     return combinedRangeText;
-  }, [studyGuideScope, wholeChapterText, manualStartVerseNum, chapterVerses, activeTranslation, currentVerseText, combinedRangeText]);
+  }, [studyGuideScope, wholeChapterText, manualStartVerseNum, customVerseNumbers, chapterVerses, activeTranslation, currentVerseText, combinedRangeText]);
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -252,6 +293,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     const audienceToUse = overrideAudience || selectedAudience;
     let targetVerseNumber: number | undefined = undefined;
     let targetEndVerseNumber: number | undefined = undefined;
+    let customPassageRef: string | undefined = undefined;
 
     if (studyGuideScope === 'verse') {
       targetVerseNumber = manualStartVerseNum;
@@ -259,6 +301,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     } else if (studyGuideScope === 'range') {
       targetVerseNumber = effectiveStartVerse;
       targetEndVerseNumber = overrideEndVerse !== undefined ? overrideEndVerse : (effectiveEndVerse > effectiveStartVerse ? effectiveEndVerse : undefined);
+    } else if (studyGuideScope === 'custom') {
+      const sorted = [...customVerseNumbers].sort((a, b) => a - b);
+      targetVerseNumber = sorted[0];
+      targetEndVerseNumber = sorted.length > 1 ? sorted[sorted.length - 1] : undefined;
+      customPassageRef = `${currentBook} ${currentChapter}:${sorted.join(', ')}`;
     } else {
       // 'chapter' (default)
       targetVerseNumber = undefined;
@@ -275,7 +322,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       studyGuideScope === 'verse' ? selectedVerse?.greekHebrew : undefined,
       isSamePassage ? currentGuide?.supportingPassages : undefined,
       audienceToUse,
-      targetEndVerseNumber
+      targetEndVerseNumber,
+      customPassageRef
     );
     const updated = saveStudyGuide(guide);
     setSavedGuides(updated);
@@ -503,83 +551,9 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
   return (
     <div className="berea-ai-inspector flex flex-col h-full bg-white text-[#26221F] border border-[#EBE5DC] rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(180,160,140,0.06)]">
-      {/* Inspector Header */}
-      <div className="px-3.5 py-2.5 bg-[#FAF7F2] border-b border-[#EBE5DC] flex items-center justify-between select-none flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-md bg-gradient-to-br from-[#B4793D] to-[#8C5E32] flex items-center justify-center text-white shadow-xs">
-            <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-heading font-semibold text-xs text-[#26221F]">Berea AI Guide</h3>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* Denominational Lens Selector Pill */}
-          <button
-            onClick={() => setShowDenomModal(!showDenomModal)}
-            className="ios-glass-btn !text-[10.5px] !py-0.5 !px-2 hover:border-[#D4A373]"
-            title="Change theological lens"
-          >
-            <span className="text-[11px]">{activeDenom.icon}</span>
-            <span className="truncate max-w-[110px] font-medium">{activeDenom.traditionGroup}</span>
-            <Sliders className="w-2.5 h-2.5 text-[#A8A29E]" />
-          </button>
-
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="ios-icon-btn !w-5 !h-5 text-xs text-[#78716C] hover:text-[#26221F]"
-              title="Close Guide"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Denominational Lens Dropdown Modal */}
-      {showDenomModal && (
-        <div className="p-3 bg-white border-b border-[#EBE5DC] animate-fadeIn select-none shadow-xs">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-[#26221F] flex items-center gap-1.5">
-              <Sliders className="w-3 h-3 text-[#B4793D]" /> Confessional Tradition
-            </span>
-            <button
-              onClick={() => setShowDenomModal(false)}
-              className="ios-icon-btn !w-5 !h-5 text-xs"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-64 overflow-y-auto custom-scrollbar">
-            {DENOMINATIONS.map((denom) => (
-              <button
-                key={denom.id}
-                onClick={() => {
-                  onLensChange(denom.id);
-                  setShowDenomModal(false);
-                }}
-                className={`text-left p-2 rounded-lg text-xs transition-all border ${activeLens === denom.id
-                  ? 'bg-[#FAF3E8] border-[#B4793D] text-[#78471F] font-semibold shadow-xs'
-                  : 'bg-white border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED]'
-                  }`}
-              >
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-xs">{denom.icon}</span>
-                  <span className="font-semibold text-[11px] truncate">{denom.name}</span>
-                </div>
-                <div className="text-[9.5px] text-[#8C827A] line-clamp-1">{denom.tagline}</div>
-                <div className="text-[8.5px] text-[#A8A29E] truncate font-mono mt-0.5">{denom.confessionalStandard.split(',')[0]}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Segmented Tab Capsule */}
-      <div className="p-1.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex justify-center select-none flex-shrink-0">
-        <div className="ios-segmented-capsule w-full flex justify-between gap-0.5">
+      {/* Segmented Tab Capsule / Header */}
+      <div className="p-1.5 px-2.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex items-center gap-1.5 select-none flex-shrink-0">
+        <div className="ios-segmented-capsule flex-1 flex justify-between gap-0.5">
           <button
             onClick={() => setActiveTab('overview')}
             className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
@@ -625,6 +599,16 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             <span>Atlas</span>
           </button>
         </div>
+
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
+            title="Close Guide"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Tab Contents */}
@@ -639,9 +623,23 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <Sliders className="w-3.5 h-3.5 text-[#B4793D]" />
                   Study Guide Depth
                 </span>
-                <span className="text-[10px] text-[#B4793D] font-medium bg-white px-2 py-0.5 rounded-full border border-[#EBE5DC]">
-                  {selectedAudience === 'deep_exegesis' ? 'Pastoral & Exegetical' : selectedAudience === 'youth_family' ? 'Youth & Family' : 'Small Group'}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowSavedGuidesDrawer(!showSavedGuidesDrawer)}
+                    className={`ios-glass-btn !text-[10px] !py-0.5 !px-2 ${showSavedGuidesDrawer ? 'border-[#B4793D] text-[#B4793D]' : ''}`}
+                    title="View Saved Study Guides"
+                  >
+                    <History className="w-3 h-3 text-[#B4793D]" />
+                    <span>Saved</span>
+                    <span className="text-[9px] font-bold px-1 rounded-full bg-white border border-[#EBE5DC]">
+                      {savedGuides.length}
+                    </span>
+                  </button>
+                  <span className="text-[10px] text-[#B4793D] font-medium bg-white px-2 py-0.5 rounded-full border border-[#EBE5DC]">
+                    {selectedAudience === 'deep_exegesis' ? 'Pastoral & Exegetical' : selectedAudience === 'youth_family' ? 'Youth & Family' : 'Small Group'}
+                  </span>
+                </div>
               </div>
 
               {/* Segmented Audience Control */}
@@ -701,34 +699,34 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   </span>
                 </div>
 
-                {/* 3-Option Segmented Control: Whole Chapter vs Individual Verse vs Verse Range */}
-                <div className="grid grid-cols-3 rounded-lg bg-[#EFE9DF] p-0.5 gap-0.5">
+                {/* 4-Option Segmented Control: Whole Chapter vs Individual Verse vs Verse Range vs Specific Verses */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 rounded-lg bg-[#EFE9DF] p-0.5 gap-0.5">
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('chapter')}
-                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
+                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
                       studyGuideScope === 'chapter'
                         ? 'bg-white text-[#26221F] shadow-xs font-semibold'
                         : 'text-[#78716C] hover:text-[#26221F]'
                     }`}
                     title="Default: Complete chapter study guide"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>Whole Chapter</span>
+                    <BookOpen className="w-3 h-3 text-[#B4793D]" />
+                    <span className="truncate">Whole Chapter</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('verse')}
-                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
+                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
                       studyGuideScope === 'verse'
                         ? 'bg-white text-[#26221F] shadow-xs font-semibold'
                         : 'text-[#78716C] hover:text-[#26221F]'
                     }`}
                     title="Focus on an individual verse"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>Individual Verse</span>
+                    <FileText className="w-3 h-3 text-[#B4793D]" />
+                    <span className="truncate">Single Verse</span>
                   </button>
 
                   <button
@@ -739,15 +737,29 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setEndVerseNum(Math.min(manualStartVerseNum + 1, maxChapterVerses));
                       }
                     }}
-                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
+                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
                       studyGuideScope === 'range'
                         ? 'bg-white text-[#26221F] shadow-xs font-semibold'
                         : 'text-[#78716C] hover:text-[#26221F]'
                     }`}
                     title="Custom verse range"
                   >
-                    <Layers className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>Verse Range</span>
+                    <Layers className="w-3 h-3 text-[#B4793D]" />
+                    <span className="truncate">Verse Range</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStudyGuideScope('custom')}
+                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
+                      studyGuideScope === 'custom'
+                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                        : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
+                    title="Pick custom verses (e.g. 1, 12, 23)"
+                  >
+                    <ListFilter className="w-3 h-3 text-[#B4793D]" />
+                    <span className="truncate">Pick Verses</span>
                   </button>
                 </div>
 
@@ -831,51 +843,70 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Study Guide Action Bar */}
-            <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] flex items-center justify-between gap-2 shadow-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#FAF0E1] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
-                  <BookOpenCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#26221F]">{effectiveStudyGuideRef}</span>
-                    <span className="text-[9.5px] text-[#B4793D] font-mono font-medium px-1.5 py-0.2 rounded bg-white border border-[#EBE5DC]">
-                      {activeDenom.name}
-                    </span>
+                {studyGuideScope === 'custom' && (
+                  <div className="p-2.5 rounded-lg bg-white/90 border border-[#EBE5DC] space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-[#57524E] font-medium">
+                        Type or tap verses:
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-[#78716C]">{currentBook} {currentChapter}:</span>
+                        <input
+                          type="text"
+                          value={customVerseInput}
+                          onChange={(e) => handleCustomVerseInputChange(e.target.value)}
+                          placeholder="e.g. 1, 12, 23"
+                          className="w-28 text-xs font-bold font-mono text-[#26221F] bg-white border border-[#EBE5DC] rounded-md px-2 py-1 focus:outline-none focus:border-[#B4793D] shadow-2xs"
+                        />
+                        {customVerseNumbers.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomVerseNumbers([]);
+                              setCustomVerseInput('');
+                            }}
+                            className="text-[10px] text-[#A8A29E] hover:text-[#B4793D] px-1 py-0.5 rounded"
+                            title="Clear selection"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quick tap chips for chapter verses */}
+                    <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto custom-scrollbar p-1 bg-[#FAF7F2] rounded-md border border-[#EBE5DC]/60">
+                      {Array.from({ length: maxChapterVerses }, (_, i) => i + 1).map((vNum) => {
+                        const isPicked = customVerseNumbers.includes(vNum);
+                        return (
+                          <button
+                            key={vNum}
+                            type="button"
+                            onClick={() => toggleCustomVerseNumber(vNum)}
+                            className={`w-6 h-6 rounded text-[10px] font-mono font-semibold transition-all flex items-center justify-center border ${
+                              isPicked
+                                ? 'bg-[#B4793D] border-[#B4793D] text-white shadow-2xs'
+                                : 'bg-white border-[#EBE5DC] text-[#78716C] hover:border-[#B4793D] hover:text-[#26221F]'
+                            }`}
+                            title={`Toggle verse ${vNum}`}
+                          >
+                            {vNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="text-[10.5px] text-[#78716C] px-0.5">
+                      {customVerseNumbers.length === 0
+                        ? 'No verses selected (click chips or enter comma-separated numbers)'
+                        : `${customVerseNumbers.length} verse${customVerseNumbers.length > 1 ? 's' : ''} selected: v.${[...customVerseNumbers].sort((a, b) => a - b).join(', ')}`}
+                    </div>
                   </div>
-                  <p className="text-[10.5px] text-[#78716C] leading-none mt-0.5">
-                    {studyGuideScope === 'chapter' ? 'Complete Chapter Guide' : selectedAudience === 'deep_exegesis' ? 'Pastoral Exegesis Guide' : selectedAudience === 'youth_family' ? 'Family & Youth Guide' : 'Small Group Study Guide'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setShowSavedGuidesDrawer(!showSavedGuidesDrawer)}
-                  className={`ios-glass-btn !text-[10.5px] !py-1 !px-2 ${showSavedGuidesDrawer ? 'border-[#B4793D] text-[#B4793D]' : ''}`}
-                  title="View Saved Study Guides"
-                >
-                  <History className="w-3 h-3 text-[#B4793D]" />
-                  <span className="hidden sm:inline">Saved</span>
-                  <span className="text-[9px] font-bold px-1 rounded-full bg-white border border-[#EBE5DC]">
-                    {savedGuides.length}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => handleGenerateStudyGuide()}
-                  className="clean-caramel-btn !text-[11px] !py-1 !px-2.5 shadow-xs"
-                  title="Generate Study Guide"
-                >
-                  <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-                  <span>Generate</span>
-                </button>
+                )}
               </div>
             </div>
+
 
             {/* Saved Guides Drawer */}
             {showSavedGuidesDrawer && (
@@ -1175,6 +1206,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
                   <div className="flex items-center gap-1">
                     <button
+                      onClick={() => handleGenerateStudyGuide()}
+                      className="ios-glass-btn text-xs !py-1 !px-2 text-[#57524E] hover:text-[#26221F] flex items-center gap-1"
+                      title="Regenerate guide"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-[#B4793D]" />
+                      <span>Regenerate</span>
+                    </button>
+
+                    <button
                       onClick={handlePrintGuide}
                       className="ios-glass-btn text-xs !py-1 !px-2 text-[#57524E] hover:text-[#26221F] flex items-center gap-1"
                       title="Print or Export as PDF"
@@ -1293,52 +1333,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             )}
 
-            {/* George Fox Applied AI Institute 'Be Known' 3-Tier Lens */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-br from-[#003057]/8 via-[#FAF7F2] to-[#D4AF37]/15 border border-[#003057]/20 space-y-2.5 shadow-xs">
-              <div className="flex items-center justify-between gap-2">
-                <AppliedAiLogo variant="lockup-navy" height={22} alt="George Fox University Applied AI Institute" />
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#003057] text-[#FAF7F2] uppercase tracking-wider flex-shrink-0">
-                  Be Known
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] text-[#57524E] leading-tight">
-                  Academic facts • Personal faith • Quiet prayer
-                </p>
-                <button
-                  onClick={() => {
-                    setActiveTab('chat');
-                    handleSendMessage(`Help me understand ${currentVerseRef} through the "Be Known" promise: 1) What it means (simple facts & words), 2) What it means for my life (God knows me), and 3) A simple prayer.`);
-                  }}
-                  className="clean-caramel-btn !bg-[#003057] hover:!bg-[#002240] !text-white !text-[10px] !py-1 !px-2.5 shadow-xs flex items-center gap-1 flex-shrink-0"
-                >
-                  <span>Explore</span>
-                  <ArrowUpRight className="w-3 h-3 text-[#D4AF37]" />
-                </button>
-              </div>
-            </div>
 
-            {/* Suggested AI Prompts in Overview Tab */}
-            <div className="space-y-1">
-              <span className="text-[9.5px] font-bold text-[#78716C] uppercase tracking-wider block px-0.5">
-                Ask Berea AI
-              </span>
-              <div className="space-y-1">
-                {insight.suggestedQuestions.map((q, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setActiveTab('chat');
-                      handleSendMessage(q);
-                    }}
-                    className="w-full text-left p-2 rounded-lg bg-white border border-[#EBE5DC] hover:bg-[#FAF5ED] hover:border-[#D4A373] transition-colors flex items-center justify-between group"
-                  >
-                    <span className="text-[11.5px] text-[#26221F] group-hover:text-[#78471F] leading-snug">{q}</span>
-                    <ChevronRight className="w-3 h-3 text-[#A8A29E] group-hover:text-[#B4793D] flex-shrink-0 ml-1.5 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Practical Application */}
             <div className="p-2.5 rounded-lg bg-[#F0FDF4] border border-[#DCFCE7] text-xs">
@@ -1601,10 +1596,29 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         )}
       </div>
 
-      {/* AI Guide Sub-footer */}
-      <div className="px-3.5 py-2 bg-[#FAF7F2] border-t border-[#EBE5DC] flex items-center justify-between text-[10px] text-[#78716C] select-none flex-shrink-0">
-        <AppliedAiLogo variant="lockup-navy" height={16} alt="George Fox University Applied AI Institute" />
-        <span className="text-[9.5px] text-[#A8A29E] font-medium">Be Known</span>
+      {/* George Fox Applied AI Institute 'Be Known' Footer */}
+      <div className="px-3.5 py-2.5 bg-gradient-to-br from-[#003057]/8 via-[#FAF7F2] to-[#D4AF37]/15 border-t border-[#003057]/20 space-y-2 select-none flex-shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <AppliedAiLogo variant="lockup-navy" height={20} alt="George Fox University Applied AI Institute" />
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#003057] text-[#FAF7F2] uppercase tracking-wider flex-shrink-0">
+            Be Known
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] text-[#57524E] leading-tight">
+            Academic facts • Personal faith • Quiet prayer
+          </p>
+          <button
+            onClick={() => {
+              setActiveTab('chat');
+              handleSendMessage(`Help me understand ${currentVerseRef} through the "Be Known" promise: 1) What it means (simple facts & words), 2) What it means for my life (God knows me), and 3) A simple prayer.`);
+            }}
+            className="clean-caramel-btn !bg-[#003057] hover:!bg-[#002240] !text-white !text-[10px] !py-1 !px-2.5 shadow-xs flex items-center gap-1 flex-shrink-0"
+          >
+            <span>Explore</span>
+            <ArrowUpRight className="w-3 h-3 text-[#D4AF37]" />
+          </button>
+        </div>
       </div>
     </div>
   );

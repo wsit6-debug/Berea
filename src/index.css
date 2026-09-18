@@ -66,6 +66,31 @@ body {
   background: rgba(180, 160, 140, 0.45);
 }
 
+/* Prominent Scrollbar for Dropdown Menus */
+.translation-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #B4793D #F5EFE6;
+}
+
+.translation-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  display: block;
+}
+
+.translation-scrollbar::-webkit-scrollbar-track {
+  background: #FAF5ED;
+  border-radius: 8px;
+}
+
+.translation-scrollbar::-webkit-scrollbar-thumb {
+  background: #C4976A;
+  border-radius: 8px;
+}
+
+.translation-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9A622A;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
