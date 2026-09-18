@@ -6,12 +6,11 @@ import { Chapter } from '../data/bibleData';
 
 interface CharacterPanelProps {
   charId: string | null;
-  onClose: () => void;
   bookName: string;
   chapter: Chapter;
 }
 
-export const CharacterPanel: React.FC<CharacterPanelProps> = ({ charId, onClose, bookName, chapter }) => {
+export const CharacterPanel: React.FC<CharacterPanelProps> = ({ charId, bookName, chapter }) => {
   const [loading, setLoading] = useState(false);
   const [progressText, setProgressText] = useState<string | null>(null);
   const [profile, setProfile] = useState<string | null>(null);
@@ -57,24 +56,29 @@ export const CharacterPanel: React.FC<CharacterPanelProps> = ({ charId, onClose,
     return () => { isMounted = false; };
   }, [character, bookName, chapter]);
 
-  if (!charId || !character) return null;
+  if (!charId || !character) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-[#A8A29E]">
+        <User className="w-12 h-12 mb-3 text-[#EBE5DC]" />
+        <h3 className="font-semibold text-[#78716C] mb-1">No Character Selected</h3>
+        <p className="text-sm">Click on a highlighted character name in the biblical text to view their AI-generated biography and meaning.</p>
+      </div>
+    );
+  }
 
   const hash = charId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
   const hue = hash % 360;
 
   return (
-    <div className="absolute right-0 top-0 bottom-0 w-80 bg-white border-l border-[#EBE5DC] shadow-[-4px_0_24px_rgba(180,160,140,0.1)] flex flex-col z-20 transition-transform duration-300">
-      <div className="flex items-center justify-between p-4 border-b border-[#EBE5DC] bg-[#FAF5ED]">
-        <h2 className="font-heading font-bold text-lg text-[#26221F] flex items-center gap-2">
-          <User className="w-5 h-5" style={{ color: `hsl(${hue}, 70%, 40%)` }} />
+    <div className="flex flex-col h-full animate-fadeIn">
+      <div className="flex items-center justify-between p-3 border-b border-[#EBE5DC] bg-[#FAF5ED] rounded-t-xl">
+        <h2 className="font-heading font-bold text-sm text-[#26221F] flex items-center gap-2">
+          <User className="w-4 h-4" style={{ color: `hsl(${hue}, 70%, 40%)` }} />
           Character Profile
         </h2>
-        <button onClick={onClose} className="p-1 rounded-full text-[#78716C] hover:bg-white transition-colors">
-          <X className="w-5 h-5" />
-        </button>
       </div>
 
-      <div className="p-5 flex-1 overflow-y-auto custom-scrollbar">
+      <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
         <div className="mb-6 text-center">
           <div 
             className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-2xl font-bold text-white mb-3 shadow-md"

@@ -18,7 +18,6 @@ import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { BookmarksModal } from './components/BookmarksModal';
-import { CharacterPanel } from './components/CharacterPanel';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
 import { scheduleBackgroundQuizPreGeneration } from './services/quizService';
@@ -281,7 +280,11 @@ export function App() {
                 setAiPanelTab('quiz');
                 setIsAiPanelOpen(true);
               }}
-              onSelectCharacter={setSelectedCharacter}
+              onSelectCharacter={(charId) => {
+                setSelectedCharacter(charId);
+                setAiPanelTab('characters');
+                setIsAiPanelOpen(true);
+              }}
             />
           </div>
 
@@ -309,17 +312,10 @@ export function App() {
                   setAiPanelTab('quiz');
                   setIsAiPanelOpen(true);
                 }}
+                selectedCharacter={selectedCharacter}
               />
             </div>
           )}
-
-          {/* Character Profile Overlay Panel */}
-          <CharacterPanel 
-            charId={selectedCharacter} 
-            onClose={() => setSelectedCharacter(null)} 
-            bookName={currentBook.name}
-            chapter={currentChapter}
-          />
         </div>
       </main>
 

@@ -22,5 +22,5 @@ export interface StudyGuide {
   supportingPassages?: SupportingPassage[];
 }
 
-export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz';
+export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'characters';
 

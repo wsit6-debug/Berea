@@ -12,6 +12,7 @@ import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiServ
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
+import { CharacterPanel } from './CharacterPanel';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
 import { AppliedAiLogo } from './AppliedAiLogo';
 import { StudyGuide, SupportingPassage, BereaAiTab, StudyGuideAudience } from '../types';
@@ -46,6 +47,7 @@ interface BereaAiPanelProps {
   activeQuizType?: 'chapter' | 'book' | null;
   onQuizTypeChange?: (type: 'chapter' | 'book' | null) => void;
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
+  selectedCharacter?: string | null;
 }
 
 export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
@@ -59,12 +61,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   onLensChange,
   activeTranslation,
   onTranslationChange,
-  onClose,
   activeTab: externalTab,
   onTabChange,
   activeQuizType,
   onQuizTypeChange,
-  onOpenQuiz
+  onOpenQuiz,
+  selectedCharacter,
+  onClose
 }) => {
   const [internalTab, setInternalTab] = useState<BereaAiTab>(externalTab || 'overview');
 
@@ -723,12 +726,21 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             <HelpCircle className="w-3 h-3" />
             <span>Quiz</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('characters')}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[11px] !py-0.5 ${activeTab === 'characters' ? 'active' : ''}`}
+          >
+            <Users className="w-3 h-3" />
+            <span>Characters</span>
+          </button>
         </div>
       </div>
 
       {/* Tab Contents */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-white">
-        {/* STUDY GUIDE TAB */}
+      <div className="flex-1 overflow-y-auto p-0 flex flex-col custom-scrollbar bg-white">
+        <div className="p-3 space-y-2.5 flex-1">
+          {/* STUDY GUIDE TAB */}
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
             {/* 1. Audience / Depth Selector Bar */}
@@ -2028,6 +2040,19 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 ) : null}
               </div>
             )}
+          </div>
+        )}
+        
+        </div>
+
+        {/* CHARACTERS TAB */}
+        {activeTab === 'characters' && (
+          <div className="h-full flex flex-col flex-1 pb-3">
+            <CharacterPanel 
+              charId={selectedCharacter || null} 
+              bookName={currentBook}
+              chapter={{ chapterNumber: currentChapter, summary: '', verses: chapterVerses || [] }}
+            />
           </div>
         )}
       </div>
