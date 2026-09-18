@@ -550,53 +550,53 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const activeDenom = DENOMINATIONS.find(d => d.id === activeLens) || DENOMINATIONS[0];
 
   return (
-    <div className="berea-ai-inspector flex flex-col h-full bg-white text-[#26221F] border border-[#EBE5DC] rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(180,160,140,0.06)]">
+    <div className="berea-ai-inspector flex flex-col h-full bg-[var(--clean-bg,#FAF7F2)] text-[var(--clean-text-primary,#26221F)] border border-[#EBE5DC] rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(180,160,140,0.06)]">
       {/* Segmented Tab Capsule / Header */}
       <div className="p-1.5 px-2.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex items-center gap-1.5 select-none flex-shrink-0">
-        <div className="ios-segmented-capsule flex-1 flex justify-between gap-0.5">
+        <div className="ios-segmented-capsule flex-1 flex overflow-x-auto gap-0.5">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'overview' ? 'active' : ''}`}
             title="Passage Overview"
           >
-            <BookOpen className="w-3 h-3" />
-            <span>Overview</span>
+            <BookOpen className="w-3 h-3 shrink-0" />
+            <span className="truncate">Overview</span>
           </button>
 
           <button
             onClick={() => setActiveTab('studyGuide')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'studyGuide' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'studyGuide' ? 'active' : ''}`}
             title="Study Guide Generator"
           >
-            <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
-            <span>Study Guide</span>
+            <BookOpenCheck className="w-3 h-3 text-[#B4793D] shrink-0" />
+            <span className="truncate">Study Guide</span>
           </button>
 
           <button
             onClick={() => setActiveTab('chat')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[65px] ${activeTab === 'chat' ? 'active' : ''}`}
             title="Ask AI Assistant"
           >
-            <MessageSquare className="w-3 h-3" />
-            <span>Ask AI</span>
+            <MessageSquare className="w-3 h-3 shrink-0" />
+            <span className="truncate">Ask AI</span>
           </button>
 
           <button
             onClick={() => setActiveTab('compare')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[70px] ${activeTab === 'compare' ? 'active' : ''}`}
             title="Parallel Comparison"
           >
-            <Columns className="w-3 h-3" />
-            <span>Compare</span>
+            <Columns className="w-3 h-3 shrink-0" />
+            <span className="truncate">Compare</span>
           </button>
 
           <button
             onClick={() => setActiveTab('map')}
-            className={`ios-segment-pill flex-1 !text-[10.5px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'map' ? 'active' : ''}`}
             title="Biblical Atlas"
           >
-            <MapPin className="w-3 h-3" />
-            <span>Atlas</span>
+            <MapPin className="w-3 h-3 shrink-0" />
+            <span className="truncate">Atlas</span>
           </button>
         </div>
 

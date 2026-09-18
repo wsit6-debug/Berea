@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart } from 'lucide-react';
+import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette } from 'lucide-react';
 import {
   TRANSLATIONS,
   TranslationId,
@@ -23,6 +23,9 @@ interface HeaderProps {
   onOpenSearch: () => void;
   isAiPanelOpen?: boolean;
   onToggleAiPanel?: () => void;
+  onOpenNotepad?: () => void;
+  isNotepadActive?: boolean;
+  onOpenColorScheme?: () => void;
   onLogout?: () => void;
 }
 
@@ -38,6 +41,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSearch,
   isAiPanelOpen = true,
   onToggleAiPanel,
+  onOpenNotepad,
+  isNotepadActive = false,
+  onOpenColorScheme,
   onLogout
 }) => {
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
@@ -49,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   const displayedTranslations: TranslationInfo[] = showAllTranslations ? TRANSLATIONS : approvedTranslations;
 
   return (
-    <header className="berea-header sticky top-0 z-40 bg-[#FAF7F2]/90 backdrop-blur-xl border-b border-[#EBE5DC] px-3 sm:px-6 py-2 transition-colors select-none">
+    <header className="berea-header sticky top-0 z-40 bg-[var(--clean-bg,#FAF7F2)]/90 backdrop-blur-xl border-b border-[var(--clean-border,#EBE5DC)] px-3 sm:px-6 py-2 transition-colors select-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Brand & Navigation */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
@@ -58,10 +64,10 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center cursor-pointer group pr-2"
             title="About Berea"
           >
-            <BereaLogo size={42} />
+            <BereaLogo size={42} textColor="var(--clean-text-primary, #26221F)" />
           </div>
 
-          <div className="h-4 w-px bg-[#EBE5DC] hidden sm:block"></div>
+          <div className="h-4 w-px bg-[var(--clean-border,#EBE5DC)] hidden sm:block"></div>
 
           {/* Book & Chapter Selector Button */}
           <button
@@ -69,11 +75,11 @@ export const Header: React.FC<HeaderProps> = ({
             className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
             title="Choose Book & Chapter"
           >
-            <BookOpen className="w-3.5 h-3.5 text-[#B4793D]" />
-            <span className="font-semibold text-xs text-[#26221F] group-hover:text-[#B4793D] transition-colors truncate max-w-[100px] sm:max-w-none">
+            <BookOpen className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+            <span className="font-semibold text-xs text-[var(--clean-text-primary,#26221F)] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors truncate max-w-[100px] sm:max-w-none">
               {currentBookName} {currentChapterNum}
             </span>
-            <ChevronDown className="w-3 h-3 text-[#A8A29E]" />
+            <ChevronDown className="w-3 h-3 text-[var(--clean-text-tertiary,#A8A29E)]" />
           </button>
 
           {/* 1. TOP GLOBAL DENOMINATION SELECTOR */}
@@ -83,21 +89,21 @@ export const Header: React.FC<HeaderProps> = ({
                 setShowDenomDropdown(prev => !prev);
                 setShowTranslationDropdown(false);
               }}
-              className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1 border border-[#EBE5DC] hover:border-[#D4A373] transition-all shadow-xs"
+              className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
               title="Select Confessional Tradition (Filters Approved Bibles)"
             >
               <span className="text-xs sm:text-sm">{currentDenom.icon}</span>
-              <span className="font-semibold text-xs text-[#26221F] group-hover:text-[#B4793D] transition-colors truncate max-w-[90px] sm:max-w-[140px]">
+              <span className="font-semibold text-xs text-[var(--clean-text-primary,#26221F)] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors truncate max-w-[90px] sm:max-w-[140px]">
                 {currentDenom.name}
               </span>
-              <ChevronDown className="w-3 h-3 text-[#A8A29E]" />
+              <ChevronDown className="w-3 h-3 text-[var(--clean-text-tertiary,#A8A29E)]" />
             </button>
 
             {showDenomDropdown && (
-              <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-white border border-[#EBE5DC] rounded-xl shadow-xl z-50 p-2 space-y-1 animate-fadeIn max-h-[420px] overflow-y-auto custom-scrollbar">
-                <div className="text-[10px] uppercase font-bold text-[#A8A29E] px-2 py-0.5 flex items-center justify-between border-b border-[#EBE5DC] pb-1.5 mb-1">
+              <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-[var(--clean-surface,#FFFFFF)] border border-[var(--clean-border,#EBE5DC)] rounded-xl shadow-xl z-50 p-2 space-y-1 animate-fadeIn max-h-[420px] overflow-y-auto custom-scrollbar">
+                <div className="text-[10px] uppercase font-bold text-[var(--clean-text-tertiary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b border-[var(--clean-border,#EBE5DC)] pb-1.5 mb-1">
                   <span>Confessional Traditions</span>
-                  <span className="text-[9px] text-[#B4793D] font-mono">7 Distinct Lenses</span>
+                  <span className="text-[9px] text-[var(--clean-accent-caramel,#B4793D)] font-mono font-bold">7 Distinct Lenses</span>
                 </div>
                 {DENOMINATIONS.map((d) => {
                   const isSelected = activeLens === d.id;
@@ -108,28 +114,24 @@ export const Header: React.FC<HeaderProps> = ({
                         onSelectLens(d.id);
                         setShowDenomDropdown(false);
                       }}
-                      style={{
-                        backgroundColor: isSelected ? '#FAF3E8' : undefined,
-                        borderColor: isSelected ? '#B4793D' : undefined
-                      }}
                       className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border ${isSelected
-                          ? 'bg-[#FAF3E8] border-[#B4793D] shadow-xs'
-                          : 'border-transparent text-[#26221F] hover:bg-[#FAF5ED] hover:text-[#B4793D]'
+                          ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] border-[var(--clean-accent-caramel,#B4793D)] shadow-xs font-semibold'
+                          : 'border-transparent text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
                         }`}
                     >
                       <div className="flex items-start gap-2">
                         <span className="text-base flex-shrink-0 mt-0.5">{d.icon}</span>
                         <div>
-                          <div className={`font-semibold text-xs ${isSelected ? 'text-[#78471F]' : 'text-[#26221F]'}`}>
+                          <div className={`font-semibold text-xs ${isSelected ? 'text-[var(--clean-accent-dark,#78471F)]' : 'text-[var(--clean-text-primary,#26221F)]'}`}>
                             {d.name}
                           </div>
-                          <div className="text-[10px] text-[#78716C] leading-snug line-clamp-1">{d.tagline}</div>
-                          <div className="text-[9px] text-[#A8A29E] font-mono mt-0.5 truncate max-w-[180px]">
+                          <div className="text-[10px] text-[var(--clean-text-secondary,#78716C)] leading-snug line-clamp-1">{d.tagline}</div>
+                          <div className="text-[9px] text-[var(--clean-text-tertiary,#A8A29E)] font-mono mt-0.5 truncate max-w-[180px]">
                             {d.confessionalStandard.split(',')[0]}
                           </div>
                         </div>
                       </div>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[#B4793D] flex-shrink-0 mt-0.5" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0 mt-0.5" />}
                     </button>
                   );
                 })}
@@ -144,21 +146,21 @@ export const Header: React.FC<HeaderProps> = ({
                 setShowTranslationDropdown(prev => !prev);
                 setShowDenomDropdown(false);
               }}
-              className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1 border border-[#EBE5DC] hover:border-[#D4A373] transition-all shadow-xs"
+              className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
               title="Select Scripture Translation (Approved for your denomination)"
             >
-              <span className="text-xs font-semibold text-[#26221F] group-hover:text-[#B4793D] transition-colors">
+              <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors">
                 {activeTranslation}
               </span>
-              <span className="hidden md:inline-block text-[9px] px-1.5 py-0.2 rounded bg-[#FAF5ED] text-[#B4793D] border border-[#EBE5DC] font-medium">
+              <span className="hidden md:inline-block text-[9px] px-1.5 py-0.2 rounded bg-[var(--clean-highlight-cream,#FAF5ED)] text-[var(--clean-accent-caramel,#B4793D)] border border-[var(--clean-accent-caramel,#B4793D)]/25 font-bold">
                 Approved
               </span>
-              <ChevronDown className="w-3 h-3 text-[#A8A29E]" />
+              <ChevronDown className="w-3 h-3 text-[var(--clean-text-tertiary,#A8A29E)]" />
             </button>
 
             {showTranslationDropdown && (
-              <div className="absolute top-full left-0 mt-1.5 w-80 bg-white border border-[#EBE5DC] rounded-xl shadow-xl z-50 p-2 space-y-1 animate-fadeIn max-h-[380px] overflow-y-auto custom-scrollbar">
-                <div className="text-[10px] uppercase font-bold text-[#A8A29E] px-2 py-0.5 flex items-center justify-between border-b border-[#EBE5DC] pb-1.5 mb-1">
+              <div className="absolute top-full left-0 mt-1.5 w-80 bg-[var(--clean-surface,#FFFFFF)] border border-[var(--clean-border,#EBE5DC)] rounded-xl shadow-xl z-50 p-2 space-y-1 animate-fadeIn max-h-[380px] overflow-y-auto custom-scrollbar">
+                <div className="text-[10px] uppercase font-bold text-[var(--clean-text-tertiary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b border-[var(--clean-border,#EBE5DC)] pb-1.5 mb-1">
                   <span className="truncate max-w-[160px]">
                     {showAllTranslations ? 'All Translations' : `Approved for ${currentDenom.traditionGroup}`}
                   </span>
@@ -167,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({
                       e.stopPropagation();
                       setShowAllTranslations(prev => !prev);
                     }}
-                    className="text-[9.5px] text-[#B4793D] hover:underline flex items-center gap-1 font-semibold"
+                    className="text-[9.5px] text-[var(--clean-accent-caramel,#B4793D)] hover:underline flex items-center gap-1 font-semibold"
                   >
                     {showAllTranslations ? 'Approved Only' : 'Show All (20+)'}
                   </button>
@@ -183,36 +185,33 @@ export const Header: React.FC<HeaderProps> = ({
                         onSelectTranslation(t.id);
                         setShowTranslationDropdown(false);
                       }}
-                      style={{
-                        backgroundColor: isSelected ? '#26221F' : undefined,
-                        color: isSelected ? '#FFFFFF' : undefined
-                      }}
                       className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors ${isSelected
-                          ? 'bg-[#26221F] text-white font-semibold shadow-xs'
-                          : 'text-[#26221F] hover:bg-[#FAF5ED] hover:text-[#B4793D]'
+                          ? 'bg-[var(--clean-text-primary,#26221F)] text-[var(--clean-surface,#FFFFFF)] font-semibold shadow-xs'
+                          : 'text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
                         }`}
                     >
                       <div className="flex-1 pr-2">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="font-bold text-xs" style={{ color: isSelected ? '#FFFFFF' : undefined }}>
+                          <span className="font-bold text-xs">
                             {t.id}
                           </span>
                           <span
-                            style={{
-                              backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : isApproved ? '#FAF3E8' : '#FAF5ED',
-                              color: isSelected ? '#FFFFFF' : isApproved ? '#B4793D' : '#78716C',
-                              borderColor: isSelected ? 'transparent' : '#EBE5DC'
-                            }}
-                            className="text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px]"
+                            className={`text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px] ${
+                              isSelected
+                                ? 'bg-white/20 text-white border-transparent'
+                                : isApproved
+                                ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-caramel,#B4793D)] border-[var(--clean-accent-caramel,#B4793D)]/30'
+                                : 'bg-[var(--clean-surface-subtle,#FAF5ED)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
+                            }`}
                           >
                             {t.badge}
                           </span>
                         </div>
-                        <div className="text-[11px] font-normal leading-snug line-clamp-1" style={{ color: isSelected ? '#F0EAE1' : '#57524E' }}>
+                        <div className={`text-[11px] font-normal leading-snug line-clamp-1 ${isSelected ? 'text-stone-200' : 'text-[var(--clean-text-secondary,#57524E)]'}`}>
                           {t.name}
                         </div>
                       </div>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[#D4A373] flex-shrink-0 mt-0.5" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-[var(--clean-accent-honey,#D4A373)] flex-shrink-0 mt-0.5" />}
                     </button>
                   );
                 })}
@@ -226,12 +225,12 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Quick Spotlight Search */}
           <button
             onClick={onOpenSearch}
-            className="ios-glass-btn text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC] hover:border-[#D4A373] !px-2.5 !py-1"
+            className="ios-glass-btn !px-2.5 !py-1"
             title="Search (⌘K)"
           >
-            <Search className="w-3.5 h-3.5 text-[#B4793D]" />
+            <Search className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
             <span className="hidden lg:inline text-xs font-normal">Search scripture, topics...</span>
-            <kbd className="hidden sm:inline-block text-[9.5px] font-mono bg-white px-1.5 py-0.5 rounded text-[#78716C] border border-[#EBE5DC]">
+            <kbd className="hidden sm:inline-block text-[9.5px] font-mono bg-[var(--clean-surface,#FFFFFF)] px-1.5 py-0.5 rounded text-[var(--clean-text-secondary,#78716C)] border border-[var(--clean-border,#EBE5DC)]">
               ⌘K
             </kbd>
           </button>
@@ -241,23 +240,56 @@ export const Header: React.FC<HeaderProps> = ({
             href={FEEDBACK_CONFIG.shareUrl || FEEDBACK_CONFIG.formUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ios-glass-btn text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC] hover:border-[#D4A373] !px-2.5 !py-1 transition-all"
+            className="ios-glass-btn !px-2.5 !py-1 transition-all"
             title="Open Feedback Form (Google Forms)"
           >
-            <MessageSquareHeart className="w-3.5 h-3.5 text-[#B4793D]" />
-            <span className="text-xs font-semibold text-[#26221F] hidden sm:inline">Feedback</span>
+            <MessageSquareHeart className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+            <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)] hidden sm:inline">Feedback</span>
           </a>
+
+          {/* Color Scheme Theme Studio Trigger */}
+          {onOpenColorScheme && (
+            <button
+              onClick={onOpenColorScheme}
+              className="ios-glass-btn !px-2.5 !py-1 transition-all flex items-center gap-1.5"
+              title="Color Scheme Studio (Customize Accent & Background)"
+            >
+              <Palette className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+              <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)] hidden sm:inline">Theme</span>
+            </button>
+          )}
+
+          {/* Notepad Top Tab */}
+          {onOpenNotepad && (
+            <button
+              onClick={onOpenNotepad}
+              className={`ios-glass-btn transition-all !px-3 !py-1 flex items-center gap-1.5 rounded-lg ${
+                isNotepadActive
+                  ? '!bg-[var(--clean-accent-caramel,#B4793D)] !border-[var(--clean-accent-caramel,#B4793D)] !text-white font-bold shadow-sm'
+                  : 'text-[var(--clean-text-primary,#57524E)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
+              }`}
+              title="Open Personal Notepad (⌘N)"
+            >
+              <NotebookPen className={`w-3.5 h-3.5 ${isNotepadActive ? 'text-white' : 'text-[var(--clean-accent-caramel,#B4793D)]'}`} />
+              <span className="text-xs font-semibold">Notepad</span>
+              <kbd className={`hidden sm:inline-block text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                isNotepadActive ? 'bg-black/20 text-white border-transparent' : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
+              }`}>
+                ⌘N
+              </kbd>
+            </button>
+          )}
 
           {/* AI Guide Inspector Toggle Button */}
           {onToggleAiPanel && (
             <button
               onClick={onToggleAiPanel}
-              className="ios-glass-btn text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC] hover:border-[#D4A373] !px-2.5 !py-1 transition-all"
+              className="ios-glass-btn !px-2.5 !py-1 transition-all"
               title="Toggle AI Guide Panel (⌘I)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#B4793D]" />
-              <span className="text-xs font-semibold text-[#26221F]">Guide</span>
-              <kbd className="hidden sm:inline-block text-[9.5px] font-mono bg-white px-1.5 py-0.5 rounded text-[#78716C] border border-[#EBE5DC]">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+              <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)]">Guide</span>
+              <kbd className="hidden sm:inline-block text-[9.5px] font-mono bg-[var(--clean-surface,#FFFFFF)] px-1.5 py-0.5 rounded text-[var(--clean-text-secondary,#78716C)] border border-[var(--clean-border,#EBE5DC)]">
                 ⌘I
               </kbd>
             </button>
@@ -267,7 +299,7 @@ export const Header: React.FC<HeaderProps> = ({
           {onLogout && (
             <button
               onClick={onLogout}
-              className="ios-glass-btn text-[#78716C] hover:text-red-600 hover:border-red-200 hover:bg-red-50/50 border border-[#EBE5DC] !p-1.5 transition-all"
+              className="ios-glass-btn hover:!text-red-600 hover:!border-red-400 hover:!bg-red-500/10 !p-1.5 transition-all"
               title="Lock & Log Out"
               aria-label="Lock and log out"
             >
