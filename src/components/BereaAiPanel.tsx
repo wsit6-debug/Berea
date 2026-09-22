@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, Trophy, HelpCircle
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, Trophy, HelpCircle, Feather
 } from 'lucide-react';
-import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
+import ChapterSymbolismPanel from './ChapterSymbolismPanel';
+import { DENOMINATIONS, DenominationalLens, getTheologicalInsight, DENOMINATION_COMMENTATORS } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
-import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
+import { askBereaAssistant, ChatMessage, QuizQuestion, generateHistoricalCommentary } from '../services/aiService';
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
@@ -166,8 +167,64 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [comparisonTranslations, setComparisonTranslations] = useState<TranslationId[]>(['ESV', 'KJV', 'NIV']);
   const [showDenomModal, setShowDenomModal] = useState(false);
 
+  const isRangeActive = Boolean(selectedVerseRange && selectedVerseRange.start !== selectedVerseRange.end);
   const activeVerseNum = selectedVerse?.verseNumber || 1;
   const currentVerseRef = `${currentBook} ${currentChapter}:${activeVerseNum}`;
+
+  // Commentary State
+  const [selectedCommentator, setSelectedCommentator] = useState<string>('');
+  const [commentaryText, setCommentaryText] = useState<string>('');
+  const [isCommentaryLoading, setIsCommentaryLoading] = useState<boolean>(false);
+  const [commentaryProgress, setCommentaryProgress] = useState<string>('');
+  const [commentaryError, setCommentaryError] = useState<string>('');
+
+  useEffect(() => {
+    setSelectedCommentator('');
+    setCommentaryText('');
+    setCommentaryError('');
+  }, [activeLens, currentVerseRef, isRangeActive, selectedVerseRange]);
+
+  const handleGenerateCommentary = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const commentatorId = e.target.value;
+    setSelectedCommentator(commentatorId);
+    if (!commentatorId) {
+      setCommentaryText('');
+      return;
+    }
+    
+    const activeCommentators = DENOMINATION_COMMENTATORS[activeLens] || [];
+    const commentator = activeCommentators.find(c => c.id === commentatorId);
+    if (!commentator) return;
+    
+    const cacheKey = `berea_persona_v3_${currentBook}_${currentChapter}_${isRangeActive ? `${selectedVerseRange!.start}_${selectedVerseRange!.end}` : activeVerseNum}_${commentatorId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      setCommentaryText(cached);
+      return;
+    }
+
+    setIsCommentaryLoading(true);
+    setCommentaryError('');
+    setCommentaryText('');
+    setCommentaryProgress('');
+
+    try {
+      const denomName = DENOMINATIONS.find(d => d.id === activeLens)?.name || activeLens;
+      const result = await generateHistoricalCommentary(
+        insight.passageRef,
+        effectiveVText || wholeChapterText,
+        commentator.name,
+        denomName,
+        (progress) => setCommentaryProgress(progress.text)
+      );
+      setCommentaryText(result);
+      localStorage.setItem(cacheKey, result);
+    } catch (err: any) {
+      setCommentaryError(err.message || 'Failed to generate commentary.');
+    } finally {
+      setIsCommentaryLoading(false);
+    }
+  };
 
   // Dynamic Chat State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -496,7 +553,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     }
   };
 
-  const isRangeActive = Boolean(selectedVerseRange && selectedVerseRange.start !== selectedVerseRange.end);
+  // isRangeActive moved up
   const effectiveVNum = isRangeActive ? selectedVerseRange!.start : selectedVerse?.verseNumber;
   const effectiveEndVNum = isRangeActive ? selectedVerseRange!.end : undefined;
   const effectiveVText = isRangeActive ? combinedRangeText : currentVerseText;
@@ -722,6 +779,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           >
             <HelpCircle className="w-3 h-3" />
             <span>Quiz</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('symbolism')}
+            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'symbolism' ? 'active' : ''}`}
+            title="Symbolism & Typology"
+          >
+            <Feather className="w-3 h-3 text-[#B4793D]" />
+            <span>Symbolism</span>
           </button>
         </div>
       </div>
@@ -1417,6 +1483,52 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             </div>
 
+            {/* AI Theological Personas */}
+            <div className="space-y-1.5 p-2.5 rounded-xl bg-white border border-[#EBE5DC] shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1">
+                  <BookOpen className="w-3 h-3 text-[#B4793D]" />
+                  AI Theological Personas
+                </span>
+              </div>
+              <select
+                value={selectedCommentator}
+                onChange={handleGenerateCommentary}
+                className="w-full p-2 text-xs border border-[#EBE5DC] rounded-lg bg-[#FAF9F6] text-[#26221F] outline-none focus:border-[#B4793D]"
+              >
+                <option value="">Select a Commentator...</option>
+                {(DENOMINATION_COMMENTATORS[activeLens] || []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.description})
+                  </option>
+                ))}
+              </select>
+
+              {isCommentaryLoading && (
+                <div className="flex flex-col items-center justify-center py-4 opacity-70 animate-pulse">
+                  <div className="w-5 h-5 border-2 border-[#B4793D] border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-[10px] text-[#B4793D] font-medium">{commentaryProgress || 'Simulating persona...'}</p>
+                </div>
+              )}
+
+              {commentaryError && (
+                <p className="text-[10px] text-red-500 text-center py-2">{commentaryError}</p>
+              )}
+
+              {!isCommentaryLoading && commentaryText && (
+                <div className="mt-2 space-y-2">
+                  <div className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs">
+                    <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#57524E]">
+                      <MarkdownTheologyRenderer content={commentaryText} />
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-[#A8A29E] italic text-center px-2">
+                    Note: This is an AI-generated simulation of historical theological perspectives, not a direct historical quote.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Suggested AI Prompts in Overview Tab */}
             <div className="space-y-1">
               <span className="text-[9.5px] font-bold text-[#78716C] uppercase tracking-wider block px-0.5">
@@ -2029,6 +2141,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             )}
           </div>
+        )}
+
+        {/* SYMBOLISM TAB */}
+        {activeTab === 'symbolism' && (
+          <ChapterSymbolismPanel
+            book={currentBook}
+            chapter={currentChapter}
+            chapterText={wholeChapterText}
+          />
         )}
       </div>
 

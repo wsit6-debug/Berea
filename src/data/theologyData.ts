@@ -90,6 +90,50 @@ export const DENOMINATIONS: DenominationConfig[] = [
     description: 'Focuses on personal conversion, believer’s baptism by immersion, the inerrant authority of Scripture, and the Great Commission.'
   }
 ];
+
+export interface Commentator {
+  id: string;
+  name: string;
+  century: string;
+  description: string;
+}
+
+export const DENOMINATION_COMMENTATORS: Record<DenominationalLens, Commentator[]> = {
+  catholic: [
+    { id: 'haydock', name: 'George Leo Haydock', century: '19th Century', description: 'Haydock’s Catholic Bible Commentary (1859)' },
+    { id: 'aquinas', name: 'St. Thomas Aquinas', century: '13th Century', description: 'Catena Aurea' },
+    { id: 'lapide', name: 'Cornelius a Lapide', century: '17th Century', description: 'The Great Commentary' }
+  ],
+  orthodox: [
+    { id: 'chrysostom', name: 'St. John Chrysostom', century: '4th Century', description: 'Homilies on the Scriptures' },
+    { id: 'theophylact', name: 'Blessed Theophylact of Ohrid', century: '11th Century', description: 'The Explanation of the New Testament' }
+  ],
+  reformed: [
+    { id: 'calvin', name: 'John Calvin', century: '16th Century', description: 'Calvin’s Commentaries' },
+    { id: 'henry', name: 'Matthew Henry', century: '18th Century', description: 'Complete Commentary on the Whole Bible' },
+    { id: 'jfb', name: 'Jamieson, Fausset & Brown', century: '19th Century', description: 'Commentary Critical and Explanatory' }
+  ],
+  lutheran: [
+    { id: 'luther', name: 'Martin Luther', century: '16th Century', description: 'Luther’s Works & Commentaries' },
+    { id: 'keil_delitzsch', name: 'Keil & Delitzsch', century: '19th Century', description: 'Commentary on the Old Testament' },
+    { id: 'kretzmann', name: 'Paul E. Kretzmann', century: '20th Century', description: 'Popular Commentary of the Bible' }
+  ],
+  wesleyan: [
+    { id: 'wesley', name: 'John Wesley', century: '18th Century', description: 'Explanatory Notes on the Whole Bible' },
+    { id: 'clarke', name: 'Adam Clarke', century: '19th Century', description: 'Commentary on the Bible' },
+    { id: 'benson', name: 'Joseph Benson', century: '19th Century', description: 'Benson Commentary' }
+  ],
+  anglican: [
+    { id: 'ryle', name: 'J.C. Ryle', century: '19th Century', description: 'Expository Thoughts on the Gospels' },
+    { id: 'ellicott', name: 'Charles Ellicott', century: '19th Century', description: 'Commentary for English Readers' },
+    { id: 'poole', name: 'Matthew Poole', century: '17th Century', description: 'Annotations on the Holy Bible' }
+  ],
+  baptist_evangelical: [
+    { id: 'gill', name: 'John Gill', century: '18th Century', description: 'Exposition of the Entire Bible' },
+    { id: 'spurgeon', name: 'C.H. Spurgeon', century: '19th Century', description: 'The Treasury of David' },
+    { id: 'robertson', name: 'A.T. Robertson', century: '20th Century', description: 'Word Pictures in the New Testament' }
+  ]
+};
 export interface TheologicalInsight {
   passageRef: string;
   conciseOverview: string;
