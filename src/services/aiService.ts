@@ -4,6 +4,7 @@ import { buildRagGroundingContext, DoctrinalEntry } from './ragService';
 import { getUserDenominationPreference, getDenominationLabel, UserDenominationSetting } from './configService';
 import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
+import { TypologyMotif, TypologyNode } from '../types';
 
 export interface QuizQuestion {
   question: string;
@@ -791,3 +792,81 @@ export async function getAccumulatedBookQuiz(
   return finalQuestions.slice(0, numQuestions);
 }
 
+export async function generateTypologyTracker(
+  passageRef: string,
+  passageText: string,
+  onProgress?: (progress: { text: string; progress: number }) => void
+): Promise<TypologyMotif> {
+  const { generateLocalAiResponse } = await import('./webLlmService');
+  
+  const prompt = `You are a biblical theology AI expert. Read the following biblical passage and identify the single most prominent theological motif or symbol (e.g., Water, Mountains, Trees, Bread, Light, Blood, Serpents). 
+
+Then, trace this motif throughout the entire biblical canon from Genesis to Revelation. Generate a JSON response with exactly this structure:
+{
+  "motif": "The identified motif (e.g., 'Water')",
+  "summary": "A 2-sentence theological synthesis of how this motif points to the larger redemptive narrative.",
+  "nodes": [
+    {
+      "era": "Creation & Patriarchs",
+      "reference": "e.g., Genesis 1:2",
+      "event": "e.g., Spirit over the waters",
+      "significance": "e.g., Creation and life from chaos"
+    },
+    {
+      "era": "Exodus & Kingdom",
+      "reference": "...",
+      "event": "...",
+      "significance": "..."
+    },
+    {
+      "era": "Prophets",
+      "reference": "...",
+      "event": "...",
+      "significance": "..."
+    },
+    {
+      "era": "Gospels",
+      "reference": "...",
+      "event": "...",
+      "significance": "..."
+    },
+    {
+      "era": "Acts & Epistles",
+      "reference": "...",
+      "event": "...",
+      "significance": "..."
+    },
+    {
+      "era": "Revelation",
+      "reference": "...",
+      "event": "...",
+      "significance": "..."
+    }
+  ]
+}
+
+Ensure all 6 eras are strictly included. Do not output anything except valid JSON.
+
+PASSAGE: ${passageRef}
+${passageText}
+`;
+
+  try {
+    if (onProgress) onProgress({ text: `Analyzing motifs in ${passageRef}...`, progress: 0.1 });
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], (progressMsg) => {
+      if (onProgress) onProgress({ text: progressMsg, progress: 0.5 });
+    }, true);
+    
+    // Extract JSON block in case the LLM wrapped it in markdown
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const jsonString = jsonMatch ? jsonMatch[0] : responseText.replace(/\`\`\`json|\`\`\`/g, '').trim();
+    
+    if (onProgress) onProgress({ text: 'Parsing typology...', progress: 0.9 });
+    const motifData = JSON.parse(jsonString) as TypologyMotif;
+    if (onProgress) onProgress({ text: 'Done.', progress: 1.0 });
+    return motifData;
+  } catch (err) {
+    console.error('Error generating typology tracker:', err);
+    throw new Error('Failed to generate typology tracker.');
+  }
+}

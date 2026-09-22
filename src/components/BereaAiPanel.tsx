@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, Trophy, HelpCircle
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, Trophy, HelpCircle, Network
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
@@ -14,6 +14,7 @@ import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragS
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
 import { AppliedAiLogo } from './AppliedAiLogo';
+import TypologyPanel from './TypologyPanel';
 import { StudyGuide, SupportingPassage, BereaAiTab, StudyGuideAudience } from '../types';
 import {
   getSavedStudyGuides,
@@ -101,6 +102,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   // User-configurable quiz length
   const [chapterQuizLength, setChapterQuizLength] = useState<number>(3);
   const [bookQuizLength, setBookQuizLength] = useState<number>(10);
+
+  const [studyGuideMode, setStudyGuideMode] = useState<'discussion' | 'typology'>('discussion');
 
   useEffect(() => {
     const updateCacheStatus = () => {
@@ -718,10 +721,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`ios-segment-pill flex-1 min-w-[90px] !text-[11px] !py-0.5 ${activeTab === 'quiz' ? 'active' : ''}`}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 p-2 border-b-2 transition-all ${
+              activeTab === 'quiz' ? 'border-[#B4793D] text-[#B4793D] bg-white' : 'border-transparent text-[#78716C] hover:text-[#26221F] hover:bg-[#FAF9F6]'
+            }`}
           >
-            <HelpCircle className="w-3 h-3" />
-            <span>Quiz</span>
+            <HelpCircle className="w-4 h-4" />
+            <span className="text-[10px] font-medium tracking-wide">Quiz</span>
           </button>
         </div>
       </div>
@@ -731,6 +736,28 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {/* STUDY GUIDE TAB */}
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
+            {/* Mode Switch */}
+            <div className="flex bg-[#EFE9DF] rounded-lg p-0.5 mb-2">
+              <button
+                onClick={() => setStudyGuideMode('discussion')}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  studyGuideMode === 'discussion' ? 'bg-white text-[#26221F] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'
+                }`}
+              >
+                Discussion Guide
+              </button>
+              <button
+                onClick={() => setStudyGuideMode('typology')}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  studyGuideMode === 'typology' ? 'bg-white text-[#26221F] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'
+                }`}
+              >
+                Typology Tracker
+              </button>
+            </div>
+
+            {studyGuideMode === 'discussion' && (
+              <>
             {/* 1. Audience / Depth Selector Bar */}
             <div className="p-2.5 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] shadow-xs space-y-2">
               <div className="flex items-center justify-between px-1">
@@ -1311,6 +1338,18 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-amber-100 fill-amber-100" />
                   <span>Generate Study Guide for {effectiveStudyGuideRef}</span>
                 </button>
+              </div>
+            )}
+            </>
+            )}
+
+            {studyGuideMode === 'typology' && (
+              <div className="rounded-xl border border-[#EBE5DC] overflow-hidden bg-[#FAF7F2] flex-1 flex flex-col min-h-[400px]">
+                <TypologyPanel
+                  currentBook={currentBook}
+                  currentChapter={currentChapter}
+                  chapterText={wholeChapterText}
+                />
               </div>
             )}
           </div>
