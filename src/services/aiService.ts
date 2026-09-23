@@ -795,13 +795,16 @@ export async function getAccumulatedBookQuiz(
 export async function generateTypologyTracker(
   passageRef: string,
   passageText: string,
-  onProgress?: (progress: { text: string; progress: number }) => void
+  onProgress?: (progress: { text: string; progress: number }) => void,
+  excludeMotif?: string
 ): Promise<TypologyMotif> {
   const { generateLocalAiResponse } = await import('./webLlmService');
   
-  const prompt = `You are a biblical theology AI expert. Read the following biblical passage and identify the single most prominent theological motif or symbol (e.g., Water, Mountains, Trees, Bread, Light, Blood, Serpents). 
-
-Then, trace this motif throughout the entire biblical canon from Genesis to Revelation. Generate a JSON response with exactly this structure:
+  let prompt = `You are a biblical theology AI expert. Read the following biblical passage and identify the single most prominent theological motif or symbol (e.g., Water, Mountains, Trees, Bread, Light, Blood, Serpents). \n\n`;
+  if (excludeMotif) {
+    prompt += `CRITICAL INSTRUCTION: You MUST NOT pick "${excludeMotif}" as the motif. You must find a completely different motif to trace.\n\n`;
+  }
+  prompt += `Then, trace this motif throughout the entire biblical canon from Genesis to Revelation. Generate a JSON response with exactly this structure:
 {
   "motif": "The identified motif (e.g., 'Water')",
   "summary": "A 2-sentence theological synthesis of how this motif points to the larger redemptive narrative.",

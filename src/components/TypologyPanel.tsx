@@ -25,7 +25,7 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
     setIsLoading(true);
     setError(null);
     try {
-      const data = await generateTypologyTracker(`${currentBook} ${currentChapter}`, chapterText, (p) => setProgress(p.text));
+      const data = await generateTypologyTracker(`${currentBook} ${currentChapter}`, chapterText, (p) => setProgress(p.text), motifData?.motif);
       setMotifData(data);
     } catch (err: any) {
       setError(err.message || 'Failed to analyze typology.');
