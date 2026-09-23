@@ -2229,13 +2229,26 @@ button:active:not(:disabled) {
   text-align: left;
 }
 
-/* Notepad Rich Text Highlighter & Editor Styles */
-mark.hl-yellow {
-  background-color: #fef08a !important;
-  color: #451a03 !important;
-  border-radius: 3px;
-  padding: 1px 3px;
+/* Route / Highway Hover Tooltip */
+.berea-route-tooltip {
+  white-space: normal !important;
+  max-width: 280px !important;
+  width: max-content !important;
+  min-width: 180px !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #EBE5DC !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 14px rgba(38, 34, 31, 0.15) !important;
+  padding: 8px 10px !important;
+  pointer-events: none !important;
 }
+
+.berea-route-tooltip::before {
+  border-top-color: #FFFFFF !important;
+}
+
 
 mark.hl-green {
   background-color: #bbf7d0 !important;

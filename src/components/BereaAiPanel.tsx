@@ -5,8 +5,8 @@ import {
   History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages, Trophy, HelpCircle, Network
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
-import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
-import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
+import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
+import { getChapterGeoData, ChapterGeoEvent, calculateDistanceMiles, getShortPlaceName } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
@@ -572,7 +572,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     effectiveEndVNum
   );
 
-  const chapterData = getChapterGeoData(currentBook, currentChapter);
+  const chapterData = useMemo(() => getChapterGeoData(currentBook, currentChapter), [currentBook, currentChapter]);
   const [selectedChapterEvent, setSelectedChapterEvent] = useState<ChapterGeoEvent | null>(null);
 
   useEffect(() => {
@@ -580,6 +580,47 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   }, [currentBook, currentChapter]);
 
   const currentEvent = selectedChapterEvent || chapterData.events[0];
+  const currentEventIndex = chapterData.events.findIndex(e => e.id === currentEvent?.id);
+
+  const currentLegInfo = useMemo(() => {
+    if (!currentEvent || currentEventIndex <= 0 || !chapterData.events[currentEventIndex - 1]) return null;
+    const prev = chapterData.events[currentEventIndex - 1];
+
+    if (chapterData.routeSegments && chapterData.routeSegments.length > 0) {
+      const segs = chapterData.routeSegments;
+      let seg = segs[currentEventIndex - 1];
+      if (!seg || !seg.toName.toLowerCase().includes(getShortPlaceName(currentEvent).toLowerCase())) {
+        const found = segs.find(s =>
+          s.toName.toLowerCase().includes(getShortPlaceName(currentEvent).toLowerCase()) ||
+          currentEvent.locationName.toLowerCase().includes(s.toName.toLowerCase())
+        );
+        if (found) seg = found;
+      }
+      if (seg) {
+        const daysLabel = seg.travelDays < 1 ? `${Math.round(seg.travelDays * 24)}h` : `~${seg.travelDays} ${seg.travelDays === 1 ? 'day' : 'days'}`;
+        return {
+          distanceMiles: seg.distanceMiles,
+          daysLabel,
+          roadName: seg.historicalRoadName,
+          fromName: seg.fromName,
+          mode: seg.mode
+        };
+      }
+    }
+
+    const miles = currentEvent.distanceFromPrevious || calculateDistanceMiles(prev.lat, prev.lng, currentEvent.lat, currentEvent.lng);
+    if (miles > 0) {
+      const estDays = Math.max(0.1, Number((miles / 20).toFixed(1)));
+      const daysLabel = estDays < 1 ? `${Math.round(estDays * 24)}h` : `~${estDays} ${estDays === 1 ? 'day' : 'days'}`;
+      return {
+        distanceMiles: miles,
+        daysLabel,
+        fromName: getShortPlaceName(prev),
+        mode: 'land_walking' as const
+      };
+    }
+    return null;
+  }, [currentEvent, currentEventIndex, chapterData]);
 
   // Retrieve official confessional documents for the active lens & passage
   const doctrinalMatches = searchDoctrinalCorpus(`${currentVerseRef} ${currentVerseText || ''}`, {
@@ -2280,75 +2321,73 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               currentBook={currentBook}
               currentChapter={currentChapter}
               activeVerseNumber={activeVerseNum}
-              height="230px"
+              height="360px"
               onEventSelect={(ev) => setSelectedChapterEvent(ev)}
             />
 
             {/* Chapter Event Active Detail Card */}
-            <div className="space-y-2">
-              <div
-                className="p-3 rounded-xl border text-xs space-y-1.5 shadow-xs"
-                style={{
-                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                  borderLeftWidth: '4px',
-                  borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span
-                    className="font-bold text-[11px] flex items-center gap-1"
-                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
-                  >
-                    <span>📍 Event {currentEvent.stepNumber}:</span> {currentEvent.title}
-                  </span>
-                  <button
-                    onClick={() => {
-                      if (onNavigateToChapterAndVerse && currentEvent.passageRef) {
-                        try {
-                          const match = currentEvent.passageRef.match(/(\d+):(\d+)/);
-                          if (match) {
-                            const chapterNum = parseInt(match[1], 10);
-                            const verseNum = parseInt(match[2], 10);
-                            if (!isNaN(chapterNum) && !isNaN(verseNum)) {
-                              onNavigateToChapterAndVerse(chapterNum, verseNum);
-                              return;
+            {currentEvent && (
+              <div className="space-y-2">
+                <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[11px] text-[#78471F] flex items-center gap-1">
+                      <span>{currentEvent.isReferencedOnly ? 'Reference' : 'Storyline'} {currentEvent.stepNumber}:</span> {currentEvent.title}
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (onNavigateToChapterAndVerse && currentEvent.passageRef) {
+                          try {
+                            const match = currentEvent.passageRef.match(/(\d+):(\d+)/);
+                            if (match) {
+                              const chapterNum = parseInt(match[1], 10);
+                              const verseNum = parseInt(match[2], 10);
+                              if (!isNaN(chapterNum) && !isNaN(verseNum)) {
+                                onNavigateToChapterAndVerse(chapterNum, verseNum);
+                                return;
+                              }
                             }
-                          }
-                        } catch(e) {}
-                      }
-                      if (onVerseRangeChange && currentEvent.verseRange) {
-                        onVerseRangeChange({ start: currentEvent.verseRange[0], end: currentEvent.verseRange[1] });
-                      }
-                    }}
-                    className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold hover:bg-[#F2E8D5] transition-colors shadow-sm cursor-pointer"
-                  >
-                    Mentioned in {currentEvent.passageRef}
-                  </button>
-                </div>
-
-                <div 
-                  className="text-[10px] font-medium"
-                  style={{ color: 'var(--clean-text-secondary, #78716C)' }}
-                >
-                  Site: <strong style={{ color: 'var(--clean-text-primary, #26221F)' }}>{currentEvent.locationName}</strong>
-                </div>
-
-                <p 
-                  className="text-[11px] leading-relaxed"
-                  style={{ color: 'var(--clean-text-primary, #44403C)' }}
-                >
-                  {currentEvent.description}
-                </p>
-
-                {currentEvent.theologicalSignificance && currentEvent.theologicalSignificance !== "" && (
-                  <div className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-[10.5px] text-[#57524E] space-y-0.5 mt-1">
-                    <strong className="text-[#78471F] text-[10px] block uppercase tracking-wider">Theological Significance</strong>
-                    <p className="leading-snug">{currentEvent.theologicalSignificance}</p>
+                          } catch(e) {}
+                        }
+                        if (onVerseRangeChange && currentEvent.verseRange) {
+                          onVerseRangeChange({ start: currentEvent.verseRange[0], end: currentEvent.verseRange[1] });
+                        }
+                      }}
+                      className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold hover:bg-[#F2E8D5] transition-colors shadow-sm cursor-pointer"
+                    >
+                      Mentioned in {currentEvent.passageRef}
+                    </button>
                   </div>
-                )}
+
+                  <div className="text-[10px] text-[#78716C] font-medium flex items-center justify-between flex-wrap gap-1">
+                    <span>Site: <strong className="text-[#26221F]">{currentEvent.locationName}</strong></span>
+                    {currentLegInfo && (
+                      <span className="text-[9.5px] font-semibold text-[#B4793D] bg-white px-2 py-0.5 rounded border border-[#EBE5DC] flex items-center gap-1 shadow-xs">
+                        <span>{currentLegInfo.distanceMiles} mi from {currentLegInfo.fromName}</span>
+                        <span>•</span>
+                        <span>{currentLegInfo.daysLabel}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {currentLegInfo?.roadName && (
+                    <div className="text-[9.5px] text-[#8C521F] font-medium bg-[#FAF3E8] px-2 py-0.5 rounded border border-[#D4A373]/30 flex items-center gap-1">
+                      <span>Historical Route: <strong>{currentLegInfo.roadName}</strong></span>
+                    </div>
+                  )}
+
+                  <p className="text-[#44403C] text-[11px] leading-relaxed">
+                    {currentEvent.description}
+                  </p>
+
+                  {currentEvent.theologicalSignificance && currentEvent.theologicalSignificance !== "" && (
+                    <div className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-[10.5px] text-[#57524E] space-y-0.5 mt-1">
+                      <strong className="text-[#78471F] text-[10px] block uppercase tracking-wider">Theological Significance</strong>
+                      <p className="leading-snug">{currentEvent.theologicalSignificance}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 

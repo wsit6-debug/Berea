@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
 import {
   ANCIENT_BIBLICAL_REGIONS,
@@ -6,9 +6,124 @@ import {
   getChapterGeoData,
   getBookGeoData,
   getShortPlaceName,
-  calculateDistanceMiles
+  calculateDistanceMiles,
+  RouteSegment,
+  getRouteJourneyStats
 } from '../data/geoData';
 import { Maximize2, Minimize2, Compass, Mountain, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
+
+function escapeHtml(str: string | number | undefined): string {
+  if (str === undefined || str === null) return '';
+  return String(str).replace(/[&<>'"]/g,
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
+}
+
+function createEventIcon(ev: ChapterGeoEvent, isCurrent: boolean) {
+  const isRef = ev.isReferencedOnly;
+  const placeLabel = getShortPlaceName(ev);
+
+  return L.divIcon({
+    className: 'chapter-event-marker',
+    html: `
+      <div style="
+        position: relative;
+        width: ${isCurrent ? '36px' : isRef ? '20px' : '28px'};
+        height: ${isCurrent ? '36px' : isRef ? '20px' : '28px'};
+        background: ${isCurrent ? '#B4793D' : isRef ? '#EBE5DC' : '#FAF7F2'};
+        border: ${isRef ? '1.5px' : '2.5px'} solid ${isCurrent ? '#FFFFFF' : isRef ? '#D4A373' : '#B4793D'};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: ${isRef ? '0 2px 4px rgba(0,0,0,0.05)' : '0 4px 14px rgba(38,34,31,0.3)'};
+        cursor: pointer;
+        transition: all 0.25s ease;
+        opacity: ${isRef && !isCurrent ? 0.75 : 1};
+      ">
+        <span style="
+          font-size: ${isCurrent ? '13px' : isRef ? '9px' : '11px'};
+          color: ${isCurrent ? '#FFFFFF' : isRef ? '#78471F' : '#78471F'};
+          font-weight: 800;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        ">
+          ${escapeHtml(ev.stepNumber)}
+        </span>
+        ${isCurrent ? `
+          <div style="
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 2px solid #B4793D;
+            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            opacity: 0.6;
+          "></div>
+        ` : ''}
+        <div style="
+          position: absolute;
+          bottom: ${isRef ? '-18px' : '-22px'};
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(255, 255, 255, 0.96);
+          color: ${isCurrent ? '#78471F' : isRef ? '#78716C' : '#26221F'};
+          padding: ${isRef ? '1px 4px' : '2px 7px'};
+          border-radius: 6px;
+          font-size: ${isRef ? '9px' : '10px'};
+          font-weight: ${isRef ? '600' : '700'};
+          white-space: nowrap;
+          border: 1px solid ${isCurrent ? '#B4793D' : isRef ? 'transparent' : '#EBE5DC'};
+          box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+          pointer-events: none;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        ">
+          ${escapeHtml(placeLabel)} ${ev.isEducatedGuess ? '<span title="Educated Guess" style="font-size: 8.5px; opacity: 0.65; font-weight: normal;">(est)</span>' : ''}
+        </div>
+      </div>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18]
+  });
+}
+
+function bindEventPopup(
+  marker: L.Marker,
+  ev: ChapterGeoEvent,
+  distInfo?: { distanceMiles?: number; travelDays?: number; label?: string; roadName?: string; mode?: string; isOrigin?: boolean } | null
+) {
+  const daysText = distInfo?.travelDays
+    ? (distInfo.travelDays < 1 ? `${Math.round(distInfo.travelDays * 24)}h` : `~${distInfo.travelDays}d`)
+    : undefined;
+
+  marker.bindPopup(`
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #26221F; padding: 4px; max-width: 260px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 4px; flex-wrap: wrap;">
+        <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D; flex-shrink: 0;">
+          ${ev.isReferencedOnly ? 'Reference' : 'Storyline'} ${escapeHtml(ev.stepNumber)} • ${escapeHtml(ev.passageRef)}
+        </span>
+        ${ev.isEducatedGuess ? `<span style="font-size: 9px; font-weight: 700; background: #FFF3CD; color: #856404; padding: 2px 4px; border-radius: 4px; border: 1px solid #FFEEBA; white-space: nowrap;">Educated Guess</span>` : ''}
+      </div>
+      <h4 style="margin: 0 0 3px 0; font-size: 13px; font-weight: 700; color: #78471F;">${escapeHtml(ev.title)}</h4>
+      <p style="margin: 0 0 4px 0; font-size: 10.5px; color: #78716C; font-weight: 500;">${escapeHtml(ev.locationName)}${ev.modernLocation ? ` (${escapeHtml(ev.modernLocation)})` : ''}</p>
+
+      ${distInfo && !distInfo.isOrigin && distInfo.distanceMiles ? `
+        <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; font-size: 9.5px; background: #FAF5ED; padding: 4px 6px; border-radius: 6px; border: 1px solid #EBE5DC;">
+          <div style="display: flex; justify-content: space-between; font-weight: 700; color: #B4793D;">
+            <span>+${distInfo.distanceMiles} miles</span>
+            <span>${daysText || ''}</span>
+          </div>
+          ${distInfo.roadName ? `<div style="color: #78471F; font-size: 9px;">Road: <strong>${escapeHtml(distInfo.roadName)}</strong></div>` : ''}
+        </div>
+      ` : ''}
+
+      <p style="margin: 0 0 6px 0; font-size: 11px; line-height: 1.4; color: #44403C;">${escapeHtml(ev.description)}</p>
+      ${ev.theologicalSignificance ? `
+        <div style="font-size: 10px; background: #FAF5ED; padding: 5px; border-radius: 6px; border-left: 2px solid #B4793D; color: #57524E; line-height: 1.35;">
+          <strong style="color: #78471F;">Theology:</strong> ${escapeHtml(ev.theologicalSignificance)}
+        </div>
+      ` : ''}
+    </div>
+  `, { maxWidth: 280 });
+}
 
 interface OpenFreeMapWidgetProps {
   currentBook?: string;
@@ -32,6 +147,8 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
   const eventMarkersRef = useRef<Map<string, L.Marker>>(new Map());
   const regionMarkersRef = useRef<L.Marker[]>([]);
   const polylineRef = useRef<L.Polyline | null>(null);
+  const routeLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const routePolylinesRef = useRef<L.Polyline[]>([]);
   const storylineButtonsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -42,11 +159,16 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
   // Default to pure Ancient Shaded Relief (100% roadless, 0 modern buildings)
   const [mapStyle, setMapStyle] = useState<'relief' | 'physical' | 'satellite'>('relief');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeEventIndex, setActiveEventIndex] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<'storyline' | 'references'>('storyline');
+  const [activeStorylineIndex, setActiveStorylineIndex] = useState<number>(0);
+  const [activeReferenceIndex, setActiveReferenceIndex] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'chapter' | 'book'>('chapter');
-  const [showMentions, setShowMentions] = useState(false);
   const [showMentionedPins, setShowMentionedPins] = useState(true);
   const widgetRef = useRef<HTMLDivElement>(null);
+
+  const prevVerseRef = useRef<number | undefined>(activeVerseNumber);
+  const prevChapterKeyRef = useRef<string>(`${currentBook}_${currentChapter}_${viewMode}`);
+  const lastLoadedChapterKey = useRef<string>('');
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -72,48 +194,128 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
     }
   };
 
-  // Fetch either the specific chapter or the aggregated book data
-  const chapterData = viewMode === 'book'
-    ? getBookGeoData(currentBook) || getChapterGeoData(currentBook, currentChapter)
-    : getChapterGeoData(currentBook, currentChapter);
+  // Fetch either the specific chapter or the aggregated book data (memoized)
+  const chapterData = useMemo(() => {
+    return viewMode === 'book'
+      ? getBookGeoData(currentBook) || getChapterGeoData(currentBook, currentChapter)
+      : getChapterGeoData(currentBook, currentChapter);
+  }, [currentBook, currentChapter, viewMode]);
 
   const chapterEvents = chapterData.events;
-  const activeEvent = chapterEvents[activeEventIndex] || chapterEvents[0];
+  const storylineEvents = useMemo(() => chapterEvents.filter(e => !e.isReferencedOnly), [chapterEvents]);
+  const referencedEvents = useMemo(() => chapterEvents.filter(e => e.isReferencedOnly), [chapterEvents]);
 
+  // Sync active tab and index on chapter/book change
   useEffect(() => {
-    const activeEv = chapterEvents[activeEventIndex];
-    if (activeEv?.isReferencedOnly) {
-      setShowMentions(true);
+    const currentKey = `${currentBook}_${currentChapter}_${viewMode}`;
+    if (prevChapterKeyRef.current !== currentKey) {
+      prevChapterKeyRef.current = currentKey;
+      prevVerseRef.current = activeVerseNumber;
+      if (storylineEvents.length > 0) {
+        setActiveTab('storyline');
+        setActiveStorylineIndex(0);
+        setActiveReferenceIndex(0);
+      } else {
+        setActiveTab('references');
+        setActiveStorylineIndex(0);
+        setActiveReferenceIndex(0);
+      }
     }
-  }, [activeEventIndex, chapterEvents]);
+  }, [currentBook, currentChapter, viewMode, storylineEvents.length]);
 
-  useEffect(() => {
-    setActiveEventIndex(0);
-  }, [currentBook, currentChapter]);
+  const currentTabEvents = activeTab === 'storyline' ? storylineEvents : referencedEvents;
+  const currentTabIndex = activeTab === 'storyline' ? activeStorylineIndex : activeReferenceIndex;
+  const activeEvent = currentTabEvents[currentTabIndex] || currentTabEvents[0] || chapterEvents[0];
 
-  // Auto-sync active event index when a specific verse is selected in the chapter
-  // (Disable this auto-sync in 'book' mode since activeVerseNumber lacks chapter context)
+  // Auto-sync when activeVerseNumber externally changes
   useEffect(() => {
     if (viewMode === 'book') return;
 
-    if (activeVerseNumber !== undefined && activeVerseNumber > 0) {
-      const matchIdx = chapterEvents.findIndex(
+    if (activeVerseNumber !== undefined && activeVerseNumber > 0 && activeVerseNumber !== prevVerseRef.current) {
+      prevVerseRef.current = activeVerseNumber;
+      const sIdx = storylineEvents.findIndex(
         ev => activeVerseNumber >= ev.verseRange[0] && activeVerseNumber <= ev.verseRange[1]
       );
-      if (matchIdx !== -1 && matchIdx !== activeEventIndex) {
-        setActiveEventIndex(matchIdx);
-        if (onEventSelect) onEventSelect(chapterEvents[matchIdx]);
+      if (sIdx !== -1) {
+        setActiveTab('storyline');
+        setActiveStorylineIndex(sIdx);
+        if (onEventSelect) onEventSelect(storylineEvents[sIdx]);
+        return;
+      }
+      const rIdx = referencedEvents.findIndex(
+        ev => activeVerseNumber >= ev.verseRange[0] && activeVerseNumber <= ev.verseRange[1]
+      );
+      if (rIdx !== -1) {
+        setActiveTab('references');
+        setActiveReferenceIndex(rIdx);
+        if (onEventSelect) onEventSelect(referencedEvents[rIdx]);
       }
     }
-  }, [activeVerseNumber, chapterEvents, viewMode]);
+  }, [activeVerseNumber, viewMode, storylineEvents, referencedEvents, onEventSelect]);
 
   // Scroll active storyline button into view
   useEffect(() => {
-    const activeBtn = storylineButtonsRef.current[activeEventIndex];
+    const activeBtn = storylineButtonsRef.current[currentTabIndex];
     if (activeBtn) {
       activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
-  }, [activeEventIndex]);
+  }, [activeTab, currentTabIndex]);
+
+  const getEventDistanceInfo = (ev: ChapterGeoEvent) => {
+    if (ev.isReferencedOnly) return null;
+    const storyIdx = storylineEvents.findIndex(e => e.id === ev.id);
+    if (storyIdx < 0) return null;
+    if (storyIdx === 0) {
+      return { isOrigin: true, label: 'Origin' };
+    }
+
+    const curr = storylineEvents[storyIdx];
+    const prev = storylineEvents[storyIdx - 1];
+    if (!prev) return null;
+
+    // Check if there is a matching segment in routeSegments
+    if (chapterData.routeSegments && chapterData.routeSegments.length > 0) {
+      const segs = chapterData.routeSegments;
+      let seg = segs[storyIdx - 1];
+      if (!seg || !seg.toName.toLowerCase().includes(getShortPlaceName(curr).toLowerCase())) {
+        const found = segs.find(s => 
+          s.toName.toLowerCase().includes(getShortPlaceName(curr).toLowerCase()) ||
+          curr.locationName.toLowerCase().includes(s.toName.toLowerCase())
+        );
+        if (found) seg = found;
+      }
+
+      if (seg) {
+        const daysLabel = seg.travelDays < 1
+          ? `${Math.round(seg.travelDays * 24)}h`
+          : `${seg.travelDays}d`;
+        return {
+          isOrigin: false,
+          distanceMiles: seg.distanceMiles,
+          travelDays: seg.travelDays,
+          label: `+${seg.distanceMiles} mi • ~${daysLabel}`,
+          roadName: seg.historicalRoadName,
+          mode: seg.mode
+        };
+      }
+    }
+
+    // Fallback: calculate distance from coordinates
+    const miles = curr.distanceFromPrevious || calculateDistanceMiles(prev.lat, prev.lng, curr.lat, curr.lng);
+    if (miles > 0) {
+      const estDays = Math.max(0.1, Number((miles / 20).toFixed(1)));
+      const daysLabel = estDays < 1 ? `${Math.round(estDays * 24)}h` : `${estDays}d`;
+      return {
+        isOrigin: false,
+        distanceMiles: miles,
+        travelDays: estDays,
+        label: `+${miles} mi • ~${daysLabel}`,
+        mode: 'land_walking' as const
+      };
+    }
+
+    return null;
+  };
 
   // Verified 100% Free, Zero-API-Key, ZERO-Roads, ZERO-Buildings Topographic Layers
   const tileProviders = {
@@ -187,6 +389,18 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
       polylineRef.current = null;
     }
 
+    if (routePolylinesRef.current.length > 0) {
+      routePolylinesRef.current.forEach(p => {
+        try { map.removeLayer(p); } catch {}
+      });
+      routePolylinesRef.current = [];
+    }
+
+    if (routeLayerGroupRef.current) {
+      map.removeLayer(routeLayerGroupRef.current);
+      routeLayerGroupRef.current = null;
+    }
+
     // HTML Entity encoder to neutralize XSS in Leaflet HTML injection points
     function escapeHtml(str: string | number | undefined): string {
       if (str === undefined || str === null) return '';
@@ -227,134 +441,200 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
       regionMarkersRef.current.push(regMarker);
     });
 
-    chapterEvents.forEach((ev, idx) => {
-      const isCurrent = idx === activeEventIndex;
-      const placeLabel = getShortPlaceName(ev);
-      const isRef = ev.isReferencedOnly;
+    chapterEvents.forEach((ev) => {
+      if (ev.isReferencedOnly && !showMentionedPins) return;
 
-      if (isRef && !showMentionedPins) return;
-
-      // Step badge numbers (1, 2, 3...) or small dots for references
-      const eventIcon = L.divIcon({
-        className: 'chapter-event-marker',
-        html: `
-          <div style="
-            position: relative;
-            width: ${isCurrent ? '36px' : isRef ? '20px' : '28px'};
-            height: ${isCurrent ? '36px' : isRef ? '20px' : '28px'};
-            background: ${isCurrent ? '#B4793D' : isRef ? '#EBE5DC' : '#FAF7F2'};
-            border: ${isRef ? '1.5px' : '2.5px'} solid ${isCurrent ? '#FFFFFF' : isRef ? '#D4A373' : '#B4793D'};
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: ${isRef ? '0 2px 4px rgba(0,0,0,0.05)' : '0 4px 14px rgba(38,34,31,0.3)'};
-            cursor: pointer;
-            transition: all 0.25s ease;
-            opacity: ${isRef && !isCurrent ? 0.75 : 1};
-          ">
-            <span style="
-              font-size: ${isCurrent ? '13px' : isRef ? '9px' : '11px'};
-              color: ${isCurrent ? '#FFFFFF' : isRef ? '#78471F' : '#78471F'};
-              font-weight: 800;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">
-              ${escapeHtml(ev.stepNumber)}
-            </span>
-            ${isCurrent ? `
-              <div style="
-                position: absolute;
-                inset: -6px;
-                border-radius: 50%;
-                border: 2px solid #B4793D;
-                animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-                opacity: 0.6;
-              "></div>
-            ` : ''}
-            <div style="
-              position: absolute;
-              bottom: ${isRef ? '-18px' : '-22px'};
-              left: 50%;
-              transform: translateX(-50%);
-              background: rgba(255, 255, 255, 0.96);
-              color: ${isCurrent ? '#78471F' : isRef ? '#78716C' : '#26221F'};
-              padding: ${isRef ? '1px 4px' : '2px 7px'};
-              border-radius: 6px;
-              font-size: ${isRef ? '9px' : '10px'};
-              font-weight: ${isRef ? '600' : '700'};
-              white-space: nowrap;
-              border: 1px solid ${isCurrent ? '#B4793D' : isRef ? 'transparent' : '#EBE5DC'};
-              box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-              pointer-events: none;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            ">
-              ${escapeHtml(placeLabel)} ${ev.isEducatedGuess ? '<span title="Educated Guess">⚠️</span>' : ''}
-            </div>
-          </div>
-        `,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
-      });
+      const isCurrent = activeEvent && activeEvent.id === ev.id;
+      const eventIcon = createEventIcon(ev, !!isCurrent);
 
       const marker = L.marker([ev.lat, ev.lng], {
         icon: eventIcon,
         zIndexOffset: isCurrent ? 1000 : 100
       }).addTo(map);
 
-      marker.bindPopup(`
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #26221F; padding: 4px; max-width: 250px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 4px; flex-wrap: wrap;">
-            <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D; flex-shrink: 0;">
-              Event ${escapeHtml(ev.stepNumber)} • ${escapeHtml(ev.passageRef)}
-            </span>
-            ${ev.isEducatedGuess ? `<span style="font-size: 9px; font-weight: 700; background: #FFF3CD; color: #856404; padding: 2px 4px; border-radius: 4px; border: 1px solid #FFEEBA; white-space: nowrap;">⚠️ Educated Guess</span>` : ''}
-          </div>
-          <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: #78471F;">${escapeHtml(ev.title)}</h4>
-          <p style="margin: 0 0 4px 0; font-size: 10.5px; color: #78716C; font-weight: 500;">📍 ${escapeHtml(ev.locationName)}</p>
-          <p style="margin: 0 0 6px 0; font-size: 11.5px; line-height: 1.4; color: #44403C;">${escapeHtml(ev.description)}</p>
-          <div style="font-size: 10px; background: #FAF5ED; padding: 5px; border-radius: 6px; border-left: 2px solid #B4793D; color: #57524E;">
-            <strong style="color: #78471F;">Theology:</strong> ${escapeHtml(ev.theologicalSignificance)}
-          </div>
-        </div>
-      `);
+      const distInfo = getEventDistanceInfo(ev);
+      bindEventPopup(marker, ev, distInfo);
 
       marker.on('click', () => {
-        setActiveEventIndex(idx);
+        if (ev.isReferencedOnly) {
+          const rIdx = referencedEvents.findIndex(e => e.id === ev.id);
+          setActiveTab('references');
+          if (rIdx !== -1) setActiveReferenceIndex(rIdx);
+        } else {
+          const sIdx = storylineEvents.findIndex(e => e.id === ev.id);
+          setActiveTab('storyline');
+          if (sIdx !== -1) setActiveStorylineIndex(sIdx);
+        }
+        marker.openPopup();
         if (onEventSelect) onEventSelect(ev);
       });
 
       eventMarkersRef.current.set(ev.id, marker);
     });
 
-    // 3. Draw Chapter Chronological Movement Route across natural terrain
-    if (showJourneys && chapterData.routeCoordinates && chapterData.routeCoordinates.length > 1) {
-      const polyline = L.polyline(chapterData.routeCoordinates as [number, number][], {
-        color: '#B4793D',
-        weight: 3.5,
-        opacity: 0.85,
-        dashArray: '6, 8',
-        lineCap: 'round'
-      }).addTo(map);
+    // 3. Draw Chapter Chronological Movement Route across natural terrain & Roman roads
+    if (showJourneys) {
+      const allRoutePoints: [number, number][] = [];
 
-      polylineRef.current = polyline;
-    }
+      if (chapterData.routeSegments && chapterData.routeSegments.length > 0) {
+        chapterData.routeSegments.forEach((segment: RouteSegment) => {
+          const isSea = segment.mode === 'sea_sailing';
+          const isCaravan = segment.mode === 'desert_caravan';
+          const isFallback = segment.historicalRoadName?.includes('Straight Line') || segment.historicalRoadName?.includes('Direct Path');
 
-    // 4. Smoothly fly to active chapter event
-    if (activeEvent) {
+          segment.coordinates.forEach(c => allRoutePoints.push(c));
+
+          // A. High-contrast white halo casing so route pops against shaded mountain relief
+          const halo = L.polyline(segment.coordinates, {
+            color: '#FFFFFF',
+            weight: isSea ? 5.5 : 6.5,
+            opacity: 0.95,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(map);
+          routePolylinesRef.current.push(halo);
+
+          // B. High-visibility core line (Roman terracotta for land, royal Mediterranean blue for sea, amber for caravan)
+          const strokeColor = isSea ? '#1D4ED8' : (isCaravan ? '#D97706' : '#C05621');
+          const dashStyle = isFallback ? '6, 8' : (isSea ? '6, 6' : (isCaravan ? '4, 6' : undefined));
+          const initialWeight = isFallback ? 3.0 : (isSea ? 3.0 : 3.8);
+
+          const polyline = L.polyline(segment.coordinates, {
+            color: strokeColor,
+            weight: initialWeight,
+            opacity: 1.0,
+            dashArray: dashStyle,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(map);
+
+          const daysText = segment.travelDays < 1
+            ? `${Math.round(segment.travelDays * 24)} hours`
+            : `~${segment.travelDays} ${segment.travelDays === 1 ? 'day' : 'days'}`;
+
+          const modeLabel = isSea ? 'Maritime Sailing' : (isCaravan ? 'Desert Caravan' : 'Foot / Roman Road');
+
+          polyline.bindTooltip(`
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #26221F; max-width: 250px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word;">
+              <div style="font-size: 10px; font-weight: 800; color: #C05621; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; white-space: normal; word-wrap: break-word;">
+                ${escapeHtml(segment.historicalRoadName || 'Historical Path')}
+              </div>
+              <div style="font-size: 12px; font-weight: 700; color: #26221F; margin-bottom: 3px; white-space: normal; word-wrap: break-word; line-height: 1.3;">
+                ${escapeHtml(segment.fromName)} → ${escapeHtml(segment.toName)}
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px 8px; font-size: 10.5px; color: #57524E; font-weight: 500; margin-bottom: 3px;">
+                <span><strong>${segment.distanceMiles} mi</strong></span>
+                <span><strong>${daysText}</strong></span>
+                <span>(${modeLabel})</span>
+              </div>
+              ${segment.notes ? `<div style="font-size: 10px; line-height: 1.35; color: #78716C; border-top: 1px solid #EBE5DC; padding-top: 4px; margin-top: 4px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(segment.notes)}</div>` : ''}
+              ${segment.isScholarlyEstimate ? `<div style="font-size: 9px; color: #856404; background: #FFF3CD; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 4px; white-space: normal;">Scholarly Reconstruction</div>` : ''}
+            </div>
+          `, { sticky: true, opacity: 0.98, className: 'berea-route-tooltip' });
+
+          polyline.on('mouseover', function () {
+            polyline.setStyle({
+              weight: initialWeight + 2.5,
+              opacity: 1.0,
+              color: isSea ? '#1E40AF' : '#9A3412'
+            });
+            polyline.bringToFront();
+          });
+
+          polyline.on('mouseout', function () {
+            polyline.setStyle({
+              weight: initialWeight,
+              opacity: 1.0,
+              color: strokeColor
+            });
+          });
+
+          routePolylinesRef.current.push(polyline);
+        });
+      } else if (chapterData.routeCoordinates && chapterData.routeCoordinates.length > 1) {
+        const coords = chapterData.routeCoordinates as [number, number][];
+        coords.forEach(c => allRoutePoints.push(c));
+
+        // High-contrast halo casing
+        const halo = L.polyline(coords, {
+          color: '#FFFFFF',
+          weight: 6.0,
+          opacity: 0.95,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
+        routePolylinesRef.current.push(halo);
+
+        // Core line
+        const polyline = L.polyline(coords, {
+          color: '#C05621',
+          weight: 3.5,
+          opacity: 1.0,
+          dashArray: '6, 8',
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
+        routePolylinesRef.current.push(polyline);
+      }
+
+      // 4. If the chapter has multiple route points and viewing chapter, frame the entire journey into view!
+      if (allRoutePoints.length > 1 && viewMode === 'chapter') {
+        const bounds = L.latLngBounds(allRoutePoints);
+        map.fitBounds(bounds, {
+          padding: [30, 30],
+          maxZoom: chapterData.defaultZoom || 9
+        });
+      } else if (activeEvent) {
+        const zoom = viewMode === 'book' ? 6 : (chapterEvents.length > 1 ? chapterData.defaultZoom : 11);
+        map.setView([activeEvent.lat, activeEvent.lng], zoom);
+      }
+    } else if (activeEvent) {
       const zoom = viewMode === 'book' ? 6 : (chapterEvents.length > 1 ? chapterData.defaultZoom : 11);
-      map.flyTo([activeEvent.lat, activeEvent.lng], zoom, {
-        duration: 1.1,
-        easeLinearity: 0.25
-      });
+      map.setView([activeEvent.lat, activeEvent.lng], zoom);
     }
 
     setTimeout(() => {
       map.invalidateSize();
     }, 200);
 
-  }, [currentBook, currentChapter, activeEventIndex, mapStyle, showJourneys, viewMode, showMentionedPins]);
+  }, [chapterData, mapStyle, showJourneys, viewMode, showMentionedPins]);
 
+  // Dedicated effect to highlight and pan to activeEvent smoothly without resetting layers
+  useEffect(() => {
+    chapterEvents.forEach((ev) => {
+      const marker = eventMarkersRef.current.get(ev.id);
+      if (marker) {
+        const isCurrent = activeEvent && activeEvent.id === ev.id;
+        marker.setIcon(createEventIcon(ev, !!isCurrent));
+        marker.setZIndexOffset(isCurrent ? 1000 : 100);
+      }
+    });
 
+    const currentKey = `${currentBook}_${currentChapter}_${viewMode}`;
+    // If it's a new chapter/viewMode change, the base effect handled framing; do not override
+    if (lastLoadedChapterKey.current !== currentKey) {
+      lastLoadedChapterKey.current = currentKey;
+      return;
+    }
+
+    if (activeEvent && mapInstanceRef.current) {
+      const map = mapInstanceRef.current;
+      const targetZoom = Math.max(map.getZoom(), 11);
+      map.flyTo([activeEvent.lat, activeEvent.lng], targetZoom, {
+        duration: 0.75,
+        easeLinearity: 0.25
+      });
+    }
+  }, [activeEvent, chapterEvents, currentBook, currentChapter, viewMode]);
+
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      const timer = setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [height, isExpanded]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     isDragging.current = true;
@@ -384,20 +664,16 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
     el.scrollLeft = scrollLeft.current - walk;
   };
 
-  const renderStorylineButton = (ev: typeof chapterEvents[0], idx: number) => {
-    const isCurrent = idx === activeEventIndex;
+  const renderStorylineButton = (ev: ChapterGeoEvent, isCurrent: boolean, idx: number, onClick: () => void) => {
     const isRef = ev.isReferencedOnly;
-    const distanceStr = ev.distanceFromPrevious ? ` (+${ev.distanceFromPrevious} mi)` : '';
+    const distInfo = getEventDistanceInfo(ev);
 
     return (
       <button
         key={ev.id}
         ref={(el) => { storylineButtonsRef.current[idx] = el; }}
-        onClick={() => {
-          setActiveEventIndex(idx);
-          if (onEventSelect) onEventSelect(ev);
-        }}
-        className={`flex-shrink-0 flex items-center gap-2 p-1.5 pr-3 rounded-lg border text-left transition-all ${
+        onClick={onClick}
+        className={`flex-shrink-0 flex items-center gap-2 p-1.5 pr-2.5 rounded-lg border text-left transition-all ${
           isCurrent 
             ? 'bg-white border-[#B4793D] shadow-md ring-1 ring-[#B4793D]/20 z-10 scale-100' 
             : isRef
@@ -406,22 +682,27 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         }`}
       >
         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-          isCurrent ? 'bg-[#B4793D] text-white' : isRef ? 'bg-[#EBE5DC] text-[#78471F]' : 'bg-[#EBE5DC] text-[#78471F]'
+          isCurrent ? 'bg-[#B4793D] text-white' : 'bg-[#EBE5DC] text-[#78471F]'
         }`}>
           {ev.stepNumber}
         </div>
-        <div>
-          <span className={`block text-[11px] font-bold flex items-center gap-1 leading-tight ${isCurrent ? 'text-[#78471F]' : isRef ? 'text-[#78716C]' : 'text-[#26221F]'}`}>
-            <span className="truncate">{getShortPlaceName(ev)}</span>
-            {ev.isEducatedGuess && (
-              <span className="text-[8px] font-bold bg-[#FFF3CD] text-[#856404] px-1 py-px rounded border border-[#FFEEBA] flex-shrink-0" title="Educated Guess">
-                Estimate
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 justify-between">
+            <span className={`block text-[11px] font-bold truncate leading-tight ${isCurrent ? 'text-[#78471F]' : isRef ? 'text-[#78716C]' : 'text-[#26221F]'}`}>
+              {getShortPlaceName(ev)}
+            </span>
+            {distInfo && (
+              <span className={`text-[9px] font-semibold px-1 py-0.5 rounded border leading-none flex-shrink-0 whitespace-nowrap ${
+                distInfo.isOrigin 
+                  ? 'bg-white text-[#78716C] border-[#EBE5DC]' 
+                  : 'bg-[#FAF5ED] text-[#B4793D] border-[#D4A373]/40'
+              }`}>
+                {distInfo.label}
               </span>
             )}
-          </span>
-          <span className="text-[9.5px] text-[#78716C] truncate block leading-none mt-0.5">
+          </div>
+          <span className="text-[9.5px] text-[#78716C] truncate block leading-none mt-0.5 max-w-[140px]">
             {ev.title}
-            <span className="text-[#A8A29E]">{distanceStr}</span>
           </span>
         </div>
       </button>
@@ -438,15 +719,8 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
           <span className="font-bold text-xs text-[#26221F] truncate max-w-[130px] sm:max-w-[180px]">
             {viewMode === 'book' ? currentBook.toUpperCase() : `${currentBook.toUpperCase()} ${currentChapter}`}
           </span>
-          <span 
-            className="text-[10px] font-medium px-1.5 py-0.2 rounded border"
-            style={{
-              color: 'var(--clean-accent-dark, #B4793D)',
-              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-              borderColor: 'var(--clean-accent-border, #EBE5DC)'
-            }}
-          >
-            {chapterEvents.length} Event{chapterEvents.length > 1 ? 's' : ''}
+          <span className="text-[10px] text-[#B4793D] font-medium bg-[#FAF5ED] px-1.5 py-0.2 rounded border border-[#EBE5DC]">
+            {storylineEvents.length} Storyline{referencedEvents.length > 0 ? ` • ${referencedEvents.length} Ref${referencedEvents.length === 1 ? '' : 's'}` : ''}
           </span>
         </div>
 
@@ -477,7 +751,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
             </button>
           </div>
 
-          {chapterEvents.some(ev => ev.isReferencedOnly) && (
+          {referencedEvents.length > 0 && (
             <button
               onClick={() => setShowMentionedPins(!showMentionedPins)}
               className={`flex items-center gap-1 h-[26px] px-2.5 rounded-full border shadow-sm transition-all text-[10px] font-bold tracking-wider ${
@@ -509,45 +783,103 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         className="z-0 rounded-2xl bg-[#D8D2C5]"
       />
 
-      {/* Chapter Event Sequence Timeline Bar (Shows ONLY events in this chapter) */}
+      {/* Chapter Event Sequence Timeline Bar */}
       <div className="bg-white/95 p-2 border-t border-[#EBE5DC] z-20 space-y-1.5 relative">
-        <div className="flex items-center justify-between text-[10px] text-[#78716C] px-1 font-medium">
-          <span className="flex items-center gap-1 font-bold text-[#78471F]">
-            <span>📜</span> {viewMode === 'book' ? `All Places in Book` : `Chapter ${currentChapter} Storyline:`}
-          </span>
+        <div className="flex items-center justify-between text-[10px] text-[#78716C] px-1 font-medium flex-wrap gap-1">
+          {/* Tabs: Storyline vs References */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                setActiveTab('storyline');
+                if (storylineEvents[activeStorylineIndex] && onEventSelect) {
+                  onEventSelect(storylineEvents[activeStorylineIndex]);
+                }
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${
+                activeTab === 'storyline'
+                  ? 'bg-[#B4793D] text-white shadow-xs'
+                  : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
+              }`}
+            >
+              <span>Storyline</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${activeTab === 'storyline' ? 'bg-white/20 text-white' : 'bg-[#EBE5DC] text-[#78471F]'}`}>
+                {storylineEvents.length}
+              </span>
+            </button>
+
+            {referencedEvents.length > 0 && (
+              <button
+                onClick={() => {
+                  setActiveTab('references');
+                  if (!showMentionedPins) setShowMentionedPins(true);
+                  if (referencedEvents[activeReferenceIndex] && onEventSelect) {
+                    onEventSelect(referencedEvents[activeReferenceIndex]);
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${
+                  activeTab === 'references'
+                    ? 'bg-[#B4793D] text-white shadow-xs'
+                    : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
+                }`}
+              >
+                <span>References</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${activeTab === 'references' ? 'bg-white/20 text-white' : 'bg-[#EBE5DC] text-[#78471F]'}`}>
+                  {referencedEvents.length}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Right Navigation & Entire Book Toggle */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 setViewMode(viewMode === 'chapter' ? 'book' : 'chapter');
-                setActiveEventIndex(0);
+                setActiveStorylineIndex(0);
+                setActiveReferenceIndex(0);
               }}
               className="text-[#B4793D] hover:text-[#78716C] underline transition-colors px-1 border-r border-[#D4A373]/30 mr-1 pr-2 text-[9.5px]"
             >
               {viewMode === 'chapter' ? 'View Entire Book' : 'View Chapter'}
             </button>
+
             <div className="flex items-center bg-[#FAF3E8] rounded border border-[#D4A373] shadow-sm overflow-hidden">
               <button
                 onClick={() => {
-                  const newIdx = Math.max(0, activeEventIndex - 1);
-                  setActiveEventIndex(newIdx);
-                  if (onEventSelect) onEventSelect(chapterEvents[newIdx]);
+                  if (activeTab === 'storyline') {
+                    const newIdx = Math.max(0, activeStorylineIndex - 1);
+                    setActiveStorylineIndex(newIdx);
+                    if (onEventSelect && storylineEvents[newIdx]) onEventSelect(storylineEvents[newIdx]);
+                  } else {
+                    const newIdx = Math.max(0, activeReferenceIndex - 1);
+                    setActiveReferenceIndex(newIdx);
+                    if (onEventSelect && referencedEvents[newIdx]) onEventSelect(referencedEvents[newIdx]);
+                  }
                 }}
-                disabled={activeEventIndex === 0}
+                disabled={currentTabIndex === 0}
                 className="p-0.5 text-[#78471F] hover:bg-[#F2E8D5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                title={`Previous ${activeTab === 'storyline' ? 'Storyline' : 'Reference'} place`}
               >
                 <ChevronLeft size={12} />
               </button>
               <span className="text-[9.5px] text-[#78471F] font-bold px-1.5 min-w-[36px] text-center border-x border-[#D4A373]/30">
-                {activeEventIndex + 1} / {chapterEvents.length}
+                {currentTabEvents.length > 0 ? `${currentTabIndex + 1} / ${currentTabEvents.length}` : '0 / 0'}
               </span>
               <button
                 onClick={() => {
-                  const newIdx = Math.min(chapterEvents.length - 1, activeEventIndex + 1);
-                  setActiveEventIndex(newIdx);
-                  if (onEventSelect) onEventSelect(chapterEvents[newIdx]);
+                  if (activeTab === 'storyline') {
+                    const newIdx = Math.min(storylineEvents.length - 1, activeStorylineIndex + 1);
+                    setActiveStorylineIndex(newIdx);
+                    if (onEventSelect && storylineEvents[newIdx]) onEventSelect(storylineEvents[newIdx]);
+                  } else {
+                    const newIdx = Math.min(referencedEvents.length - 1, activeReferenceIndex + 1);
+                    setActiveReferenceIndex(newIdx);
+                    if (onEventSelect && referencedEvents[newIdx]) onEventSelect(referencedEvents[newIdx]);
+                  }
                 }}
-                disabled={activeEventIndex === chapterEvents.length - 1}
+                disabled={currentTabEvents.length === 0 || currentTabIndex >= currentTabEvents.length - 1}
                 className="p-0.5 text-[#78471F] hover:bg-[#F2E8D5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                title={`Next ${activeTab === 'storyline' ? 'Storyline' : 'Reference'} place`}
               >
                 <ChevronRight size={12} />
               </button>
@@ -555,51 +887,40 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
           </div>
         </div>
 
-        {/* Step Buttons for Each Event in Chapter */}
-        <div className="flex flex-col gap-1.5 w-full">
-          {/* Main Physical Storyline Row */}
-          <div className="flex items-center w-full">
-            <div 
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseLeaveOrUp}
-              onMouseUp={handleMouseLeaveOrUp}
-              onMouseMove={handleMouseMove}
-              className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5 cursor-grab flex-1"
-            >
-              {chapterEvents.map((ev, idx) => ({ ev, idx }))
-                .filter(item => !item.ev.isReferencedOnly)
-                .map(item => renderStorylineButton(item.ev, item.idx))}
-            </div>
-          </div>
-
-          {/* Secondary Mentioned Places Row */}
-          {chapterEvents.some(ev => ev.isReferencedOnly) && (
-            <div className="flex flex-col gap-1.5 pt-2 mt-0.5 border-t border-dashed border-[#EBE5DC] w-full">
-              <div className="flex items-center justify-between px-1">
-                <button
-                  onClick={() => setShowMentions(!showMentions)}
-                  className="flex items-center gap-1 text-[10px] font-bold text-[#B4793D] hover:text-[#78471F] uppercase tracking-wider transition-colors"
-                  title={showMentions ? "Hide Mentioned Places" : "Show Mentioned Places"}
-                >
-                  <span>🔗 Mentioned Places</span>
-                  {showMentions ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                </button>
+        {/* Buttons List for Selected Tab */}
+        <div 
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeaveOrUp}
+          onMouseUp={handleMouseLeaveOrUp}
+          onMouseMove={handleMouseMove}
+          className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5 cursor-grab w-full"
+        >
+          {activeTab === 'storyline' ? (
+            storylineEvents.length > 0 ? (
+              storylineEvents.map((ev, idx) =>
+                renderStorylineButton(ev, idx === activeStorylineIndex, idx, () => {
+                  setActiveStorylineIndex(idx);
+                  if (onEventSelect) onEventSelect(ev);
+                })
+              )
+            ) : (
+              <div className="text-[11px] text-[#78716C] italic py-1 px-2">
+                No physical storyline journeys in this chapter. See References tab.
               </div>
-
-              {showMentions && (
-                <div 
-                  onMouseDown={handleMouseDown}
-                  onMouseLeave={handleMouseLeaveOrUp}
-                  onMouseUp={handleMouseLeaveOrUp}
-                  onMouseMove={handleMouseMove}
-                  className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5 cursor-grab"
-                >
-                  {chapterEvents.map((ev, idx) => ({ ev, idx }))
-                    .filter(item => item.ev.isReferencedOnly)
-                    .map(item => renderStorylineButton(item.ev, item.idx))}
-                </div>
-              )}
-            </div>
+            )
+          ) : (
+            referencedEvents.length > 0 ? (
+              referencedEvents.map((ev, idx) =>
+                renderStorylineButton(ev, idx === activeReferenceIndex, idx, () => {
+                  setActiveReferenceIndex(idx);
+                  if (onEventSelect) onEventSelect(ev);
+                })
+              )
+            ) : (
+              <div className="text-[11px] text-[#78716C] italic py-1 px-2">
+                No mentioned places in this chapter.
+              </div>
+            )
           )}
         </div>
       </div>

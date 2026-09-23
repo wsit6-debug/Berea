@@ -319,7 +319,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
   const chapterHasRedLines = (chapter?.verses || []).some(v => {
     const text = getVerseDisplayText(v, activeTranslation);
-    return Boolean(v.isWordsOfJesus || checkIsWordsOfJesus(bookName, chapter.chapterNumber, v.verseNumber, text));
+    return checkIsWordsOfJesus(bookName, chapter.chapterNumber, v.verseNumber, text);
   });
 
   const handleCopyVerse = (verse: Verse, e: React.MouseEvent) => {
@@ -822,27 +822,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     const isRangeEnd = activeRange?.end === verse.verseNumber;
                     const isBookmarked = isVerseSaved(verse.verseNumber);
                     const verseText = getVerseDisplayText(verse, activeTranslation);
-                    const isWordOfJesus = Boolean(
-                      verse.isWordsOfJesus ||
-                      checkIsWordsOfJesus(bookName, chapter.chapterNumber, verse.verseNumber, verseText)
-                    );
-                    const tabHighlight = tabHighlights?.[verse.verseNumber];
-
-                    let highlightClasses = '';
-                    let highlightInlineStyle: React.CSSProperties = {};
-                    if (tabHighlight === 'yellow') {
-                      highlightClasses = 'hl-verse-yellow font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-yellow-bg)', color: 'var(--hl-yellow-text)' };
-                    } else if (tabHighlight === 'green') {
-                      highlightClasses = 'hl-verse-green font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-green-bg)', color: 'var(--hl-green-text)' };
-                    } else if (tabHighlight === 'red') {
-                      highlightClasses = 'hl-verse-red font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-red-bg)', color: 'var(--hl-red-text)' };
-                    } else if (tabHighlight === 'blue') {
-                      highlightClasses = 'hl-verse-blue font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-blue-bg)', color: 'var(--hl-blue-text)' };
-                    }
+                    const isWordOfJesus = checkIsWordsOfJesus(bookName, chapter.chapterNumber, verse.verseNumber, verseText);
 
                     return (
                       <span
@@ -870,7 +850,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           {verse.verseNumber}
                           {isBookmarked && <span className="text-[var(--clean-accent-caramel,#B4793D)] ml-0.5">★</span>}
                         </sup>{' '}
-                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter, matchedCharacters, selectedCharacter, aiVerifiedCharacters)}{' '}
+                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, bookName, chapter.chapterNumber, verse.verseNumber)}{' '}
                       </span>
                     );
                   })}
@@ -1120,10 +1100,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   const isRangeEnd = activeRange?.end === verse.verseNumber;
                   const isBookmarked = isVerseSaved(verse.verseNumber);
                   const verseText = getVerseDisplayText(verse, activeTranslation);
-                  const isWordOfJesus = Boolean(
-                    verse.isWordsOfJesus ||
-                    checkIsWordsOfJesus(bookName, chapter.chapterNumber, verse.verseNumber, verseText)
-                  );
+                  const isWordOfJesus = checkIsWordsOfJesus(bookName, chapter.chapterNumber, verse.verseNumber, verseText);
 
                   const tabHighlight = tabHighlights?.[verse.verseNumber];
 
@@ -1182,7 +1159,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                             style={{ fontSize: `${fontSize}px`, lineHeight: '1.75' }}
                             className="font-scripture tracking-normal"
                           >
-                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter, matchedCharacters, selectedCharacter, aiVerifiedCharacters)}
+                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, bookName, chapter.chapterNumber, verse.verseNumber)}
                           </p>
 
                           {/* Multi-Verse Action Banner when at the end of the range in Verse Mode */}
