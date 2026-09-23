@@ -317,7 +317,10 @@ export function App() {
   }
 
   return (
-    <div className="berea-app h-screen flex flex-col font-sans bg-[#FAF7F2] text-[#26221F] overflow-hidden">
+    <div
+      className="berea-app h-screen flex flex-col font-sans text-[#26221F] overflow-hidden transition-colors duration-300"
+      style={{ backgroundColor: 'var(--clean-bg, #FAF7F2)' }}
+    >
       {/* Top Application Header with Global Denomination and Approved Translation Selectors */}
       <Header
         currentBookName={currentBook.name}
@@ -408,18 +411,43 @@ export function App() {
           {/* Dedicated Notepad Sidebar (Independent Tab) */}
           {activeSidebar === 'notepad' && (
             <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
-              <div className="flex flex-col h-full bg-white text-[#26221F] border border-[#EBE5DC] rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(180,160,140,0.06)]">
+              <div
+                className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 {/* Header with Title & Close Button */}
-                <div className="p-2 px-3 border-b border-[#EBE5DC] bg-[#FAF7F2] flex items-center justify-between select-none flex-shrink-0">
+                <div
+                  className="p-2 px-3 border-b flex items-center justify-between select-none flex-shrink-0"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: '#26221F'
+                  }}
+                >
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-[#FAF5ED] border border-[#E2D5C3] flex items-center justify-center">
-                      <NotebookPen className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <div
+                      className="w-6 h-6 rounded-lg border flex items-center justify-center"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border, #E2D5C3)'
+                      }}
+                    >
+                      <NotebookPen className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                     </div>
                     <div>
-                      <h3 className="font-serif font-bold text-xs text-[#26221F] leading-none">
+                      <h3
+                        className="font-serif font-bold text-xs leading-none"
+                        style={{ color: '#26221F' }}
+                      >
                         Personal Study Notepad
                       </h3>
-                      <p className="text-[10px] text-[#78716C] leading-none mt-0.5">
+                      <p
+                        className="text-[10px] leading-none mt-0.5"
+                        style={{ color: '#78716C' }}
+                      >
                         Reflections, study notes & chapter journals
                       </p>
                     </div>

@@ -44,9 +44,23 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
   }, [controlledOnClose, controlledOnOpen]);
 
   const [theme, setTheme] = useState<ThemeConfig>(() => loadSavedTheme());
+  const [savedThemes, setSavedThemes] = useState<ThemeConfig[]>(() => {
+    try {
+      const stored = localStorage.getItem('berea_saved_themes_list');
+      if (stored) return JSON.parse(stored);
+    } catch { }
+    return [];
+  });
   const [editTarget, setEditTarget] = useState<EditTarget>('accent');
+  const [bgLightnessMode, setBgLightnessMode] = useState<'light' | 'dark'>(theme.bgLightness && theme.bgLightness < 50 ? 'dark' : 'light');
   const [isDraggingWheel, setIsDraggingWheel] = useState(false);
   const [hexInput, setHexInput] = useState(theme.accentHex);
+
+  const handleSaveProfile = () => {
+    const newThemes = [...savedThemes, { ...theme, name: `Profile ${savedThemes.length + 1}` }];
+    setSavedThemes(newThemes);
+    localStorage.setItem('berea_saved_themes_list', JSON.stringify(newThemes));
+  };
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -58,10 +72,10 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
     (theme.bgMode === 'dark'
       ? '#121214'
       : theme.bgMode === 'sepia'
-      ? '#F5EEDB'
-      : theme.bgMode === 'white'
-      ? '#FFFFFF'
-      : '#FAF7F2');
+        ? '#F5EEDB'
+        : theme.bgMode === 'white'
+          ? '#FFFFFF'
+          : '#FAF7F2');
 
   const currentHue = editTarget === 'accent' ? theme.hue : (theme.bgHue ?? hexToHsl(currentBgHex).h);
   const currentSaturation = editTarget === 'accent' ? theme.saturation : (theme.bgSaturation ?? hexToHsl(currentBgHex).s);
@@ -323,36 +337,11 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
     updateTheme(DEFAULT_THEME);
   };
 
+  const isDarkTheme = theme.bgMode === 'dark' || (theme.bgLightness !== undefined && theme.bgLightness < 45);
+
   return (
     <>
-      {/* FLOATING BOTTOM-RIGHT LAUNCHER */}
-      <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="group flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-[#1C1B1E] text-[#26221F] dark:text-[#F5F3EF] rounded-full shadow-[0_4px_24px_rgba(0,0,0,0.2)] border border-[#EBE5DC] dark:border-[#38363C] hover:border-[#B4793D] transition-all hover:scale-105 active:scale-95 cursor-pointer"
-          title="Toggle Color Scheme Studio"
-          aria-label="Toggle Color Theme Wheel"
-        >
-          {/* Conical Rainbow Wheel Badge */}
-          <span
-            className="w-5 h-5 rounded-full shadow-xs shrink-0 flex items-center justify-center p-0.5"
-            style={{
-              background:
-                'conic-gradient(from 180deg at 50% 50%, #FF2A2A, #FFA726, #FFEE58, #66BB6A, #26C6DA, #29B6F6, #AB47BC, #FF2A2A)'
-            }}
-          >
-            <span
-              className="w-2.5 h-2.5 rounded-full border border-white/80"
-              style={{ backgroundColor: theme.accentHex }}
-            />
-          </span>
-
-          <span className="text-xs font-bold font-heading text-[#26221F] dark:text-[#F5F3EF]">
-            Color Scheme
-          </span>
-        </button>
-      </div>
+      {/* (Floating launcher removed - accessed via Header Theme button) */}
 
       {/* DEDICATED BOTTOM COLOR SCHEME STUDIO (Solid, Opaque, High Contrast) */}
       {isOpen && (
@@ -361,24 +350,34 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
           className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-auto animate-fadeIn"
         >
           <div
-            className="w-full max-w-4xl mx-auto rounded-t-2xl border-t border-x border-[#DCD5C9] dark:border-[#38363C] shadow-[0_-8px_36px_rgba(0,0,0,0.22)] p-4 sm:p-5 flex flex-col gap-3.5 select-none"
+            className="w-full max-w-4xl mx-auto rounded-t-2xl border-t border-x shadow-[0_-8px_36px_rgba(0,0,0,0.22)] p-4 sm:p-5 flex flex-col gap-3.5 select-none"
             style={{
-              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-              color: 'var(--clean-text-primary, #26221F)'
+              backgroundColor: isDarkTheme ? '#141316' : '#FFFFFF',
+              borderColor: isDarkTheme ? '#38363C' : '#DCD5C9',
+              color: isDarkTheme ? '#F5F3EF' : '#26221F'
             }}
           >
             {/* Top Bar: Title & Reset/Close */}
-            <div className="flex items-center justify-between border-b border-[#EBE5DC] dark:border-[#38363C] pb-2">
+            <div
+              className="flex items-center justify-between pb-2 border-b"
+              style={{ borderColor: isDarkTheme ? '#2A292E' : '#EBE5DC' }}
+            >
               <div className="flex items-center gap-2">
                 <span
                   className="w-4 h-4 rounded-full border border-black/15 shadow-2xs shrink-0"
                   style={{ backgroundColor: currentColorHex }}
                 />
                 <div>
-                  <h3 className="font-heading font-bold text-xs leading-none" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                  <h3
+                    className="font-heading font-bold text-xs leading-none"
+                    style={{ color: isDarkTheme ? '#FFFFFF' : '#26221F' }}
+                  >
                     Color Scheme Studio
                   </h3>
-                  <p className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                  <p
+                    className="text-[10px] leading-none mt-0.5"
+                    style={{ color: isDarkTheme ? '#CBD5E1' : '#78716C' }}
+                  >
                     {theme.name || (editTarget === 'accent' ? 'Custom Accent' : 'Custom Background')}
                   </p>
                 </div>
@@ -388,8 +387,12 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                 <button
                   type="button"
                   onClick={handleResetDefault}
-                  className="p-1 px-2 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-[11px] flex items-center gap-1 font-medium cursor-pointer"
-                  style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                  className="p-1 px-2 rounded-md transition-colors text-[11px] flex items-center gap-1 font-semibold cursor-pointer"
+                  style={{
+                    color: isDarkTheme ? '#F8FAFC' : '#57524E',
+                    backgroundColor: isDarkTheme ? '#26252B' : '#FAF5ED',
+                    border: isDarkTheme ? '1px solid #48464C' : '1px solid #EBE5DC'
+                  }}
                   title="Reset to Berea default"
                 >
                   <RotateCcw className="w-3 h-3" />
@@ -398,8 +401,12 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
-                  style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                  className="p-1 rounded-md transition-colors cursor-pointer"
+                  style={{
+                    color: isDarkTheme ? '#F8FAFC' : '#57524E',
+                    backgroundColor: isDarkTheme ? '#26252B' : '#FAF5ED',
+                    border: isDarkTheme ? '1px solid #48464C' : '1px solid #EBE5DC'
+                  }}
                   title="Close"
                 >
                   <X className="w-4 h-4" />
@@ -408,43 +415,58 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
             </div>
 
             {/* Target Selector: Accent Color vs Background Tone */}
-            <div className="flex items-center p-1 rounded-xl border border-[#EBE5DC] dark:border-[#38363C]" style={{ backgroundColor: 'var(--clean-surface-subtle, #FAF5ED)' }}>
+            <div
+              className="flex items-center p-1 rounded-xl border"
+              style={{
+                backgroundColor: isDarkTheme ? '#18171C' : '#FAF5ED',
+                borderColor: isDarkTheme ? '#38363C' : '#EBE5DC'
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setEditTarget('accent')}
-                className={`flex-1 py-2 px-3 rounded-lg font-medium text-xs text-center transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  editTarget === 'accent'
-                    ? 'bg-white dark:bg-[#1C1B1E] font-bold shadow-xs border border-[#EBE5DC] dark:border-[#38363C]'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-                style={{ color: 'var(--clean-text-primary, #26221F)' }}
+                className={`flex-1 py-2 px-3 rounded-lg font-medium text-xs text-center transition-all flex items-center justify-center gap-2 cursor-pointer border ${editTarget === 'accent' ? 'font-bold shadow-xs' : 'border-transparent'
+                  }`}
+                style={{
+                  backgroundColor: editTarget === 'accent' ? (isDarkTheme ? '#2C2B32' : '#FFFFFF') : 'transparent',
+                  borderColor: editTarget === 'accent' ? (isDarkTheme ? '#5A5864' : '#E2D5C3') : 'transparent',
+                  color: editTarget === 'accent' ? '#FFFFFF' : (isDarkTheme ? '#CBD5E1' : '#78716C')
+                }}
               >
                 <Paintbrush className="w-3.5 h-3.5" style={{ color: currentAccentHex }} />
                 <span>Accent Color</span>
-                <span className="text-[10px] opacity-70 hidden sm:inline">(Buttons, Tabs & Highlights)</span>
+                <span className="text-[10px] opacity-75 hidden sm:inline">(Buttons, Tabs & Highlights)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setEditTarget('background')}
-                className={`flex-1 py-2 px-3 rounded-lg font-medium text-xs text-center transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  editTarget === 'background'
-                    ? 'bg-white dark:bg-[#1C1B1E] font-bold shadow-xs border border-[#EBE5DC] dark:border-[#38363C]'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-                style={{ color: 'var(--clean-text-primary, #26221F)' }}
+                className={`flex-1 py-2 px-3 rounded-lg font-medium text-xs text-center transition-all flex items-center justify-center gap-2 cursor-pointer border ${editTarget === 'background' ? 'font-bold shadow-xs' : 'border-transparent'
+                  }`}
+                style={{
+                  backgroundColor: editTarget === 'background' ? (isDarkTheme ? '#2C2B32' : '#FFFFFF') : 'transparent',
+                  borderColor: editTarget === 'background' ? (isDarkTheme ? '#5A5864' : '#E2D5C3') : 'transparent',
+                  color: editTarget === 'background' ? '#FFFFFF' : (isDarkTheme ? '#CBD5E1' : '#78716C')
+                }}
               >
                 <Sun className="w-3.5 h-3.5 text-amber-500" />
                 <span>Background Tone</span>
-                <span className="text-[10px] opacity-70 hidden sm:inline">(Page Canvas & Reading Surface)</span>
+                <span className="text-[10px] opacity-75 hidden sm:inline">(Page Canvas & Reading Surface)</span>
               </button>
             </div>
 
             {/* Contrast Guard Badge */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#E2D5C3] dark:border-[#38363C] text-[10.5px]" style={{ backgroundColor: 'var(--clean-surface-warm, #FAF3E8)', color: 'var(--clean-accent-dark, #78471F)' }}>
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10.5px]"
+              style={{
+                backgroundColor: isDarkTheme ? '#1E293B' : '#FAF3E8',
+                borderColor: isDarkTheme ? '#334155' : '#E2D5C3',
+                color: isDarkTheme ? '#F1F5F9' : '#78471F'
+              }}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>
-                <strong>Contrast Guard:</strong> Reading & notes surfaces stay protected and balanced for optimal legibility.
+                <strong style={{ color: isDarkTheme ? '#34D399' : '#059669' }}>Contrast Guard:</strong> Reading & notes surfaces stay protected and balanced for optimal legibility.
               </span>
             </div>
 
@@ -463,12 +485,22 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
             </div>
 
             {/* Sliders Container */}
-            <div className="w-full flex flex-col gap-2.5 p-3 rounded-xl border border-[#EBE5DC] dark:border-[#38363C]" style={{ backgroundColor: 'var(--clean-surface-warm, #FAF7F2)' }}>
+            <div
+              className="w-full flex flex-col gap-2.5 p-3 rounded-xl border"
+              style={{
+                backgroundColor: isDarkTheme ? '#1A191E' : '#FAF7F2',
+                borderColor: isDarkTheme ? '#38363C' : '#EBE5DC'
+              }}
+            >
               {/* Saturation Slider */}
               <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-xs font-medium" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
-                  <span>{editTarget === 'accent' ? 'Intensity (Saturation)' : 'Tone Saturation'}</span>
-                  <span className="font-semibold" style={{ color: 'var(--clean-text-primary, #26221F)' }}>{currentSaturation}%</span>
+                <div className="flex items-center justify-between text-xs font-medium">
+                  <span style={{ color: isDarkTheme ? '#E2E8F0' : '#78716C' }}>
+                    {editTarget === 'accent' ? 'Intensity (Saturation)' : 'Tone Saturation'}
+                  </span>
+                  <span className="font-semibold" style={{ color: isDarkTheme ? '#FFFFFF' : '#26221F' }}>
+                    {currentSaturation}%
+                  </span>
                 </div>
                 <input
                   type="range"
@@ -476,34 +508,83 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                   max={editTarget === 'background' ? 60 : 100}
                   value={currentSaturation}
                   onChange={e => handleSaturationChange(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#EBE5DC] dark:bg-[#38363C] rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
+                  className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
+                  style={{ backgroundColor: isDarkTheme ? '#38363C' : '#EBE5DC' }}
                 />
               </div>
 
               {/* Lightness Slider */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-xs font-medium" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
-                  <span>{editTarget === 'accent' ? 'Brightness (Lightness)' : 'Background Lightness'}</span>
-                  <span className="font-semibold" style={{ color: 'var(--clean-text-primary, #26221F)' }}>{currentLightness}%</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs font-medium">
+                  <span style={{ color: isDarkTheme ? '#E2E8F0' : '#78716C' }}>
+                    {editTarget === 'accent' ? 'Brightness (Lightness)' : 'Background Lightness'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {editTarget === 'background' && (
+                      <div
+                        className="flex p-0.5 rounded-lg border"
+                        style={{
+                          backgroundColor: isDarkTheme ? '#141316' : '#EBE5DC',
+                          borderColor: isDarkTheme ? '#38363C' : '#DCD5C9'
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBgLightnessMode('light');
+                            handleLightnessChange(90); // Darkest light version
+                          }}
+                          className="px-2.5 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer"
+                          style={{
+                            backgroundColor: bgLightnessMode === 'light' ? '#FFFFFF' : 'transparent',
+                            color: bgLightnessMode === 'light' ? '#141211' : (isDarkTheme ? '#A8A29E' : '#78716C')
+                          }}
+                        >
+                          LIGHT
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBgLightnessMode('dark');
+                            handleLightnessChange(30); // Lightest dark version
+                          }}
+                          className="px-2.5 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer"
+                          style={{
+                            backgroundColor: bgLightnessMode === 'dark' ? (isDarkTheme ? '#2C2B30' : '#26221F') : 'transparent',
+                            color: bgLightnessMode === 'dark' ? '#FFFFFF' : (isDarkTheme ? '#A8A29E' : '#78716C')
+                          }}
+                        >
+                          DARK
+                        </button>
+                      </div>
+                    )}
+                    <span className="font-semibold" style={{ color: isDarkTheme ? '#FFFFFF' : '#26221F' }}>
+                      {currentLightness}%
+                    </span>
+                  </div>
                 </div>
                 <input
                   type="range"
-                  min={editTarget === 'background' ? 10 : 20}
-                  max={editTarget === 'background' ? 98 : 80}
+                  min={editTarget === 'background' ? (bgLightnessMode === 'dark' ? 10 : 80) : 20}
+                  max={editTarget === 'background' ? (bgLightnessMode === 'dark' ? 30 : 98) : 80}
                   value={currentLightness}
                   onChange={e => handleLightnessChange(Number(e.target.value))}
-                  className="w-full h-1.5 bg-[#EBE5DC] dark:bg-[#38363C] rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
+                  className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
+                  style={{ backgroundColor: isDarkTheme ? '#38363C' : '#EBE5DC' }}
                 />
               </div>
             </div>
 
             {/* Bottom: Hex Input and Direct Color Swatch */}
-            <div className="w-full flex items-center justify-between gap-2">
+            <div className="w-full flex items-center justify-between gap-2.5">
               <div
-                className="flex items-center gap-1.5 flex-1 px-3 py-1.5 rounded-lg border border-[#EBE5DC] dark:border-[#38363C]"
-                style={{ backgroundColor: 'var(--clean-surface-subtle, #FAF5ED)' }}
+                className="flex items-center gap-2 flex-1 px-3 py-1.5 rounded-lg border"
+                style={{
+                  backgroundColor: isDarkTheme ? '#18171C' : '#FAF5ED',
+                  borderColor: isDarkTheme ? '#38363C' : '#EBE5DC'
+                }}
               >
-                <span className="text-xs font-mono font-bold" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                <span className="text-xs font-mono font-bold" style={{ color: isDarkTheme ? '#CBD5E1' : '#78716C' }}>
                   HEX
                 </span>
                 <input
@@ -512,14 +593,19 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                   onChange={e => handleHexInputChange(e.target.value)}
                   placeholder={currentColorHex}
                   className="w-full bg-transparent font-mono text-xs font-bold outline-none uppercase"
-                  style={{ color: 'var(--clean-text-primary, #26221F)' }}
+                  style={{ color: isDarkTheme ? '#FFFFFF' : '#26221F' }}
                   maxLength={7}
                 />
               </div>
 
               <label
-                className="relative flex items-center justify-center w-9 h-8 rounded-lg cursor-pointer shadow-2xs border border-[#EBE5DC] dark:border-[#38363C] transition-transform hover:scale-105 shrink-0"
-                style={{ backgroundColor: currentColorHex }}
+                className="relative flex items-center justify-center rounded-lg cursor-pointer shadow-2xs border transition-transform hover:scale-105 shrink-0"
+                style={{
+                  width: '38px',
+                  height: '34px',
+                  backgroundColor: currentColorHex,
+                  borderColor: isDarkTheme ? '#48464C' : '#EBE5DC'
+                }}
                 title={`Open picker for ${editTarget}`}
               >
                 <input
@@ -529,6 +615,68 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                   className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                 />
               </label>
+            </div>
+
+            {/* Return to Default & Saved Profiles Section */}
+            <div
+              className="pt-3 border-t flex flex-col gap-2.5"
+              style={{ borderColor: isDarkTheme ? '#2A292E' : '#EBE5DC' }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={handleResetDefault}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer shadow-2xs"
+                  style={{
+                    backgroundColor: isDarkTheme ? '#26252C' : '#FAF5ED',
+                    borderColor: isDarkTheme ? '#48464C' : '#EBE5DC',
+                    color: isDarkTheme ? '#FFFFFF' : '#26221F'
+                  }}
+                  title="Return to predetermined default color scheme"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" style={{ color: currentAccentHex }} />
+                  <span>Return to Default Scheme</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  className="text-[10px] font-semibold px-2.5 py-1.5 rounded border transition-colors cursor-pointer"
+                  style={{
+                    backgroundColor: isDarkTheme ? '#26252C' : '#FAF5ED',
+                    borderColor: isDarkTheme ? '#48464C' : '#EBE5DC',
+                    color: isDarkTheme ? '#FFFFFF' : '#26221F'
+                  }}
+                >
+                  Save Current
+                </button>
+              </div>
+
+              {savedThemes.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: isDarkTheme ? '#CBD5E1' : '#78716C' }}>
+                    Saved Profiles
+                  </span>
+                  <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                    {savedThemes.map((t, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => updateTheme(t)}
+                        className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer"
+                        title={`Load Profile ${idx + 1}`}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-full border-2 border-transparent group-hover:border-[#B4793D] transition-all shadow-sm flex items-center justify-center overflow-hidden"
+                          style={{ backgroundColor: t.bgHex || (t.bgMode === 'dark' ? '#121214' : '#FAF7F2') }}
+                        >
+                          <div className="w-3 h-3 rounded-full shadow-2xs" style={{ backgroundColor: t.accentHex }} />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

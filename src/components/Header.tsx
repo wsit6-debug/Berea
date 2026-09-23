@@ -55,7 +55,14 @@ export const Header: React.FC<HeaderProps> = ({
   const displayedTranslations: TranslationInfo[] = showAllTranslations ? TRANSLATIONS : approvedTranslations;
 
   return (
-    <header className="berea-header sticky top-0 z-40 bg-[var(--clean-bg,#FAF7F2)]/90 backdrop-blur-xl border-b border-[var(--clean-border,#EBE5DC)] px-3 sm:px-6 py-2 transition-colors select-none">
+    <header
+      className="berea-header sticky top-0 z-40 backdrop-blur-xl border-b px-3 sm:px-6 py-2 transition-colors select-none"
+      style={{
+        backgroundColor: 'var(--clean-header-bg, #FAF7F2)',
+        borderColor: 'var(--clean-header-border, #EBE5DC)',
+        color: 'var(--clean-header-text, #26221F)'
+      }}
+    >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Brand & Navigation */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
@@ -64,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center cursor-pointer group pr-2"
             title="About Berea"
           >
-            <BereaLogo size={42} textColor="var(--clean-text-primary, #26221F)" />
+            <BereaLogo size={42} textColor="var(--clean-header-text, #26221F)" />
           </div>
 
           <div className="h-4 w-px bg-[var(--clean-border,#EBE5DC)] hidden sm:block"></div>
@@ -115,8 +122,8 @@ export const Header: React.FC<HeaderProps> = ({
                         setShowDenomDropdown(false);
                       }}
                       className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border ${isSelected
-                          ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] border-[var(--clean-accent-caramel,#B4793D)] shadow-xs font-semibold'
-                          : 'border-transparent text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
+                        ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] border-[var(--clean-accent-caramel,#B4793D)] shadow-xs font-semibold'
+                        : 'border-transparent text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
                         }`}
                     >
                       <div className="flex items-start gap-2">
@@ -186,8 +193,8 @@ export const Header: React.FC<HeaderProps> = ({
                         setShowTranslationDropdown(false);
                       }}
                       className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors ${isSelected
-                          ? 'bg-[var(--clean-text-primary,#26221F)] text-[var(--clean-surface,#FFFFFF)] font-semibold shadow-xs'
-                          : 'text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
+                        ? 'bg-[var(--clean-text-primary,#26221F)] text-[var(--clean-surface,#FFFFFF)] font-semibold shadow-xs'
+                        : 'text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
                         }`}
                     >
                       <div className="flex-1 pr-2">
@@ -196,13 +203,12 @@ export const Header: React.FC<HeaderProps> = ({
                             {t.id}
                           </span>
                           <span
-                            className={`text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px] ${
-                              isSelected
+                            className={`text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px] ${isSelected
                                 ? 'bg-white/20 text-white border-transparent'
                                 : isApproved
-                                ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-caramel,#B4793D)] border-[var(--clean-accent-caramel,#B4793D)]/30'
-                                : 'bg-[var(--clean-surface-subtle,#FAF5ED)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
-                            }`}
+                                  ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-caramel,#B4793D)] border-[var(--clean-accent-caramel,#B4793D)]/30'
+                                  : 'bg-[var(--clean-surface-subtle,#FAF5ED)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
+                              }`}
                           >
                             {t.badge}
                           </span>
@@ -225,12 +231,24 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Quick Spotlight Search */}
           <button
             onClick={onOpenSearch}
-            className="ios-glass-btn !px-2.5 !py-1"
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-caramel, #B4793D)',
+              color: 'var(--clean-text-primary, #26221F)'
+            }}
+            className="ios-glass-btn !px-2.5 !py-1 cursor-pointer select-none"
             title="Search (⌘K)"
           >
-            <Search className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+            <Search className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
             <span className="hidden lg:inline text-xs font-normal">Search scripture, topics...</span>
-            <kbd className="hidden sm:inline-block text-[9.5px] font-mono bg-[var(--clean-surface,#FFFFFF)] px-1.5 py-0.5 rounded text-[var(--clean-text-secondary,#78716C)] border border-[var(--clean-border,#EBE5DC)]">
+            <kbd
+              className="hidden sm:inline-block text-[9.5px] font-mono px-1.5 py-0.5 rounded border"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                color: 'var(--clean-text-secondary, #78716C)'
+              }}
+            >
               ⌘K
             </kbd>
           </button>
@@ -263,18 +281,38 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenNotepad && (
             <button
               onClick={onOpenNotepad}
-              className={`ios-glass-btn transition-all !px-3 !py-1 flex items-center gap-1.5 rounded-lg ${
+              style={
                 isNotepadActive
-                  ? '!bg-[var(--clean-accent-caramel,#B4793D)] !border-[var(--clean-accent-caramel,#B4793D)] !text-white font-bold shadow-sm'
-                  : 'text-[var(--clean-text-primary,#57524E)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
+                  ? {
+                      backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                      color: '#FFFFFF'
+                    }
+                  : {
+                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                      color: 'var(--clean-text-primary, #26221F)'
+                    }
+              }
+              className={`ios-glass-btn transition-all !px-3 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
+                isNotepadActive ? 'active font-bold shadow-sm' : ''
               }`}
               title="Open Personal Notepad (⌘N)"
             >
-              <NotebookPen className={`w-3.5 h-3.5 ${isNotepadActive ? 'text-white' : 'text-[var(--clean-accent-caramel,#B4793D)]'}`} />
-              <span className="text-xs font-semibold">Notepad</span>
-              <kbd className={`hidden sm:inline-block text-[9px] font-mono px-1.5 py-0.5 rounded border ${
-                isNotepadActive ? 'bg-black/20 text-white border-transparent' : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
-              }`}>
+              <NotebookPen
+                className="w-3.5 h-3.5"
+                style={{ color: isNotepadActive ? '#FFFFFF' : 'var(--clean-accent-caramel, #B4793D)' }}
+              />
+              <span style={{ color: isNotepadActive ? '#FFFFFF' : 'var(--clean-text-primary, #26221F)' }} className="text-xs font-semibold">
+                Notepad
+              </span>
+              <kbd
+                className={`hidden sm:inline-block text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                  isNotepadActive
+                    ? 'bg-black/25 text-white border-transparent'
+                    : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
+                }`}
+              >
                 ⌘N
               </kbd>
             </button>
@@ -284,12 +322,38 @@ export const Header: React.FC<HeaderProps> = ({
           {onToggleAiPanel && (
             <button
               onClick={onToggleAiPanel}
-              className="ios-glass-btn !px-2.5 !py-1 transition-all"
+              style={
+                isAiPanelOpen
+                  ? {
+                      backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                      color: '#FFFFFF'
+                    }
+                  : {
+                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                      color: 'var(--clean-text-primary, #26221F)'
+                    }
+              }
+              className={`ios-glass-btn transition-all !px-2.5 !py-1 flex items-center gap-1 rounded-lg select-none cursor-pointer ${
+                isAiPanelOpen ? 'active font-bold shadow-sm' : ''
+              }`}
               title="Toggle AI Guide Panel (⌘I)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
-              <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)]">Guide</span>
-              <kbd className="hidden sm:inline-block text-[9.5px] font-mono bg-[var(--clean-surface,#FFFFFF)] px-1.5 py-0.5 rounded text-[var(--clean-text-secondary,#78716C)] border border-[var(--clean-border,#EBE5DC)]">
+              <Sparkles
+                className="w-3.5 h-3.5"
+                style={{ color: isAiPanelOpen ? '#FFFFFF' : 'var(--clean-accent-caramel, #B4793D)' }}
+              />
+              <span style={{ color: isAiPanelOpen ? '#FFFFFF' : 'var(--clean-text-primary, #26221F)' }} className="text-xs font-semibold">
+                Guide
+              </span>
+              <kbd
+                className={`hidden sm:inline-block text-[9.5px] font-mono px-1.5 py-0.5 rounded border ${
+                  isAiPanelOpen
+                    ? 'bg-black/25 text-white border-transparent'
+                    : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
+                }`}
+              >
                 ⌘I
               </kbd>
             </button>
@@ -299,11 +363,15 @@ export const Header: React.FC<HeaderProps> = ({
           {onLogout && (
             <button
               onClick={onLogout}
-              className="ios-glass-btn hover:!text-red-600 hover:!border-red-400 hover:!bg-red-500/10 !p-1.5 transition-all"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-caramel, #B4793D)'
+              }}
+              className="ios-glass-btn hover:!text-red-600 hover:!border-red-400 hover:!bg-red-500/10 !p-1.5 transition-all cursor-pointer"
               title="Lock & Log Out"
               aria-label="Lock and log out"
             >
-              <Lock className="w-3.5 h-3.5" />
+              <Lock className="w-3.5 h-3.5" style={{ color: 'var(--clean-text-secondary, #78716C)' }} />
             </button>
           )}
         </div>

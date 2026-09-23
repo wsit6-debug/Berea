@@ -38,8 +38,8 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
             <h2 className="font-heading text-2xl font-bold tracking-tight text-[#26221F]">
               Berea
             </h2>
-            <p className="text-xs text-[#B4793D] font-medium tracking-wide">
-              Acts 17:11 • Examine Daily • Be Known
+            <p className="text-xs font-medium tracking-wide">
+              <span className="text-[#B4793D]">Acts 17:11</span> <span className="text-[#8C827A]">• Examine Daily • Be Known</span>
             </p>
           </div>
         )}
@@ -70,8 +70,13 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
     >
       {/* Gold & Ivory Monogram Mark */}
       <div
-        style={{ width: `${size}px`, height: `${size}px` }}
-        className="rounded-xl overflow-hidden shadow-sm border border-[#EBE5DC] bg-[#FAF7F2] p-0.5 flex-shrink-0 transition-transform duration-200 hover:scale-105 flex items-center justify-center"
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          backgroundColor: 'var(--clean-surface, #FAF7F2)',
+          borderColor: 'var(--clean-accent-border, #EBE5DC)'
+        }}
+        className="rounded-xl overflow-hidden shadow-sm border p-0.5 flex-shrink-0 transition-transform duration-200 hover:scale-105 flex items-center justify-center"
       >
         <img
           src="/berea-logo.jpg"
@@ -82,19 +87,29 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
 
       {/* Typography */}
       {showText && (
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-1.5">
+        <div className="flex flex-col select-none">
+          <div className="flex items-center gap-1.5">
             <span
               className="font-heading font-bold text-base sm:text-lg tracking-tight leading-none"
-              style={{ color: textColor }}
+              style={{ color: textColor || 'var(--clean-text-primary, #26221F)' }}
             >
               Berea
             </span>
-            <span className="hidden sm:inline text-[9.5px] font-medium text-[#B4793D] bg-[#FAF5ED] px-1.5 py-0.2 rounded-full border border-[#EBE5DC]">
+            <span
+              className="inline-flex items-center text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border shadow-2xs leading-none shrink-0"
+              style={{
+                color: 'var(--clean-accent-dark, #B4793D)',
+                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                borderColor: 'var(--clean-accent-border, #E2D5C3)'
+              }}
+            >
               Acts 17:11
             </span>
           </div>
-          <span className="text-[9px] tracking-wide text-[#8C827A] font-medium hidden md:inline leading-tight">
+          <span
+            className="text-[9px] tracking-wide font-medium hidden sm:inline leading-tight mt-0.5"
+            style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+          >
             Examine Daily • Be Known
           </span>
         </div>
