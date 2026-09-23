@@ -293,14 +293,16 @@ export function renderRedLetterContent(
   isWordsOfJesus: boolean,
   showRedLetter: boolean,
   isSelected: boolean = false,
-  onCharClick?: (charId: string) => void
+  onCharClick?: (charId: string) => void,
+  matchedCharacters?: Set<string>,
+  selectedCharacter?: string | null
 ): React.ReactNode {
   if (!text) return null;
 
   if (!showRedLetter || !isWordsOfJesus) {
     const colorStyle = { color: isSelected ? '#26221F' : '#38332E' };
     const className = isSelected ? 'text-[#26221F]' : 'text-[#38332E]';
-    return renderWithCharacters(text, colorStyle, className, onCharClick);
+    return renderWithCharacters(text, colorStyle, className, onCharClick, matchedCharacters, selectedCharacter);
   }
 
   const segments = parseVerseSegments(text, isWordsOfJesus);
@@ -312,7 +314,7 @@ export function renderRedLetterContent(
           const colorStyle = { color: isSelected ? '#26221F' : '#78716C' };
           return (
             <React.Fragment key={idx}>
-              {renderWithCharacters(seg.text, colorStyle, 'dialogue-intro-text', onCharClick)}
+              {renderWithCharacters(seg.text, colorStyle, 'dialogue-intro-text', onCharClick, matchedCharacters, selectedCharacter)}
             </React.Fragment>
           );
         }
@@ -329,7 +331,7 @@ export function renderRedLetterContent(
 
         return (
           <React.Fragment key={idx}>
-            {renderWithCharacters(seg.text, speechStyle, speechClass, onCharClick)}
+            {renderWithCharacters(seg.text, speechStyle, speechClass, onCharClick, matchedCharacters, selectedCharacter)}
           </React.Fragment>
         );
       })}

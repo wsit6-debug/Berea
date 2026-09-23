@@ -61,6 +61,7 @@ interface BibleReaderProps {
   isLastChapterOfBook?: boolean;
   onOpenBookmarks?: () => void;
   onSelectCharacter?: (charId: string) => void;
+  selectedCharacter?: string | null;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -84,7 +85,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onOpenQuiz,
   isLastChapterOfBook = false,
   onOpenBookmarks,
-  onSelectCharacter
+  onSelectCharacter,
+  selectedCharacter
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
@@ -346,6 +348,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   };
 
   const activeVerse = chapter.verses.find(v => v.verseNumber === selectedVerseNumber) || chapter.verses[0];
+  const matchedCharacters = new Set<string>();
 
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl border border-[#EBE5DC] shadow-[0_2px_12px_rgba(180,160,140,0.06)] overflow-hidden">
@@ -577,7 +580,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           {verse.verseNumber}
                           {isBookmarked && <span className="text-[#B4793D] ml-0.5">★</span>}
                         </sup>{' '}
-                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter)}{' '}
+                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter, matchedCharacters, selectedCharacter)}{' '}
                       </span>
                     );
                   })}
@@ -795,7 +798,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                             style={{ fontSize: `${fontSize}px`, lineHeight: '1.75' }}
                             className="font-scripture tracking-normal"
                           >
-                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter)}
+                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter, matchedCharacters, selectedCharacter)}
                           </p>
 
                           {/* Multi-Verse Action Banner when at the end of the range in Verse Mode */}

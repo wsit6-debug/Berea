@@ -23,7 +23,9 @@ export function renderWithCharacters(
   text: string,
   colorStyle: React.CSSProperties,
   className: string,
-  onCharClick?: (charId: string) => void
+  onCharClick?: (charId: string) => void,
+  matchedCharacters?: Set<string>,
+  selectedCharacter?: string | null
 ): React.ReactNode {
   if (!text) return null;
 
@@ -44,12 +46,38 @@ export function renderWithCharacters(
           if (characterMap[charId]) {
             const hash = charId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
             const hue = hash % 360;
+            const isSelected = charId === selectedCharacter;
+            
+            // If we've already matched it, just render as plain text to limit 1 highlight per page
+            if (matchedCharacters && matchedCharacters.has(charId)) {
+              return part ? <span key={i} className={className} style={colorStyle}>{part}</span> : null;
+            }
+
+            // Mark it as matched
+            if (matchedCharacters) {
+              matchedCharacters.add(charId);
+            }
+
+            // If it's selected, highlight it prominently
+            if (isSelected) {
+              return (
+                <span
+                  key={i}
+                  className={`rounded px-1 transition-colors ${className}`}
+                  style={{ ...colorStyle, backgroundColor: `hsl(${hue}, 70%, 85%)`, color: `hsl(${hue}, 80%, 30%)`, fontWeight: 'bold' }}
+                >
+                  {part}
+                </span>
+              );
+            }
+            
+            // If it's not selected, render as a clickable link
             return (
               <span
                 key={i}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onCharClick(charId);
+                  onCharClick?.(charId);
                 }}
                 className={`cursor-pointer hover:bg-black/5 rounded px-0.5 transition-colors ${className}`}
                 style={{ ...colorStyle, color: `hsl(${hue}, 70%, 35%)`, fontWeight: 'bold' }}

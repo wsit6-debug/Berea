@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { X, Sparkles, User } from 'lucide-react';
+import React from 'react';
+import { Sparkles, User } from 'lucide-react';
 import { characterMap } from '../data/characterData';
-import { generateCharacterProfile } from '../services/aiService';
 import { Chapter } from '../data/bibleData';
 
 interface CharacterPanelProps {
@@ -11,50 +10,7 @@ interface CharacterPanelProps {
 }
 
 export const CharacterPanel: React.FC<CharacterPanelProps> = ({ charId, bookName, chapter }) => {
-  const [loading, setLoading] = useState(false);
-  const [progressText, setProgressText] = useState<string | null>(null);
-  const [profile, setProfile] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
   const character = charId ? characterMap[charId] : null;
-
-  useEffect(() => {
-    if (!character) {
-      setProfile(null);
-      return;
-    }
-
-    let isMounted = true;
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError(null);
-      setProfile(null);
-      setProgressText('Initializing AI engine...');
-      try {
-        const text = chapter.verses.map(v => v.text['KJV'] || Object.values(v.text)[0]).join(' ');
-        const result = await generateCharacterProfile(
-          character.name, 
-          bookName, 
-          chapter.chapterNumber, 
-          text,
-          (prog) => {
-            if (isMounted) setProgressText(prog.text);
-          }
-        );
-        if (isMounted) {
-          setProfile(result);
-        }
-      } catch (err: any) {
-        if (isMounted) setError(err.message || 'Failed to generate profile.');
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchProfile();
-
-    return () => { isMounted = false; };
-  }, [character, bookName, chapter]);
 
   if (!charId || !character) {
     return (
@@ -99,30 +55,17 @@ export const CharacterPanel: React.FC<CharacterPanelProps> = ({ charId, bookName
             <Sparkles className="w-3.5 h-3.5 text-[#B4793D]" /> AI Biography
           </h3>
           
-          {loading ? (
-            <div className="space-y-3">
-              <div className="animate-pulse space-y-3">
-                <div className="h-4 bg-[#FAF5ED] rounded w-full"></div>
-                <div className="h-4 bg-[#FAF5ED] rounded w-5/6"></div>
-                <div className="h-4 bg-[#FAF5ED] rounded w-4/6"></div>
-              </div>
-              {progressText && (
-                <div className="text-xs text-[#B4793D] italic text-center mt-4 px-2">
-                  {progressText}
-                </div>
-              )}
-            </div>
-          ) : error ? (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
-              {error}
-            </div>
-          ) : profile ? (
+          {character.aiBiography ? (
             <div className="text-sm text-[#38332E] leading-relaxed space-y-4">
-              {profile.split('\n\n').map((p, i) => (
+              {character.aiBiography.split('\n\n').map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <div className="text-sm text-[#A8A29E] italic bg-[#FAF5ED] p-4 rounded-xl border border-[#EBE5DC] text-center">
+              Biography not available yet for this character.
+            </div>
+          )}
         </div>
       </div>
     </div>

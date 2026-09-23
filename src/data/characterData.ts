@@ -1,7 +1,10 @@
+import generatedBiosData from './generatedBiographies.json';
+
 export interface CharacterProfile {
   id: string;
   name: string;
   meaning: string;
+  aiBiography?: string;
 }
 
 export const characterMap: Record<string, CharacterProfile> = {
@@ -108,7 +111,11 @@ export const characterMap: Record<string, CharacterProfile> = {
   'sarai': { id: 'sarai', name: 'Sarai', meaning: 'Abram\'s wife (11:29)' },
   'milcah': { id: 'milcah', name: 'Milcah', meaning: 'Nahor\'s wife (and niece), the daughter of Haran (GEN 11:29)' },
   'iscah': { id: 'iscah', name: 'Iscah', meaning: 'daughter of Haran (GEN 11:29)' },
-  'pharaoh': { id: 'pharaoh', name: 'Pharaoh', meaning: 'who took Sarai (GEN 12:15)' },
+  'pharaoh': { 
+    id: 'pharaoh', 
+    name: 'Pharaoh', 
+    meaning: 'Great House'
+  },
   'amraphel': { id: 'amraphel', name: 'Amraphel', meaning: 'King of Shinar (GEN 14:1)' },
   'arioch': { id: 'arioch', name: 'Arioch', meaning: 'King of Ellasar (GEN 14:1)' },
   'chedorlaomer': { id: 'chedorlaomer', name: 'Chedorlaomer', meaning: 'King of Elam (GEN 14:1)' },
@@ -323,10 +330,18 @@ export const characterMap: Record<string, CharacterProfile> = {
   'machir': { id: 'machir', name: 'Machir', meaning: 'son of Manasseh (GEN 50:23)' },
   'shiphrah': { id: 'shiphrah', name: 'Shiphrah', meaning: 'Hebrew midwife of Exodus (EXO 1:15)' },
   'puah': { id: 'puah', name: 'Puah', meaning: 'Hebrew midwife of Exodus (EXO 1:15)' },
-  'moses': { id: 'moses', name: 'Moses', meaning: 'led Israel out of Egypt in the Exodus (EXO 13:3)' },
+  'moses': { 
+    id: 'moses', 
+    name: 'Moses', 
+    meaning: 'Drawn out of the water'
+  },
   'zipporah': { id: 'zipporah', name: 'Zipporah', meaning: 'daughter of Reuel (EXO 2:18), Moses\' wife (EXO 2:21), a Cushite (NUM 12:1)' },
   'gershom': { id: 'gershom', name: 'Gershom', meaning: 'Moses\' first son (EXO 2:22)' },
-  'aaron': { id: 'aaron', name: 'Aaron', meaning: 'brother of Moses (EXO 4:14) and Levitical priest (EXO 28:1)' },
+  'aaron': { 
+    id: 'aaron', 
+    name: 'Aaron', 
+    meaning: 'Mountain of strength / Enlightened'
+  },
   'libni': { id: 'libni', name: 'Libni', meaning: 'son of Gershon (EXO 6:17)' },
   'shimei': { id: 'shimei', name: 'Shimei', meaning: 'son of Gershon (EXO 6:17)' },
   'amram': { id: 'amram', name: 'Amram', meaning: 'son of Kohath (EXO 6:18)' },
@@ -1763,7 +1778,12 @@ export const characterMap: Record<string, CharacterProfile> = {
   'syntyche': { id: 'syntyche', name: 'Syntyche', meaning: 'Paul urged her to live in harmony in the Lord (PHP 4:2)' },
   'clement': { id: 'clement', name: 'Clement', meaning: 'a fellow worker of Paul\'s (PHP 4:3)' },
   'onesimus': { id: 'onesimus', name: 'Onesimus', meaning: 'a Colossian who was Paul\'s faithful and beloved brother (COL 4:9)' },
-  'jesus': { id: 'jesus', name: 'Jesus', meaning: 'Paul\'s fellow worker from the circumcision (COL 4:11)' },
+  'jesus-justus': { id: 'jesus-justus', name: 'Jesus Justus', meaning: 'Paul\'s fellow worker from the circumcision (COL 4:11)' },
+  'jesus': { 
+    id: 'jesus', 
+    name: 'Jesus', 
+    meaning: 'Yahweh saves',
+  },
   'luke': { id: 'luke', name: 'Luke', meaning: 'the beloved physician (COL 4:14)' },
   'demas': { id: 'demas', name: 'Demas', meaning: 'sent greetings via Paul to the Colossians (COL 4:14)' },
   'nympha': { id: 'nympha', name: 'Nympha', meaning: 'had a church in her house in Colossae (COL 4:15)' },
@@ -1795,3 +1815,11 @@ export const characterMap: Record<string, CharacterProfile> = {
   'zaboud': { id: 'zaboud', name: 'Zaboud', meaning: 'son of Hammuel and father of Zaccur (1CH 4:26)' },
   'rokeim': { id: 'rokeim', name: 'Rokeim', meaning: 'father of Hananiah_6 in Ralhlf\'s Septuaginta (NEH 3:8)' },
 };
+
+// Merge dynamically generated AI biographies from the local JSON store
+const generatedBios = generatedBiosData as Record<string, { aiBiography: string }>;
+for (const [id, data] of Object.entries(generatedBios)) {
+  if (characterMap[id]) {
+    if (data.aiBiography) characterMap[id].aiBiography = data.aiBiography;
+  }
+}
