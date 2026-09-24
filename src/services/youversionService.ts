@@ -139,23 +139,26 @@ export async function fetchChapterFromYouVersion(
       if (localCached) {
         const parsed = JSON.parse(localCached);
         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.text) {
-          // Sanitize any previously cached verses on the fly
-          const sanitizedVerses: Verse[] = parsed.map((v: Verse) => {
-            const cleanText: Record<string, string> = {};
-            if (v.text) {
-              Object.entries(v.text).forEach(([k, val]) => {
-                cleanText[k] = cleanApiText(val);
-              });
-            }
-            const isJesus = checkIsWordsOfJesus(bookId, chapterNum, v.verseNumber);
-            return {
-              ...v,
-              text: cleanText,
-              isWordsOfJesus: isJesus
-            };
-          });
-          chapterCache.set(cacheKey, sanitizedVerses);
-          return sanitizedVerses;
+          const firstText = String(Object.values(parsed[0].text)[0] || '');
+          // If previous cache was the placeholder fallback, invalidate and refetch
+          if (!firstText.includes('The word of the Lord came unto His servants')) {
+            const sanitizedVerses: Verse[] = parsed.map((v: Verse) => {
+              const cleanText: Record<string, string> = {};
+              if (v.text) {
+                Object.entries(v.text).forEach(([k, val]) => {
+                  cleanText[k] = cleanApiText(val);
+                });
+              }
+              const isJesus = checkIsWordsOfJesus(bookId, chapterNum, v.verseNumber);
+              return {
+                ...v,
+                text: cleanText,
+                isWordsOfJesus: isJesus
+              };
+            });
+            chapterCache.set(cacheKey, sanitizedVerses);
+            return sanitizedVerses;
+          }
         }
       }
     } catch (e) {
@@ -181,7 +184,8 @@ export async function fetchChapterFromYouVersion(
       const data: Array<{ pk: number; verse: number; text: string }> = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         const verses: Verse[] = data.map(item => {
-          const isJesus = checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text);
+          const hasWj = /<(?:span\s+class=["'][^"']*\bwj\b|wj\b)/i.test(item.text || '');
+          const isJesus = Boolean(hasWj || checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text));
           return {
             verseNumber: item.verse,
             text: {
@@ -215,7 +219,8 @@ export async function fetchChapterFromYouVersion(
       const fbData = await fallbackRes.json();
       if (fbData && Array.isArray(fbData.verses) && fbData.verses.length > 0) {
         const verses: Verse[] = fbData.verses.map((item: any) => {
-          const isJesus = checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text);
+          const hasWj = /<(?:span\s+class=["'][^"']*\bwj\b|wj\b)/i.test(item.text || '');
+          const isJesus = Boolean(hasWj || checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text));
           return {
             verseNumber: item.verse,
             text: {
@@ -302,12 +307,14 @@ export async function fetchFullMultiTranslationChapter(
         if (!existing.text[version] || existing.text[version].startsWith('[')) {
           existing.text[version] = cleanedText;
         }
-        existing.isWordsOfJesus = checkIsWordsOfJesus(bookId, chapterNum, v.verseNumber, cleanedText);
+        if (v.isWordsOfJesus) {
+          existing.isWordsOfJesus = true;
+        }
       } else {
         verseMap.set(v.verseNumber, {
           verseNumber: v.verseNumber,
           text: { [version]: cleanedText },
-          isWordsOfJesus: checkIsWordsOfJesus(bookId, chapterNum, v.verseNumber, cleanedText)
+          isWordsOfJesus: Boolean(v.isWordsOfJesus || checkIsWordsOfJesus(bookId, chapterNum, v.verseNumber, cleanedText))
         });
       }
     });
