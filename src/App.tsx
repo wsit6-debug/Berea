@@ -20,6 +20,8 @@ import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { ColorThemeWheel } from './components/ColorThemeWheel';
+import { SettingsWidget } from './components/SettingsWidget';
+import { FeedbackModal } from './components/FeedbackModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
 import { BereaAiTab, NotepadState } from './types';
@@ -63,6 +65,7 @@ export function App() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isColorSchemeOpen, setIsColorSchemeOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   // Dynamic Chapter State fetched from YouVersion Scripture API
   const currentBook = getBook(bookId) || BIBLE_BOOKS[0];
@@ -511,11 +514,28 @@ export function App() {
         activeLens={activeLens}
       />
 
-      {/* Customizable Color Scheme Wheel (Bottom-Right & Modal) */}
+      {/* Customizable Color Scheme Wheel (Bottom-Right Studio Drawer) */}
       <ColorThemeWheel
         isOpen={isColorSchemeOpen}
         onClose={() => setIsColorSchemeOpen(false)}
         onOpen={() => setIsColorSchemeOpen(true)}
+      />
+
+      {/* Pastoral & Clergy Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        currentBookName={currentBook.name}
+        currentChapterNum={chapterNum}
+        currentVerseNum={selectedVerse?.verseNumber}
+        activeLens={activeLens}
+        activeTranslation={activeTranslation}
+      />
+
+      {/* Floating Settings Widget (Bottom-Right: Holds Color Scheme and Feedback) */}
+      <SettingsWidget
+        onOpenThemeStudio={() => setIsColorSchemeOpen(true)}
+        onOpenFeedbackModal={() => setIsFeedbackModalOpen(true)}
       />
     </div>
   );

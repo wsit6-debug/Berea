@@ -60,6 +60,15 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
     const newThemes = [...savedThemes, { ...theme, name: `Profile ${savedThemes.length + 1}` }];
     setSavedThemes(newThemes);
     localStorage.setItem('berea_saved_themes_list', JSON.stringify(newThemes));
+    window.dispatchEvent(new Event('berea_saved_themes_updated'));
+  };
+
+  const handleDeleteProfile = (indexToDelete: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newThemes = savedThemes.filter((_, idx) => idx !== indexToDelete);
+    setSavedThemes(newThemes);
+    localStorage.setItem('berea_saved_themes_list', JSON.stringify(newThemes));
+    window.dispatchEvent(new Event('berea_saved_themes_updated'));
   };
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -98,6 +107,19 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
     const saved = loadSavedTheme();
     setTheme(saved);
     applyThemeToDocument(saved);
+
+    const handleSavedThemesSync = () => {
+      try {
+        const stored = localStorage.getItem('berea_saved_themes_list');
+        setSavedThemes(stored ? JSON.parse(stored) : []);
+      } catch {}
+    };
+    window.addEventListener('berea_saved_themes_updated', handleSavedThemesSync);
+    window.addEventListener('storage', handleSavedThemesSync);
+    return () => {
+      window.removeEventListener('berea_saved_themes_updated', handleSavedThemesSync);
+      window.removeEventListener('storage', handleSavedThemesSync);
+    };
   }, []);
 
   // Close on Escape key
@@ -687,20 +709,30 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                   </span>
                   <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
                     {savedThemes.map((t, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => updateTheme(t)}
-                        className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer"
-                        title={`Load Profile ${idx + 1}`}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-full border-2 border-transparent group-hover:border-[#B4793D] transition-all shadow-sm flex items-center justify-center overflow-hidden"
-                          style={{ backgroundColor: t.bgHex || (t.bgMode === 'dark' ? '#121214' : '#FAF7F2') }}
+                      <div key={idx} className="relative group/saved flex flex-col items-center shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateTheme(t)}
+                          className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer"
+                          title={`Load ${t.name || `Profile ${idx + 1}`}`}
                         >
-                          <div className="w-3 h-3 rounded-full shadow-2xs" style={{ backgroundColor: t.accentHex }} />
-                        </div>
-                      </button>
+                          <div
+                            className="w-8 h-8 rounded-full border-2 border-transparent group-hover:border-[#B4793D] transition-all shadow-sm flex items-center justify-center overflow-hidden"
+                            style={{ backgroundColor: t.bgHex || (t.bgMode === 'dark' ? '#121214' : '#FAF7F2') }}
+                          >
+                            <div className="w-3 h-3 rounded-full shadow-2xs" style={{ backgroundColor: t.accentHex }} />
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteProfile(idx, e)}
+                          className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-[8px] font-bold opacity-0 group-hover/saved:opacity-100 transition-opacity cursor-pointer shadow-xs"
+                          title="Delete profile"
+                          aria-label="Delete profile"
+                        >
+                          ×
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
