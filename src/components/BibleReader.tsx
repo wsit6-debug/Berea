@@ -25,7 +25,7 @@ export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue'
 /**
  * Universal extractor for verse display text across all translation keys & data shapes
  */
-function getVerseDisplayText(
+export function getVerseDisplayText(
   verse: Verse | undefined | null,
   activeTranslation?: string
 ): string {
@@ -629,8 +629,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           <button
             onClick={handleToggleAudio}
             className={`text-xs py-1 px-2.5 rounded-full border flex items-center gap-1.5 transition-all shadow-xs active:scale-95 ${isPlayingAudio
-              ? 'bg-[#B4793D] text-white border-[#B4793D] font-medium shadow-[0_2px_8px_rgba(180,121,61,0.25)]'
-              : 'bg-white text-[#26221F] border-[#EBE5DC] hover:border-[#D4A373]'
+                ? 'bg-[#B4793D] text-white border-[#B4793D] font-medium shadow-[0_2px_8px_rgba(180,121,61,0.25)]'
+                : 'bg-white text-[#26221F] border-[#EBE5DC] hover:border-[#D4A373]'
               }`}
             title={isPlayingAudio ? 'Pause Narration' : 'Listen to Audio Narration'}
           >
@@ -845,8 +845,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                         onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
                         onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
                         className={`cursor-pointer transition-all duration-100 px-1 py-0.5 inline ${isSelected
-                          ? `bg-[#FAF3E8] text-[#26221F] font-normal shadow-2xs ${isRangeStart ? 'rounded-l-md pl-1.5' : ''} ${isRangeEnd ? 'rounded-r-md pr-1.5' : ''} ${isMultiSelect ? 'border-y border-[#B4793D]/30' : 'rounded ring-1 ring-[#B4793D]/30'}`
-                          : 'hover:bg-[#FAF9F5] rounded'
+                            ? `bg-[#FAF3E8] text-[#26221F] font-normal shadow-2xs ${isRangeStart ? 'rounded-l-md pl-1.5' : ''} ${isRangeEnd ? 'rounded-r-md pr-1.5' : ''} ${isMultiSelect ? 'border-y border-[#B4793D]/30' : 'rounded ring-1 ring-[#B4793D]/30'}`
+                            : 'hover:bg-[#FAF9F5] rounded'
                           }`}
                       >
                         <sup className={`text-[10.5px] select-none mr-1 ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'text-[var(--clean-accent-caramel,#B4793D)] font-black' : 'text-[#8C827A] font-bold'}`}>
@@ -1045,8 +1045,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           onMouseDown={(e) => e.stopPropagation()}
                           onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
                           className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${bookmarkedVerses.includes(activeVerse.verseNumber)
-                            ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
-                            : 'bg-white hover:border-[#D4A373]'
+                              ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
+                              : 'bg-white hover:border-[#D4A373]'
                             }`}
                           title={isVerseSaved(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
                         >
@@ -1137,18 +1137,18 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
                       onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
                       className={`group relative px-2.5 py-1.5 rounded-lg cursor-pointer transition-all duration-150 ${isSelected
-                        ? 'bg-[#FAF3E8] border-l-3 border-[#B4793D] shadow-xs'
-                        : showRedLetter && isWordOfJesus
-                          ? 'bg-red-50/20 border-l-2 border-red-500 hover:bg-red-50/40'
-                          : 'hover:bg-[#FAF9F5] border-l-2 border-transparent'
+                          ? 'bg-[#FAF3E8] border-l-3 border-[#B4793D] shadow-xs'
+                          : showRedLetter && isWordOfJesus
+                            ? 'bg-red-50/20 border-l-2 border-red-500 hover:bg-red-50/40'
+                            : 'hover:bg-[#FAF9F5] border-l-2 border-transparent'
                         }`}
                     >
                       <div className="flex items-baseline gap-2">
                         <span className={`text-[10.5px] select-none font-semibold flex-shrink-0 w-4 text-right ${isSelected
-                          ? 'text-[#B4793D] font-bold'
-                          : showRedLetter && isWordOfJesus
-                            ? 'text-red-600 font-bold'
-                            : 'text-[#A8A29E]'
+                            ? 'text-[#B4793D] font-bold'
+                            : showRedLetter && isWordOfJesus
+                              ? 'text-red-600 font-bold'
+                              : 'text-[#A8A29E]'
                           }`}>
                           {verse.verseNumber}
                         </span>
@@ -1324,8 +1324,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                   onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => handleToggleBookmark(verse.verseNumber, e)}
                                   className={`ios-glass-btn text-xs !py-0.5 !px-2.5 transition-all ${isBookmarked
-                                    ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
-                                    : 'bg-white hover:border-[#D4A373]'
+                                      ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
+                                      : 'bg-white hover:border-[#D4A373]'
                                     }`}
                                   title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Verse'}
                                 >
@@ -1507,8 +1507,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       playVerseAudio(selectedVerseNumber, rate, selectedVoiceId);
                     }}
                     className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono transition-all ${playbackSpeed === rate
-                      ? 'bg-[#B4793D] text-white font-bold'
-                      : 'text-[#A8A29E] hover:text-white'
+                        ? 'bg-[#B4793D] text-white font-bold'
+                        : 'text-[#A8A29E] hover:text-white'
                       }`}
                   >
                     {rate === 1.0 ? '1x' : `${rate}x`}
