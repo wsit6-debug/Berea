@@ -5,6 +5,7 @@ import { getUserDenominationPreference, getDenominationLabel, UserDenominationSe
 import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
 import { TypologyMotif, TypologyNode } from '../types';
+import { getTypologyFromDatabase } from '../data/typologyDatabase';
 
 export interface QuizQuestion {
   question: string;
@@ -792,86 +793,29 @@ export async function getAccumulatedBookQuiz(
   return finalQuestions.slice(0, numQuestions);
 }
 
+export { TYPOLOGY_CHAPTER_HASHMAP, getTypologyFromDatabase } from '../data/typologyDatabase';
+
 export async function generateTypologyTracker(
   passageRef: string,
-  passageText: string,
+  _passageText: string,
   onProgress?: (progress: { text: string; progress: number }) => void,
   excludeMotif?: string
 ): Promise<TypologyMotif> {
-  const { generateLocalAiResponse } = await import('./webLlmService');
-  
-  let prompt = `You are a biblical theology AI expert. Read the following biblical passage and identify the single most prominent theological motif or symbol (e.g., Water, Mountains, Trees, Bread, Light, Blood, Serpents). \n\n`;
-  if (excludeMotif) {
-    prompt += `CRITICAL INSTRUCTION: You MUST NOT pick "${excludeMotif}" as the motif. You must find a completely different motif to trace.\n\n`;
+  // Instant O(1) canonical database & hashmap retrieval (sub-150ms)
+  if (onProgress) {
+    onProgress({ text: `Locating canonical motifs for ${passageRef}...`, progress: 0.35 });
   }
-  prompt += `Then, trace this motif throughout the entire biblical canon from Genesis to Revelation. Generate a JSON response with exactly this structure:
-{
-  "motif": "The identified motif (e.g., 'Water')",
-  "summary": "A 2-sentence theological synthesis of how this motif points to the larger redemptive narrative.",
-  "nodes": [
-    {
-      "era": "Creation & Patriarchs",
-      "reference": "e.g., Genesis 1:2",
-      "event": "e.g., Spirit over the waters",
-      "significance": "e.g., Creation and life from chaos"
-    },
-    {
-      "era": "Exodus & Kingdom",
-      "reference": "...",
-      "event": "...",
-      "significance": "..."
-    },
-    {
-      "era": "Prophets",
-      "reference": "...",
-      "event": "...",
-      "significance": "..."
-    },
-    {
-      "era": "Gospels",
-      "reference": "...",
-      "event": "...",
-      "significance": "..."
-    },
-    {
-      "era": "Acts & Epistles",
-      "reference": "...",
-      "event": "...",
-      "significance": "..."
-    },
-    {
-      "era": "Revelation",
-      "reference": "...",
-      "event": "...",
-      "significance": "..."
-    }
-  ]
-}
 
-Ensure all 6 eras are strictly included. Do not output anything except valid JSON.
-
-PASSAGE: ${passageRef}
-${passageText}
-`;
-
-  try {
-    if (onProgress) onProgress({ text: `Analyzing motifs in ${passageRef}...`, progress: 0.1 });
-    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], (progressMsg) => {
-      if (onProgress) {
-        onProgress(typeof progressMsg === 'object' && progressMsg ? progressMsg : { text: String(progressMsg), progress: 0.5 });
-      }
-    }, true);
-    
-    // Extract JSON block in case the LLM wrapped it in markdown
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    const jsonString = jsonMatch ? jsonMatch[0] : responseText.replace(/\`\`\`json|\`\`\`/g, '').trim();
-    
-    if (onProgress) onProgress({ text: 'Parsing typology...', progress: 0.9 });
-    const motifData = JSON.parse(jsonString) as TypologyMotif;
-    if (onProgress) onProgress({ text: 'Done.', progress: 1.0 });
-    return motifData;
-  } catch (err) {
-    console.error('Error generating typology tracker:', err);
-    throw new Error('Failed to generate typology tracker.');
+  // Smooth, snappy micro-tick for UI feedback
+  await new Promise((r) => setTimeout(r, 60));
+  if (onProgress) {
+    onProgress({ text: 'Tracing covenant trajectory across 6 biblical eras...', progress: 0.85 });
   }
+  await new Promise((r) => setTimeout(r, 60));
+
+  const result = getTypologyFromDatabase(passageRef, excludeMotif);
+  if (onProgress) {
+    onProgress({ text: 'Canonical tapestry complete.', progress: 1.0 });
+  }
+  return result;
 }

@@ -25,42 +25,49 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
   const [error, setError] = useState<string | null>(null);
   const phaseTimerRef = useRef<number | null>(null);
 
+  // Automatically load typology whenever book or chapter changes
   useEffect(() => {
-    // Reset when chapter changes
-    setMotifData(null);
+    let isMounted = true;
     setError(null);
-  }, [currentBook, currentChapter]);
+    setIsLoading(true);
+    setProgress('');
+    setProgressPercent(35);
 
-  // Phase message and progress bar ticker during loading
-  useEffect(() => {
-    if (!isLoading) {
-      if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
-      return;
-    }
-
-    let step = 0;
-    setProgressPercent(15);
-    setLoadingPhaseMessage(LOADING_PHASES[0]);
-
-    phaseTimerRef.current = window.setInterval(() => {
-      step++;
-      const nextIndex = Math.min(step, LOADING_PHASES.length - 1);
-      setLoadingPhaseMessage(LOADING_PHASES[nextIndex]);
-      setProgressPercent((prev) => {
-        if (prev >= 88) return prev;
-        return prev + Math.floor(Math.random() * 12 + 6);
+    generateTypologyTracker(
+      `${currentBook} ${currentChapter}`,
+      chapterText,
+      (p) => {
+        if (!isMounted) return;
+        if (p.text) setProgress(p.text);
+        if (typeof p.progress === 'number' && p.progress > 0) {
+          const pct = p.progress <= 1 ? p.progress * 100 : p.progress;
+          setProgressPercent(Math.min(100, Math.round(pct)));
+        }
+      }
+    )
+      .then((data) => {
+        if (!isMounted) return;
+        setProgressPercent(100);
+        setMotifData(data);
+      })
+      .catch((err: any) => {
+        if (!isMounted) return;
+        setError(err.message || 'Failed to analyze typology.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
       });
-    }, 2800);
 
     return () => {
-      if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+      isMounted = false;
     };
-  }, [isLoading]);
+  }, [currentBook, currentChapter]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (cycle: boolean = false) => {
     setIsLoading(true);
     setError(null);
     setProgress('');
+    setProgressPercent(35);
     try {
       const data = await generateTypologyTracker(
         `${currentBook} ${currentChapter}`,
@@ -68,10 +75,11 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
         (p) => {
           if (p.text) setProgress(p.text);
           if (typeof p.progress === 'number' && p.progress > 0) {
-            setProgressPercent(Math.round(p.progress * 100));
+            const pct = p.progress <= 1 ? p.progress * 100 : p.progress;
+            setProgressPercent(Math.min(100, Math.round(pct)));
           }
         },
-        motifData?.motif
+        cycle ? motifData?.motif : undefined
       );
       setProgressPercent(100);
       setMotifData(data);
@@ -100,7 +108,7 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
             Discover the deep theological themes and motifs woven throughout the biblical narrative starting from {currentBook} {currentChapter}.
           </p>
           <button 
-            onClick={handleGenerate}
+            onClick={() => handleGenerate(false)}
             className="clean-caramel-btn text-xs font-semibold px-4 py-2"
           >
             Trace Biblical Motif
@@ -221,8 +229,8 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
           </div>
 
           <div className="flex justify-center pt-2">
-             <button onClick={handleGenerate} className="text-[10px] text-[#B4793D] hover:underline font-medium uppercase tracking-wider">
-               Generate Different Motif
+             <button onClick={() => handleGenerate(true)} className="text-[10px] text-[#B4793D] hover:underline font-medium uppercase tracking-wider">
+               Explore Alternate Motif
              </button>
           </div>
         </div>

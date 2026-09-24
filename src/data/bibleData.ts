@@ -351,6 +351,15 @@ export const BIBLE_BOOKS: BibleBook[] = [
   { id: 'zechariah', name: 'Zechariah', abbreviation: 'Zec', testament: 'OT', category: 'Minor Prophets', chaptersCount: 14, author: 'Zechariah', dateWritten: 'c. 520 BC', theme: 'Visions of the Messianic King and Future Glory', keyVerse: 'Zechariah 9:9' },
   { id: 'malachi', name: 'Malachi', abbreviation: 'Mal', testament: 'OT', category: 'Minor Prophets', chaptersCount: 4, author: 'Malachi', dateWritten: 'c. 430 BC', theme: 'Call to Faithfulness and the Coming Messenger of the Covenant', keyVerse: 'Malachi 4:2' },
 
+  // Deuterocanonical / Apocrypha (Catholic & Orthodox Canon)
+  { id: 'tobit', name: 'Tobit', abbreviation: 'Tob', testament: 'OT', category: 'History', chaptersCount: 14, author: 'Tobit / Tobias', dateWritten: 'c. 200 BC', theme: 'Faithfulness in Exile, Angelic Guidance, and Divine Healing', keyVerse: 'Tobit 12:15' },
+  { id: 'judith', name: 'Judith', abbreviation: 'Jdt', testament: 'OT', category: 'History', chaptersCount: 16, author: 'Unknown', dateWritten: 'c. 150 BC', theme: 'Courageous Faith, Overcoming Oppression, and Victory by a Woman', keyVerse: 'Judith 13:18' },
+  { id: 'wisdom', name: 'Wisdom of Solomon', abbreviation: 'Wis', testament: 'OT', category: 'Wisdom', chaptersCount: 19, author: 'Solomon (traditional) / Hellenistic Sage', dateWritten: 'c. 50 BC', theme: 'The Immortality of the Soul, Divine Wisdom, and the Righteous Sufferer', keyVerse: 'Wisdom 2:12-20' },
+  { id: 'sirach', name: 'Sirach', abbreviation: 'Sir', testament: 'OT', category: 'Wisdom', chaptersCount: 51, author: 'Jesus ben Sira', dateWritten: 'c. 180 BC', theme: 'Living Wisdom Grounded in the Fear of the Lord and Sacred Tradition', keyVerse: 'Sirach 24:8-10' },
+  { id: 'baruch', name: 'Baruch', abbreviation: 'Bar', testament: 'OT', category: 'Major Prophets', chaptersCount: 6, author: 'Baruch son of Neriah', dateWritten: 'c. 150 BC', theme: 'Repentance in Exile, Divine Wisdom on Earth, and Restoration of Jerusalem', keyVerse: 'Baruch 3:37' },
+  { id: '1maccabees', name: '1 Maccabees', abbreviation: '1Ma', testament: 'OT', category: 'History', chaptersCount: 16, author: 'Jewish Historian', dateWritten: 'c. 100 BC', theme: 'Zeal for the Covenant, the Maccabean Revolt, and Temple Purification', keyVerse: '1 Maccabees 4:56-59' },
+  { id: '2maccabees', name: '2 Maccabees', abbreviation: '2Ma', testament: 'OT', category: 'History', chaptersCount: 15, author: 'Jason of Cyrene / Epitomist', dateWritten: 'c. 120 BC', theme: 'The Seven Holy Martyrs, Bodily Resurrection, and Prayers for the Dead', keyVerse: '2 Maccabees 7:9' },
+
   // New Testament (40–66)
   { id: 'matthew', name: 'Matthew', abbreviation: 'Mat', testament: 'NT', category: 'Gospels', chaptersCount: 28, author: 'Matthew', dateWritten: 'c. AD 60–70', theme: 'Jesus as King and Fulfillment of Prophecy', keyVerse: 'Matthew 28:19-20' },
   { id: 'mark', name: 'Mark', abbreviation: 'Mrk', testament: 'NT', category: 'Gospels', chaptersCount: 16, author: 'John Mark', dateWritten: 'c. AD 55–65', theme: 'Jesus as the Suffering Servant who Gives His Life', keyVerse: 'Mark 10:45' },
