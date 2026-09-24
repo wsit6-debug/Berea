@@ -793,7 +793,7 @@ export async function getAccumulatedBookQuiz(
   return finalQuestions.slice(0, numQuestions);
 }
 
-export { TYPOLOGY_CHAPTER_HASHMAP, getTypologyFromDatabase } from '../data/typologyDatabase';
+export { TYPOLOGY_CHAPTER_HASHMAP, getTypologyFromDatabase, hasAlternateMotif } from '../data/typologyDatabase';
 
 export async function generateTypologyTracker(
   passageRef: string,

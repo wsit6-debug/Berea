@@ -542,7 +542,7 @@ export function getTypologyFromDatabase(passageRef: string, excludeMotif?: strin
   // Try several canonical key variations (e.g. 'genesis_14', '1_samuel_3', '1samuel_3')
   const keysToTry = [
     clean.replace(/[^a-z0-9]+/g, '_'),
-    clean.replace(/^([0-9])\s+/, '').replace(/[^a-z0-9]+/g, '_')
+    clean.replace(/^([0-9])\s+/, '$1').replace(/[^a-z0-9]+/g, '_')
   ];
 
   for (const k of keysToTry) {
@@ -568,3 +568,27 @@ export function getTypologyFromDatabase(passageRef: string, excludeMotif?: strin
   const genre = getGenreForBook(bookName);
   return TYPOLOGY_GENRE_HASHMAP[genre] || TYPOLOGY_GENRE_HASHMAP['gospels'];
 }
+
+/**
+ * Returns true if a given passage reference has more than one motif in the database.
+ */
+export function hasAlternateMotif(passageRef: string, currentMotif?: string): boolean {
+  const clean = passageRef.trim().toLowerCase();
+  const keysToTry = [
+    clean.replace(/[^a-z0-9]+/g, '_'),
+    clean.replace(/^([0-9])\s+/, '$1').replace(/[^a-z0-9]+/g, '_')
+  ];
+
+  for (const k of keysToTry) {
+    const chapterMatches = TYPOLOGY_CHAPTER_HASHMAP[k];
+    if (chapterMatches && chapterMatches.length > 1) {
+      if (currentMotif) {
+        return chapterMatches.some(m => m.motif.toLowerCase() !== currentMotif.toLowerCase());
+      }
+      return true;
+    }
+  }
+
+  return false;
+}
+

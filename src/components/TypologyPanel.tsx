@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Network, Search, Loader2, Sparkles, BookOpen } from 'lucide-react';
-import { generateTypologyTracker } from '../services/aiService';
+import { generateTypologyTracker, hasAlternateMotif } from '../services/aiService';
 import { TypologyMotif } from '../types';
 
 interface TypologyPanelProps {
@@ -228,11 +228,13 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
             ))}
           </div>
 
-          <div className="flex justify-center pt-2">
-             <button onClick={() => handleGenerate(true)} className="text-[10px] text-[#B4793D] hover:underline font-medium uppercase tracking-wider">
-               Explore Alternate Motif
-             </button>
-          </div>
+          {hasAlternateMotif(`${currentBook} ${currentChapter}`, motifData.motif) && (
+            <div className="flex justify-center pt-2">
+               <button onClick={() => handleGenerate(true)} className="text-[10px] text-[#B4793D] hover:underline font-medium uppercase tracking-wider">
+                 Explore Alternate Motif
+               </button>
+            </div>
+          )}
         </div>
       )}
     </div>
