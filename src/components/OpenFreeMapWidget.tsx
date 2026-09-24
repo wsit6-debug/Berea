@@ -299,7 +299,14 @@ function escapeHtml(str: string | number | undefined): string {
       className={`openfreemap-card relative rounded-2xl overflow-hidden border shadow-[0_4px_20px_rgba(180,160,140,0.08)] transition-all duration-300 ${isExpanded ? 'fixed inset-4 z-50 bg-white flex flex-col shadow-2xl' : ''}`}
     >
       {/* Top Map Control Bar */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 z-[1000] flex items-center justify-between gap-2 pointer-events-none">
+      <div 
+        className="absolute z-[1000] flex items-center justify-between gap-2 pointer-events-none"
+        style={{
+          top: '0.625rem',
+          left: '0.625rem',
+          right: '0.625rem'
+        }}
+      >
         {/* Active Chapter Badge */}
         <div 
           style={{

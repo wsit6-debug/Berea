@@ -13,13 +13,7 @@ import {
   Sparkles,
   Trash2,
   Plus,
-  Lock,
-  KeyRound,
-  Eye,
-  EyeOff,
-  Mail,
-  ArrowLeft,
-  CheckCircle2
+  Lock
 } from 'lucide-react';
 import {
   ThemeConfig,
@@ -31,7 +25,7 @@ import {
 } from '../services/themeService';
 import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
 
-export type SettingsTab = 'theme' | 'feedback' | 'password';
+export type SettingsTab = 'theme' | 'feedback';
 
 export interface SettingsWidgetProps {
   onOpenThemeStudio: () => void;
@@ -57,17 +51,6 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
     } catch {}
     return [];
   });
-
-  // Password tab state
-  const [isForgotMode, setIsForgotMode] = useState(false);
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [recoveryEmail, setRecoveryEmail] = useState('');
-  const [showOldPass, setShowOldPass] = useState(false);
-  const [showNewPass, setShowNewPass] = useState(false);
-  const [showConfirmPass, setShowConfirmPass] = useState(false);
-  const [passwordStatusMsg, setPasswordStatusMsg] = useState<string | null>(null);
 
   const popoverRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -164,38 +147,6 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
     } catch {}
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isForgotMode) {
-      if (!recoveryEmail) {
-        setPasswordStatusMsg('Please enter your recovery email address.');
-        return;
-      }
-      setPasswordStatusMsg('Password reset instructions sent to ' + recoveryEmail + ' (Preview)');
-      setTimeout(() => setPasswordStatusMsg(null), 4000);
-      return;
-    }
-
-    if (!oldPassword) {
-      setPasswordStatusMsg('Please provide your current password or use Forgot Password.');
-      return;
-    }
-    if (!newPassword || newPassword.length < 6) {
-      setPasswordStatusMsg('New password must be at least 6 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordStatusMsg('New passwords do not match.');
-      return;
-    }
-
-    setPasswordStatusMsg('Password updated successfully! (Concept Preview)');
-    setOldPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setPasswordStatusMsg(null), 3500);
-  };
-
   const isOriginalThemeActive =
     currentTheme.accentHex?.toUpperCase() === DEFAULT_THEME.accentHex?.toUpperCase() &&
     (currentTheme.bgMode === 'warm' || currentTheme.bgHex === '#FAF7F2');
@@ -287,7 +238,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
                   Settings
                 </h3>
                 <p className="text-[11px] text-[var(--clean-text-secondary,#78716C)] leading-tight mt-0.5">
-                  Theme, Feedback & Password Security
+                  Color Scheme & Pastoral Feedback
                 </p>
               </div>
             </div>
@@ -303,9 +254,9 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
             </button>
           </div>
 
-          {/* Fixed Height 3-Tab Navigation: Theme | Feedback | Password */}
+          {/* Fixed Height 2-Tab Navigation: Color Scheme | Feedback */}
           <div
-            className="flex items-center p-1.5 border-b gap-1 shrink-0"
+            className="flex items-center p-1.5 border-b gap-1.5 shrink-0"
             style={{
               borderColor: 'var(--clean-accent-border, #EBE5DC)',
               backgroundColor: 'var(--clean-surface, #FFFFFF)',
@@ -315,44 +266,31 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('theme')}
-              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
                 activeTab === 'theme'
                   ? 'border-[var(--clean-accent-border-strong,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-dark,#78471F)] shadow-2xs'
                   : 'border-transparent text-[var(--clean-text-secondary,#78716C)] hover:bg-[var(--clean-surface-warm,#FAF5ED)]'
               }`}
             >
-              <Palette className="w-3.5 h-3.5 shrink-0" />
-              <span>Theme</span>
+              <Palette className="w-3.5 h-3.5" />
+              <span>Color Scheme</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('feedback')}
-              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
                 activeTab === 'feedback'
                   ? 'border-[var(--clean-accent-border-strong,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-dark,#78471F)] shadow-2xs'
                   : 'border-transparent text-[var(--clean-text-secondary,#78716C)] hover:bg-[var(--clean-surface-warm,#FAF5ED)]'
               }`}
             >
-              <MessageSquareHeart className="w-3.5 h-3.5 shrink-0" />
+              <MessageSquareHeart className="w-3.5 h-3.5" />
               <span>Feedback</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('password')}
-              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
-                activeTab === 'password'
-                  ? 'border-[var(--clean-accent-border-strong,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-dark,#78471F)] shadow-2xs'
-                  : 'border-transparent text-[var(--clean-text-secondary,#78716C)] hover:bg-[var(--clean-surface-warm,#FAF5ED)]'
-              }`}
-            >
-              <KeyRound className="w-3.5 h-3.5 shrink-0" />
-              <span>Password</span>
             </button>
           </div>
 
-          {/* Content Area - Takes remaining height identically across all tabs */}
+          {/* Content Area - Takes remaining height identically across both tabs */}
           <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3.5 space-y-3.5">
             {/* TAB 1: COLOR SCHEME */}
             {activeTab === 'theme' && (
@@ -619,220 +557,6 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
                   Contact: <span className="font-mono text-[10px] text-[var(--clean-accent-caramel,#B4793D)]">{FEEDBACK_CONFIG.contactEmail}</span>
                 </div>
               </div>
-            )}
-
-            {/* TAB 3: PASSWORD & SECURITY */}
-            {activeTab === 'password' && (
-              <form onSubmit={handlePasswordSubmit} className="space-y-3 flex flex-col h-full justify-between pb-1">
-                <div className="space-y-3">
-                  <div
-                    className="p-3 rounded-xl border space-y-1"
-                    style={{
-                      backgroundColor: 'var(--clean-surface-warm, #FAF5ED)',
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <KeyRound className="w-4 h-4 text-[var(--clean-accent-caramel,#B4793D)]" />
-                        <span className="font-semibold text-xs">
-                          {isForgotMode ? 'Account Recovery' : 'Change Password'}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono font-semibold text-[var(--clean-accent-caramel,#B4793D)] bg-[var(--clean-surface,#FFFFFF)] px-1.5 py-0.5 rounded border border-[var(--clean-accent-border,#EBE5DC)]">
-                        Concept Preview
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-[var(--clean-text-secondary,#78716C)] leading-tight">
-                      {isForgotMode
-                        ? 'Lost your current password? Request a secure reset token below.'
-                        : 'Provide your current password to set a new password, or use account recovery.'}
-                    </p>
-                  </div>
-
-                  {passwordStatusMsg && (
-                    <div
-                      className="p-2.5 rounded-xl border text-xs flex items-center gap-2 animate-fadeIn"
-                      style={{
-                        backgroundColor: passwordStatusMsg.includes('successfully') || passwordStatusMsg.includes('sent')
-                          ? '#F0FDF4'
-                          : '#FEF2F2',
-                        borderColor: passwordStatusMsg.includes('successfully') || passwordStatusMsg.includes('sent')
-                          ? '#BBF7D0'
-                          : '#FECACA',
-                        color: passwordStatusMsg.includes('successfully') || passwordStatusMsg.includes('sent')
-                          ? '#15803D'
-                          : '#B91C1C'
-                      }}
-                    >
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      <span>{passwordStatusMsg}</span>
-                    </div>
-                  )}
-
-                  {!isForgotMode ? (
-                    /* NORMAL CHANGE PASSWORD FIELDS */
-                    <div className="space-y-2.5">
-                      {/* Old Password */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="text-[11px] font-semibold text-[var(--clean-text-secondary,#78716C)]">
-                            Current Password
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsForgotMode(true);
-                              setPasswordStatusMsg(null);
-                            }}
-                            className="text-[11px] font-semibold text-[var(--clean-accent-caramel,#B4793D)] hover:underline cursor-pointer"
-                          >
-                            Forgot password?
-                          </button>
-                        </div>
-                        <div className="relative flex items-center">
-                          <input
-                            type={showOldPass ? 'text' : 'password'}
-                            value={oldPassword}
-                            onChange={e => setOldPassword(e.target.value)}
-                            placeholder="Enter current password"
-                            className="w-full text-xs px-3 py-2 pr-9 rounded-xl border outline-none transition-colors"
-                            style={{
-                              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                              borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                              color: 'var(--clean-text-primary, #26221F)'
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowOldPass(!showOldPass)}
-                            className="absolute right-2.5 text-[var(--clean-text-secondary,#78716C)] hover:text-[var(--clean-text-primary,#26221F)] cursor-pointer"
-                            title={showOldPass ? 'Hide' : 'Show'}
-                          >
-                            {showOldPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* New Password */}
-                      <div>
-                        <label className="block text-[11px] font-semibold text-[var(--clean-text-secondary,#78716C)] mb-1">
-                          New Password
-                        </label>
-                        <div className="relative flex items-center">
-                          <input
-                            type={showNewPass ? 'text' : 'password'}
-                            value={newPassword}
-                            onChange={e => setNewPassword(e.target.value)}
-                            placeholder="Enter at least 6 characters"
-                            className="w-full text-xs px-3 py-2 pr-9 rounded-xl border outline-none transition-colors"
-                            style={{
-                              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                              borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                              color: 'var(--clean-text-primary, #26221F)'
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowNewPass(!showNewPass)}
-                            className="absolute right-2.5 text-[var(--clean-text-secondary,#78716C)] hover:text-[var(--clean-text-primary,#26221F)] cursor-pointer"
-                            title={showNewPass ? 'Hide' : 'Show'}
-                          >
-                            {showNewPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Confirm New Password */}
-                      <div>
-                        <label className="block text-[11px] font-semibold text-[var(--clean-text-secondary,#78716C)] mb-1">
-                          Confirm New Password
-                        </label>
-                        <div className="relative flex items-center">
-                          <input
-                            type={showConfirmPass ? 'text' : 'password'}
-                            value={confirmPassword}
-                            onChange={e => setConfirmPassword(e.target.value)}
-                            placeholder="Re-enter new password"
-                            className="w-full text-xs px-3 py-2 pr-9 rounded-xl border outline-none transition-colors"
-                            style={{
-                              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                              borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                              color: 'var(--clean-text-primary, #26221F)'
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPass(!showConfirmPass)}
-                            className="absolute right-2.5 text-[var(--clean-text-secondary,#78716C)] hover:text-[var(--clean-text-primary,#26221F)] cursor-pointer"
-                            title={showConfirmPass ? 'Hide' : 'Show'}
-                          >
-                            {showConfirmPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    /* FORGOT PASSWORD SECTION */
-                    <div className="space-y-3 animate-fadeIn">
-                      <div>
-                        <label className="block text-[11px] font-semibold text-[var(--clean-text-secondary,#78716C)] mb-1">
-                          Account Email or Username
-                        </label>
-                        <div className="relative flex items-center">
-                          <input
-                            type="email"
-                            value={recoveryEmail}
-                            onChange={e => setRecoveryEmail(e.target.value)}
-                            placeholder="name@church.org"
-                            className="w-full text-xs px-3 py-2 pr-8 rounded-xl border outline-none transition-colors"
-                            style={{
-                              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                              borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                              color: 'var(--clean-text-primary, #26221F)'
-                            }}
-                          />
-                          <Mail className="absolute right-2.5 w-3.5 h-3.5 text-[var(--clean-text-secondary,#78716C)] pointer-events-none" />
-                        </div>
-                        <p className="text-[10px] text-[var(--clean-text-secondary,#78716C)] mt-1">
-                          A 6-digit verification code will be dispatched to verify pastoral identity.
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsForgotMode(false);
-                          setPasswordStatusMsg(null);
-                        }}
-                        className="text-xs font-semibold text-[var(--clean-text-secondary,#78716C)] hover:text-[var(--clean-text-primary,#26221F)] flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <ArrowLeft className="w-3 h-3" />
-                        <span>Back to provide old password</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-[var(--clean-accent-border,#EBE5DC)]">
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 border"
-                    style={{
-                      backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
-                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
-                      color: 'var(--clean-accent-contrast-text, #FFFFFF)'
-                    }}
-                  >
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>{isForgotMode ? 'Send Recovery Link' : 'Update Password'}</span>
-                  </button>
-
-                  <p className="text-[10px] text-center text-[var(--clean-text-secondary,#78716C)]">
-                    Local authentication credential simulation.
-                  </p>
-                </div>
-              </form>
             )}
           </div>
         </div>

@@ -1561,28 +1561,53 @@ ${noteText}
       </div>
 
       {/* 4. MAIN NOTE EDITOR AREA */}
-      <div className="flex-1 flex flex-col p-3 gap-2 overflow-hidden bg-white">
-        {/* Note Title Input */}
-        <input
-          type="text"
-          value={activeTab?.title || ''}
-          onChange={e => handleTitleChange(e.target.value)}
-          placeholder="Title of this note..."
-          className="w-full text-base font-bold text-[#26221F] bg-transparent border-b border-transparent hover:border-stone-200 pb-1 outline-none transition-colors"
-          style={{
-            fontFamily: currentFontConfig.cssFamily,
-            borderColor: 'transparent'
-          }}
+      <div 
+        className="flex-1 flex flex-col p-3 gap-2.5 overflow-hidden"
+        style={{ backgroundColor: 'var(--clean-surface-subtle, #FAF8F5)' }}
+      >
+        {/* Header Section: Outlined Title Input + Context Metadata */}
+        <div className="flex flex-col gap-1.5 shrink-0">
+          <input
+            type="text"
+            value={activeTab?.title || ''}
+            onChange={e => handleTitleChange(e.target.value)}
+            placeholder="Title of this note..."
+            className="w-full px-3 py-2 text-base sm:text-lg font-bold text-[#26221F] bg-white border rounded-lg outline-none transition-all shadow-2xs focus:ring-2 focus:ring-[var(--clean-accent-caramel,#B4793D)]/25"
+            style={{
+              borderColor: 'var(--clean-accent-border, #DCD5C9)',
+              borderWidth: '1.5px',
+              fontFamily: currentFontConfig.cssFamily
+            }}
+          />
+          <div className="flex items-center justify-between text-[11px] text-[var(--clean-text-secondary,#78716C)] px-1">
+            <span className="font-semibold text-[var(--clean-accent-caramel,#B4793D)] flex items-center gap-1">
+              <span>📖</span>
+              <span>{activeTab?.book && activeTab?.chapter ? `${activeTab.book} ${activeTab.chapter} Journal` : 'General Journal'}</span>
+            </span>
+            <span className="text-[10px] font-mono opacity-60">
+              {activeTab?.updatedAt ? new Date(activeTab.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+            </span>
+          </div>
+        </div>
+
+        {/* Clear Separation Line between Header and Writing Space */}
+        <div
+          className="w-full border-b shrink-0"
+          style={{ borderColor: 'var(--clean-accent-border, #E2D9CC)' }}
         />
 
-        {/* Rich Text Editor or Preview */}
-        <div className="flex-1 relative min-h-0 flex flex-col">
+        {/* Outlined Writing Space: Clearly framed box where the user writes */}
+        <div
+          className="flex-1 min-h-0 flex flex-col rounded-xl border bg-white shadow-2xs overflow-hidden transition-colors"
+          style={{
+            borderColor: 'var(--clean-accent-border, #DCD5C9)',
+            borderWidth: '1.5px'
+          }}
+        >
           {isPreviewMode ? (
             <div
-              className="w-full h-full overflow-y-auto custom-scrollbar p-2 rounded-lg border select-text"
+              className="w-full h-full overflow-y-auto custom-scrollbar p-3.5 select-text"
               style={{
-                backgroundColor: 'var(--clean-highlight-cream, #FAF8F5)',
-                borderColor: 'var(--clean-accent-border, #EBE5DC)',
                 fontFamily: currentFontConfig.cssFamily,
                 fontSize: currentSizeConfig.cssSize
               }}
@@ -1594,11 +1619,11 @@ ${noteText}
               )}
             </div>
           ) : (
-            <div className="relative w-full h-full flex flex-col">
+            <div className="relative w-full h-full flex flex-col p-3.5">
               {/* Quick Outline Starter Banner for Empty Notes */}
               {(!activeTab?.content || activeTab.content.trim() === '') && (
                 <div
-                  className="mb-2 p-2 rounded-lg border flex items-center justify-between gap-2 select-none animate-fadeIn"
+                  className="mb-2 p-2 rounded-lg border flex items-center justify-between gap-2 select-none animate-fadeIn shrink-0"
                   style={{
                     backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
                     borderColor: 'var(--clean-accent-border, #EBE5DC)'

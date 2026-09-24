@@ -138,11 +138,23 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-16 p-3 sm:p-4 bg-black/30 backdrop-blur-xl animate-fadeIn select-none">
-      <div className="bg-white border border-[#EBE5DC] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_20px_50px_rgba(180,160,140,0.2)]">
+      <div 
+        className="bg-white border rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_20px_50px_rgba(180,160,140,0.2)]"
+        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+      >
         {/* Spotlight Search Bar with Integrated Translation Selector */}
-        <div className="p-3 sm:p-3.5 bg-[#FAF7F2] border-b border-[#EBE5DC] flex items-center gap-3 rounded-t-2xl relative z-30">
-          <div className="flex-1 flex items-center gap-2.5 bg-white border border-[#EBE5DC] rounded-xl px-3 py-1.5 focus-within:border-[#D4A373] shadow-xs">
-            <Search className="w-4 h-4 text-[#B4793D] shrink-0" />
+        <div 
+          className="p-3 sm:p-3.5 border-b flex items-center gap-3 rounded-t-2xl relative z-30"
+          style={{
+            backgroundColor: 'var(--clean-surface-subtle, #FAF7F2)',
+            borderBottomColor: 'var(--clean-accent-border, #EBE5DC)'
+          }}
+        >
+          <div 
+            className="flex-1 flex items-center gap-2.5 bg-white border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-[var(--clean-accent-caramel,#B4793D)]/30 shadow-xs transition-all"
+            style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+          >
+            <Search className="w-4 h-4 shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
             <input
               type="text"
               autoFocus
@@ -154,7 +166,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="text-xs text-[#A8A29E] hover:text-[#26221F] px-1"
+                className="text-xs text-[#A8A29E] hover:text-[#26221F] px-1 cursor-pointer"
               >
                 Clear
               </button>
@@ -165,11 +177,19 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           <div className="relative shrink-0" ref={translationDropdownRef}>
             <button
               onClick={() => setShowTranslationDropdown((prev) => !prev)}
-              className="ios-glass-btn !text-xs !py-1.5 !px-2.5 flex items-center gap-1.5 border border-[#EBE5DC] hover:border-[#D4A373] shadow-xs cursor-pointer bg-white"
+              className="ios-glass-btn !text-xs !py-1.5 !px-2.5 flex items-center gap-1.5 border shadow-xs cursor-pointer bg-white"
+              style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
               title="Change search translation"
             >
               <span className="font-bold text-[#26221F]">{searchTranslation}</span>
-              <span className="hidden sm:inline text-[9.5px] px-1.5 py-0.2 rounded bg-[#FAF5ED] text-[#B4793D] font-medium border border-[#EBE5DC]">
+              <span 
+                className="hidden sm:inline text-[9.5px] px-1.5 py-0.2 rounded font-medium border"
+                style={{
+                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                  color: 'var(--clean-accent-dark, #B4793D)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 {TRANSLATIONS.find(t => t.id === searchTranslation && t.approvedDenominations.includes(activeLens)) ? 'Approved' : 'All'}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />
@@ -177,12 +197,25 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
             {/* Translation Selection Menu (Anchored & Cleanly Positioned) */}
             {showTranslationDropdown && (
-              <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-white border border-[#EBE5DC] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 p-3 space-y-2.5 animate-fadeIn flex flex-col">
+              <div 
+                className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-white border rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-50 p-3 space-y-2.5 animate-fadeIn flex flex-col"
+                style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+              >
                 {/* Header with Title and Toggle */}
-                <div className="flex items-center justify-between border-b border-[#EBE5DC] pb-2 px-1">
+                <div 
+                  className="flex items-center justify-between border-b pb-2 px-1"
+                  style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-[#26221F]">Search Translation</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FAF5ED] text-[#B4793D] font-medium border border-[#EBE5DC]">
+                    <span 
+                      className="text-[10px] px-1.5 py-0.5 rounded font-medium border"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        color: 'var(--clean-accent-dark, #B4793D)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
                       {showAllTranslations ? `All (${TRANSLATIONS.length})` : `${currentDenomConfig?.traditionGroup || 'Approved'} (${approvedTranslations.length})`}
                     </span>
                   </div>
@@ -191,15 +224,24 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                       e.stopPropagation();
                       setShowAllTranslations((prev) => !prev);
                     }}
-                    className="text-[10.5px] text-[#B4793D] hover:text-[#78471F] font-semibold cursor-pointer px-2 py-0.5 rounded-md hover:bg-[#FAF5ED] transition-colors"
+                    className="text-[10.5px] font-semibold cursor-pointer px-2 py-0.5 rounded-md transition-colors"
+                    style={{
+                      color: 'var(--clean-accent-caramel, #B4793D)'
+                    }}
                   >
                     {showAllTranslations ? '← View Approved Only' : 'Show All (21) →'}
                   </button>
                 </div>
 
                 {/* Quick Translation Search Filter with Integrated Search Icon */}
-                <div className="flex items-center gap-2 bg-[#FAF7F2] border border-[#EBE5DC] rounded-lg px-2.5 py-1.5 focus-within:border-[#D4A373]">
-                  <Search className="w-3.5 h-3.5 text-[#B4793D] shrink-0" />
+                <div 
+                  className="flex items-center gap-2 border rounded-lg px-2.5 py-1.5"
+                  style={{
+                    backgroundColor: 'var(--clean-surface-subtle, #FAF7F2)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
+                  <Search className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                   <input
                     type="text"
                     value={translationSearch}
@@ -290,7 +332,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         </div>
 
         {/* Filter Sub-bar: Category Tabs */}
-        <div className="px-4 py-2 bg-white border-b border-[#EBE5DC] flex items-center justify-between gap-2 relative z-20">
+        <div 
+          className="px-4 py-2 bg-white border-b flex items-center justify-between gap-2 relative z-20"
+          style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
+        >
           <div className="ios-segmented-capsule">
             <button
               onClick={() => setFilterCategory('ALL')}
@@ -325,8 +370,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
         {/* Quick Suggestion Chips */}
         {!cleanQuery && (
-          <div className="p-4 space-y-2 bg-[#FAF7F2]">
-            <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider block">
+          <div 
+            className="p-4 space-y-2"
+            style={{ backgroundColor: 'var(--clean-surface-subtle, #FAF7F2)' }}
+          >
+            <span 
+              className="text-[10px] font-bold uppercase tracking-wider block"
+              style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+            >
               Suggested Searches
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -334,7 +385,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 <button
                   key={chip}
                   onClick={() => setQuery(chip)}
-                  className="ios-glass-btn text-xs py-1 px-2.5 hover:border-[#D4A373] hover:text-[#B4793D]"
+                  className="ios-glass-btn text-xs py-1 px-2.5 transition-all shadow-2xs cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-border-soft, #EBE5DC)'
+                  }}
                 >
                   {chip}
                 </button>
@@ -347,7 +402,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         <div className="flex-1 overflow-y-auto p-3.5 space-y-4 custom-scrollbar bg-white select-text rounded-b-2xl">
           {isSearching && verseResults.length === 0 && (
             <div className="py-12 flex flex-col items-center justify-center text-[#78716C] text-xs gap-2">
-              <RefreshCw className="w-4 h-4 animate-spin text-[#B4793D]" />
+              <RefreshCw className="w-4 h-4 animate-spin" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
               <span>Searching full Scripture in {searchTranslation}...</span>
             </div>
           )}
@@ -355,8 +410,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           {(filterCategory === 'ALL' || filterCategory === 'SCRIPTURE') && verseResults.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1">
-                  <BookOpen className="w-3 h-3 text-[#B4793D]" />
+                <span 
+                  className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                  style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+                >
+                  <BookOpen className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                   Scripture Passages ({verseResults.length} matches in {searchTranslation})
                 </span>
               </div>
@@ -368,14 +426,15 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                       onNavigateToPassage(v.bookId, v.chapterNum, v.verseNum);
                       onClose();
                     }}
-                    className="p-2.5 rounded-xl bg-white hover:bg-[#FAF5ED] border border-[#EBE5DC] hover:border-[#D4A373] cursor-pointer transition-colors space-y-1 group shadow-xs"
+                    className="p-2.5 rounded-xl bg-white border cursor-pointer transition-colors space-y-1 group shadow-xs hover:bg-[var(--clean-surface-warm,#FAF5ED)]"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-xs text-[#26221F] group-hover:text-[#78471F] flex items-center gap-1">
+                      <span className="font-semibold text-xs text-[#26221F] group-hover:text-[var(--clean-accent-dark,#78471F)] flex items-center gap-1">
                         <span>{v.bookName} {v.chapterNum}:{v.verseNum}</span>
                         <span className="text-[9.5px] text-[#A8A29E] font-mono">({v.translation})</span>
                       </span>
-                      <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E] group-hover:text-[#B4793D] transition-transform group-hover:translate-x-0.5" />
+                      <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-transform group-hover:translate-x-0.5" />
                     </div>
                     <p className="font-scripture text-xs text-[#38332E] leading-relaxed">
                       {highlightMatch(v.text, cleanQuery)}
@@ -389,8 +448,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           {/* Places Results */}
           {(filterCategory === 'ALL' || filterCategory === 'MAPS') && geoResults.length > 0 && (
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1 px-1">
-                <MapPin className="w-3 h-3 text-[#B4793D]" />
+              <span 
+                className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 px-1"
+                style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+              >
+                <MapPin className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                 Historical Atlas ({geoResults.length})
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -406,7 +468,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                       }
                       onClose();
                     }}
-                    className="p-3 rounded-xl bg-white hover:bg-[#FAF5ED] border border-[#EBE5DC] hover:border-[#D4A373] cursor-pointer transition-colors flex flex-col justify-between shadow-xs"
+                    className="p-3 rounded-xl bg-white border cursor-pointer transition-colors flex flex-col justify-between shadow-xs hover:bg-[var(--clean-surface-warm,#FAF5ED)]"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
                   >
                     <div>
                       <div className="font-semibold text-xs text-[#26221F]">{loc.name}</div>
@@ -422,8 +485,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           {/* Theology Results */}
           {(filterCategory === 'ALL' || filterCategory === 'THEOLOGY') && theologyResults.length > 0 && (
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1 px-1">
-                <Sparkles className="w-3 h-3 text-[#B4793D]" />
+              <span 
+                className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 px-1"
+                style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+              >
+                <Sparkles className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                 Theological Topics ({theologyResults.length})
               </span>
               <div className="space-y-1.5">
@@ -437,9 +503,15 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                       }
                       onClose();
                     }}
-                    className="p-3 rounded-xl bg-white hover:bg-[#FAF5ED] border border-[#EBE5DC] hover:border-[#D4A373] cursor-pointer transition-colors shadow-xs"
+                    className="p-3 rounded-xl bg-white border cursor-pointer transition-colors shadow-xs hover:bg-[var(--clean-surface-warm,#FAF5ED)]"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
                   >
-                    <div className="font-semibold text-xs text-[#B4793D] mb-0.5">{t.passageRef}</div>
+                    <div 
+                      className="font-semibold text-xs mb-0.5"
+                      style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
+                    >
+                      {t.passageRef}
+                    </div>
                     <p className="text-xs text-[#78716C] line-clamp-2 leading-relaxed">{t.conciseOverview}</p>
                   </div>
                 ))}

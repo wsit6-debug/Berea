@@ -86,9 +86,15 @@ export const BookSelectorModal: React.FC<BookSelectorModalProps> = ({
           className="p-3 border-b flex flex-col sm:flex-row gap-2"
         >
           {/* Search */}
-          <div className="relative flex-1">
+          <div 
+            className="flex-1 flex items-center gap-2 rounded-full border px-3 py-1.5 transition-colors focus-within:ring-1 focus-within:ring-[var(--clean-accent-caramel,#B4793D)]/40 shadow-2xs"
+            style={{
+              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)'
+            }}
+          >
             <Search 
-              className="w-3.5 h-3.5 absolute left-3 top-2.5" 
+              className="w-3.5 h-3.5 shrink-0" 
               style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
             />
             <input
@@ -97,12 +103,20 @@ export const BookSelectorModal: React.FC<BookSelectorModalProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                borderColor: 'var(--clean-accent-border, #EBE5DC)',
                 color: 'var(--clean-text-primary, #26221F)'
               }}
-              className="w-full border rounded-full pl-8 pr-3 py-1.5 text-xs placeholder-[var(--clean-text-secondary,#A8A29E)] focus:outline-none transition-colors"
+              className="flex-1 bg-transparent text-xs placeholder-[var(--clean-text-secondary,#A8A29E)] focus:outline-none min-w-0"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-[11px] text-stone-400 hover:text-stone-700 px-1 cursor-pointer select-none"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           {/* Testament Toggle */}
