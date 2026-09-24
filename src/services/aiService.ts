@@ -857,7 +857,9 @@ ${passageText}
   try {
     if (onProgress) onProgress({ text: `Analyzing motifs in ${passageRef}...`, progress: 0.1 });
     const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], (progressMsg) => {
-      if (onProgress) onProgress({ text: progressMsg, progress: 0.5 });
+      if (onProgress) {
+        onProgress(typeof progressMsg === 'object' && progressMsg ? progressMsg : { text: String(progressMsg), progress: 0.5 });
+      }
     }, true);
     
     // Extract JSON block in case the LLM wrapped it in markdown

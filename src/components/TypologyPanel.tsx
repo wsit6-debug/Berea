@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Network, Search, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Network, Search, Loader2, Sparkles, BookOpen } from 'lucide-react';
 import { generateTypologyTracker } from '../services/aiService';
 import { TypologyMotif } from '../types';
 
@@ -9,11 +9,21 @@ interface TypologyPanelProps {
   chapterText: string;
 }
 
+const LOADING_PHASES = [
+  'Detecting symbolic motifs and covenant themes...',
+  'Tracing Old Testament types & shadowy promises...',
+  'Unfolding Christological climax in the Gospels...',
+  'Mapping canonical trajectory to New Creation...'
+];
+
 const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapter, chapterText }) => {
   const [motifData, setMotifData] = useState<TypologyMotif | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState('');
+  const [progressPercent, setProgressPercent] = useState(15);
+  const [loadingPhaseMessage, setLoadingPhaseMessage] = useState(LOADING_PHASES[0]);
   const [error, setError] = useState<string | null>(null);
+  const phaseTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Reset when chapter changes
@@ -21,11 +31,49 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
     setError(null);
   }, [currentBook, currentChapter]);
 
+  // Phase message and progress bar ticker during loading
+  useEffect(() => {
+    if (!isLoading) {
+      if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+      return;
+    }
+
+    let step = 0;
+    setProgressPercent(15);
+    setLoadingPhaseMessage(LOADING_PHASES[0]);
+
+    phaseTimerRef.current = window.setInterval(() => {
+      step++;
+      const nextIndex = Math.min(step, LOADING_PHASES.length - 1);
+      setLoadingPhaseMessage(LOADING_PHASES[nextIndex]);
+      setProgressPercent((prev) => {
+        if (prev >= 88) return prev;
+        return prev + Math.floor(Math.random() * 12 + 6);
+      });
+    }, 2800);
+
+    return () => {
+      if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+    };
+  }, [isLoading]);
+
   const handleGenerate = async () => {
     setIsLoading(true);
     setError(null);
+    setProgress('');
     try {
-      const data = await generateTypologyTracker(`${currentBook} ${currentChapter}`, chapterText, (p) => setProgress(p.text), motifData?.motif);
+      const data = await generateTypologyTracker(
+        `${currentBook} ${currentChapter}`,
+        chapterText,
+        (p) => {
+          if (p.text) setProgress(p.text);
+          if (typeof p.progress === 'number' && p.progress > 0) {
+            setProgressPercent(Math.round(p.progress * 100));
+          }
+        },
+        motifData?.motif
+      );
+      setProgressPercent(100);
       setMotifData(data);
     } catch (err: any) {
       setError(err.message || 'Failed to analyze typology.');
@@ -61,9 +109,81 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
       )}
 
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-12 space-y-3">
-          <Loader2 className="w-8 h-8 text-[#B4793D] animate-spin" />
-          <p className="text-xs text-[#B4793D] font-medium animate-pulse">{progress || 'Analyzing text...'}</p>
+        <div className="space-y-5 py-2 animate-fadeIn">
+          {/* Glowing Emblem & Progress Header */}
+          <div className="text-center space-y-3">
+            <div className="relative inline-flex items-center justify-center">
+              {/* Outer pulsing glow */}
+              <div className="absolute w-16 h-16 rounded-full bg-[#B4793D]/15 animate-ping opacity-60" />
+              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FAF5ED] to-white border border-[#EBE5DC] shadow-sm flex items-center justify-center">
+                <Network className="w-6 h-6 text-[#B4793D] animate-pulse" />
+                <Sparkles className="w-3 h-3 text-[#D4A373] absolute top-2 right-2 animate-bounce" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-xs font-bold text-[#26221F] uppercase tracking-wider">
+                Weaving Canonical Tapestry
+              </h3>
+              <p className="text-[11px] text-[#78716C] font-medium h-4 transition-all duration-300">
+                {progress || loadingPhaseMessage}
+              </p>
+            </div>
+
+            {/* Smooth Progress Bar */}
+            <div className="max-w-xs mx-auto px-4">
+              <div className="w-full bg-[#EBE5DC] rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="h-1.5 rounded-full bg-gradient-to-r from-[#D4A373] via-[#B4793D] to-[#8C5824] transition-all duration-500 ease-out"
+                  style={{ width: `${Math.max(12, Math.min(progressPercent, 95))}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[9.5px] text-[#A8A29E] mt-1 font-mono">
+                <span>{currentBook} {currentChapter}</span>
+                <span>{Math.round(progressPercent)}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Shimmering Canonical Era Skeleton Timeline */}
+          <div className="relative border-l-2 border-[#EBE5DC]/80 ml-4 pl-4 space-y-3.5">
+            {[
+              { era: 'Creation & Patriarchs', label: 'Archetype & Promise' },
+              { era: 'Gospels & Passion', label: 'Christological Fulfillment' },
+              { era: 'Revelation & Consummation', label: 'Eternal Realization' }
+            ].map((skeleton, idx) => (
+              <div key={idx} className="relative animate-pulse" style={{ animationDelay: `${idx * 200}ms` }}>
+                {/* Node indicator */}
+                <div className="absolute -left-[22px] top-2 w-3 h-3 rounded-full bg-[#EBE5DC] border-2 border-[#FAF7F2] flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#B4793D]/60 animate-ping" />
+                </div>
+
+                <div className="bg-white/70 border border-[#EBE5DC] rounded-xl p-3 shadow-xs space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9.5px] font-bold text-[#B4793D]/70 uppercase tracking-wider">
+                      {skeleton.era}
+                    </span>
+                    <span className="h-3 w-16 bg-[#F5EFE6] rounded text-[8.5px] inline-block font-mono" />
+                  </div>
+                  <div className="h-3 w-3/4 bg-[#EBE5DC] rounded" />
+                  <div className="space-y-1">
+                    <div className="h-2 w-full bg-[#F5EFE6] rounded" />
+                    <div className="h-2 w-5/6 bg-[#F5EFE6] rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Theological Quote Banner */}
+          <div className="bg-[#FAF5ED] border border-[#EBE5DC] rounded-xl p-3 text-center space-y-1">
+            <p className="text-[10.5px] text-[#57524E] font-serif italic">
+              "Novum Testamentum in Vetere latet, Vetus in Novo patet."
+            </p>
+            <p className="text-[9px] text-[#A8A29E] uppercase tracking-wider font-semibold">
+              The New is in the Old concealed; the Old is in the New revealed — St. Augustine
+            </p>
+          </div>
         </div>
       )}
 
