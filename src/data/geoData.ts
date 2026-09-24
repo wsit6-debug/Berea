@@ -1977,54 +1977,54 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
   });
 
   matchingKeys.forEach(key => {
-      const parts = key.split('_');
-      const chNum = parseInt(parts[1] || '0', 10);
-      const chapterData = getChapterGeoData(bookId, chNum);
-      const segs = chapterData.routeSegments || [];
-      segs.forEach(s => {
-        if (!seenSegmentIds.has(s.id)) {
-          seenSegmentIds.add(s.id);
-          allSegments.push(s);
-        }
-      });
+    const parts = key.split('_');
+    const chNum = parseInt(parts[1] || '0', 10);
+    const chapterData = getChapterGeoData(bookId, chNum);
+    const segs = chapterData.routeSegments || [];
+    segs.forEach(s => {
+      if (!seenSegmentIds.has(s.id)) {
+        seenSegmentIds.add(s.id);
+        allSegments.push(s);
+      }
+    });
 
-      chapterData.events.forEach(ev => {
-        const cleanLoc = cleanDisambiguatedPlaceName(ev.locationName);
-        const cleanShort = cleanDisambiguatedPlaceName(ev.shortPlaceName || ev.locationName);
-        let cleanTitle = ev.title;
-        if (cleanTitle === ev.locationName || /\s+\d+$/.test(cleanTitle)) {
-          cleanTitle = cleanDisambiguatedPlaceName(cleanTitle);
-        }
+    chapterData.events.forEach(ev => {
+      const cleanLoc = cleanDisambiguatedPlaceName(ev.locationName);
+      const cleanShort = cleanDisambiguatedPlaceName(ev.shortPlaceName || ev.locationName);
+      let cleanTitle = ev.title;
+      if (cleanTitle === ev.locationName || /\s+\d+$/.test(cleanTitle)) {
+        cleanTitle = cleanDisambiguatedPlaceName(cleanTitle);
+      }
 
-        const cleanedEv = {
-          ...ev,
-          locationName: cleanLoc,
-          shortPlaceName: cleanShort,
-          title: cleanTitle
-        };
+      const cleanedEv = {
+        ...ev,
+        locationName: cleanLoc,
+        shortPlaceName: cleanShort,
+        title: cleanTitle
+      };
 
-        if (cleanedEv.isReferencedOnly) {
-          if (!uniqueRef.has(cleanedEv.locationName)) {
-            uniqueRef.add(cleanedEv.locationName);
-            allEvents.push({
-              ...cleanedEv,
-              stepNumber: uniqueRef.size,
-              id: `book_${bookId}_ref_${uniqueRef.size}`,
-              passageRef: cleanedEv.passageRef
-            });
-          }
-        } else {
-          if (!uniquePhysical.has(cleanedEv.locationName)) {
-            uniquePhysical.add(cleanedEv.locationName);
-            allEvents.push({
-              ...cleanedEv,
-              stepNumber: uniquePhysical.size,
-              id: `book_${bookId}_phys_${uniquePhysical.size}`,
-              passageRef: cleanedEv.passageRef
-            });
-          }
+      if (cleanedEv.isReferencedOnly) {
+        if (!uniqueRef.has(cleanedEv.locationName)) {
+          uniqueRef.add(cleanedEv.locationName);
+          allEvents.push({
+            ...cleanedEv,
+            stepNumber: uniqueRef.size,
+            id: `book_${bookId}_ref_${uniqueRef.size}`,
+            passageRef: cleanedEv.passageRef
+          });
         }
-      });
+      } else {
+        if (!uniquePhysical.has(cleanedEv.locationName)) {
+          uniquePhysical.add(cleanedEv.locationName);
+          allEvents.push({
+            ...cleanedEv,
+            stepNumber: uniquePhysical.size,
+            id: `book_${bookId}_phys_${uniquePhysical.size}`,
+            passageRef: cleanedEv.passageRef
+          });
+        }
+      }
+    });
   });
 
   if (allEvents.length === 0) return null;

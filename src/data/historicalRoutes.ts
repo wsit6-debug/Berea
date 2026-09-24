@@ -65,7 +65,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     historicalRoadName: "Levantine Gulf Sea Lane",
     mode: "sea_sailing",
     distanceMiles: 130,
-    travelDays: 1.5,
+    travelDays: 2.5,
     notes: "Sailing southwest across the northeastern Mediterranean to the primary eastern port of Cyprus (Acts 13:4-5).",
     coordinates: [
       [36.1200, 35.9200], // Seleucia Pieria harbor
@@ -246,10 +246,10 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     travelDays: 1,
     notes: "Steep paved Roman road climbing through the Symbolon mountain pass into the Philippian plain.",
     coordinates: [
-      [40.9380, 24.4120], // Neapolis
-      [40.9480, 24.4050], // Symbolon mountain pass ascent
-      [40.9520, 24.3800], // Crest of the pass
-      [40.9333, 24.4167]  // Philippi Roman Colony
+      [40.9380, 24.4120], // Neapolis (Kavala harbor)
+      [40.9550, 24.3950], // Symbolon mountain pass ascent
+      [40.9850, 24.3350], // Descent into Philippi plain
+      [41.0135, 24.2862]  // Philippi Roman Colony
     ]
   },
 
@@ -263,9 +263,9 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     travelDays: 2,
     notes: "Paved military highway following the Mount Pangaion foothills down to the Strymon River bridge.",
     coordinates: [
-      [40.9333, 24.4167], // Philippi
-      [40.9100, 24.3000],
-      [40.8600, 24.1500], // Base of Mount Pangaion
+      [41.0135, 24.2862], // Philippi
+      [40.9600, 24.1600], // Angitis valley / Drama corridor
+      [40.8800, 24.0000], // Base of Mount Pangaion
       [40.8300, 23.9500],
       [40.8242, 23.8458]  // Amphipolis (Lion monument / bridge)
     ]
@@ -277,7 +277,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Apollonia",
     historicalRoadName: "Via Egnatia (Chalcidice Northern Route)",
     mode: "land_walking",
-    distanceMiles: 30,
+    distanceMiles: 28,
     travelDays: 1.5,
     notes: "Passing along the Bolbe Lake corridor through the Rentina gorge.",
     coordinates: [
@@ -294,7 +294,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Thessalonica",
     historicalRoadName: "Via Egnatia (Thermaic Gulf Approach)",
     mode: "land_walking",
-    distanceMiles: 38,
+    distanceMiles: 34,
     travelDays: 2,
     notes: "Descending through the hills into the provincial capital and principal naval port of Macedonia.",
     coordinates: [
@@ -471,10 +471,9 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     notes: "Luke 24:13: Sixty stadia (about 7 miles). Cleopas and companion walked here on Resurrection afternoon.",
     coordinates: [
       [31.7767, 35.2354], // Jerusalem
-      [31.7850, 35.1950], // Lifta / Roman milestone route
-      [31.7950, 35.1500], // Roman paved track through Judean foothills
-      [31.8100, 35.1050], // Kiryat Ye'arim vicinity
-      [31.8380, 35.0020]  // Emmaus
+      [31.7950, 35.2100], // Lifta / Roman road descending westward
+      [31.8150, 35.1750], // Nebi Samwil ridge route
+      [31.8400, 35.1350]  // Emmaus (el-Qubeibeh, 64 stadia)
     ]
   },
 
@@ -570,7 +569,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Pi-Hahiroth (Red Sea Crossing)",
     historicalRoadName: "Way of the Wilderness (Wadi Tumilat)",
     mode: "desert_caravan",
-    distanceMiles: 65,
+    distanceMiles: 82,
     travelDays: 5,
     isScholarlyEstimate: true,
     notes: "Exodus 12–14: Israel departing Goshen along Wadi Tumilat through Succoth and Etham to the Sea.",
@@ -589,7 +588,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Mount Sinai (Jebel Musa)",
     historicalRoadName: "Sinai Coastal & Granite Valley Route",
     mode: "desert_caravan",
-    distanceMiles: 110,
+    distanceMiles: 132,
     travelDays: 45, // Exodus narrative records 50 days to Sinai covenant
     isScholarlyEstimate: true,
     notes: "Exodus 15–19: Through Marah, Elim, the Wilderness of Sin, and Rephidim to the Mountain of God.",
@@ -613,8 +612,8 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     historicalRoadName: "Eastern Mediterranean Imperial Grain Route",
     mode: "sea_sailing",
     distanceMiles: 480,
-    travelDays: 6,
-    notes: "Acts 27:1-5: Boarding an Adramyttian ship, stopping at Sidon, then sailing under the lee of Cyprus along Cilicia.",
+    travelDays: 10,
+    notes: "Acts 27:1-5: Boarding an Adramyttian ship, stopping at Sidon, then sailing slowly under the lee of Cyprus along Cilicia against contrary winds.",
     coordinates: [
       [32.5020, 34.8910], // Caesarea Harbor
       [33.5600, 35.3700], // Sidon
@@ -647,7 +646,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Malta (St. Paul's Bay)",
     historicalRoadName: "Adrift in the Sea of Adria (Northeaster Gale)",
     mode: "sea_sailing",
-    distanceMiles: 490,
+    distanceMiles: 590,
     travelDays: 14,
     notes: "Acts 27:14-44: Fourteen days driven before the violent 'Euroclydon' storm until shipwreck on Malta.",
     coordinates: [
@@ -875,7 +874,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     historicalRoadName: "Cilician & Levantine Sea Lane",
     mode: "sea_sailing",
     distanceMiles: 310,
-    travelDays: 4,
+    travelDays: 5.5,
     notes: "Acts 14:26: And thence sailed to Antioch, from whence they had been recommended to the grace of God for the work which they fulfilled.",
     coordinates: [
       [36.8860, 30.7030],
@@ -897,7 +896,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     historicalRoadName: "Aegean to Levantine Deep Sea Lane",
     mode: "sea_sailing",
     distanceMiles: 590,
-    travelDays: 7,
+    travelDays: 10,
     notes: "Acts 18:21-22: Paul sailed from Ephesus, promising to return God willing, and landed at Caesarea.",
     coordinates: [
       [37.9400, 27.3400],
@@ -1072,7 +1071,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     historicalRoadName: "Deep Mediterranean Route (South of Cyprus)",
     mode: "sea_sailing",
     distanceMiles: 350,
-    travelDays: 4,
+    travelDays: 6,
     notes: "Acts 21:2-3: Finding a ship sailing over unto Phenicia, we discovered Cyprus, leaving it on the left hand, and sailed into Syria, landing at Tyre.",
     coordinates: [
       [36.2600, 29.3100],
@@ -1477,8 +1476,8 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Egypt",
     historicalRoadName: "The Way of Shur / Coastal Road to Egypt",
     mode: "desert_caravan",
-    distanceMiles: 195,
-    travelDays: 10,
+    distanceMiles: 245,
+    travelDays: 12,
     notes: "Matthew 2:14: 'He rose and took the child and his mother by night and departed to Egypt.' Ancient caravan route past Hebron and Beersheba through Gaza and Pelusium to the Nile Delta.",
     coordinates: [
       [31.7054, 35.2024], // Bethlehem
@@ -1610,8 +1609,8 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Bethlehem",
     historicalRoadName: "Transjordan Highway & Ascent of Ziz",
     mode: "desert_caravan",
-    distanceMiles: 48,
-    travelDays: 3.2,
+    distanceMiles: 72,
+    travelDays: 4.5,
     notes: "Ruth 1:19: Naomi and Ruth's journey from the plateau of Moab across the Jordan valley/Dead Sea northern basin and up the Judean hills to Bethlehem.",
     coordinates: [
       [31.1806, 35.7014], // Moab Plateau (Kir-Hareseth / Kerak)
@@ -1718,14 +1717,16 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Jerusalem",
     historicalRoadName: "Persian Imperial Royal Road to Jerusalem",
     mode: "desert_caravan",
-    distanceMiles: 1120,
-    travelDays: 95,
+    distanceMiles: 1020,
+    travelDays: 90,
     notes: "Nehemiah 2:1-9: Nehemiah departs Susa with letters and military escorts from King Artaxerxes I, crossing the Euphrates Province ('Beyond the River') to rebuild Jerusalem's walls.",
     coordinates: [
       [32.1900, 48.2400], // Susa (Palace of Darius / Artaxerxes)
       [32.5000, 46.5000], // Zagros foothill imperial route
       [33.0900, 44.5800], // Ctesiphon / Tigris crossing
       [33.3152, 44.3661], // Babylon / Northern Babylonia
+      [34.3500, 42.1000], // Hit on Euphrates river road
+      [35.0000, 40.4000], // Mari / Deir ez-Zor Fertile Crescent bend
       [34.5600, 38.2700], // Palmyra (Tadmor)
       [33.5138, 36.2765], // Damascus
       [32.2200, 35.2600], // Samaria / Shechem
@@ -1791,8 +1792,8 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Ekron",
     historicalRoadName: "Captivity Route of the Ark of the Covenant",
     mode: "land_walking",
-    distanceMiles: 48,
-    travelDays: 2.8,
+    distanceMiles: 67,
+    travelDays: 3.5,
     notes: "1 Samuel 4:1-5:10: The Ark carried from Shiloh to battle at Ebenezer/Aphek, captured by the Philistines, and moved between Ashdod, Gath, and Ekron.",
     coordinates: [
       [32.0557, 35.2895], // Shiloh
@@ -1825,8 +1826,8 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Makkedah",
     historicalRoadName: "Ascent of Beth-Horon & Aijalon Valley Warpath",
     mode: "land_walking",
-    distanceMiles: 34,
-    travelDays: 1.8,
+    distanceMiles: 45,
+    travelDays: 2.2,
     notes: "Joshua 10:9-14: Joshua's night march from Gilgal to rescue Gibeon, pursuing the Amorite kings down the Ascent of Beth-Horon where the sun stood still over Aijalon.",
     coordinates: [
       [31.8700, 35.4800], // Gilgal
@@ -2076,8 +2077,8 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Kir of Moab",
     historicalRoadName: "Transjordan Royal Highway",
     mode: "desert_caravan",
-    distanceMiles: 75,
-    travelDays: 4.5,
+    distanceMiles: 60,
+    travelDays: 3.5,
     notes: "Ancient King's Highway trunk linking the Ammonite capital at Rabbah (Amman) southward across the plateau through Medeba and the Arnon Gorge to Moab.",
     coordinates: [
       [31.9500, 35.9300], // Rabbah of Ammon
@@ -2088,7 +2089,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
       [31.1806, 35.7014]  // Kir-Hareseth (Moab)
     ]
   }
-,
+  ,
 
   "antioch_to_derbe_cilician_gates": {
     id: "antioch_to_derbe_cilician_gates",
@@ -2205,8 +2206,8 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
     toName: "Valley of the Arnon",
     historicalRoadName: "King's Highway (Edom Bypass)",
     mode: "land_walking",
-    distanceMiles: 85,
-    travelDays: 4.5,
+    distanceMiles: 170,
+    travelDays: 9.0,
     notes: "Numbers 21:4–13: Israel setting out from Mount Hor by way of the Red Sea to compass Edom, arriving at the Arnon Gorge.",
     coordinates: [
       [30.3167, 35.4000], // Mount Hor

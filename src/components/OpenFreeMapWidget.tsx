@@ -76,7 +76,7 @@ function createEventIcon(ev: ChapterGeoEvent, isCurrent: boolean) {
           pointer-events: none;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         ">
-          ${escapeHtml(placeLabel)} ${ev.isDeparturePoint && ev.departureFromChapter ? `<span style="font-size: 8px; font-weight: 800; background: #EEF2FF; color: #4338CA; padding: 1px 3.5px; border-radius: 3px; border: 1px solid #C7D2FE; margin-left: 2px;">FROM ${escapeHtml(ev.departureFromChapter.toUpperCase())}</span>` : ''} ${ev.isEducatedGuess ? '<span title="Educated Guess" style="font-size: 8.5px; opacity: 0.65; font-weight: normal;">(est)</span>' : ''}
+          ${escapeHtml(placeLabel)}${ev.isDeparturePoint && ev.departureFromChapter ? ` <span style="font-size: 8px; font-weight: 400; color: #8C827A; margin-left: 2px;">• From ${escapeHtml(ev.departureFromChapter)}</span>` : ''} ${ev.isEducatedGuess ? '<span title="Educated Guess" style="font-size: 8px; opacity: 0.6; font-weight: normal;">(est)</span>' : ''}
         </div>
       </div>
     `,
@@ -100,7 +100,7 @@ function bindEventPopup(
         <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D; flex-shrink: 0;">
           ${ev.isReferencedOnly ? 'Reference' : 'Storyline'} ${escapeHtml(ev.stepNumber)} • ${escapeHtml(ev.passageRef)}
         </span>
-        ${ev.isDeparturePoint ? `<span style="font-size: 9px; font-weight: 800; background: #EEF2FF; color: #4338CA; padding: 2px 6px; border-radius: 4px; border: 1px solid #C7D2FE; white-space: nowrap;">Departed from ${escapeHtml(ev.departureFromChapter || 'Prev Chapter')}</span>` : ''}
+        ${ev.isDeparturePoint ? `<span style="font-size: 9px; font-weight: 400; color: #8C827A; white-space: nowrap;">From ${escapeHtml(ev.departureFromChapter || 'previous chapter')}</span>` : ''}
         ${ev.isEducatedGuess ? `<span style="font-size: 9px; font-weight: 700; background: #FFF3CD; color: #856404; padding: 2px 4px; border-radius: 4px; border: 1px solid #FFEEBA; white-space: nowrap;">Educated Guess</span>` : ''}
       </div>
       <h4 style="margin: 0 0 3px 0; font-size: 13px; font-weight: 700; color: #78471F;">${escapeHtml(ev.title)}</h4>
@@ -699,25 +699,32 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         ref={(el) => { storylineButtonsRef.current[idx] = el; }}
         onClick={onClick}
         className={`flex-shrink-0 flex items-center gap-2 p-1.5 pr-2.5 rounded-lg border text-left transition-all ${isCurrent
-            ? 'bg-white border-[#B4793D] shadow-md ring-1 ring-[#B4793D]/20 z-10 scale-100'
-            : isRef
-              ? 'bg-[#FAF5ED]/50 border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-75 hover:opacity-100 scale-95 hover:scale-100'
-              : 'bg-[#FAF7F2] border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-85 hover:opacity-100 scale-95 hover:scale-100'
+          ? 'bg-white border-[#B4793D] shadow-md ring-1 ring-[#B4793D]/20 z-10 scale-100'
+          : isRef
+            ? 'bg-[#FAF5ED]/50 border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-75 hover:opacity-100 scale-95 hover:scale-100'
+            : 'bg-[#FAF7F2] border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-85 hover:opacity-100 scale-95 hover:scale-100'
           }`}
       >
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isCurrent ? 'bg-[#B4793D] text-white' : 'bg-[#EBE5DC] text-[#78471F]'
+        <div
+          style={{ fontSize: '10px' }}
+          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${isCurrent ? 'bg-[#B4793D] text-white' : 'bg-[#EBE5DC] text-[#78471F]'
           }`}>
           {ev.stepNumber}
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 justify-between">
-            <span className={`block text-[11px] font-bold truncate leading-tight ${isCurrent ? 'text-[#78471F]' : isRef ? 'text-[#78716C]' : 'text-[#26221F]'}`}>
+            <span
+              style={{ fontSize: '11px' }}
+              className={`block font-bold truncate leading-tight ${isCurrent ? 'text-[#78471F]' : isRef ? 'text-[#78716C]' : 'text-[#26221F]'}`}
+            >
               {getShortPlaceName(ev)}
             </span>
             {distInfo && (
-              <span className={`text-[9px] font-semibold px-1 py-0.5 rounded border leading-none flex-shrink-0 whitespace-nowrap ${distInfo.isOrigin
-                  ? 'bg-white text-[#78716C] border-[#EBE5DC]'
-                  : 'bg-[#FAF5ED] text-[#B4793D] border-[#D4A373]/40'
+              <span
+                style={{ fontSize: '8.5px' }}
+                className={`font-semibold px-1 py-0.5 rounded border leading-none flex-shrink-0 whitespace-nowrap ${distInfo.isOrigin
+                ? 'bg-white text-[#78716C] border-[#EBE5DC]'
+                : 'bg-[#FAF5ED] text-[#B4793D] border-[#D4A373]/40'
                 }`}>
                 {distInfo.label}
               </span>
@@ -725,11 +732,17 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
           </div>
           <div className="flex items-center gap-1 mt-0.5">
             {ev.isDeparturePoint && ev.departureFromChapter && (
-              <span className="text-[8.5px] font-bold bg-[#EEF2FF] text-[#4338CA] px-1 py-0.2 rounded border border-[#C7D2FE] flex-shrink-0">
-                From {ev.departureFromChapter}
+              <span
+                style={{ fontSize: '8px', lineHeight: 1 }}
+                className="text-[#8C827A] font-normal flex-shrink-0"
+              >
+                From {ev.departureFromChapter} •
               </span>
             )}
-            <span className="text-[9.5px] text-[#78716C] truncate block leading-none max-w-[130px]">
+            <span
+              style={{ fontSize: '9px' }}
+              className="text-[#78716C] truncate block leading-none max-w-[130px]"
+            >
               {ev.title}
             </span>
           </div>
@@ -784,8 +797,8 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
             <button
               onClick={() => setShowMentionedPins(!showMentionedPins)}
               className={`flex items-center gap-1 h-[26px] px-2.5 rounded-full border shadow-sm transition-all text-[10px] font-bold tracking-wider ${showMentionedPins
-                  ? 'bg-[#B4793D] border-[#B4793D] text-white hover:bg-[#9A632E]'
-                  : 'bg-white/95 border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED] hover:text-[#26221F]'
+                ? 'bg-[#B4793D] border-[#B4793D] text-white hover:bg-[#9A632E]'
+                : 'bg-white/95 border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED] hover:text-[#26221F]'
                 }`}
               title={showMentionedPins ? "Hide Mentioned Pins" : "Show Mentioned Pins"}
             >
@@ -824,8 +837,8 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                 }
               }}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${activeTab === 'storyline'
-                  ? 'bg-[#B4793D] text-white shadow-xs'
-                  : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
+                ? 'bg-[#B4793D] text-white shadow-xs'
+                : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
                 }`}
             >
               <span>Storyline</span>
@@ -844,8 +857,8 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                   }
                 }}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${activeTab === 'references'
-                    ? 'bg-[#B4793D] text-white shadow-xs'
-                    : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
+                  ? 'bg-[#B4793D] text-white shadow-xs'
+                  : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
                   }`}
               >
                 <span>References</span>
