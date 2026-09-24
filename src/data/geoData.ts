@@ -1203,7 +1203,7 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
     });
 
     const physicalEvents = renumberedEvents.filter(e => !e.isReferencedOnly);
-    const targetEvents = physicalEvents.length > 1 ? physicalEvents : (renumberedEvents.length > 1 ? renumberedEvents : []);
+    const targetEvents = physicalEvents.length > 1 ? physicalEvents : [];
 
     // Assemble final route segments: historical segments + straight line fallback
     const finalSegments: RouteSegment[] = [...historicalSegments];
@@ -1259,8 +1259,8 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
         }
       }
 
-    // Secondary fallback: if no segments were created but data.routeCoordinates has coordinates, connect them
-    if (finalSegments.length === 0 && data.routeCoordinates && data.routeCoordinates.length > 1) {
+    // Secondary fallback: if no segments were created but physicalEvents > 1 and data.routeCoordinates has coordinates, connect them
+    if (finalSegments.length === 0 && physicalEvents.length > 1 && data.routeCoordinates && data.routeCoordinates.length > 1) {
       for (let i = 0; i < data.routeCoordinates.length - 1; i++) {
         const c1 = data.routeCoordinates[i];
         const c2 = data.routeCoordinates[i + 1];
