@@ -4,9 +4,10 @@ import {
   getRouteJourneyStats,
   HISTORICAL_ROAD_SEGMENTS
 } from './historicalRoutes';
+import { getChapterSetting, ChapterHistoricalSetting } from './biblicalSettings';
 
-export type { RouteSegment };
-export { getHistoricalRouteSegments, getRouteJourneyStats, HISTORICAL_ROAD_SEGMENTS };
+export type { RouteSegment, ChapterHistoricalSetting };
+export { getHistoricalRouteSegments, getRouteJourneyStats, HISTORICAL_ROAD_SEGMENTS, getChapterSetting };
 
 export interface GeoLocation {
   id: string;
@@ -1756,6 +1757,39 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
     });
 
     const physicalEvents = renumberedEvents.filter(e => !e.isReferencedOnly);
+    let finalEvents = [...renumberedEvents];
+    let finalCenterLat = data.centerLat;
+    let finalCenterLng = data.centerLng;
+    let finalZoom = data.defaultZoom;
+
+    // If no explicit physical storyline places were mentioned in the chapter,
+    // anchor the chapter with the scholarly historical setting where it occurred or was composed!
+    if (physicalEvents.length === 0) {
+      const setting = getChapterSetting(bookId, chapterNum);
+      const cleanBookName = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
+      const settingEvent: ChapterGeoEvent = {
+        id: `${key}_setting`,
+        stepNumber: 1,
+        title: setting.settingTitle,
+        passageRef: `${cleanBookName} ${chapterNum}`,
+        verseRange: [1, 1],
+        locationName: setting.locationName,
+        shortPlaceName: setting.shortPlaceName,
+        modernLocation: setting.modernLocation,
+        lat: setting.lat,
+        lng: setting.lng,
+        description: setting.description,
+        theologicalSignificance: setting.theologicalSignificance,
+        isEducatedGuess: true,
+        isReferencedOnly: false
+      };
+      finalEvents.unshift(settingEvent);
+      physicalEvents.push(settingEvent);
+      finalCenterLat = setting.lat;
+      finalCenterLng = setting.lng;
+      finalZoom = setting.zoom || 11;
+    }
+
     const targetEvents = physicalEvents;
 
     // Assemble final route segments: historical segments + master dictionary matching + straight line fallback
@@ -1878,7 +1912,10 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
 
     return {
       ...data,
-      events: renumberedEvents,
+      centerLat: finalCenterLat,
+      centerLng: finalCenterLng,
+      defaultZoom: finalZoom,
+      events: finalEvents,
       routeSegments: hasSegments ? finalSegments : undefined,
       routeCoordinates: hasSegments
         ? (allCoords.length > 0 ? allCoords : undefined)
@@ -1886,37 +1923,36 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
     };
   }
 
-  const fallbackLoc = getLocationForPassage(bookId, chapterNum);
+  const setting = getChapterSetting(bookId, chapterNum);
   const cleanBook = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
 
   return {
     bookId: bookId.toLowerCase(),
     chapterNumber: chapterNum,
     chapterTitle: `${cleanBook} Chapter ${chapterNum}`,
-    region: fallbackLoc.modernCountry,
-    centerLat: fallbackLoc.lat,
-    centerLng: fallbackLoc.lng,
-    defaultZoom: fallbackLoc.zoom,
+    region: setting.modernLocation,
+    centerLat: setting.lat,
+    centerLng: setting.lng,
+    defaultZoom: setting.zoom || 11,
     events: [
       {
-        id: `${key}_ev1`,
+        id: `${key}_setting`,
         stepNumber: 1,
-        title: `${fallbackLoc.name} (${cleanBook} ${chapterNum})`,
-        passageRef: `${cleanBook} ${chapterNum}:1–15`,
-        verseRange: [1, 15],
-        locationName: fallbackLoc.name,
-        shortPlaceName: getShortPlaceName({ locationName: fallbackLoc.name }),
-        modernLocation: fallbackLoc.modernCountry,
-        lat: fallbackLoc.lat,
-        lng: fallbackLoc.lng,
-        description: `Historical events recorded in ${cleanBook} chapter ${chapterNum}, situated in ${fallbackLoc.name}.`,
-        theologicalSignificance: fallbackLoc.biblicalEvents[0] || "Historical biblical event fulfilling God's redemptive purpose."
+        title: setting.settingTitle,
+        passageRef: `${cleanBook} ${chapterNum}`,
+        verseRange: [1, 1],
+        locationName: setting.locationName,
+        shortPlaceName: setting.shortPlaceName,
+        modernLocation: setting.modernLocation,
+        lat: setting.lat,
+        lng: setting.lng,
+        description: setting.description,
+        theologicalSignificance: setting.theologicalSignificance,
+        isEducatedGuess: true,
+        isReferencedOnly: false
       }
     ],
-    routeCoordinates: [
-      [fallbackLoc.lat, fallbackLoc.lng]
-    ],
-    routeSegments: historicalSegments
+    routeSegments: historicalSegments && historicalSegments.length > 0 ? historicalSegments : undefined
   };
 }
 
@@ -2093,137 +2129,19 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
 }
 
 export function getLocationForPassage(bookId: string, chapterNum: number): GeoLocation {
-  const bookKey = bookId.toLowerCase();
-
-  // --------------------------------------------------------------------------
-  // GENESIS (Patriarchal & Primeval Geography - Pre-Davidic Jerusalem)
-  // --------------------------------------------------------------------------
-  if (bookKey === "genesis") {
-    // Primeval History: Eden, Ararat, Babel & Ur
-    if (chapterNum <= 7) return BIBLICAL_LOCATIONS.eden_mesopotamia;
-    if (chapterNum >= 8 && chapterNum <= 10) return BIBLICAL_LOCATIONS.mount_ararat;
-    if (chapterNum === 11) return BIBLICAL_LOCATIONS.ur_chaldees;
-
-    // Abraham's Call & Journeys
-    if (chapterNum === 12) return BIBLICAL_LOCATIONS.shechem;
-    if (chapterNum === 13) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum === 14) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum >= 15 && chapterNum <= 19) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum === 20 || chapterNum === 21) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 22) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 23) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum === 24) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 25 || chapterNum === 26) return BIBLICAL_LOCATIONS.beersheba;
-
-    // Jacob & Esau
-    if (chapterNum === 27) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 28) return BIBLICAL_LOCATIONS.bethel;
-    if (chapterNum >= 29 && chapterNum <= 31) return BIBLICAL_LOCATIONS.haran;
-    if (chapterNum === 32) return BIBLICAL_LOCATIONS.peniel_jabbok;
-    if (chapterNum === 33 || chapterNum === 34) return BIBLICAL_LOCATIONS.shechem;
-    if (chapterNum === 35) return BIBLICAL_LOCATIONS.bethel;
-    if (chapterNum === 36) return BIBLICAL_LOCATIONS.hebron;
-
-    // Joseph & Israel in Egypt
-    if (chapterNum === 37) return BIBLICAL_LOCATIONS.dothan;
-    if (chapterNum >= 38 && chapterNum <= 45) return BIBLICAL_LOCATIONS.goshen_egypt;
-    if (chapterNum === 46) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum >= 47 && chapterNum <= 50) return BIBLICAL_LOCATIONS.goshen_egypt;
-
-    return BIBLICAL_LOCATIONS.hebron;
-  }
-
-  // --------------------------------------------------------------------------
-  // EXODUS & PENTATEUCH
-  // --------------------------------------------------------------------------
-  if (bookKey === "exodus") {
-    if (chapterNum <= 13) return BIBLICAL_LOCATIONS.goshen_egypt;
-    if (chapterNum >= 14 && chapterNum <= 18) return BIBLICAL_LOCATIONS.mount_sinai;
-    return BIBLICAL_LOCATIONS.mount_sinai;
-  }
-  if (bookKey === "leviticus" || bookKey === "numbers" || bookKey === "deuteronomy") {
-    return BIBLICAL_LOCATIONS.mount_sinai;
-  }
-
-  // --------------------------------------------------------------------------
-  // HISTORICAL BOOKS & PROPHETS
-  // --------------------------------------------------------------------------
-  if (bookKey === "joshua") return BIBLICAL_LOCATIONS.jericho;
-  if (bookKey === "judges" || bookKey === "ruth") return BIBLICAL_LOCATIONS.bethlehem;
-  if (bookKey.includes("kings") && (chapterNum === 18 || chapterNum === 19)) {
-    return BIBLICAL_LOCATIONS.mount_carmel;
-  }
-  if (bookKey === "esther") return BIBLICAL_LOCATIONS.susa_persia;
-  if (bookKey === "daniel") return BIBLICAL_LOCATIONS.babylon_ancient;
-  if (bookKey === "ezekiel") return BIBLICAL_LOCATIONS.babylon_ancient;
-
-  // --------------------------------------------------------------------------
-  // GOSPEL OF JOHN
-  // --------------------------------------------------------------------------
-  if (bookKey === "john") {
-    if (chapterNum === 1) return BIBLICAL_LOCATIONS.jordan_river;
-    if (chapterNum === 2) return BIBLICAL_LOCATIONS.nazareth;
-    if (chapterNum === 3) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 4) return BIBLICAL_LOCATIONS.jordan_river;
-    if (chapterNum === 5) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 6) return BIBLICAL_LOCATIONS.galilee;
-    if (chapterNum >= 7 && chapterNum <= 10) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 11) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum >= 12 && chapterNum <= 20) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 21) return BIBLICAL_LOCATIONS.galilee;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-
-  // --------------------------------------------------------------------------
-  // ACTS OF THE APOSTLES
-  // --------------------------------------------------------------------------
-  if (bookKey === "acts") {
-    if (chapterNum <= 7) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 8 || chapterNum === 9) return BIBLICAL_LOCATIONS.damascus;
-    if (chapterNum === 10) return BIBLICAL_LOCATIONS.caesarea;
-    if (chapterNum >= 11 && chapterNum <= 14) return BIBLICAL_LOCATIONS.antioch;
-    if (chapterNum === 15) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 16) return BIBLICAL_LOCATIONS.philippi;
-    if (chapterNum === 17) return BIBLICAL_LOCATIONS.berea;
-    if (chapterNum === 18) return BIBLICAL_LOCATIONS.corinth;
-    if (chapterNum === 19 || chapterNum === 20) return BIBLICAL_LOCATIONS.ephesus;
-    if (chapterNum >= 21 && chapterNum <= 26) return BIBLICAL_LOCATIONS.caesarea;
-    if (chapterNum >= 27) return BIBLICAL_LOCATIONS.rome;
-    return BIBLICAL_LOCATIONS.berea;
-  }
-
-  // --------------------------------------------------------------------------
-  // SYNOPTIC GOSPELS
-  // --------------------------------------------------------------------------
-  if (bookKey === "matthew") {
-    if (chapterNum <= 2) return BIBLICAL_LOCATIONS.bethlehem;
-    if (chapterNum >= 3 && chapterNum <= 18) return BIBLICAL_LOCATIONS.galilee;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-  if (bookKey === "mark") {
-    if (chapterNum <= 10) return BIBLICAL_LOCATIONS.galilee;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-  if (bookKey === "luke") {
-    if (chapterNum <= 2) return BIBLICAL_LOCATIONS.nazareth;
-    if (chapterNum === 19) return BIBLICAL_LOCATIONS.jericho;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-
-  // --------------------------------------------------------------------------
-  // EPISTLES & REVELATION
-  // --------------------------------------------------------------------------
-  if (bookKey === "romans") return BIBLICAL_LOCATIONS.rome;
-  if (bookKey.includes("corinthians")) return BIBLICAL_LOCATIONS.corinth;
-  if (bookKey === "galatians") return BIBLICAL_LOCATIONS.antioch;
-  if (bookKey === "ephesians") return BIBLICAL_LOCATIONS.ephesus;
-  if (bookKey === "philippians") return BIBLICAL_LOCATIONS.philippi;
-  if (bookKey === "colossians") return BIBLICAL_LOCATIONS.ephesus;
-  if (bookKey.includes("thessalonians")) return BIBLICAL_LOCATIONS.thessalonica;
-  if (bookKey.includes("timothy") || bookKey === "titus") return BIBLICAL_LOCATIONS.ephesus;
-  if (bookKey === "hebrews") return BIBLICAL_LOCATIONS.jerusalem;
-  if (bookKey.includes("peter")) return BIBLICAL_LOCATIONS.rome;
-  if (bookKey === "revelation") return BIBLICAL_LOCATIONS.patmos;
-
-  return BIBLICAL_LOCATIONS.jerusalem;
+  const setting = getChapterSetting(bookId, chapterNum);
+  return {
+    id: `${bookId.toLowerCase()}_${chapterNum}_loc`,
+    name: setting.locationName,
+    ancientName: setting.shortPlaceName,
+    modernCountry: setting.modernLocation,
+    lat: setting.lat,
+    lng: setting.lng,
+    zoom: setting.zoom || 11,
+    era: setting.era,
+    biblicalEvents: [setting.settingTitle, setting.theologicalSignificance],
+    description: setting.description,
+    scriptureReferences: [`${bookId} ${chapterNum}`],
+    archaeologicalNotes: setting.description
+  };
 }
