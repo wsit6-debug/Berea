@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
@@ -677,49 +677,58 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               <div
                 className="flex rounded-lg p-0.5 gap-0.5 border"
                 style={{
-                  backgroundColor: 'var(--clean-bg, #EFE9DF)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
                   borderColor: 'var(--clean-accent-border, #EBE5DC)'
                 }}
               >
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('small_group')}
-                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'small_group'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
-                    }`}
-                  style={selectedAudience === 'small_group' ? { borderColor: 'var(--clean-accent-border, #EBE5DC)' } : undefined}
+                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
+                  style={{
+                    backgroundColor: selectedAudience === 'small_group' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                    borderColor: selectedAudience === 'small_group' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                    color: selectedAudience === 'small_group' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                    fontWeight: selectedAudience === 'small_group' ? 700 : 600,
+                    boxShadow: selectedAudience === 'small_group' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
                   title="Practical small group discussion, fellowship, and personal application"
                 >
-                  <Users className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                  <Users className="w-3.5 h-3.5" style={{ color: selectedAudience === 'small_group' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                   <span>Small Group</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('deep_exegesis')}
-                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'deep_exegesis'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
-                    }`}
-                  style={selectedAudience === 'deep_exegesis' ? { borderColor: 'var(--clean-accent-border, #EBE5DC)' } : undefined}
+                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
+                  style={{
+                    backgroundColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                    borderColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                    color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                    fontWeight: selectedAudience === 'deep_exegesis' ? 700 : 600,
+                    boxShadow: selectedAudience === 'deep_exegesis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
                   title="Pastoral exegesis, linguistic grammar, confessional dogmatics, and historical setting"
                 >
-                  <GraduationCap className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                  <GraduationCap className="w-3.5 h-3.5" style={{ color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                   <span>Deep Exegesis</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('youth_family')}
-                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'youth_family'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
-                    }`}
-                  style={selectedAudience === 'youth_family' ? { borderColor: 'var(--clean-accent-border, #EBE5DC)' } : undefined}
+                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
+                  style={{
+                    backgroundColor: selectedAudience === 'youth_family' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                    borderColor: selectedAudience === 'youth_family' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                    color: selectedAudience === 'youth_family' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                    fontWeight: selectedAudience === 'youth_family' ? 700 : 600,
+                    boxShadow: selectedAudience === 'youth_family' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
                   title="Engaging storytelling, real-world scenarios, and family discussion prompts"
                 >
-                  <Baby className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                  <Baby className="w-3.5 h-3.5" style={{ color: selectedAudience === 'youth_family' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                   <span>Youth & Family</span>
                 </button>
               </div>
@@ -752,33 +761,41 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <div
                   className="grid grid-cols-2 sm:grid-cols-4 rounded-lg p-0.5 gap-0.5 border"
                   style={{
-                    backgroundColor: 'var(--clean-bg, #EFE9DF)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
                     borderColor: 'var(--clean-accent-border, #EBE5DC)'
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('chapter')}
-                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'chapter'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'chapter' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'chapter' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'chapter' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'chapter' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'chapter' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
                     title="Default: Complete chapter study guide"
                   >
-                    <BookOpen className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    <BookOpen className="w-3 h-3" style={{ color: studyGuideScope === 'chapter' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                     <span className="truncate">Whole Chapter</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('verse')}
-                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'verse'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'verse' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'verse' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'verse' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'verse' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'verse' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
                     title="Focus on an individual verse"
                   >
-                    <FileText className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    <FileText className="w-3 h-3" style={{ color: studyGuideScope === 'verse' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                     <span className="truncate">Single Verse</span>
                   </button>
 
@@ -790,26 +807,34 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setEndVerseNum(Math.min(manualStartVerseNum + 1, maxChapterVerses));
                       }
                     }}
-                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'range'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'range' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'range' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'range' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'range' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'range' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
                     title="Custom verse range"
                   >
-                    <Layers className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    <Layers className="w-3 h-3" style={{ color: studyGuideScope === 'range' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                     <span className="truncate">Verse Range</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('custom')}
-                    className={`py-1.5 px-1.5 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'custom'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'custom' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'custom' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'custom' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'custom' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
                     title="Pick custom verses (e.g. 1, 12, 23)"
                   >
-                    <ListFilter className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    <ListFilter className="w-3 h-3" style={{ color: studyGuideScope === 'custom' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                     <span className="truncate">Pick Verses</span>
                   </button>
                 </div>
@@ -1605,18 +1630,65 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
             {/* Original Language Nuance */}
             {insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[9.5px] font-bold text-[#78716C] uppercase tracking-wider block px-1">
-                  Original Greek / Hebrew Exegesis
-                </span>
-                <div className="space-y-1">
+              <div
+                className="p-3 rounded-xl border space-y-2 text-xs shadow-xs"
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                  borderLeftWidth: '4px',
+                  borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                    style={{ color: 'var(--clean-accent-dark, #854D0E)' }}
+                  >
+                    <Languages className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    Original Greek / Hebrew Exegesis
+                  </span>
+                  <span
+                    className="text-[9.5px] font-mono px-1.5 py-0.2 rounded font-semibold border shadow-2xs"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                      color: 'var(--clean-accent-dark, #854D0E)'
+                    }}
+                  >
+                    {insight.originalLanguageInsights.length} Terms
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
                   {insight.originalLanguageInsights.map((term, i) => (
-                    <div key={i} className="p-2 rounded-lg bg-white border border-[var(--clean-accent-border,#EBE5DC)] text-xs">
+                    <div
+                      key={i}
+                      className="p-2.5 rounded-lg border text-xs space-y-1"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
                       <div className="flex items-center justify-between font-mono">
-                        <span className="font-bold text-[var(--clean-accent-caramel,#B4793D)]">{term.term}</span>
-                        <span className="text-[10px] text-[#78716C]">{term.originalScript} ({term.transliteration})</span>
+                        <span
+                          className="font-bold text-xs"
+                          style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+                        >
+                          {term.term}
+                        </span>
+                        <span
+                          className="text-[10px] font-medium"
+                          style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                        >
+                          {term.originalScript} ({term.transliteration})
+                        </span>
                       </div>
-                      <p className="text-[10.5px] text-[#57524E] mt-0.5">{term.nuance}</p>
+                      <p
+                        className="text-[11px] leading-relaxed"
+                        style={{ color: 'var(--clean-text-secondary, #57524E)' }}
+                      >
+                        {term.nuance}
+                      </p>
                     </div>
                   ))}
                 </div>

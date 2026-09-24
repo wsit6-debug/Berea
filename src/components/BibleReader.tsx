@@ -13,6 +13,13 @@ import {
 } from '../services/audioNarrationService';
 import { cleanApiText } from '../services/youversionService';
 
+export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue', { bg: string; border: string; label: string }> = {
+  yellow: { bg: 'var(--hl-yellow-bg, #FEF08A)', border: 'var(--hl-yellow-border, #EAB308)', label: 'Yellow' },
+  green: { bg: 'var(--hl-green-bg, #BBF7D0)', border: 'var(--hl-green-border, #22C55E)', label: 'Green' },
+  red: { bg: 'var(--hl-red-bg, #FECDD3)', border: 'var(--hl-red-border, #F43F5E)', label: 'Red' },
+  blue: { bg: 'var(--hl-blue-bg, #BAE6FD)', border: 'var(--hl-blue-border, #0EA5E9)', label: 'Blue' }
+};
+
 /**
  * Universal extractor for verse display text across all translation keys & data shapes
  */
@@ -524,11 +531,11 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       key={color}
                       type="button"
                       onClick={() => setReaderHighlightColor(color)}
-                      className={`w-3.5 h-3.5 rounded-full transition-transform hover:scale-110 active:scale-95 ${color === 'yellow' ? 'bg-amber-400 border border-amber-600' :
-                        color === 'green' ? 'bg-emerald-400 border border-emerald-600' :
-                          color === 'red' ? 'bg-rose-400 border border-rose-600' :
-                            'bg-sky-400 border border-sky-600'
-                        } ${readerHighlightColor === color ? 'ring-2 ring-[#26221F] ring-offset-1 scale-110' : 'opacity-70 hover:opacity-100'}`}
+                      className={`w-3.5 h-3.5 rounded-full transition-transform hover:scale-115 active:scale-95 shadow-2xs ${readerHighlightColor === color ? 'ring-2 ring-[#26221F] ring-offset-1 scale-110' : 'opacity-85 hover:opacity-100'}`}
+                      style={{
+                        backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                        border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                      }}
                       title={`Select ${color} for direct highlighting`}
                     />
                   ))}
@@ -853,7 +860,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     <div className="flex items-center gap-1.5 ml-auto">
                       {/* 4-Color Highlighter Palette for Range */}
                       {onHighlightVerse && (
-                        <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
+                        <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
                           <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
                           {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
                             <button
@@ -863,12 +870,12 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                 e.stopPropagation();
                                 onHighlightVerse(activeRange.start, color, activeRange);
                               }}
-                              className={`w-4 h-4 rounded-full transition-transform hover:scale-110 active:scale-95 ${color === 'yellow' ? 'bg-amber-200 border border-amber-400' :
-                                color === 'green' ? 'bg-emerald-200 border border-emerald-400' :
-                                  color === 'red' ? 'bg-rose-200 border border-rose-400' :
-                                    'bg-sky-200 border border-sky-400'
-                                }`}
-                              title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${color}`}
+                              className="w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs"
+                              style={{
+                                backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                                border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                              }}
+                              title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
                             />
                           ))}
                         </div>
@@ -968,7 +975,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       <div className="flex items-center gap-1.5 ml-auto">
                         {/* 4-Color Highlighter Palette for Single Verse */}
                         {onHighlightVerse && (
-                          <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
+                          <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
                             <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
                             {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
                               const isCurrent = tabHighlights?.[activeVerse.verseNumber] === color;
@@ -980,12 +987,12 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                     e.stopPropagation();
                                     onHighlightVerse(activeVerse.verseNumber, color);
                                   }}
-                                  className={`w-4 h-4 rounded-full transition-transform hover:scale-110 active:scale-95 ${color === 'yellow' ? 'bg-amber-200 border border-amber-400' :
-                                    color === 'green' ? 'bg-emerald-200 border border-emerald-400' :
-                                      color === 'red' ? 'bg-rose-200 border border-rose-400' :
-                                        'bg-sky-200 border border-sky-400'
-                                    } ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1' : ''}`}
-                                  title={`Highlight verse in ${color}${isCurrent ? ' (click to toggle off)' : ''}`}
+                                  className={`w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : ''}`}
+                                  style={{
+                                    backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                                    border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                                  }}
+                                  title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
                                 />
                               );
                             })}
@@ -1154,7 +1161,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                               <div className="flex items-center gap-1.5 ml-auto">
                                 {/* 4-Color Highlighter Palette for Range */}
                                 {onHighlightVerse && (
-                                  <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
+                                  <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
                                     <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
                                     {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
                                       <button
@@ -1164,12 +1171,12 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                           e.stopPropagation();
                                           onHighlightVerse(activeRange.start, color, activeRange);
                                         }}
-                                        className={`w-4 h-4 rounded-full transition-transform hover:scale-110 active:scale-95 ${color === 'yellow' ? 'bg-amber-200 border border-amber-400' :
-                                          color === 'green' ? 'bg-emerald-200 border border-emerald-400' :
-                                            color === 'red' ? 'bg-rose-200 border border-rose-400' :
-                                              'bg-sky-200 border border-sky-400'
-                                          }`}
-                                        title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${color}`}
+                                        className="w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs"
+                                        style={{
+                                          backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                                          border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                                        }}
+                                        title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
                                       />
                                     ))}
                                   </div>
@@ -1254,7 +1261,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                               <div className="flex items-center gap-1.5 ml-auto">
                                 {/* 4-Color Highlighter Palette for Single Verse */}
                                 {onHighlightVerse && (
-                                  <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
+                                  <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
                                     <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
                                     {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
                                       const isCurrent = tabHighlights?.[verse.verseNumber] === color;
@@ -1266,12 +1273,12 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                             e.stopPropagation();
                                             onHighlightVerse(verse.verseNumber, color);
                                           }}
-                                          className={`w-4 h-4 rounded-full transition-transform hover:scale-110 active:scale-95 ${color === 'yellow' ? 'bg-amber-200 border border-amber-400' :
-                                            color === 'green' ? 'bg-emerald-200 border border-emerald-400' :
-                                              color === 'red' ? 'bg-rose-200 border border-rose-400' :
-                                                'bg-sky-200 border border-sky-400'
-                                            } ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1' : ''}`}
-                                          title={`Highlight verse in ${color}${isCurrent ? ' (click to toggle off)' : ''}`}
+                                          className={`w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : ''}`}
+                                          style={{
+                                            backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                                            border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                                          }}
+                                          title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
                                         />
                                       );
                                     })}

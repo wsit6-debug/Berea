@@ -309,7 +309,7 @@ export function applyThemeToDocument(theme: ThemeConfig): void {
     root.style.setProperty('--clean-header-border', headerBorder);
     root.style.setProperty('--clean-header-btn-bg', headerBtnBg);
     root.style.setProperty('--clean-header-text', '#F8FAFC');
-    root.style.setProperty('--clean-header-text-secondary', '#CBD5E1');
+    root.style.setProperty('--clean-header-text-secondary', 'rgba(255, 255, 255, 0.75)');
   } else if (bgMode === 'sepia') {
     // Sepia: top section is darker than bottom section (#F5EEDB)
     root.style.setProperty('--clean-header-bg', '#EADBBD');
@@ -332,11 +332,14 @@ export function applyThemeToDocument(theme: ThemeConfig): void {
     const headerBorder = hslToHex(bgHsl.h, Math.min(50, bgHsl.s + 12), Math.max(6, bgHsl.l - 16));
     const headerBtnBg = hslToHex(bgHsl.h, Math.min(35, bgHsl.s), Math.max(90, Math.min(97, bgHsl.l)));
 
+    const headerBgLum = getRelativeLuminance(headerBg);
+    const isDarkHeader = headerBgLum < 0.38 || bgHsl.l < 52;
+
     root.style.setProperty('--clean-header-bg', headerBg);
     root.style.setProperty('--clean-header-border', headerBorder);
     root.style.setProperty('--clean-header-btn-bg', headerBtnBg);
-    root.style.setProperty('--clean-header-text', '#26221F');
-    root.style.setProperty('--clean-header-text-secondary', '#57524E');
+    root.style.setProperty('--clean-header-text', isDarkHeader ? '#F8FAFC' : '#26221F');
+    root.style.setProperty('--clean-header-text-secondary', isDarkHeader ? 'rgba(255, 255, 255, 0.75)' : '#57524E');
   } else {
     // Warm Linen: top section (#F0E6D8) is automatically darker than bottom section (#FAF7F2)
     root.style.setProperty('--clean-header-bg', '#F0E6D8');
@@ -346,3 +349,4 @@ export function applyThemeToDocument(theme: ThemeConfig): void {
     root.style.setProperty('--clean-header-text-secondary', '#78716C');
   }
 }
+

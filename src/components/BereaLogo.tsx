@@ -5,6 +5,7 @@ interface BereaLogoProps {
   size?: number; // Size in px (e.g. 36, 42, 48, 64)
   showText?: boolean;
   textColor?: string;
+  subtextColor?: string;
   variant?: 'mark' | 'full' | 'hero' | 'compact';
   onClick?: () => void;
 }
@@ -13,7 +14,8 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
   className = '',
   size = 40,
   showText = true,
-  textColor = '#26221F',
+  textColor = 'var(--clean-header-text, #26221F)',
+  subtextColor,
   variant = 'mark',
   onClick
 }) => {
@@ -39,7 +41,7 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
               Berea
             </h2>
             <p className="text-xs font-medium tracking-wide">
-              <span className="text-[#B4793D]">Acts 17:11</span> <span className="text-[#8C827A]">• Examine Daily • Be Known</span>
+              <span className="text-[#B4793D]">Acts 17:11</span> <span style={{ color: subtextColor || 'var(--clean-text-secondary, #8C827A)' }}>• Examine Daily • Be Known</span>
             </p>
           </div>
         )}
@@ -91,7 +93,7 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
           <div className="flex items-center gap-1.5">
             <span
               className="font-heading font-bold text-base sm:text-lg tracking-tight leading-none"
-              style={{ color: textColor || 'var(--clean-text-primary, #26221F)' }}
+              style={{ color: textColor || 'var(--clean-header-text, #26221F)' }}
             >
               Berea
             </span>
@@ -107,8 +109,8 @@ export const BereaLogo: React.FC<BereaLogoProps> = ({
             </span>
           </div>
           <span
-            className="text-[9px] tracking-wide font-medium hidden sm:inline leading-tight mt-0.5"
-            style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+            className="text-[9px] tracking-wide font-medium hidden sm:inline leading-tight mt-0.5 transition-colors"
+            style={{ color: subtextColor || 'var(--clean-header-text-secondary, #78716C)' }}
           >
             Examine Daily • Be Known
           </span>

@@ -71,7 +71,11 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center cursor-pointer group pr-2"
             title="About Berea"
           >
-            <BereaLogo size={42} textColor="var(--clean-header-text, #26221F)" />
+            <BereaLogo
+              size={42}
+              textColor="var(--clean-header-text, #26221F)"
+              subtextColor="var(--clean-header-text-secondary, rgba(255, 255, 255, 0.75))"
+            />
           </div>
 
           <div className="h-4 w-px bg-[var(--clean-border,#EBE5DC)] hidden sm:block"></div>
@@ -107,10 +111,25 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {showDenomDropdown && (
-              <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-[var(--clean-surface,#FFFFFF)] border border-[var(--clean-border,#EBE5DC)] rounded-xl shadow-xl z-50 p-2 space-y-1 animate-fadeIn max-h-[420px] overflow-y-auto custom-scrollbar">
-                <div className="text-[10px] uppercase font-bold text-[var(--clean-text-tertiary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b border-[var(--clean-border,#EBE5DC)] pb-1.5 mb-1">
+              <div 
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                  color: 'var(--clean-text-primary, #26221F)'
+                }}
+                className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 border rounded-xl shadow-2xl z-50 p-2 space-y-1 animate-fadeIn max-h-[420px] overflow-y-auto custom-scrollbar"
+              >
+                <div 
+                  style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  className="text-[10px] uppercase font-bold text-[var(--clean-text-secondary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-1"
+                >
                   <span>Confessional Traditions</span>
-                  <span className="text-[9px] text-[var(--clean-accent-caramel,#B4793D)] font-mono font-bold">7 Distinct Lenses</span>
+                  <span 
+                    style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+                    className="text-[9px] font-mono font-bold"
+                  >
+                    7 Distinct Lenses
+                  </span>
                 </div>
                 {DENOMINATIONS.map((d) => {
                   const isSelected = activeLens === d.id;
@@ -121,24 +140,37 @@ export const Header: React.FC<HeaderProps> = ({
                         onSelectLens(d.id);
                         setShowDenomDropdown(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border ${isSelected
-                        ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] border-[var(--clean-accent-caramel,#B4793D)] shadow-xs font-semibold'
-                        : 'border-transparent text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
-                        }`}
+                      style={{
+                        backgroundColor: isSelected ? 'var(--clean-highlight-cream, #FAF3E8)' : 'transparent',
+                        borderColor: isSelected ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                        color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-primary, #26221F)'
+                      }}
+                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]"
                     >
                       <div className="flex items-start gap-2">
                         <span className="text-base flex-shrink-0 mt-0.5">{d.icon}</span>
                         <div>
-                          <div className={`font-semibold text-xs ${isSelected ? 'text-[var(--clean-accent-dark,#78471F)]' : 'text-[var(--clean-text-primary,#26221F)]'}`}>
+                          <div 
+                            style={{ color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-primary, #26221F)' }}
+                            className="font-semibold text-xs"
+                          >
                             {d.name}
                           </div>
-                          <div className="text-[10px] text-[var(--clean-text-secondary,#78716C)] leading-snug line-clamp-1">{d.tagline}</div>
-                          <div className="text-[9px] text-[var(--clean-text-tertiary,#A8A29E)] font-mono mt-0.5 truncate max-w-[180px]">
+                          <div 
+                            style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                            className="text-[10px] leading-snug line-clamp-1"
+                          >
+                            {d.tagline}
+                          </div>
+                          <div 
+                            style={{ color: 'var(--clean-text-secondary, #A8A29E)' }}
+                            className="text-[9px] font-mono mt-0.5 truncate max-w-[180px]"
+                          >
                             {d.confessionalStandard.split(',')[0]}
                           </div>
                         </div>
                       </div>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0 mt-0.5" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />}
                     </button>
                   );
                 })}
@@ -166,8 +198,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {showTranslationDropdown && (
-              <div className="absolute top-full left-0 mt-1.5 w-80 bg-[var(--clean-surface,#FFFFFF)] border border-[var(--clean-border,#EBE5DC)] rounded-xl shadow-xl z-50 p-2 space-y-1 animate-fadeIn max-h-[380px] overflow-y-auto custom-scrollbar">
-                <div className="text-[10px] uppercase font-bold text-[var(--clean-text-tertiary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b border-[var(--clean-border,#EBE5DC)] pb-1.5 mb-1">
+              <div 
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                  color: 'var(--clean-text-primary, #26221F)'
+                }}
+                className="absolute top-full left-0 mt-1.5 w-80 border rounded-xl shadow-2xl z-50 p-2 space-y-1 animate-fadeIn max-h-[380px] overflow-y-auto custom-scrollbar"
+              >
+                <div 
+                  style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  className="text-[10px] uppercase font-bold text-[var(--clean-text-secondary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-1"
+                >
                   <span className="truncate max-w-[160px]">
                     {showAllTranslations ? 'All Translations' : `Approved for ${currentDenom.traditionGroup}`}
                   </span>
@@ -176,7 +218,8 @@ export const Header: React.FC<HeaderProps> = ({
                       e.stopPropagation();
                       setShowAllTranslations(prev => !prev);
                     }}
-                    className="text-[9.5px] text-[var(--clean-accent-caramel,#B4793D)] hover:underline flex items-center gap-1 font-semibold"
+                    style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+                    className="text-[9.5px] hover:underline flex items-center gap-1 font-semibold"
                   >
                     {showAllTranslations ? 'Approved Only' : 'Show All (20+)'}
                   </button>
@@ -192,10 +235,15 @@ export const Header: React.FC<HeaderProps> = ({
                         onSelectTranslation(t.id);
                         setShowTranslationDropdown(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors ${isSelected
-                        ? 'bg-[var(--clean-text-primary,#26221F)] text-[var(--clean-surface,#FFFFFF)] font-semibold shadow-xs'
-                        : 'text-[var(--clean-text-primary,#26221F)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-caramel,#B4793D)]'
-                        }`}
+                      style={{
+                        backgroundColor: isSelected 
+                          ? 'var(--clean-accent-caramel, #B4793D)' 
+                          : 'transparent',
+                        color: isSelected 
+                          ? 'var(--clean-accent-contrast-text, #FFFFFF)' 
+                          : 'var(--clean-text-primary, #26221F)'
+                      }}
+                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors hover:bg-[var(--clean-surface-warm,#FAF5ED)]"
                     >
                       <div className="flex-1 pr-2">
                         <div className="flex items-center gap-1.5 mb-0.5">
@@ -203,21 +251,41 @@ export const Header: React.FC<HeaderProps> = ({
                             {t.id}
                           </span>
                           <span
-                            className={`text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px] ${isSelected
-                                ? 'bg-white/20 text-white border-transparent'
-                                : isApproved
-                                  ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-caramel,#B4793D)] border-[var(--clean-accent-caramel,#B4793D)]/30'
-                                  : 'bg-[var(--clean-surface-subtle,#FAF5ED)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
-                              }`}
+                            style={{
+                              backgroundColor: isSelected 
+                                ? 'rgba(255, 255, 255, 0.25)' 
+                                : isApproved 
+                                  ? 'var(--clean-highlight-cream, #FAF3E8)' 
+                                  : 'var(--clean-surface-warm, #FAF5ED)',
+                              borderColor: isSelected 
+                                ? 'transparent' 
+                                : isApproved 
+                                  ? 'var(--clean-accent-border, #B4793D)' 
+                                  : 'var(--clean-accent-border, #EBE5DC)',
+                              color: isSelected 
+                                ? 'inherit' 
+                                : isApproved 
+                                  ? 'var(--clean-accent-dark, #B4793D)' 
+                                  : 'var(--clean-text-secondary, #78716C)'
+                            }}
+                            className="text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px]"
                           >
                             {t.badge}
                           </span>
                         </div>
-                        <div className={`text-[11px] font-normal leading-snug line-clamp-1 ${isSelected ? 'text-stone-200' : 'text-[var(--clean-text-secondary,#57524E)]'}`}>
+                        <div 
+                          style={{ color: isSelected ? 'inherit' : 'var(--clean-text-secondary, #57524E)', opacity: isSelected ? 0.9 : 1 }}
+                          className="text-[11px] font-normal leading-snug line-clamp-1"
+                        >
                           {t.name}
                         </div>
                       </div>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[var(--clean-accent-honey,#D4A373)] flex-shrink-0 mt-0.5" />}
+                      {isSelected && (
+                        <Check 
+                          className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" 
+                          style={{ color: 'var(--clean-accent-contrast-text, #FFFFFF)' }} 
+                        />
+                      )}
                     </button>
                   );
                 })}
