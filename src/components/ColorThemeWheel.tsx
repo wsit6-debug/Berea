@@ -430,7 +430,7 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                 style={{
                   backgroundColor: editTarget === 'accent' ? (isDarkTheme ? '#2C2B32' : '#FFFFFF') : 'transparent',
                   borderColor: editTarget === 'accent' ? (isDarkTheme ? '#5A5864' : '#E2D5C3') : 'transparent',
-                  color: editTarget === 'accent' ? '#FFFFFF' : (isDarkTheme ? '#CBD5E1' : '#78716C')
+                  color: editTarget === 'accent' ? (isDarkTheme ? '#FFFFFF' : '#26221F') : (isDarkTheme ? '#CBD5E1' : '#78716C')
                 }}
               >
                 <Paintbrush className="w-3.5 h-3.5" style={{ color: currentAccentHex }} />
@@ -446,7 +446,7 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                 style={{
                   backgroundColor: editTarget === 'background' ? (isDarkTheme ? '#2C2B32' : '#FFFFFF') : 'transparent',
                   borderColor: editTarget === 'background' ? (isDarkTheme ? '#5A5864' : '#E2D5C3') : 'transparent',
-                  color: editTarget === 'background' ? '#FFFFFF' : (isDarkTheme ? '#CBD5E1' : '#78716C')
+                  color: editTarget === 'background' ? (isDarkTheme ? '#FFFFFF' : '#26221F') : (isDarkTheme ? '#CBD5E1' : '#78716C')
                 }}
               >
                 <Sun className="w-3.5 h-3.5 text-amber-500" />
@@ -499,15 +499,29 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                     {editTarget === 'accent' ? 'Intensity (Saturation)' : 'Tone Saturation'}
                   </span>
                   <span className="font-semibold" style={{ color: isDarkTheme ? '#FFFFFF' : '#26221F' }}>
-                    {currentSaturation}%
+                    {(() => {
+                      const min = editTarget === 'background' ? 0 : 10;
+                      const max = editTarget === 'background' ? 60 : 100;
+                      return Math.min(100, Math.max(0, Math.round(((currentSaturation - min) / (max - min)) * 100)));
+                    })()}%
                   </span>
                 </div>
                 <input
                   type="range"
-                  min={editTarget === 'background' ? 0 : 10}
-                  max={editTarget === 'background' ? 60 : 100}
-                  value={currentSaturation}
-                  onChange={e => handleSaturationChange(Number(e.target.value))}
+                  min={0}
+                  max={100}
+                  value={(() => {
+                    const min = editTarget === 'background' ? 0 : 10;
+                    const max = editTarget === 'background' ? 60 : 100;
+                    return Math.min(100, Math.max(0, Math.round(((currentSaturation - min) / (max - min)) * 100)));
+                  })()}
+                  onChange={e => {
+                    const norm = Number(e.target.value);
+                    const min = editTarget === 'background' ? 0 : 10;
+                    const max = editTarget === 'background' ? 60 : 100;
+                    const actualVal = Math.round(min + (norm / 100) * (max - min));
+                    handleSaturationChange(actualVal);
+                  }}
                   className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
                   style={{ backgroundColor: isDarkTheme ? '#38363C' : '#EBE5DC' }}
                 />
@@ -559,16 +573,30 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
                       </div>
                     )}
                     <span className="font-semibold" style={{ color: isDarkTheme ? '#FFFFFF' : '#26221F' }}>
-                      {currentLightness}%
+                      {(() => {
+                        const min = editTarget === 'background' ? (bgLightnessMode === 'dark' ? 10 : 80) : 20;
+                        const max = editTarget === 'background' ? (bgLightnessMode === 'dark' ? 30 : 98) : 80;
+                        return Math.min(100, Math.max(0, Math.round(((currentLightness - min) / (max - min)) * 100)));
+                      })()}%
                     </span>
                   </div>
                 </div>
                 <input
                   type="range"
-                  min={editTarget === 'background' ? (bgLightnessMode === 'dark' ? 10 : 80) : 20}
-                  max={editTarget === 'background' ? (bgLightnessMode === 'dark' ? 30 : 98) : 80}
-                  value={currentLightness}
-                  onChange={e => handleLightnessChange(Number(e.target.value))}
+                  min={0}
+                  max={100}
+                  value={(() => {
+                    const min = editTarget === 'background' ? (bgLightnessMode === 'dark' ? 10 : 80) : 20;
+                    const max = editTarget === 'background' ? (bgLightnessMode === 'dark' ? 30 : 98) : 80;
+                    return Math.min(100, Math.max(0, Math.round(((currentLightness - min) / (max - min)) * 100)));
+                  })()}
+                  onChange={e => {
+                    const norm = Number(e.target.value);
+                    const min = editTarget === 'background' ? (bgLightnessMode === 'dark' ? 10 : 80) : 20;
+                    const max = editTarget === 'background' ? (bgLightnessMode === 'dark' ? 30 : 98) : 80;
+                    const actualVal = Math.round(min + (norm / 100) * (max - min));
+                    handleLightnessChange(actualVal);
+                  }}
                   className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[#007AFF]"
                   style={{ backgroundColor: isDarkTheme ? '#38363C' : '#EBE5DC' }}
                 />
