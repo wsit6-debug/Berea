@@ -38,7 +38,7 @@ for (const [chKey, segKeys] of Object.entries(CHAPTER_ROUTE_SEGMENT_KEYS)) {
 
   if (firstSeg && firstStory) {
     const matchStart = firstSeg.fromName.toLowerCase().includes(firstStory.locationName.toLowerCase()) ||
-                       firstStory.locationName.toLowerCase().includes(firstSeg.fromName.toLowerCase());
+      firstStory.locationName.toLowerCase().includes(firstSeg.fromName.toLowerCase());
     if (!matchStart) {
       console.log(`  ⚠️ MISMATCH START: First event is "${firstStory.locationName}" but first segment starts at "${firstSeg.fromName}"`);
     }

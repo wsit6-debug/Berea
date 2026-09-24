@@ -397,25 +397,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "numbers_33_event9",
-        "stepNumber": 8,
-        "title": "Red Sea 1",
-        "passageRef": "Num 33:8",
-        "verseRange": [
-          8,
-          8
-        ],
-        "locationName": "Red Sea 1",
-        "shortPlaceName": "Red Sea 1",
-        "modernLocation": "Gulf of Suez",
-        "lat": 28.75,
-        "lng": 33,
-        "description": "Waterbody mentioned in Exodus, which the Israelites are said to have crossed miraculously.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "numbers_33_event8",
         "stepNumber": 9,
         "title": "Marah",
@@ -449,6 +430,25 @@
         "lat": 29.254722,
         "lng": 32.915833,
         "description": "Biblical place.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "numbers_33_event9",
+        "stepNumber": 8,
+        "title": "Red Sea 1",
+        "passageRef": "Num 33:10",
+        "verseRange": [
+          10,
+          10
+        ],
+        "locationName": "Red Sea 1",
+        "shortPlaceName": "Red Sea 1",
+        "modernLocation": "Gulf of Suez",
+        "lat": 28.75,
+        "lng": 33,
+        "description": "Waterbody mentioned in Exodus, which the Israelites are said to have crossed miraculously.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
         "isReferencedOnly": false
@@ -1628,25 +1628,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "jeremiah_22_event1",
-        "stepNumber": 1,
-        "title": "Jerusalem",
-        "passageRef": "Jer 22:4",
-        "verseRange": [
-          4,
-          4
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "jeremiah_22_event2",
         "stepNumber": 2,
         "title": "Gilead 1",
@@ -1680,6 +1661,25 @@
         "lat": 33.54,
         "lng": 35.583611,
         "description": "Aspect of history.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "jeremiah_22_event1",
+        "stepNumber": 1,
+        "title": "Jerusalem",
+        "passageRef": "Jer 22:19",
+        "verseRange": [
+          19,
+          19
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -3125,25 +3125,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "1chronicles_6_event17",
-        "stepNumber": 17,
-        "title": "Jordan",
-        "passageRef": "1 Chr 6:62",
-        "verseRange": [
-          62,
-          62
-        ],
-        "locationName": "Jordan",
-        "shortPlaceName": "Jordan",
-        "modernLocation": "Jordan River",
-        "lat": 31.761389,
-        "lng": 35.558333,
-        "description": "River in West Asia which flows to the Dead Sea.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "1chronicles_6_event19",
         "stepNumber": 18,
         "title": "Shechem",
@@ -3635,6 +3616,25 @@
         "description": "Levitical city.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "1chronicles_6_event17",
+        "stepNumber": 17,
+        "title": "Jordan",
+        "passageRef": "1 Chr 6:78",
+        "verseRange": [
+          78,
+          78
+        ],
+        "locationName": "Jordan",
+        "shortPlaceName": "Jordan",
+        "modernLocation": "Jordan River",
+        "lat": 31.761389,
+        "lng": 35.558333,
+        "description": "River in West Asia which flows to the Dead Sea.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       },
       {
@@ -4540,10 +4540,10 @@
         "id": "2kings_15_event8",
         "stepNumber": 7,
         "title": "Gilead 1",
-        "passageRef": "2 Kgs 15:25",
+        "passageRef": "2 Kgs 15:29",
         "verseRange": [
-          25,
-          25
+          29,
+          29
         ],
         "locationName": "Gilead 1",
         "shortPlaceName": "Gilead 1",
@@ -5364,25 +5364,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "judges_7_event2",
-        "stepNumber": 2,
-        "title": "Midian",
-        "passageRef": "Judg 7:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Midian",
-        "shortPlaceName": "Midian",
-        "modernLocation": "Al Bad",
-        "lat": 28.4947,
-        "lng": 35.0122,
-        "description": "Place mentioned in the bible.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "judges_7_event3",
         "stepNumber": 3,
         "title": "Moreh 2",
@@ -5418,6 +5399,25 @@
         "description": "Location mentioned in Judg 7:3",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "judges_7_event2",
+        "stepNumber": 2,
+        "title": "Midian",
+        "passageRef": "Judg 7:8",
+        "verseRange": [
+          8,
+          8
+        ],
+        "locationName": "Midian",
+        "shortPlaceName": "Midian",
+        "modernLocation": "Al Bad",
+        "lat": 28.4947,
+        "lng": 35.0122,
+        "description": "Place mentioned in the bible.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": false
       },
       {
@@ -6558,25 +6558,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "judges_8_event1",
-        "stepNumber": 1,
-        "title": "Midian",
-        "passageRef": "Judg 8:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Midian",
-        "shortPlaceName": "Midian",
-        "modernLocation": "Al Bad",
-        "lat": 28.4947,
-        "lng": 35.0122,
-        "description": "Place mentioned in the bible.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "judges_8_event2",
         "stepNumber": 2,
         "title": "Abiezer",
@@ -6593,6 +6574,25 @@
         "description": "Location mentioned in Judg 8:2",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "judges_8_event1",
+        "stepNumber": 1,
+        "title": "Midian",
+        "passageRef": "Judg 8:3",
+        "verseRange": [
+          3,
+          3
+        ],
+        "locationName": "Midian",
+        "shortPlaceName": "Midian",
+        "modernLocation": "Al Bad",
+        "lat": 28.4947,
+        "lng": 35.0122,
+        "description": "Place mentioned in the bible.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": false
       },
       {
@@ -7213,10 +7213,10 @@
         "id": "genesis_10_event13",
         "stepNumber": 12,
         "title": "Canaan",
-        "passageRef": "Gen 10:19",
+        "passageRef": "Gen 10:15",
         "verseRange": [
-          19,
-          19
+          15,
+          15
         ],
         "locationName": "Canaan",
         "shortPlaceName": "Canaan",
@@ -9060,10 +9060,10 @@
         "id": "1corinthians_16_event2",
         "stepNumber": 2,
         "title": "Jerusalem",
-        "passageRef": "1 Cor 16:1",
+        "passageRef": "1 Cor 16:3",
         "verseRange": [
-          1,
-          1
+          3,
+          3
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -11753,25 +11753,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "joshua_19_event21",
-        "stepNumber": 21,
-        "title": "Ramah 6",
-        "passageRef": "Josh 19:8",
-        "verseRange": [
-          8,
-          8
-        ],
-        "locationName": "Ramah 6",
-        "shortPlaceName": "Ramah 6",
-        "modernLocation": "Tel Ira",
-        "lat": 31.2328,
-        "lng": 34.9867,
-        "description": "Location mentioned in Josh 19:8",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": true
-      },
-      {
         "id": "joshua_19_event22",
         "stepNumber": 22,
         "title": "Sarid",
@@ -12776,6 +12757,25 @@
         "description": "Capital city of South Governorate, Lebanon.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "joshua_19_event21",
+        "stepNumber": 21,
+        "title": "Ramah 6",
+        "passageRef": "Josh 19:29",
+        "verseRange": [
+          29,
+          29
+        ],
+        "locationName": "Ramah 6",
+        "shortPlaceName": "Ramah 6",
+        "modernLocation": "Tel Ira",
+        "lat": 31.2328,
+        "lng": 34.9867,
+        "description": "Location mentioned in Josh 19:8",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
         "isReferencedOnly": true
       },
       {
@@ -14045,25 +14045,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "joshua_15_event13",
-        "stepNumber": 13,
-        "title": "Great Sea",
-        "passageRef": "Josh 15:4",
-        "verseRange": [
-          4,
-          4
-        ],
-        "locationName": "Great Sea",
-        "shortPlaceName": "Great Sea",
-        "modernLocation": "Mediterranean Sea",
-        "lat": 31.804819,
-        "lng": 34.17035,
-        "description": "Sea between Europe, Africa and Asia.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "joshua_15_event14",
         "stepNumber": 14,
         "title": "Jordan",
@@ -14555,6 +14536,25 @@
         "description": "Biblical place.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "joshua_15_event13",
+        "stepNumber": 13,
+        "title": "Great Sea",
+        "passageRef": "Josh 15:12",
+        "verseRange": [
+          12,
+          12
+        ],
+        "locationName": "Great Sea",
+        "shortPlaceName": "Great Sea",
+        "modernLocation": "Mediterranean Sea",
+        "lat": 31.804819,
+        "lng": 34.17035,
+        "description": "Sea between Europe, Africa and Asia.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       },
       {
@@ -19372,25 +19372,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "hosea_11_event2",
-        "stepNumber": 2,
-        "title": "Assyria",
-        "passageRef": "Hos 11:5",
-        "verseRange": [
-          5,
-          5
-        ],
-        "locationName": "Assyria",
-        "shortPlaceName": "Assyria",
-        "modernLocation": "Nineveh",
-        "lat": 36.3594,
-        "lng": 43.1528,
-        "description": "Major Mesopotamian East Semitic kingdom.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "hosea_11_event3",
         "stepNumber": 3,
         "title": "Admah",
@@ -19426,6 +19407,25 @@
         "description": "Location mentioned in Hos 11:8",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "hosea_11_event2",
+        "stepNumber": 2,
+        "title": "Assyria",
+        "passageRef": "Hos 11:11",
+        "verseRange": [
+          11,
+          11
+        ],
+        "locationName": "Assyria",
+        "shortPlaceName": "Assyria",
+        "modernLocation": "Nineveh",
+        "lat": 36.3594,
+        "lng": 43.1528,
+        "description": "Major Mesopotamian East Semitic kingdom.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       }
     ],
@@ -23585,10 +23585,10 @@
         "id": "ezra_8_event4",
         "stepNumber": 4,
         "title": "Jerusalem",
-        "passageRef": "Ezra 8:17",
+        "passageRef": "Ezra 8:29",
         "verseRange": [
-          17,
-          17
+          29,
+          29
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -24507,10 +24507,10 @@
         "id": "joshua_9_event3",
         "stepNumber": 6,
         "title": "Jericho 1",
-        "passageRef": "Josh 9:1",
+        "passageRef": "Josh 9:3",
         "verseRange": [
-          1,
-          1
+          3,
+          3
         ],
         "locationName": "Jericho 1",
         "shortPlaceName": "Jericho 1",
@@ -25159,25 +25159,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "jeremiah_49_event1",
-        "stepNumber": 1,
-        "title": "Ammon",
-        "passageRef": "Jer 49:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Ammon",
-        "shortPlaceName": "Ammon",
-        "modernLocation": "Amman",
-        "lat": 31.9547,
-        "lng": 35.9343,
-        "description": "Ancient Semitic-speaking peoples.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "jeremiah_49_event2",
         "stepNumber": 2,
         "title": "Rabbah 1",
@@ -25232,6 +25213,25 @@
         "description": "Location mentioned in Jer 49:3",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "jeremiah_49_event1",
+        "stepNumber": 1,
+        "title": "Ammon",
+        "passageRef": "Jer 49:6",
+        "verseRange": [
+          6,
+          6
+        ],
+        "locationName": "Ammon",
+        "shortPlaceName": "Ammon",
+        "modernLocation": "Amman",
+        "lat": 31.9547,
+        "lng": 35.9343,
+        "description": "Ancient Semitic-speaking peoples.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       },
       {
@@ -25551,25 +25551,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "isaiah_10_event1",
-        "stepNumber": 1,
-        "title": "Assyria",
-        "passageRef": "Isa 10:5",
-        "verseRange": [
-          5,
-          5
-        ],
-        "locationName": "Assyria",
-        "shortPlaceName": "Assyria",
-        "modernLocation": "Nineveh",
-        "lat": 36.3594,
-        "lng": 43.1528,
-        "description": "Major Mesopotamian East Semitic kingdom.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "isaiah_10_event4",
         "stepNumber": 2,
         "title": "Carchemish",
@@ -25698,6 +25679,25 @@
         "lat": 31.776667,
         "lng": 35.234167,
         "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "isaiah_10_event1",
+        "stepNumber": 1,
+        "title": "Assyria",
+        "passageRef": "Isa 10:12",
+        "verseRange": [
+          12,
+          12
+        ],
+        "locationName": "Assyria",
+        "shortPlaceName": "Assyria",
+        "modernLocation": "Nineveh",
+        "lat": 36.3594,
+        "lng": 43.1528,
+        "description": "Major Mesopotamian East Semitic kingdom.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -27009,25 +27009,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "judges_12_event2",
-        "stepNumber": 2,
-        "title": "Jordan",
-        "passageRef": "Judg 12:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Jordan",
-        "shortPlaceName": "Jordan",
-        "modernLocation": "Jordan River",
-        "lat": 31.761389,
-        "lng": 35.558333,
-        "description": "River in West Asia which flows to the Dead Sea.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "judges_12_event3",
         "stepNumber": 3,
         "title": "Zaphon 1",
@@ -27063,6 +27044,25 @@
         "description": "Ancient Israelite geographical location in modern day Jordan.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "judges_12_event2",
+        "stepNumber": 2,
+        "title": "Jordan",
+        "passageRef": "Judg 12:5",
+        "verseRange": [
+          5,
+          5
+        ],
+        "locationName": "Jordan",
+        "shortPlaceName": "Jordan",
+        "modernLocation": "Jordan River",
+        "lat": 31.761389,
+        "lng": 35.558333,
+        "description": "River in West Asia which flows to the Dead Sea.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": false
       },
       {
@@ -27107,10 +27107,10 @@
         "id": "judges_12_event7",
         "stepNumber": 7,
         "title": "Pirathon",
-        "passageRef": "Judg 12:13",
+        "passageRef": "Judg 12:15",
         "verseRange": [
-          13,
-          13
+          15,
+          15
         ],
         "locationName": "Pirathon",
         "shortPlaceName": "Pirathon",
@@ -30302,25 +30302,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "judges_3_event12",
-        "stepNumber": 10,
-        "title": "Jordan",
-        "passageRef": "Judg 3:26",
-        "verseRange": [
-          26,
-          26
-        ],
-        "locationName": "Jordan",
-        "shortPlaceName": "Jordan",
-        "modernLocation": "Jordan River",
-        "lat": 31.761389,
-        "lng": 35.558333,
-        "description": "River in West Asia which flows to the Dead Sea.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "judges_3_event13",
         "stepNumber": 11,
         "title": "Seirah",
@@ -30337,6 +30318,25 @@
         "description": "Location mentioned in Judg 3:26",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "judges_3_event12",
+        "stepNumber": 10,
+        "title": "Jordan",
+        "passageRef": "Judg 3:28",
+        "verseRange": [
+          28,
+          28
+        ],
+        "locationName": "Jordan",
+        "shortPlaceName": "Jordan",
+        "modernLocation": "Jordan River",
+        "lat": 31.761389,
+        "lng": 35.558333,
+        "description": "River in West Asia which flows to the Dead Sea.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": false
       }
     ],
@@ -31780,25 +31780,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "2samuel_8_event14",
-        "stepNumber": 13,
-        "title": "Edom",
-        "passageRef": "2 Sam 8:12",
-        "verseRange": [
-          12,
-          12
-        ],
-        "locationName": "Edom",
-        "shortPlaceName": "Edom",
-        "modernLocation": "Buseira",
-        "lat": 30.745843,
-        "lng": 35.603919,
-        "description": "Ancient kingdom in Transjordan located between Moab to the northeast, the Arabah to the west and the Arabian Desert to the south and east, today part of Israel and Jordan.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "2samuel_8_event16",
         "stepNumber": 14,
         "title": "Valley of Salt",
@@ -31813,6 +31794,25 @@
         "lat": 31.050508,
         "lng": 35.406271,
         "description": "Location mentioned in 2 Sam 8:13",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "2samuel_8_event14",
+        "stepNumber": 13,
+        "title": "Edom",
+        "passageRef": "2 Sam 8:14",
+        "verseRange": [
+          14,
+          14
+        ],
+        "locationName": "Edom",
+        "shortPlaceName": "Edom",
+        "modernLocation": "Buseira",
+        "lat": 30.745843,
+        "lng": 35.603919,
+        "description": "Ancient kingdom in Transjordan located between Moab to the northeast, the Arabah to the west and the Arabian Desert to the south and east, today part of Israel and Jordan.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
         "isReferencedOnly": false
@@ -32893,25 +32893,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "2samuel_2_event3",
-        "stepNumber": 2,
-        "title": "Jezreel 3",
-        "passageRef": "2 Sam 2:2",
-        "verseRange": [
-          2,
-          2
-        ],
-        "locationName": "Jezreel 3",
-        "shortPlaceName": "Jezreel 3",
-        "modernLocation": "Yatta",
-        "lat": 31.447778,
-        "lng": 35.09,
-        "description": "Location mentioned in 2 Sam 2:2",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "2samuel_2_event2",
         "stepNumber": 3,
         "title": "Carmel 1",
@@ -32964,6 +32945,25 @@
         "lat": 32.18575,
         "lng": 35.68667,
         "description": "Male given name.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "2samuel_2_event3",
+        "stepNumber": 2,
+        "title": "Jezreel 3",
+        "passageRef": "2 Sam 2:9",
+        "verseRange": [
+          9,
+          9
+        ],
+        "locationName": "Jezreel 3",
+        "shortPlaceName": "Jezreel 3",
+        "modernLocation": "Yatta",
+        "lat": 31.447778,
+        "lng": 35.09,
+        "description": "Location mentioned in 2 Sam 2:2",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
         "isReferencedOnly": false
@@ -36823,25 +36823,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "2samuel_17_event3",
-        "stepNumber": 1,
-        "title": "Jordan",
-        "passageRef": "2 Sam 17:16",
-        "verseRange": [
-          16,
-          16
-        ],
-        "locationName": "Jordan",
-        "shortPlaceName": "Jordan",
-        "modernLocation": "Jordan River",
-        "lat": 31.761389,
-        "lng": 35.558333,
-        "description": "River in West Asia which flows to the Dead Sea.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "2samuel_17_event4",
         "stepNumber": 2,
         "title": "En-rogel",
@@ -36894,6 +36875,25 @@
         "lat": 31.776667,
         "lng": 35.234167,
         "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "2samuel_17_event3",
+        "stepNumber": 1,
+        "title": "Jordan",
+        "passageRef": "2 Sam 17:22",
+        "verseRange": [
+          22,
+          22
+        ],
+        "locationName": "Jordan",
+        "shortPlaceName": "Jordan",
+        "modernLocation": "Jordan River",
+        "lat": 31.761389,
+        "lng": 35.558333,
+        "description": "River in West Asia which flows to the Dead Sea.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -37058,13 +37058,32 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "1kings_11_event3",
-        "stepNumber": 1,
-        "title": "Moab 1",
+        "id": "1kings_11_event4",
+        "stepNumber": 4,
+        "title": "Sidon",
         "passageRef": "1 Kgs 11:1",
         "verseRange": [
           1,
           1
+        ],
+        "locationName": "Sidon",
+        "shortPlaceName": "Sidon",
+        "modernLocation": "Sandikli archaeological site in Sidon",
+        "lat": 33.560985,
+        "lng": 35.371944,
+        "description": "Capital city of South Governorate, Lebanon.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "1kings_11_event3",
+        "stepNumber": 1,
+        "title": "Moab 1",
+        "passageRef": "1 Kgs 11:7",
+        "verseRange": [
+          7,
+          7
         ],
         "locationName": "Moab 1",
         "shortPlaceName": "Moab 1",
@@ -37080,10 +37099,10 @@
         "id": "1kings_11_event1",
         "stepNumber": 2,
         "title": "Ammon",
-        "passageRef": "1 Kgs 11:1",
+        "passageRef": "1 Kgs 11:7",
         "verseRange": [
-          1,
-          1
+          7,
+          7
         ],
         "locationName": "Ammon",
         "shortPlaceName": "Ammon",
@@ -37091,44 +37110,6 @@
         "lat": 31.9547,
         "lng": 35.9343,
         "description": "Ancient Semitic-speaking peoples.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
-        "id": "1kings_11_event2",
-        "stepNumber": 3,
-        "title": "Edom",
-        "passageRef": "1 Kgs 11:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Edom",
-        "shortPlaceName": "Edom",
-        "modernLocation": "Buseira",
-        "lat": 30.745843,
-        "lng": 35.603919,
-        "description": "Ancient kingdom in Transjordan located between Moab to the northeast, the Arabah to the west and the Arabian Desert to the south and east, today part of Israel and Jordan.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
-        "id": "1kings_11_event4",
-        "stepNumber": 4,
-        "title": "Sidon",
-        "passageRef": "1 Kgs 11:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Sidon",
-        "shortPlaceName": "Sidon",
-        "modernLocation": "Sandikli archaeological site in Sidon",
-        "lat": 33.560985,
-        "lng": 35.371944,
-        "description": "Capital city of South Governorate, Lebanon.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -37169,6 +37150,25 @@
         "description": "Mountain in Jerusalem that is mentioned several times in the Bible.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "1kings_11_event2",
+        "stepNumber": 3,
+        "title": "Edom",
+        "passageRef": "1 Kgs 11:14",
+        "verseRange": [
+          14,
+          14
+        ],
+        "locationName": "Edom",
+        "shortPlaceName": "Edom",
+        "modernLocation": "Buseira",
+        "lat": 30.745843,
+        "lng": 35.603919,
+        "description": "Ancient kingdom in Transjordan located between Moab to the northeast, the Arabah to the west and the Arabian Desert to the south and east, today part of Israel and Jordan.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
         "isReferencedOnly": false
       },
       {
@@ -40737,25 +40737,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "ezekiel_25_event1",
-        "stepNumber": 1,
-        "title": "Ammon",
-        "passageRef": "Ezek 25:2",
-        "verseRange": [
-          2,
-          2
-        ],
-        "locationName": "Ammon",
-        "shortPlaceName": "Ammon",
-        "modernLocation": "Amman",
-        "lat": 31.9547,
-        "lng": 35.9343,
-        "description": "Ancient Semitic-speaking peoples.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "ezekiel_25_event2",
         "stepNumber": 2,
         "title": "East",
@@ -40886,6 +40867,25 @@
         "description": "Location mentioned in Ezek 25:9",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "ezekiel_25_event1",
+        "stepNumber": 1,
+        "title": "Ammon",
+        "passageRef": "Ezek 25:10",
+        "verseRange": [
+          10,
+          10
+        ],
+        "locationName": "Ammon",
+        "shortPlaceName": "Ammon",
+        "modernLocation": "Amman",
+        "lat": 31.9547,
+        "lng": 35.9343,
+        "description": "Ancient Semitic-speaking peoples.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       },
       {
@@ -44980,25 +44980,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "acts_15_event1",
-        "stepNumber": 2,
-        "title": "Antioch 1",
-        "passageRef": "Acts 15:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Antioch 1",
-        "shortPlaceName": "Antioch 1",
-        "modernLocation": "Antioch on the Orontes",
-        "lat": 36.226691,
-        "lng": 36.171743,
-        "description": "Ancient Greek city in southern Turkey.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "acts_15_event3",
         "stepNumber": 3,
         "title": "Jerusalem",
@@ -45051,6 +45032,25 @@
         "lat": 32.276111,
         "lng": 35.195,
         "description": "Historical region in the Levant.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "acts_15_event1",
+        "stepNumber": 2,
+        "title": "Antioch 1",
+        "passageRef": "Acts 15:22",
+        "verseRange": [
+          22,
+          22
+        ],
+        "locationName": "Antioch 1",
+        "shortPlaceName": "Antioch 1",
+        "modernLocation": "Antioch on the Orontes",
+        "lat": 36.226691,
+        "lng": 36.171743,
+        "description": "Ancient Greek city in southern Turkey.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -45902,6 +45902,25 @@
         "isReferencedOnly": true
       },
       {
+        "id": "isaiah_15_event18",
+        "stepNumber": 18,
+        "title": "Dibon 3",
+        "passageRef": "Isa 15:2",
+        "verseRange": [
+          2,
+          2
+        ],
+        "locationName": "Dibon 3",
+        "shortPlaceName": "Dibon 3",
+        "modernLocation": "Tall Dhiban",
+        "lat": 31.502236,
+        "lng": 35.776574,
+        "description": "Location mentioned in Isa 15:9",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
         "id": "isaiah_15_event8",
         "stepNumber": 7,
         "title": "Heshbon",
@@ -46106,25 +46125,6 @@
         "lat": 31.571944,
         "lng": 35.893333,
         "description": "Location mentioned in Isa 15:8",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": true
-      },
-      {
-        "id": "isaiah_15_event18",
-        "stepNumber": 18,
-        "title": "Dibon 3",
-        "passageRef": "Isa 15:9",
-        "verseRange": [
-          9,
-          9
-        ],
-        "locationName": "Dibon 3",
-        "shortPlaceName": "Dibon 3",
-        "modernLocation": "Tall Dhiban",
-        "lat": 31.502236,
-        "lng": 35.776574,
-        "description": "Location mentioned in Isa 15:9",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
         "isReferencedOnly": true
@@ -46351,25 +46351,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "deuteronomy_1_event12",
-        "stepNumber": 1,
-        "title": "Egypt",
-        "passageRef": "Deut 1:3",
-        "verseRange": [
-          3,
-          3
-        ],
-        "locationName": "Egypt",
-        "shortPlaceName": "Egypt",
-        "modernLocation": "Ain Shams",
-        "lat": 30.129444,
-        "lng": 31.3075,
-        "description": "Egyptian civilization from the 4th millennium BC.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "deuteronomy_1_event16",
         "stepNumber": 2,
         "title": "Heshbon",
@@ -46579,6 +46560,25 @@
         "isReferencedOnly": false
       },
       {
+        "id": "deuteronomy_1_event12",
+        "stepNumber": 1,
+        "title": "Egypt",
+        "passageRef": "Deut 1:27",
+        "verseRange": [
+          27,
+          27
+        ],
+        "locationName": "Egypt",
+        "shortPlaceName": "Egypt",
+        "modernLocation": "Ain Shams",
+        "lat": 30.129444,
+        "lng": 31.3075,
+        "description": "Egyptian civilization from the 4th millennium BC.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
         "id": "deuteronomy_1_event24",
         "stepNumber": 18,
         "title": "Way of the Red Sea",
@@ -46707,25 +46707,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "deuteronomy_4_event4",
-        "stepNumber": 4,
-        "title": "Jordan",
-        "passageRef": "Deut 4:14",
-        "verseRange": [
-          14,
-          14
-        ],
-        "locationName": "Jordan",
-        "shortPlaceName": "Jordan",
-        "modernLocation": "Jordan River",
-        "lat": 31.761389,
-        "lng": 35.558333,
-        "description": "River in West Asia which flows to the Dead Sea.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "deuteronomy_4_event5",
         "stepNumber": 1,
         "title": "Egypt",
@@ -46743,6 +46724,25 @@
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
+      },
+      {
+        "id": "deuteronomy_4_event4",
+        "stepNumber": 4,
+        "title": "Jordan",
+        "passageRef": "Deut 4:21",
+        "verseRange": [
+          21,
+          21
+        ],
+        "locationName": "Jordan",
+        "shortPlaceName": "Jordan",
+        "modernLocation": "Jordan River",
+        "lat": 31.761389,
+        "lng": 35.558333,
+        "description": "River in West Asia which flows to the Dead Sea.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
       },
       {
         "id": "deuteronomy_4_event7",
@@ -47071,25 +47071,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "deuteronomy_11_event3",
-        "stepNumber": 3,
-        "title": "Jordan",
-        "passageRef": "Deut 11:8",
-        "verseRange": [
-          8,
-          8
-        ],
-        "locationName": "Jordan",
-        "shortPlaceName": "Jordan",
-        "modernLocation": "Jordan River",
-        "lat": 31.761389,
-        "lng": 35.558333,
-        "description": "River in West Asia which flows to the Dead Sea.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "deuteronomy_11_event6",
         "stepNumber": 4,
         "title": "Lebanon",
@@ -47183,6 +47164,25 @@
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
+      },
+      {
+        "id": "deuteronomy_11_event3",
+        "stepNumber": 3,
+        "title": "Jordan",
+        "passageRef": "Deut 11:30",
+        "verseRange": [
+          30,
+          30
+        ],
+        "locationName": "Jordan",
+        "shortPlaceName": "Jordan",
+        "modernLocation": "Jordan River",
+        "lat": 31.761389,
+        "lng": 35.558333,
+        "description": "River in West Asia which flows to the Dead Sea.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
       },
       {
         "id": "deuteronomy_11_event10",
@@ -47332,25 +47332,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "1samuel_23_event7",
-        "stepNumber": 4,
-        "title": "Ziph 1",
-        "passageRef": "1 Sam 23:19",
-        "verseRange": [
-          19,
-          19
-        ],
-        "locationName": "Ziph 1",
-        "shortPlaceName": "Ziph 1",
-        "modernLocation": "Tell Zif",
-        "lat": 31.47475,
-        "lng": 35.13514,
-        "description": "Former town in the Judean Mountains, south-east of Hebron.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "1samuel_23_event4",
         "stepNumber": 5,
         "title": "Gibeah 1",
@@ -47403,6 +47384,25 @@
         "lat": 31.4703,
         "lng": 35.2228,
         "description": "Location mentioned in 1 Sam 23:19",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "1samuel_23_event7",
+        "stepNumber": 4,
+        "title": "Ziph 1",
+        "passageRef": "1 Sam 23:24",
+        "verseRange": [
+          24,
+          24
+        ],
+        "locationName": "Ziph 1",
+        "shortPlaceName": "Ziph 1",
+        "modernLocation": "Tell Zif",
+        "lat": 31.47475,
+        "lng": 35.13514,
+        "description": "Former town in the Judean Mountains, south-east of Hebron.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
         "isReferencedOnly": false
@@ -49796,25 +49796,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "isaiah_21_event1",
-        "stepNumber": 2,
-        "title": "Babylon 1",
-        "passageRef": "Isa 21:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Babylon 1",
-        "shortPlaceName": "Babylon 1",
-        "modernLocation": "Babylon",
-        "lat": 32.543333,
-        "lng": 44.422222,
-        "description": "Capital city of Babylonia and an archaeological site in modern-day Iraq.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "isaiah_21_event3",
         "stepNumber": 3,
         "title": "Elam",
@@ -49848,6 +49829,25 @@
         "lat": 34.8065,
         "lng": 48.516247,
         "description": "Ancient Iranian People.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "isaiah_21_event1",
+        "stepNumber": 2,
+        "title": "Babylon 1",
+        "passageRef": "Isa 21:9",
+        "verseRange": [
+          9,
+          9
+        ],
+        "locationName": "Babylon 1",
+        "shortPlaceName": "Babylon 1",
+        "modernLocation": "Babylon",
+        "lat": 32.543333,
+        "lng": 44.422222,
+        "description": "Capital city of Babylonia and an archaeological site in modern-day Iraq.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -50808,25 +50808,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "ezekiel_30_event6",
-        "stepNumber": 6,
-        "title": "Put",
-        "passageRef": "Ezek 30:5",
-        "verseRange": [
-          5,
-          5
-        ],
-        "locationName": "Put",
-        "shortPlaceName": "Put",
-        "modernLocation": "Cyrene",
-        "lat": 32.820946,
-        "lng": 21.851229,
-        "description": "Put the son of Ham, one of the three sons of Noah.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": true
-      },
-      {
         "id": "ezekiel_30_event8",
         "stepNumber": 7,
         "title": "Syene",
@@ -50900,6 +50881,25 @@
         "description": "Major river in northeastern Africa.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "ezekiel_30_event6",
+        "stepNumber": 6,
+        "title": "Put",
+        "passageRef": "Ezek 30:13",
+        "verseRange": [
+          13,
+          13
+        ],
+        "locationName": "Put",
+        "shortPlaceName": "Put",
+        "modernLocation": "Cyrene",
+        "lat": 32.820946,
+        "lng": 21.851229,
+        "description": "Put the son of Ham, one of the three sons of Noah.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
         "isReferencedOnly": true
       },
       {
@@ -51584,25 +51584,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "judges_18_event4",
-        "stepNumber": 5,
-        "title": "Dan",
-        "passageRef": "Judg 18:7",
-        "verseRange": [
-          7,
-          7
-        ],
-        "locationName": "Dan",
-        "shortPlaceName": "Dan",
-        "modernLocation": "Tel Dan",
-        "lat": 33.249,
-        "lng": 35.652,
-        "description": "Ancient city in northern Israel.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "judges_18_event7",
         "stepNumber": 6,
         "title": "Mahaneh-dan 2",
@@ -51636,6 +51617,25 @@
         "lat": 31.808957,
         "lng": 35.10378,
         "description": "Archaeological tell.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "judges_18_event4",
+        "stepNumber": 5,
+        "title": "Dan",
+        "passageRef": "Judg 18:16",
+        "verseRange": [
+          16,
+          16
+        ],
+        "locationName": "Dan",
+        "shortPlaceName": "Dan",
+        "modernLocation": "Tel Dan",
+        "lat": 33.249,
+        "lng": 35.652,
+        "description": "Ancient city in northern Israel.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -53533,25 +53533,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "2kings_19_event2",
-        "stepNumber": 3,
-        "title": "Jerusalem",
-        "passageRef": "2 Kgs 19:8",
-        "verseRange": [
-          8,
-          8
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "2kings_19_event5",
         "stepNumber": 2,
         "title": "Cush 1",
@@ -53569,6 +53550,25 @@
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
+      },
+      {
+        "id": "2kings_19_event2",
+        "stepNumber": 3,
+        "title": "Jerusalem",
+        "passageRef": "2 Kgs 19:10",
+        "verseRange": [
+          10,
+          10
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
       },
       {
         "id": "2kings_19_event7",
@@ -54000,25 +54000,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "isaiah_37_event2",
-        "stepNumber": 3,
-        "title": "Jerusalem",
-        "passageRef": "Isa 37:8",
-        "verseRange": [
-          8,
-          8
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "isaiah_37_event5",
         "stepNumber": 2,
         "title": "Cush 1",
@@ -54036,6 +54017,25 @@
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
+      },
+      {
+        "id": "isaiah_37_event2",
+        "stepNumber": 3,
+        "title": "Jerusalem",
+        "passageRef": "Isa 37:10",
+        "verseRange": [
+          10,
+          10
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
       },
       {
         "id": "isaiah_37_event7",
@@ -54448,25 +54448,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "jeremiah_51_event3",
-        "stepNumber": 3,
-        "title": "Chaldea",
-        "passageRef": "Jer 51:4",
-        "verseRange": [
-          4,
-          4
-        ],
-        "locationName": "Chaldea",
-        "shortPlaceName": "Chaldea",
-        "modernLocation": "Tell el Muqayyar",
-        "lat": 30.962222,
-        "lng": 46.104444,
-        "description": "Small country between the late 10th or early 9th and mid-6th centuries BC.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "jeremiah_51_event4",
         "stepNumber": 4,
         "title": "Zion",
@@ -54500,6 +54481,25 @@
         "lat": 34.8065,
         "lng": 48.516247,
         "description": "Ancient Iranian People.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "jeremiah_51_event3",
+        "stepNumber": 3,
+        "title": "Chaldea",
+        "passageRef": "Jer 51:24",
+        "verseRange": [
+          24,
+          24
+        ],
+        "locationName": "Chaldea",
+        "shortPlaceName": "Chaldea",
+        "modernLocation": "Tell el Muqayyar",
+        "lat": 30.962222,
+        "lng": 46.104444,
+        "description": "Small country between the late 10th or early 9th and mid-6th centuries BC.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -54691,10 +54691,10 @@
         "id": "isaiah_29_event3",
         "stepNumber": 3,
         "title": "Jerusalem",
-        "passageRef": "Isa 29:2",
+        "passageRef": "Isa 29:8",
         "verseRange": [
-          2,
-          2
+          8,
+          8
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -54947,10 +54947,10 @@
         "id": "luke_23_event2",
         "stepNumber": 3,
         "title": "Jerusalem",
-        "passageRef": "Luke 23:5",
+        "passageRef": "Luke 23:7",
         "verseRange": [
-          5,
-          5
+          7,
+          7
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -55727,25 +55727,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "jeremiah_48_event14",
-        "stepNumber": 14,
-        "title": "Jahaz",
-        "passageRef": "Jer 48:21",
-        "verseRange": [
-          21,
-          21
-        ],
-        "locationName": "Jahaz",
-        "shortPlaceName": "Jahaz",
-        "modernLocation": "Khirbet el Medeiyineh",
-        "lat": 31.588347,
-        "lng": 35.907928,
-        "description": "Location mentioned in Jer 48:21",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": true
-      },
-      {
         "id": "jeremiah_48_event15",
         "stepNumber": 15,
         "title": "Mephaath",
@@ -55952,6 +55933,25 @@
         "description": "Lake with no outflow (sea) in Western Asia.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "jeremiah_48_event14",
+        "stepNumber": 14,
+        "title": "Jahaz",
+        "passageRef": "Jer 48:34",
+        "verseRange": [
+          34,
+          34
+        ],
+        "locationName": "Jahaz",
+        "shortPlaceName": "Jahaz",
+        "modernLocation": "Khirbet el Medeiyineh",
+        "lat": 31.588347,
+        "lng": 35.907928,
+        "description": "Location mentioned in Jer 48:21",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
         "isReferencedOnly": true
       },
       {
@@ -58577,25 +58577,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "judges_9_event8",
-        "stepNumber": 8,
-        "title": "Arumah",
-        "passageRef": "Judg 9:31",
-        "verseRange": [
-          31,
-          31
-        ],
-        "locationName": "Arumah",
-        "shortPlaceName": "Arumah",
-        "modernLocation": "Khirbet Urmah",
-        "lat": 32.147556,
-        "lng": 35.321583,
-        "description": "Location mentioned in Judg 9:31",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "judges_9_event10",
         "stepNumber": 9,
         "title": "Tabbur-erez",
@@ -58631,6 +58612,25 @@
         "description": "Location mentioned in Judg 9:37",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "judges_9_event8",
+        "stepNumber": 8,
+        "title": "Arumah",
+        "passageRef": "Judg 9:41",
+        "verseRange": [
+          41,
+          41
+        ],
+        "locationName": "Arumah",
+        "shortPlaceName": "Arumah",
+        "modernLocation": "Khirbet Urmah",
+        "lat": 32.147556,
+        "lng": 35.321583,
+        "description": "Location mentioned in Judg 9:31",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
         "isReferencedOnly": false
       },
       {
@@ -62435,25 +62435,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "2kings_17_event9",
-        "stepNumber": 3,
-        "title": "Cuth",
-        "passageRef": "2 Kgs 17:24",
-        "verseRange": [
-          24,
-          24
-        ],
-        "locationName": "Cuth",
-        "shortPlaceName": "Cuth",
-        "modernLocation": "Tell Ibrahim",
-        "lat": 32.760028,
-        "lng": 44.612861,
-        "description": "Location mentioned in 2 Kgs 17:24",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": true
-      },
-      {
         "id": "2kings_17_event10",
         "stepNumber": 4,
         "title": "Hamath 2",
@@ -62528,6 +62509,25 @@
         "theologicalSignificance": "",
         "isEducatedGuess": true,
         "isReferencedOnly": false
+      },
+      {
+        "id": "2kings_17_event9",
+        "stepNumber": 3,
+        "title": "Cuth",
+        "passageRef": "2 Kgs 17:30",
+        "verseRange": [
+          30,
+          30
+        ],
+        "locationName": "Cuth",
+        "shortPlaceName": "Cuth",
+        "modernLocation": "Tell Ibrahim",
+        "lat": 32.760028,
+        "lng": 44.612861,
+        "description": "Location mentioned in 2 Kgs 17:24",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": true
       }
     ],
     "routeCoordinates": [
@@ -63275,10 +63275,10 @@
         "id": "ezra_4_event8",
         "stepNumber": 3,
         "title": "Beyond the River",
-        "passageRef": "Ezra 4:10",
+        "passageRef": "Ezra 4:17",
         "verseRange": [
-          10,
-          10
+          17,
+          17
         ],
         "locationName": "Beyond the River",
         "shortPlaceName": "Beyond the River",
@@ -65470,25 +65470,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "jeremiah_50_event2",
-        "stepNumber": 2,
-        "title": "Chaldea",
-        "passageRef": "Jer 50:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Chaldea",
-        "shortPlaceName": "Chaldea",
-        "modernLocation": "Tell el Muqayyar",
-        "lat": 30.962222,
-        "lng": 46.104444,
-        "description": "Small country between the late 10th or early 9th and mid-6th centuries BC.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "jeremiah_50_event3",
         "stepNumber": 3,
         "title": "Zion",
@@ -65503,6 +65484,25 @@
         "lat": 31.776667,
         "lng": 35.234167,
         "description": "Place name often used as a synonym for Jerusalem.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "jeremiah_50_event2",
+        "stepNumber": 2,
+        "title": "Chaldea",
+        "passageRef": "Jer 50:10",
+        "verseRange": [
+          10,
+          10
+        ],
+        "locationName": "Chaldea",
+        "shortPlaceName": "Chaldea",
+        "modernLocation": "Tell el Muqayyar",
+        "lat": 30.962222,
+        "lng": 46.104444,
+        "description": "Small country between the late 10th or early 9th and mid-6th centuries BC.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -65894,10 +65894,10 @@
         "id": "ezekiel_23_event4",
         "stepNumber": 4,
         "title": "Assyria",
-        "passageRef": "Ezek 23:5",
+        "passageRef": "Ezek 23:7",
         "verseRange": [
-          5,
-          5
+          7,
+          7
         ],
         "locationName": "Assyria",
         "shortPlaceName": "Assyria",
@@ -67109,25 +67109,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "micah_7_event2",
-        "stepNumber": 3,
-        "title": "Egypt",
-        "passageRef": "Mic 7:12",
-        "verseRange": [
-          12,
-          12
-        ],
-        "locationName": "Egypt",
-        "shortPlaceName": "Egypt",
-        "modernLocation": "Ain Shams",
-        "lat": 30.129444,
-        "lng": 31.3075,
-        "description": "Egyptian civilization from the 4th millennium BC.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "micah_7_event6",
         "stepNumber": 4,
         "title": "Mount Carmel",
@@ -67182,6 +67163,25 @@
         "description": "Ancient Israelite geographical location in modern day Jordan.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "micah_7_event2",
+        "stepNumber": 3,
+        "title": "Egypt",
+        "passageRef": "Mic 7:15",
+        "verseRange": [
+          15,
+          15
+        ],
+        "locationName": "Egypt",
+        "shortPlaceName": "Egypt",
+        "modernLocation": "Ain Shams",
+        "lat": 30.129444,
+        "lng": 31.3075,
+        "description": "Egyptian civilization from the 4th millennium BC.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       }
     ],
@@ -67339,10 +67339,10 @@
         "id": "nahum_3_event1",
         "stepNumber": 1,
         "title": "Nineveh",
-        "passageRef": "Nahum 3:1",
+        "passageRef": "Nahum 3:7",
         "verseRange": [
-          1,
-          1
+          7,
+          7
         ],
         "locationName": "Nineveh",
         "shortPlaceName": "Nineveh",
@@ -71358,10 +71358,10 @@
         "id": "judges_20_event7",
         "stepNumber": 4,
         "title": "Bethel 1",
-        "passageRef": "Judg 20:18",
+        "passageRef": "Judg 20:31",
         "verseRange": [
-          18,
-          18
+          31,
+          31
         ],
         "locationName": "Bethel 1",
         "shortPlaceName": "Bethel 1",
@@ -72137,10 +72137,10 @@
         "id": "ezra_7_event1",
         "stepNumber": 1,
         "title": "Babylon 1",
-        "passageRef": "Ezra 7:1",
+        "passageRef": "Ezra 7:6",
         "verseRange": [
-          1,
-          1
+          6,
+          6
         ],
         "locationName": "Babylon 1",
         "shortPlaceName": "Babylon 1",
@@ -72148,25 +72148,6 @@
         "lat": 32.543333,
         "lng": 44.422222,
         "description": "Capital city of Babylonia and an archaeological site in modern-day Iraq.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
-        "id": "ezra_7_event2",
-        "stepNumber": 2,
-        "title": "Jerusalem",
-        "passageRef": "Ezra 7:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -72186,6 +72167,25 @@
         "lat": 32.543333,
         "lng": 44.422222,
         "description": "Historical country.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "ezra_7_event2",
+        "stepNumber": 2,
+        "title": "Jerusalem",
+        "passageRef": "Ezra 7:7",
+        "verseRange": [
+          7,
+          7
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -73618,25 +73618,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "jeremiah_38_event2",
-        "stepNumber": 2,
-        "title": "Jerusalem",
-        "passageRef": "Jer 38:2",
-        "verseRange": [
-          2,
-          2
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "jeremiah_38_event3",
         "stepNumber": 3,
         "title": "Babylon 1",
@@ -73670,6 +73651,25 @@
         "lat": 31.776667,
         "lng": 35.234167,
         "description": "Location mentioned in Jer 38:7",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "jeremiah_38_event2",
+        "stepNumber": 2,
+        "title": "Jerusalem",
+        "passageRef": "Jer 38:28",
+        "verseRange": [
+          28,
+          28
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -76650,25 +76650,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "2samuel_19_event2",
-        "stepNumber": 3,
-        "title": "Jerusalem",
-        "passageRef": "2 Sam 19:15",
-        "verseRange": [
-          15,
-          15
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "2samuel_19_event4",
         "stepNumber": 4,
         "title": "Bahurim",
@@ -76685,6 +76666,25 @@
         "description": "Biblical place.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "2samuel_19_event2",
+        "stepNumber": 3,
+        "title": "Jerusalem",
+        "passageRef": "2 Sam 19:19",
+        "verseRange": [
+          19,
+          19
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": false
       },
       {
@@ -76834,10 +76834,10 @@
         "id": "deuteronomy_33_event1",
         "stepNumber": 4,
         "title": "Meribah 1",
-        "passageRef": "Deut 33:2",
+        "passageRef": "Deut 33:8",
         "verseRange": [
-          2,
-          2
+          8,
+          8
         ],
         "locationName": "Meribah 1",
         "shortPlaceName": "Meribah 1",
@@ -76973,10 +76973,10 @@
         "id": "joshua_17_event3",
         "stepNumber": 3,
         "title": "Jordan",
-        "passageRef": "Josh 17:1",
+        "passageRef": "Josh 17:5",
         "verseRange": [
-          1,
-          1
+          5,
+          5
         ],
         "locationName": "Jordan",
         "shortPlaceName": "Jordan",
@@ -77686,25 +77686,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "psalms_68_event1",
-        "stepNumber": 1,
-        "title": "Egypt",
-        "passageRef": "Ps 68:7",
-        "verseRange": [
-          7,
-          7
-        ],
-        "locationName": "Egypt",
-        "shortPlaceName": "Egypt",
-        "modernLocation": "Ain Shams",
-        "lat": 30.129444,
-        "lng": 31.3075,
-        "description": "Egyptian civilization from the 4th millennium BC.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "psalms_68_event2",
         "stepNumber": 2,
         "title": "Mount Sinai",
@@ -77833,6 +77814,25 @@
         "lat": 31.776667,
         "lng": 35.234167,
         "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "psalms_68_event1",
+        "stepNumber": 1,
+        "title": "Egypt",
+        "passageRef": "Ps 68:31",
+        "verseRange": [
+          31,
+          31
+        ],
+        "locationName": "Egypt",
+        "shortPlaceName": "Egypt",
+        "modernLocation": "Ain Shams",
+        "lat": 30.129444,
+        "lng": 31.3075,
+        "description": "Egyptian civilization from the 4th millennium BC.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -78832,25 +78832,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "acts_3_event1",
-        "stepNumber": 1,
-        "title": "Beautiful Gate",
-        "passageRef": "Acts 3:2",
-        "verseRange": [
-          2,
-          2
-        ],
-        "locationName": "Beautiful Gate",
-        "shortPlaceName": "Beautiful Gate",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "Location mentioned in Acts 3:2",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "acts_3_event2",
         "stepNumber": 2,
         "title": "Nazareth",
@@ -78865,6 +78846,25 @@
         "lat": 32.70214,
         "lng": 35.29769,
         "description": "City in Israel; predominantly inhabited by Muslim-Arab citizens of Israel; a center of Christian pilgrimage as the childhood home of Jesus.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "acts_3_event1",
+        "stepNumber": 1,
+        "title": "Beautiful Gate",
+        "passageRef": "Acts 3:10",
+        "verseRange": [
+          10,
+          10
+        ],
+        "locationName": "Beautiful Gate",
+        "shortPlaceName": "Beautiful Gate",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "Location mentioned in Acts 3:2",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -80613,10 +80613,10 @@
         "id": "genesis_46_event2",
         "stepNumber": 2,
         "title": "Egypt",
-        "passageRef": "Gen 46:1",
+        "passageRef": "Gen 46:3",
         "verseRange": [
-          1,
-          1
+          3,
+          3
         ],
         "locationName": "Egypt",
         "shortPlaceName": "Egypt",
@@ -82599,10 +82599,10 @@
         "id": "genesis_31_event6",
         "stepNumber": 6,
         "title": "Mizpah 4",
-        "passageRef": "Gen 31:47",
+        "passageRef": "Gen 31:49",
         "verseRange": [
-          47,
-          47
+          49,
+          49
         ],
         "locationName": "Mizpah 4",
         "shortPlaceName": "Mizpah 4",
@@ -82902,25 +82902,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "judges_21_event2",
-        "stepNumber": 2,
-        "title": "Bethel 1",
-        "passageRef": "Judg 21:2",
-        "verseRange": [
-          2,
-          2
-        ],
-        "locationName": "Bethel 1",
-        "shortPlaceName": "Bethel 1",
-        "modernLocation": "Beitin",
-        "lat": 31.922778,
-        "lng": 35.241389,
-        "description": "Biblical place.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "judges_21_event3",
         "stepNumber": 3,
         "title": "Jabesh-gilead",
@@ -82992,6 +82973,25 @@
         "lat": 31.84762,
         "lng": 35.305139,
         "description": "Location mentioned in Judg 21:13",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "judges_21_event2",
+        "stepNumber": 2,
+        "title": "Bethel 1",
+        "passageRef": "Judg 21:19",
+        "verseRange": [
+          19,
+          19
+        ],
+        "locationName": "Bethel 1",
+        "shortPlaceName": "Bethel 1",
+        "modernLocation": "Beitin",
+        "lat": 31.922778,
+        "lng": 35.241389,
+        "description": "Biblical place.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
         "isReferencedOnly": false
@@ -83175,25 +83175,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "1samuel_10_event6",
-        "stepNumber": 6,
-        "title": "Gibeah 1",
-        "passageRef": "1 Sam 10:10",
-        "verseRange": [
-          10,
-          10
-        ],
-        "locationName": "Gibeah 1",
-        "shortPlaceName": "Gibeah 1",
-        "modernLocation": "Tel el Ful",
-        "lat": 31.823113,
-        "lng": 35.230718,
-        "description": "Location mentioned in 1 Sam 10:10",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "1samuel_10_event7",
         "stepNumber": 7,
         "title": "Mizpah 3",
@@ -83230,6 +83211,25 @@
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
+      },
+      {
+        "id": "1samuel_10_event6",
+        "stepNumber": 6,
+        "title": "Gibeah 1",
+        "passageRef": "1 Sam 10:26",
+        "verseRange": [
+          26,
+          26
+        ],
+        "locationName": "Gibeah 1",
+        "shortPlaceName": "Gibeah 1",
+        "modernLocation": "Tel el Ful",
+        "lat": 31.823113,
+        "lng": 35.230718,
+        "description": "Location mentioned in 1 Sam 10:10",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
+        "isReferencedOnly": false
       },
       {
         "id": "1samuel_10_event9",
@@ -85228,10 +85228,10 @@
         "id": "ruth_2_event1",
         "stepNumber": 1,
         "title": "Bethlehem 1",
-        "passageRef": "Ruth 2:1",
+        "passageRef": "Ruth 2:4",
         "verseRange": [
-          1,
-          1
+          4,
+          4
         ],
         "locationName": "Bethlehem 1",
         "shortPlaceName": "Bethlehem 1",
@@ -85369,10 +85369,10 @@
         "id": "1samuel_16_event1",
         "stepNumber": 1,
         "title": "Bethlehem 1",
-        "passageRef": "1 Sam 16:1",
+        "passageRef": "1 Sam 16:4",
         "verseRange": [
-          1,
-          1
+          4,
+          4
         ],
         "locationName": "Bethlehem 1",
         "shortPlaceName": "Bethlehem 1",
@@ -91011,10 +91011,10 @@
         "id": "genesis_47_event3",
         "stepNumber": 3,
         "title": "Egypt",
-        "passageRef": "Gen 47:4",
+        "passageRef": "Gen 47:6",
         "verseRange": [
-          4,
-          4
+          6,
+          6
         ],
         "locationName": "Egypt",
         "shortPlaceName": "Egypt",
@@ -91213,10 +91213,10 @@
         "id": "exodus_6_event2",
         "stepNumber": 2,
         "title": "Egypt",
-        "passageRef": "Ex 6:6",
+        "passageRef": "Ex 6:11",
         "verseRange": [
-          6,
-          6
+          11,
+          11
         ],
         "locationName": "Egypt",
         "shortPlaceName": "Egypt",
@@ -92651,10 +92651,10 @@
         "id": "psalms_105_event2",
         "stepNumber": 2,
         "title": "Egypt",
-        "passageRef": "Ps 105:17",
+        "passageRef": "Ps 105:23",
         "verseRange": [
-          17,
-          17
+          23,
+          23
         ],
         "locationName": "Egypt",
         "shortPlaceName": "Egypt",
@@ -93728,25 +93728,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "matthew_15_event2",
-        "stepNumber": 4,
-        "title": "Galilee 1",
-        "passageRef": "Matt 15:21",
-        "verseRange": [
-          21,
-          21
-        ],
-        "locationName": "Galilee 1",
-        "shortPlaceName": "Galilee 1",
-        "modernLocation": "Galilee",
-        "lat": 32.76,
-        "lng": 35.527,
-        "description": "Large region mainly located in northern Israel.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
         "id": "matthew_15_event5",
         "stepNumber": 5,
         "title": "Canaan",
@@ -93761,6 +93742,25 @@
         "lat": 32.766667,
         "lng": 35.333333,
         "description": "Levantine civilization in the Ancient Near East during the late 2nd millennium BC.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "matthew_15_event2",
+        "stepNumber": 4,
+        "title": "Galilee 1",
+        "passageRef": "Matt 15:29",
+        "verseRange": [
+          29,
+          29
+        ],
+        "locationName": "Galilee 1",
+        "shortPlaceName": "Galilee 1",
+        "modernLocation": "Galilee",
+        "lat": 32.76,
+        "lng": 35.527,
+        "description": "Large region mainly located in northern Israel.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -93832,25 +93832,6 @@
     "centerLng": 35.234167,
     "defaultZoom": 7,
     "events": [
-      {
-        "id": "matthew_4_event1",
-        "stepNumber": 1,
-        "title": "Jerusalem",
-        "passageRef": "Matt 4:5",
-        "verseRange": [
-          5,
-          5
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
       {
         "id": "matthew_4_event2",
         "stepNumber": 1,
@@ -93980,6 +93961,25 @@
         "lat": 33.511112,
         "lng": 36.30639,
         "description": "Roman province (64 BC - 198 AD).",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "matthew_4_event1",
+        "stepNumber": 1,
+        "title": "Jerusalem",
+        "passageRef": "Matt 4:25",
+        "verseRange": [
+          25,
+          25
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -94488,10 +94488,10 @@
         "id": "mark_10_event4",
         "stepNumber": 2,
         "title": "Jerusalem",
-        "passageRef": "Mark 10:17",
+        "passageRef": "Mark 10:32",
         "verseRange": [
-          17,
-          17
+          32,
+          32
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -95902,10 +95902,10 @@
         "id": "jeremiah_33_event2",
         "stepNumber": 2,
         "title": "Jerusalem",
-        "passageRef": "Jer 33:6",
+        "passageRef": "Jer 33:10",
         "verseRange": [
-          6,
-          6
+          10,
+          10
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -96007,10 +96007,10 @@
         "id": "ezekiel_11_event2",
         "stepNumber": 2,
         "title": "Jerusalem",
-        "passageRef": "Ezek 11:9",
+        "passageRef": "Ezek 11:15",
         "verseRange": [
-          9,
-          9
+          15,
+          15
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -96577,10 +96577,10 @@
         "id": "acts_22_event2",
         "stepNumber": 3,
         "title": "Jerusalem",
-        "passageRef": "Acts 22:3",
+        "passageRef": "Acts 22:5",
         "verseRange": [
-          3,
-          3
+          5,
+          5
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -97558,25 +97558,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "isaiah_22_event1",
-        "stepNumber": 1,
-        "title": "Jerusalem",
-        "passageRef": "Isa 22:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "isaiah_22_event2",
         "stepNumber": 2,
         "title": "Elam",
@@ -97629,6 +97610,25 @@
         "lat": 31.776667,
         "lng": 35.234167,
         "description": "Location mentioned in Isa 22:8",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "isaiah_22_event1",
+        "stepNumber": 1,
+        "title": "Jerusalem",
+        "passageRef": "Isa 22:9",
+        "verseRange": [
+          9,
+          9
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -98059,6 +98059,25 @@
         "isReferencedOnly": true
       },
       {
+        "id": "jeremiah_31_event5",
+        "stepNumber": 5,
+        "title": "Jerusalem",
+        "passageRef": "Jer 31:12",
+        "verseRange": [
+          12,
+          12
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
         "id": "jeremiah_31_event4",
         "stepNumber": 4,
         "title": "Ramah 1",
@@ -98075,25 +98094,6 @@
         "description": "Biblical city of ancient Israel.",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
-        "isReferencedOnly": true
-      },
-      {
-        "id": "jeremiah_31_event5",
-        "stepNumber": 5,
-        "title": "Jerusalem",
-        "passageRef": "Jer 31:23",
-        "verseRange": [
-          23,
-          23
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
         "isReferencedOnly": true
       },
       {
@@ -98455,25 +98455,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "zephaniah_3_event1",
-        "stepNumber": 1,
-        "title": "Jerusalem",
-        "passageRef": "Zeph 3:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "zephaniah_3_event2",
         "stepNumber": 2,
         "title": "Cush 1",
@@ -98488,6 +98469,25 @@
         "lat": 16.935139,
         "lng": 33.75075,
         "description": "C. 1070 BCE – c. CE 350 / kingdom in Nubia (modern-day Sudan), northeast Africa.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "zephaniah_3_event1",
+        "stepNumber": 1,
+        "title": "Jerusalem",
+        "passageRef": "Zeph 3:14",
+        "verseRange": [
+          14,
+          14
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -99117,13 +99117,32 @@
         "isReferencedOnly": true
       },
       {
+        "id": "mark_7_event5",
+        "stepNumber": 4,
+        "title": "Phoenicia",
+        "passageRef": "Mark 7:26",
+        "verseRange": [
+          26,
+          26
+        ],
+        "locationName": "Phoenicia",
+        "shortPlaceName": "Phoenicia",
+        "modernLocation": "Tyre",
+        "lat": 33.270833,
+        "lng": 35.196111,
+        "description": "Ancient Semitic maritime civilization.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
         "id": "mark_7_event4",
         "stepNumber": 1,
         "title": "Tyre",
-        "passageRef": "Mark 7:24",
+        "passageRef": "Mark 7:30",
         "verseRange": [
-          24,
-          24
+          30,
+          30
         ],
         "locationName": "Tyre",
         "shortPlaceName": "Tyre",
@@ -99139,10 +99158,10 @@
         "id": "mark_7_event3",
         "stepNumber": 2,
         "title": "Sidon",
-        "passageRef": "Mark 7:24",
+        "passageRef": "Mark 7:30",
         "verseRange": [
-          24,
-          24
+          30,
+          30
         ],
         "locationName": "Sidon",
         "shortPlaceName": "Sidon",
@@ -99158,10 +99177,10 @@
         "id": "mark_7_event2",
         "stepNumber": 3,
         "title": "Galilee 1",
-        "passageRef": "Mark 7:24",
+        "passageRef": "Mark 7:30",
         "verseRange": [
-          24,
-          24
+          30,
+          30
         ],
         "locationName": "Galilee 1",
         "shortPlaceName": "Galilee 1",
@@ -99169,25 +99188,6 @@
         "lat": 32.76,
         "lng": 35.527,
         "description": "Large region mainly located in northern Israel.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": false
-      },
-      {
-        "id": "mark_7_event5",
-        "stepNumber": 4,
-        "title": "Phoenicia",
-        "passageRef": "Mark 7:26",
-        "verseRange": [
-          26,
-          26
-        ],
-        "locationName": "Phoenicia",
-        "shortPlaceName": "Phoenicia",
-        "modernLocation": "Tyre",
-        "lat": 33.270833,
-        "lng": 35.196111,
-        "description": "Ancient Semitic maritime civilization.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": false
@@ -104476,10 +104476,10 @@
         "id": "joshua_2_event2",
         "stepNumber": 3,
         "title": "Jordan",
-        "passageRef": "Josh 2:1",
+        "passageRef": "Josh 2:7",
         "verseRange": [
-          1,
-          1
+          7,
+          7
         ],
         "locationName": "Jordan",
         "shortPlaceName": "Jordan",
@@ -104987,10 +104987,10 @@
         "id": "1chronicles_17_event1",
         "stepNumber": 1,
         "title": "Egypt",
-        "passageRef": "1 Chr 17:5",
+        "passageRef": "1 Chr 17:21",
         "verseRange": [
-          5,
-          5
+          21,
+          21
         ],
         "locationName": "Egypt",
         "shortPlaceName": "Egypt",
@@ -106044,25 +106044,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "jeremiah_26_event1",
-        "stepNumber": 2,
-        "title": "Jerusalem",
-        "passageRef": "Jer 26:6",
-        "verseRange": [
-          6,
-          6
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "jeremiah_26_event3",
         "stepNumber": 3,
         "title": "New Gate",
@@ -106077,6 +106058,25 @@
         "lat": 31.776667,
         "lng": 35.234167,
         "description": "Location mentioned in Jer 26:10",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "jeremiah_26_event1",
+        "stepNumber": 2,
+        "title": "Jerusalem",
+        "passageRef": "Jer 26:18",
+        "verseRange": [
+          18,
+          18
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -106637,10 +106637,10 @@
         "id": "hebrews_11_event1",
         "stepNumber": 1,
         "title": "Egypt",
-        "passageRef": "Heb 11:22",
+        "passageRef": "Heb 11:26",
         "verseRange": [
-          22,
-          22
+          26,
+          26
         ],
         "locationName": "Egypt",
         "shortPlaceName": "Egypt",
@@ -107369,25 +107369,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "isaiah_60_event1",
-        "stepNumber": 1,
-        "title": "Jerusalem",
-        "passageRef": "Isa 60:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "isaiah_60_event3",
         "stepNumber": 2,
         "title": "Midian",
@@ -107497,6 +107478,25 @@
         "lat": 33.54,
         "lng": 35.583611,
         "description": "Aspect of history.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "isaiah_60_event1",
+        "stepNumber": 1,
+        "title": "Jerusalem",
+        "passageRef": "Isa 60:14",
+        "verseRange": [
+          14,
+          14
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -108023,25 +108023,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "psalms_132_event1",
-        "stepNumber": 1,
-        "title": "Jerusalem",
-        "passageRef": "Ps 132:1",
-        "verseRange": [
-          1,
-          1
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "psalms_132_event2",
         "stepNumber": 2,
         "title": "Ephrathah",
@@ -108077,6 +108058,25 @@
         "description": "Location mentioned in Ps 132:6",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "psalms_132_event1",
+        "stepNumber": 1,
+        "title": "Jerusalem",
+        "passageRef": "Ps 132:13",
+        "verseRange": [
+          13,
+          13
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       },
       {
@@ -112312,10 +112312,10 @@
         "id": "numbers_12_event1",
         "stepNumber": 1,
         "title": "Hazeroth",
-        "passageRef": "Num 12:1",
+        "passageRef": "Num 12:16",
         "verseRange": [
-          1,
-          1
+          16,
+          16
         ],
         "locationName": "Hazeroth",
         "shortPlaceName": "Hazeroth",
@@ -112781,25 +112781,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "hebrews_9_event1",
-        "stepNumber": 1,
-        "title": "Holy Place 2",
-        "passageRef": "Heb 9:2",
-        "verseRange": [
-          2,
-          2
-        ],
-        "locationName": "Holy Place 2",
-        "shortPlaceName": "Holy Place 2",
-        "modernLocation": "Mount Moriah",
-        "lat": 31.777778,
-        "lng": 35.235556,
-        "description": "Location mentioned in Heb 9:2",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "hebrews_9_event2",
         "stepNumber": 2,
         "title": "Most Holy Place 2",
@@ -112814,6 +112795,25 @@
         "lat": 31.777778,
         "lng": 35.235556,
         "description": "Location mentioned in Heb 9:3",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "hebrews_9_event1",
+        "stepNumber": 1,
+        "title": "Holy Place 2",
+        "passageRef": "Heb 9:12",
+        "verseRange": [
+          12,
+          12
+        ],
+        "locationName": "Holy Place 2",
+        "shortPlaceName": "Holy Place 2",
+        "modernLocation": "Mount Moriah",
+        "lat": 31.777778,
+        "lng": 35.235556,
+        "description": "Location mentioned in Heb 9:2",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
         "isReferencedOnly": true
@@ -114246,25 +114246,6 @@
         "isReferencedOnly": true
       },
       {
-        "id": "psalms_48_event3",
-        "stepNumber": 3,
-        "title": "Jerusalem",
-        "passageRef": "Ps 48:3",
-        "verseRange": [
-          3,
-          3
-        ],
-        "locationName": "Jerusalem",
-        "shortPlaceName": "Jerusalem",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "City in the Middle East, holy to the three Abrahamic religions.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "psalms_48_event4",
         "stepNumber": 4,
         "title": "Tarshish 2",
@@ -114281,6 +114262,25 @@
         "description": "Location mentioned in Ps 48:7",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "psalms_48_event3",
+        "stepNumber": 3,
+        "title": "Jerusalem",
+        "passageRef": "Ps 48:11",
+        "verseRange": [
+          11,
+          11
+        ],
+        "locationName": "Jerusalem",
+        "shortPlaceName": "Jerusalem",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "City in the Middle East, holy to the three Abrahamic religions.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       },
       {
@@ -114453,10 +114453,10 @@
         "id": "psalms_99_event2",
         "stepNumber": 2,
         "title": "Jerusalem",
-        "passageRef": "Ps 99:9",
+        "passageRef": "Ps 99:2",
         "verseRange": [
-          9,
-          9
+          2,
+          2
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -114909,10 +114909,10 @@
         "id": "psalms_128_event1",
         "stepNumber": 1,
         "title": "Jerusalem",
-        "passageRef": "Ps 128:1",
+        "passageRef": "Ps 128:5",
         "verseRange": [
-          1,
-          1
+          5,
+          5
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -114968,10 +114968,10 @@
         "id": "psalms_129_event1",
         "stepNumber": 1,
         "title": "Jerusalem",
-        "passageRef": "Ps 129:1",
+        "passageRef": "Ps 129:5",
         "verseRange": [
-          1,
-          1
+          5,
+          5
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -115099,10 +115099,10 @@
         "id": "psalms_133_event1",
         "stepNumber": 1,
         "title": "Jerusalem",
-        "passageRef": "Ps 133:1",
+        "passageRef": "Ps 133:3",
         "verseRange": [
-          1,
-          1
+          3,
+          3
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -115181,10 +115181,10 @@
         "id": "psalms_134_event1",
         "stepNumber": 1,
         "title": "Jerusalem",
-        "passageRef": "Ps 134:1",
+        "passageRef": "Ps 134:3",
         "verseRange": [
-          1,
-          1
+          3,
+          3
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -116232,10 +116232,10 @@
         "id": "isaiah_49_event3",
         "stepNumber": 3,
         "title": "Jerusalem",
-        "passageRef": "Isa 49:16",
+        "passageRef": "Isa 49:14",
         "verseRange": [
-          16,
-          16
+          14,
+          14
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -117007,10 +117007,10 @@
         "id": "jeremiah_30_event1",
         "stepNumber": 1,
         "title": "Zion",
-        "passageRef": "Jer 30:12",
+        "passageRef": "Jer 30:17",
         "verseRange": [
-          12,
-          12
+          17,
+          17
         ],
         "locationName": "Zion",
         "shortPlaceName": "Zion",
@@ -117066,10 +117066,10 @@
         "id": "lamentations_1_event1",
         "stepNumber": 1,
         "title": "Jerusalem",
-        "passageRef": "Lam 1:1",
+        "passageRef": "Lam 1:4",
         "verseRange": [
-          1,
-          1
+          4,
+          4
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -117144,10 +117144,10 @@
         "id": "lamentations_2_event2",
         "stepNumber": 2,
         "title": "Jerusalem",
-        "passageRef": "Lam 2:2",
+        "passageRef": "Lam 2:4",
         "verseRange": [
-          2,
-          2
+          4,
+          4
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -117256,10 +117256,10 @@
         "id": "ezekiel_5_event1",
         "stepNumber": 1,
         "title": "Jerusalem",
-        "passageRef": "Ezek 5:2",
+        "passageRef": "Ezek 5:5",
         "verseRange": [
-          2,
-          2
+          5,
+          5
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -117472,10 +117472,10 @@
         "id": "ezekiel_22_event1",
         "stepNumber": 1,
         "title": "Jerusalem",
-        "passageRef": "Ezek 22:2",
+        "passageRef": "Ezek 22:19",
         "verseRange": [
-          2,
-          2
+          19,
+          19
         ],
         "locationName": "Jerusalem",
         "shortPlaceName": "Jerusalem",
@@ -120311,25 +120311,6 @@
         "isReferencedOnly": false
       },
       {
-        "id": "numbers_25_event3",
-        "stepNumber": 3,
-        "title": "Peor",
-        "passageRef": "Num 25:3",
-        "verseRange": [
-          3,
-          3
-        ],
-        "locationName": "Peor",
-        "shortPlaceName": "Peor",
-        "modernLocation": "Khirbet Ayun Musa",
-        "lat": 31.777021,
-        "lng": 35.738498,
-        "description": "Wikimedia disambiguation page.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": true,
-        "isReferencedOnly": false
-      },
-      {
         "id": "numbers_25_event4",
         "stepNumber": 4,
         "title": "Midian",
@@ -120346,6 +120327,25 @@
         "description": "Place mentioned in the bible.",
         "theologicalSignificance": "",
         "isEducatedGuess": false,
+        "isReferencedOnly": false
+      },
+      {
+        "id": "numbers_25_event3",
+        "stepNumber": 3,
+        "title": "Peor",
+        "passageRef": "Num 25:18",
+        "verseRange": [
+          18,
+          18
+        ],
+        "locationName": "Peor",
+        "shortPlaceName": "Peor",
+        "modernLocation": "Khirbet Ayun Musa",
+        "lat": 31.777021,
+        "lng": 35.738498,
+        "description": "Wikimedia disambiguation page.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": true,
         "isReferencedOnly": false
       }
     ],
@@ -121347,10 +121347,10 @@
         "id": "nahum_2_event1",
         "stepNumber": 1,
         "title": "Nineveh",
-        "passageRef": "Nahum 2:1",
+        "passageRef": "Nahum 2:8",
         "verseRange": [
-          1,
-          1
+          8,
+          8
         ],
         "locationName": "Nineveh",
         "shortPlaceName": "Nineveh",
@@ -122520,25 +122520,6 @@
     "defaultZoom": 7,
     "events": [
       {
-        "id": "psalms_84_event1",
-        "stepNumber": 1,
-        "title": "Zion",
-        "passageRef": "Ps 84:5",
-        "verseRange": [
-          5,
-          5
-        ],
-        "locationName": "Zion",
-        "shortPlaceName": "Zion",
-        "modernLocation": "Jerusalem",
-        "lat": 31.776667,
-        "lng": 35.234167,
-        "description": "Place name often used as a synonym for Jerusalem.",
-        "theologicalSignificance": "",
-        "isEducatedGuess": false,
-        "isReferencedOnly": true
-      },
-      {
         "id": "psalms_84_event2",
         "stepNumber": 2,
         "title": "Valley of Baca",
@@ -122555,6 +122536,25 @@
         "description": "Location mentioned in Ps 84:6",
         "theologicalSignificance": "",
         "isEducatedGuess": true,
+        "isReferencedOnly": true
+      },
+      {
+        "id": "psalms_84_event1",
+        "stepNumber": 1,
+        "title": "Zion",
+        "passageRef": "Ps 84:7",
+        "verseRange": [
+          7,
+          7
+        ],
+        "locationName": "Zion",
+        "shortPlaceName": "Zion",
+        "modernLocation": "Jerusalem",
+        "lat": 31.776667,
+        "lng": 35.234167,
+        "description": "Place name often used as a synonym for Jerusalem.",
+        "theologicalSignificance": "",
+        "isEducatedGuess": false,
         "isReferencedOnly": true
       }
     ],

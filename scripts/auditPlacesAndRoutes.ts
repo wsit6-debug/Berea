@@ -21,7 +21,7 @@ const largeStorylineJumps: any[] = [];
 for (const [chKey, chData] of Object.entries<any>(rawDb)) {
   const events = chData.events || [];
   const physicalEvents: any[] = [];
-  
+
   for (const ev of events) {
     totalEvents++;
     if (ev.isReferencedOnly) {

@@ -23,20 +23,20 @@ const sampleChapters = [
   { book: 'exodus', chapter: 19 },
   { book: 'numbers', chapter: 13 },
   { book: 'deuteronomy', chapter: 34 },
-  
+
   // Historical
   { book: 'joshua', chapter: 6 },
   { book: '1samuel', chapter: 17 },
   { book: '2samuel', chapter: 5 },
   { book: '1kings', chapter: 18 },
   { book: 'nehemiah', chapter: 2 },
-  
+
   // Wisdom & Prophets
   { book: 'psalms', chapter: 23 },
   { book: 'isaiah', chapter: 6 },
   { book: 'jeremiah', chapter: 1 },
   { book: 'jonah', chapter: 1 },
-  
+
   // Gospels
   { book: 'matthew', chapter: 2 },
   { book: 'matthew', chapter: 4 },
@@ -47,7 +47,7 @@ const sampleChapters = [
   { book: 'john', chapter: 2 },
   { book: 'john', chapter: 4 },
   { book: 'john', chapter: 11 },
-  
+
   // Acts of the Apostles
   { book: 'acts', chapter: 1 },
   { book: 'acts', chapter: 8 },
@@ -60,7 +60,7 @@ const sampleChapters = [
   { book: 'acts', chapter: 18 },
   { book: 'acts', chapter: 27 },
   { book: 'acts', chapter: 28 },
-  
+
   // Epistles & Revelation
   { book: 'romans', chapter: 1 },
   { book: '1corinthians', chapter: 1 },
@@ -119,7 +119,7 @@ for (const test of sampleChapters) {
       } else {
         for (const [lat, lng] of seg.coordinates) {
           if (typeof lat !== 'number' || isNaN(lat) || lat < -90 || lat > 90 ||
-              typeof lng !== 'number' || isNaN(lng) || lng < -180 || lng > 180) {
+            typeof lng !== 'number' || isNaN(lng) || lng < -180 || lng > 180) {
             errors.push(`Invalid coordinate in segment ${seg.id}: [${lat}, ${lng}]`);
             validCoords = false;
           }

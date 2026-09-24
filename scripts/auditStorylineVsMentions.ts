@@ -112,13 +112,13 @@ export function auditAndClassifyDatabase(dryRun: boolean = true): AuditResult {
         // 1. Check for physical storyline indicators in the verse
         // Verbs of motion, arrival, departure, sailing, encampment, battle, habitation
         const motionPattern = /\b(passed through|passed by|came|went|journeyed|departed|arrived|reached|sailed|landed|loosed from|launched|entered|brought|led them out|walked|fled|returned|escaped|encamped|camped|pitched|dwelt|abode|tarried|lodged|gathered|assembled|built an altar|fought|smote|besieged|took the city)\b/i;
-        
+
         // 2. Check for mentioned-only indicators (Origins/Epithets, Sayings/Comparisons, Sermons)
         // Demonym / Origin: "man of [City]", "born in [City]", or specific person + "of [City]"
         const personOriginRegex = new RegExp(`\\b(man|men|woman|women|inhabitants|citizen|born|native)\\s+(?:of|in|at)\\s+${shortName}\\b`, 'i');
         const namedPersonOrigin = new RegExp(`\\b(Simon|Lucius|Joseph|Mary|Jesus|Saul|Paul|Gaius|Sopater|Aristarchus|Secundus|Tychicus|Trophimus|Jason|Aquila|Apollos)\\s+(?:of|from)\\s+${shortName}\\b`, 'i');
         const governorRegex = new RegExp(`\\b(governor|tetrarch|proconsul|deputy|king|ruler|kingdom)\\s+of\\s+${shortName}\\b`, 'i');
-        
+
         // Metaphor / Comparison: "woe unto thee, Chorazin", "like unto Sodom", "even as Gomorrah", "from Dan to Beersheba"
         const comparisonRegex = new RegExp(`\\b(woe\\s+unto\\s+(?:thee|you)[,:]?|like\\s+unto|even\\s+as)\\s+.*\\b${shortName}\\b`, 'i');
         const danToBeersheba = /from\s+Dan\s+(?:even\s+)?to\s+Beer-?sheba/i.test(verseText);
@@ -200,7 +200,7 @@ export function auditAndClassifyDatabase(dryRun: boolean = true): AuditResult {
         } else {
           // If no specific match, default to Storyline for narrative books, Reference for prophetic/epistolary
           const isNarrativeBook = ['genesis', 'exodus', 'numbers', 'joshua', 'judges', 'ruth', '1samuel', '2samuel', '1kings', '2kings', '1chronicles', '2chronicles', 'ezra', 'nehemiah', 'esther', 'matthew', 'mark', 'luke', 'john', 'acts'].includes(bookId.toLowerCase());
-          
+
           if (isNarrativeBook) {
             // In narrative books, places mentioned in narrative context default to physical storyline
             newIsRef = false;

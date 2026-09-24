@@ -49,7 +49,7 @@ interface RedLetterVerseEntry {
 async function fetchBookData(bookName: string): Promise<RawVerse[]> {
   const encodedBook = encodeURIComponent(bookName);
   const url = `https://raw.githubusercontent.com/jburson/bible-data/main/data/kjv/books/${encodedBook}/${encodedBook}.json`;
-  
+
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch ${url}: ${res.statusText}`);
@@ -69,7 +69,7 @@ function parseTokensToSegments(rawText: string): { segments: { text: string; isS
   for (const token of tokens) {
     if (!token.trim()) continue;
     totalWords++;
-    
+
     // Check if token has * and the flag contains 'r' (red letter)
     const isSpeech = /\*[a-z]*r[a-z]*/i.test(token);
     if (isSpeech) speechWords++;
@@ -112,11 +112,11 @@ async function buildDatabase() {
 
       for (const item of verses) {
         if (!item.t || !item.r) continue;
-        
+
         // Parse reference e.g. "kjv:Matthew:4:4" or "kjv:1 Corinthians:11:24"
         const parts = item.r.split(':');
         if (parts.length < 4) continue;
-        
+
         const ch = parseInt(parts[2], 10);
         const v = parseInt(parts[3], 10);
         const key = `${book.id}_${ch}_${v}`;

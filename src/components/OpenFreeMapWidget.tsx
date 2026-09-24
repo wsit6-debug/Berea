@@ -233,6 +233,24 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
 
     if (activeVerseNumber !== undefined && activeVerseNumber > 0 && activeVerseNumber !== prevVerseRef.current) {
       prevVerseRef.current = activeVerseNumber;
+
+      // If active event already covers activeVerseNumber, do not alter selection or jump tabs
+      if (activeEvent && activeEvent.verseRange && activeVerseNumber >= activeEvent.verseRange[0] && activeVerseNumber <= activeEvent.verseRange[1]) {
+        return;
+      }
+
+      // If user is on references tab, check referencedEvents first to avoid abruptly switching them to storyline
+      if (activeTab === 'references') {
+        const rIdx = referencedEvents.findIndex(
+          ev => activeVerseNumber >= ev.verseRange[0] && activeVerseNumber <= ev.verseRange[1]
+        );
+        if (rIdx !== -1) {
+          setActiveReferenceIndex(rIdx);
+          if (onEventSelect) onEventSelect(referencedEvents[rIdx]);
+          return;
+        }
+      }
+
       const sIdx = storylineEvents.findIndex(
         ev => activeVerseNumber >= ev.verseRange[0] && activeVerseNumber <= ev.verseRange[1]
       );
@@ -251,7 +269,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         if (onEventSelect) onEventSelect(referencedEvents[rIdx]);
       }
     }
-  }, [activeVerseNumber, viewMode, storylineEvents, referencedEvents, onEventSelect]);
+  }, [activeVerseNumber, viewMode, activeEvent, activeTab, storylineEvents, referencedEvents, onEventSelect]);
 
   // Scroll active storyline button into view
   useEffect(() => {
@@ -262,23 +280,23 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
   }, [activeTab, currentTabIndex]);
 
   const getEventDistanceInfo = (ev: ChapterGeoEvent) => {
-    if (ev.isReferencedOnly) return null;
-    const storyIdx = storylineEvents.findIndex(e => e.id === ev.id);
-    if (storyIdx < 0) return null;
-    if (storyIdx === 0) {
-      return { isOrigin: true, label: 'Origin' };
+    const list = ev.isReferencedOnly ? referencedEvents : storylineEvents;
+    const idx = list.findIndex(e => e.id === ev.id);
+    if (idx < 0) return null;
+    if (idx === 0) {
+      return { isOrigin: true, label: ev.isReferencedOnly ? '1st Mention' : 'Origin' };
     }
 
-    const curr = storylineEvents[storyIdx];
-    const prev = storylineEvents[storyIdx - 1];
+    const curr = list[idx];
+    const prev = list[idx - 1];
     if (!prev) return null;
 
     // Check if there is a matching segment in routeSegments
     if (chapterData.routeSegments && chapterData.routeSegments.length > 0) {
       const segs = chapterData.routeSegments;
-      let seg = segs[storyIdx - 1];
+      let seg = segs[idx - 1];
       if (!seg || !seg.toName.toLowerCase().includes(getShortPlaceName(curr).toLowerCase())) {
-        const found = segs.find(s => 
+        const found = segs.find(s =>
           s.toName.toLowerCase().includes(getShortPlaceName(curr).toLowerCase()) ||
           curr.locationName.toLowerCase().includes(s.toName.toLowerCase())
         );
@@ -391,7 +409,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
 
     if (routePolylinesRef.current.length > 0) {
       routePolylinesRef.current.forEach(p => {
-        try { map.removeLayer(p); } catch {}
+        try { map.removeLayer(p); } catch { }
       });
       routePolylinesRef.current = [];
     }
@@ -480,24 +498,24 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         chapterData.routeSegments.forEach((segment: RouteSegment) => {
           const isSea = segment.mode === 'sea_sailing';
           const isCaravan = segment.mode === 'desert_caravan';
-          const isFallback = segment.historicalRoadName?.includes('Straight Line') || segment.historicalRoadName?.includes('Direct Path');
+          const isFallback = segment.historicalRoadName?.includes('Straight Line') || segment.historicalRoadName?.includes('Direct Path') || segment.historicalRoadName?.includes('No Recorded Road');
 
           segment.coordinates.forEach(c => allRoutePoints.push(c));
 
           // A. High-contrast white halo casing so route pops against shaded mountain relief
           const halo = L.polyline(segment.coordinates, {
             color: '#FFFFFF',
-            weight: isSea ? 5.5 : 6.5,
+            weight: isSea ? 5.5 : (isFallback ? 5.0 : 6.5),
             opacity: 0.95,
             lineCap: 'round',
             lineJoin: 'round'
           }).addTo(map);
           routePolylinesRef.current.push(halo);
 
-          // B. High-visibility core line (Roman terracotta for land, royal Mediterranean blue for sea, amber for caravan)
-          const strokeColor = isSea ? '#1D4ED8' : (isCaravan ? '#D97706' : '#C05621');
+          // B. High-visibility core line (Roman terracotta for land, royal Mediterranean blue for sea, amber for caravan, stone gray for direct path)
+          const strokeColor = isFallback ? (isSea ? '#2563EB' : '#78716C') : (isSea ? '#1D4ED8' : (isCaravan ? '#D97706' : '#C05621'));
           const dashStyle = isFallback ? '6, 8' : (isSea ? '6, 6' : (isCaravan ? '4, 6' : undefined));
-          const initialWeight = isFallback ? 3.0 : (isSea ? 3.0 : 3.8);
+          const initialWeight = isFallback ? 2.8 : (isSea ? 3.0 : 3.8);
 
           const polyline = L.polyline(segment.coordinates, {
             color: strokeColor,
@@ -512,12 +530,12 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
             ? `${Math.round(segment.travelDays * 24)} hours`
             : `~${segment.travelDays} ${segment.travelDays === 1 ? 'day' : 'days'}`;
 
-          const modeLabel = isSea ? 'Maritime Sailing' : (isCaravan ? 'Desert Caravan' : 'Foot / Roman Road');
+          const modeLabel = isSea ? 'Maritime Sailing' : (isCaravan ? 'Desert Caravan' : (isFallback ? 'Direct Path / No Road' : 'Foot / Roman Road'));
 
           polyline.bindTooltip(`
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #26221F; max-width: 250px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word;">
-              <div style="font-size: 10px; font-weight: 800; color: #C05621; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; white-space: normal; word-wrap: break-word;">
-                ${escapeHtml(segment.historicalRoadName || 'Historical Path')}
+              <div style="font-size: 10px; font-weight: 800; color: ${isFallback ? '#78716C' : '#C05621'}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; white-space: normal; word-wrap: break-word;">
+                ${escapeHtml(segment.historicalRoadName || (isFallback ? 'Direct Path (No Recorded Road)' : 'Historical Path'))}
               </div>
               <div style="font-size: 12px; font-weight: 700; color: #26221F; margin-bottom: 3px; white-space: normal; word-wrap: break-word; line-height: 1.3;">
                 ${escapeHtml(segment.fromName)} → ${escapeHtml(segment.toName)}
@@ -528,7 +546,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                 <span>(${modeLabel})</span>
               </div>
               ${segment.notes ? `<div style="font-size: 10px; line-height: 1.35; color: #78716C; border-top: 1px solid #EBE5DC; padding-top: 4px; margin-top: 4px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word;">${escapeHtml(segment.notes)}</div>` : ''}
-              ${segment.isScholarlyEstimate ? `<div style="font-size: 9px; color: #856404; background: #FFF3CD; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 4px; white-space: normal;">Scholarly Reconstruction</div>` : ''}
+              ${isFallback ? `<div style="font-size: 9px; color: #44403C; background: #E7E5E4; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 4px; white-space: normal; font-weight: 600;">No Recorded Ancient Road (Direct Line)</div>` : (segment.isScholarlyEstimate ? `<div style="font-size: 9px; color: #856404; background: #FFF3CD; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 4px; white-space: normal;">Scholarly Reconstruction</div>` : '')}
             </div>
           `, { sticky: true, opacity: 0.98, className: 'berea-route-tooltip' });
 
@@ -577,12 +595,18 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         routePolylinesRef.current.push(polyline);
       }
 
-      // 4. If the chapter has multiple route points and viewing chapter, frame the entire journey into view!
-      if (allRoutePoints.length > 1 && viewMode === 'chapter') {
+      // 4. Frame route bounds smoothly for both chapter and whole-book views
+      if (allRoutePoints.length > 1) {
         const bounds = L.latLngBounds(allRoutePoints);
         map.fitBounds(bounds, {
-          padding: [30, 30],
-          maxZoom: chapterData.defaultZoom || 9
+          padding: [35, 35],
+          maxZoom: viewMode === 'book' ? 7 : (chapterData.defaultZoom || 9)
+        });
+      } else if (chapterEvents.length > 1) {
+        const bounds = L.latLngBounds(chapterEvents.map(e => [e.lat, e.lng]));
+        map.fitBounds(bounds, {
+          padding: [35, 35],
+          maxZoom: viewMode === 'book' ? 7 : (chapterData.defaultZoom || 9)
         });
       } else if (activeEvent) {
         const zoom = viewMode === 'book' ? 6 : (chapterEvents.length > 1 ? chapterData.defaultZoom : 11);
@@ -673,17 +697,15 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         key={ev.id}
         ref={(el) => { storylineButtonsRef.current[idx] = el; }}
         onClick={onClick}
-        className={`flex-shrink-0 flex items-center gap-2 p-1.5 pr-2.5 rounded-lg border text-left transition-all ${
-          isCurrent 
-            ? 'bg-white border-[#B4793D] shadow-md ring-1 ring-[#B4793D]/20 z-10 scale-100' 
+        className={`flex-shrink-0 flex items-center gap-2 p-1.5 pr-2.5 rounded-lg border text-left transition-all ${isCurrent
+            ? 'bg-white border-[#B4793D] shadow-md ring-1 ring-[#B4793D]/20 z-10 scale-100'
             : isRef
               ? 'bg-[#FAF5ED]/50 border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-75 hover:opacity-100 scale-95 hover:scale-100'
               : 'bg-[#FAF7F2] border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-85 hover:opacity-100 scale-95 hover:scale-100'
-        }`}
+          }`}
       >
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-          isCurrent ? 'bg-[#B4793D] text-white' : 'bg-[#EBE5DC] text-[#78471F]'
-        }`}>
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isCurrent ? 'bg-[#B4793D] text-white' : 'bg-[#EBE5DC] text-[#78471F]'
+          }`}>
           {ev.stepNumber}
         </div>
         <div className="min-w-0">
@@ -692,11 +714,10 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
               {getShortPlaceName(ev)}
             </span>
             {distInfo && (
-              <span className={`text-[9px] font-semibold px-1 py-0.5 rounded border leading-none flex-shrink-0 whitespace-nowrap ${
-                distInfo.isOrigin 
-                  ? 'bg-white text-[#78716C] border-[#EBE5DC]' 
+              <span className={`text-[9px] font-semibold px-1 py-0.5 rounded border leading-none flex-shrink-0 whitespace-nowrap ${distInfo.isOrigin
+                  ? 'bg-white text-[#78716C] border-[#EBE5DC]'
                   : 'bg-[#FAF5ED] text-[#B4793D] border-[#D4A373]/40'
-              }`}>
+                }`}>
                 {distInfo.label}
               </span>
             )}
@@ -754,11 +775,10 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
           {referencedEvents.length > 0 && (
             <button
               onClick={() => setShowMentionedPins(!showMentionedPins)}
-              className={`flex items-center gap-1 h-[26px] px-2.5 rounded-full border shadow-sm transition-all text-[10px] font-bold tracking-wider ${
-                showMentionedPins 
-                  ? 'bg-[#B4793D] border-[#B4793D] text-white hover:bg-[#9A632E]' 
+              className={`flex items-center gap-1 h-[26px] px-2.5 rounded-full border shadow-sm transition-all text-[10px] font-bold tracking-wider ${showMentionedPins
+                  ? 'bg-[#B4793D] border-[#B4793D] text-white hover:bg-[#9A632E]'
                   : 'bg-white/95 border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED] hover:text-[#26221F]'
-              }`}
+                }`}
               title={showMentionedPins ? "Hide Mentioned Pins" : "Show Mentioned Pins"}
             >
               {showMentionedPins ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -795,11 +815,10 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                   onEventSelect(storylineEvents[activeStorylineIndex]);
                 }
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${
-                activeTab === 'storyline'
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${activeTab === 'storyline'
                   ? 'bg-[#B4793D] text-white shadow-xs'
                   : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
-              }`}
+                }`}
             >
               <span>Storyline</span>
               <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${activeTab === 'storyline' ? 'bg-white/20 text-white' : 'bg-[#EBE5DC] text-[#78471F]'}`}>
@@ -816,11 +835,10 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                     onEventSelect(referencedEvents[activeReferenceIndex]);
                   }
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${
-                  activeTab === 'references'
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${activeTab === 'references'
                     ? 'bg-[#B4793D] text-white shadow-xs'
                     : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
-                }`}
+                  }`}
               >
                 <span>References</span>
                 <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${activeTab === 'references' ? 'bg-white/20 text-white' : 'bg-[#EBE5DC] text-[#78471F]'}`}>
@@ -888,7 +906,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         </div>
 
         {/* Buttons List for Selected Tab */}
-        <div 
+        <div
           onMouseDown={handleMouseDown}
           onMouseLeave={handleMouseLeaveOrUp}
           onMouseUp={handleMouseLeaveOrUp}

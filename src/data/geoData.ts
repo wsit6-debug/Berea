@@ -43,11 +43,18 @@ export interface ChapterGeoEvent {
   distanceFromPrevious?: number;
 }
 
-export function getShortPlaceName(ev: { shortPlaceName?: string; locationName: string; title?: string }): string {
-  if (ev.shortPlaceName) return ev.shortPlaceName;
-  if (!ev.locationName) return "Biblical Site";
+export function cleanDisambiguatedPlaceName(rawName?: string): string {
+  if (!rawName) return '';
+  const trimmed = rawName.trim();
+  if (trimmed === 'Antioch 2') return 'Antioch (Pisidia)';
+  if (trimmed === 'Antioch 1') return 'Antioch (Syria)';
+  // Strip any trailing gazetteer index number, e.g. "Bethlehem 1" -> "Bethlehem", "City of Palms 2" -> "City of Palms"
+  return trimmed.replace(/\s+\d+$/, '');
+}
 
-  let name = ev.locationName
+export function getShortPlaceName(ev: { shortPlaceName?: string; locationName: string; title?: string }): string {
+  const raw = ev.shortPlaceName || ev.locationName || ev.title || 'Biblical Site';
+  let name = cleanDisambiguatedPlaceName(raw)
     .replace(/\s*\([^)]*\)/g, "")
     .split(",")[0]
     .split("—")[0]
@@ -58,7 +65,8 @@ export function getShortPlaceName(ev: { shortPlaceName?: string; locationName: s
   name = name.replace(/^Ancient\s+/i, "");
   name = name.replace(/\s+&.*$/i, "");
 
-  return name || ev.locationName.split(" ")[0] || "Biblical Site";
+  const cleaned = cleanDisambiguatedPlaceName(name);
+  return cleaned || cleanDisambiguatedPlaceName(ev.locationName) || "Biblical Site";
 }
 
 export function calculateDistanceMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -1094,101 +1102,173 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
   if (CHAPTER_MICRO_EVENTS[key]) {
     const data = CHAPTER_MICRO_EVENTS[key];
     const events = data.events.map(ev => {
+      const cleanLoc = cleanDisambiguatedPlaceName(ev.locationName);
+      const cleanShort = cleanDisambiguatedPlaceName(ev.shortPlaceName || ev.locationName);
+      let cleanTitle = ev.title;
+      if (cleanTitle === ev.locationName || /\s+\d+$/.test(cleanTitle)) {
+        cleanTitle = cleanDisambiguatedPlaceName(cleanTitle);
+      }
+
+      let modifiedEv: ChapterGeoEvent = {
+        ...ev,
+        locationName: cleanLoc,
+        shortPlaceName: cleanShort,
+        title: cleanTitle
+      };
+
       // In Acts 17, Amphipolis, Apollonia, Thessalonica, Berea, Athens are physical stops
-      if (key === 'acts_17' && ['Amphipolis', 'Apollonia', 'Thessalonica'].includes(ev.locationName)) {
-        return { ...ev, isReferencedOnly: false };
+      if (key === 'acts_17' && ['Amphipolis', 'Apollonia', 'Thessalonica'].includes(cleanLoc)) {
+        modifiedEv.isReferencedOnly = false;
       }
       // In Acts 16, Jerusalem (council ref), Thyatira (origin), Asia/Bithynia (forbidden/prevented) are referenced
       if (key === 'acts_16') {
-        if (['Jerusalem', 'Thyatira', 'Asia', 'Bithynia', 'Greece', 'Macedonia'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Jerusalem', 'Thyatira', 'Asia', 'Bithynia', 'Greece', 'Macedonia'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       // In Acts 13 (First Missionary Journey), Perga and Pisidian Antioch are physical; sermon/origin places are referenced
       if (key === 'acts_13') {
-        if (['Perga', 'Antioch 2', 'Iconium'].includes(ev.locationName) || ev.title.includes('Perga') || ev.title.includes('Antioch in Pisidia')) {
-          return { ...ev, isReferencedOnly: false };
+        if (['Perga', 'Antioch (Pisidia)', 'Iconium'].includes(cleanLoc) || ev.title.includes('Perga') || ev.title.includes('Antioch in Pisidia') || ev.title.includes('Antioch 2')) {
+          modifiedEv.isReferencedOnly = false;
         }
-        if (['Cyrene', 'Egypt', 'Canaan', 'Galilee 1', 'Jerusalem'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Cyrene', 'Egypt', 'Canaan', 'Galilee', 'Jerusalem', 'Cyprus'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
-      // In Acts 14, Lystra and Derbe are key physical stops
+      // In Acts 14, Lystra and Derbe are key physical stops; v19 Jews from Antioch stoning Paul is referenced
       if (key === 'acts_14') {
-        if (['Lystra', 'Derbe'].includes(ev.locationName) || ev.title.includes('Lystra') || ev.title.includes('Derbe')) {
-          return { ...ev, isReferencedOnly: false };
+        if (['Lystra', 'Derbe'].includes(cleanLoc) || ev.title.includes('Lystra') || ev.title.includes('Derbe')) {
+          modifiedEv.isReferencedOnly = false;
+        }
+        if (ev.passageRef === 'Acts 14:19') {
+          modifiedEv.isReferencedOnly = true;
         }
       }
-      // In Acts 18, companion origins are referenced
+      // In Acts 18, companion origins and regions are referenced
       if (key === 'acts_18') {
-        if (['Rome', 'Italy', 'Pontus', 'Alexandria', 'Egypt'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Rome', 'Italy', 'Pontus', 'Alexandria', 'Egypt', 'Macedonia', 'Achaia'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
-      // In Acts 20 & 21, coastal island voyage stops are physical
+      // In Acts 20 & 21, coastal island voyage stops are physical; bypassed/speech places are referenced
       if (key === 'acts_20') {
-        if (['Assos', 'Mitylene', 'Chios', 'Samos', 'Miletus'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: false };
+        if (['Assos', 'Mitylene', 'Chios', 'Samos', 'Miletus'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = false;
         }
-        if (['Berea', 'Derbe', 'Thessalonica'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Berea', 'Derbe', 'Thessalonica', 'Ephesus', 'Jerusalem'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'acts_21') {
-        if (['Cos', 'Rhodes 1', 'Patara', 'Tyre', 'Ptolemais', 'Caesarea'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: false };
+        if (['Cos', 'Rhodes', 'Patara', 'Tyre', 'Ptolemais', 'Caesarea'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = false;
         }
-        if (['Tarsus', 'Cilicia'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Tarsus', 'Cilicia', 'Cyprus', 'Syria', 'Jerusalem', 'Judea'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'exodus_13') {
-        if (['Egypt', 'Red Sea 1'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Egypt', 'Red Sea'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'exodus_14') {
-        if (ev.locationName === 'Egypt') {
-          return { ...ev, isReferencedOnly: true };
+        if (cleanLoc === 'Egypt') {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'exodus_16') {
-        if (['Egypt', 'Canaan'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Egypt', 'Canaan', 'Mount Sinai'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'exodus_17') {
-        if (['Egypt', 'Nile', 'Amalek'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Egypt', 'Nile', 'Amalek'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'exodus_19') {
-        if (['Egypt', 'Wilderness of Sinai'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Egypt', 'Wilderness of Sinai'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === '1samuel_17') {
+        if (['Gath', 'Bethlehem'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === '2kings_5') {
+        if (['Abana', 'Pharpar', 'Damascus', 'Aram'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'joshua_2') {
+        if (cleanLoc === 'Egypt') {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'judges_11') {
+        if (['Red Sea', 'Kadesh-barnea', 'Edom', 'Moab'].includes(cleanLoc) && ev.passageRef && ['Judg 11:15', 'Judg 11:16', 'Judg 11:17'].includes(ev.passageRef)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'luke_2') {
-        if (['Galilee 1', 'Judea 1'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Galilee', 'Judea'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'luke_24') {
-        if (['Galilee 1', 'Nazareth'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Galilee', 'Nazareth'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'john_4') {
-        if (['Mount Gerizim', 'Jerusalem', 'Capernaum'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Mount Gerizim', 'Jerusalem', 'Capernaum'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
       if (key === 'matthew_16') {
-        if (['Jerusalem'].includes(ev.locationName)) {
-          return { ...ev, isReferencedOnly: true };
+        if (['Jerusalem'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
         }
       }
-      return ev;
+      return modifiedEv;
     });
+
+    // Narrative chronological adjustments for itineraries
+    if (key === 'acts_28') {
+      const romeIdx = events.findIndex(e => e.locationName.includes('Rome'));
+      const forumIdx = events.findIndex(e => e.locationName.includes('Forum') || e.locationName.includes('Appius'));
+      if (romeIdx !== -1 && forumIdx !== -1 && romeIdx < forumIdx) {
+        const romeEv = events.splice(romeIdx, 1)[0];
+        events.push(romeEv);
+      }
+    }
+    if (key === 'acts_20') {
+      const troasIdx = events.findIndex(e => e.locationName.includes('Troas'));
+      const philippiIdx = events.findIndex(e => e.locationName.includes('Philippi'));
+      if (troasIdx !== -1 && philippiIdx !== -1 && troasIdx < philippiIdx) {
+        const philippiEv = events.splice(philippiIdx, 1)[0];
+        events.splice(troasIdx, 0, philippiEv);
+      }
+    }
+    if (key === 'acts_23') {
+      const caesareaIdx = events.findIndex(e => e.locationName.includes('Caesarea'));
+      const antipatrisIdx = events.findIndex(e => e.locationName.includes('Aphek') || e.locationName.includes('Antipatris'));
+      if (caesareaIdx !== -1 && antipatrisIdx !== -1 && caesareaIdx < antipatrisIdx) {
+        const caesareaEv = events.splice(caesareaIdx, 1)[0];
+        events.push(caesareaEv);
+      }
+    }
+    if (key === 'acts_18') {
+      const caesareaIdx = events.findIndex(e => e.locationName.includes('Caesarea'));
+      const jerusalemIdx = events.findIndex(e => e.locationName.includes('Jerusalem'));
+      if (caesareaIdx !== -1 && jerusalemIdx !== -1 && jerusalemIdx < caesareaIdx) {
+        const jerusalemEv = events.splice(jerusalemIdx, 1)[0];
+        const newCaesareaIdx = events.findIndex(e => e.locationName.includes('Caesarea'));
+        events.splice(newCaesareaIdx + 1, 0, jerusalemEv);
+      }
+    }
 
     let storyStep = 0;
     let refStep = 0;
@@ -1203,61 +1283,145 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
     });
 
     const physicalEvents = renumberedEvents.filter(e => !e.isReferencedOnly);
-    const targetEvents = physicalEvents.length > 1 ? physicalEvents : [];
+    const targetEvents = physicalEvents.length > 1 ? physicalEvents : (renumberedEvents.length > 1 ? renumberedEvents : []);
 
-    // Assemble final route segments: historical segments + straight line fallback
+    // Assemble final route segments: historical segments + master dictionary matching + straight line fallback
     const finalSegments: RouteSegment[] = [...historicalSegments];
     const allCoords: [number, number][] = [];
 
-    // Collect coordinates from historical segments
+    // Collect coordinates from explicit historical segments
     historicalSegments.forEach(s => s.coordinates.forEach(c => allCoords.push(c)));
 
-    // For any consecutive physical events, if no historical segment connects them, add a straight-line fallback segment
+    // For any consecutive events, resolve from master HISTORICAL_ROAD_SEGMENTS dictionary or fallback
     if (targetEvents.length > 1) {
       for (let i = 0; i < targetEvents.length - 1; i++) {
         const fromEv = targetEvents[i];
         const toEv = targetEvents[i + 1];
 
-        // Check if already covered by the curated route network
         const fromName = (fromEv.shortPlaceName || fromEv.locationName).toLowerCase();
         const toName = (toEv.shortPlaceName || toEv.locationName).toLowerCase();
 
-        const isFromCovered = finalSegments.some(s =>
-          s.coordinates.some(c => calculateDistanceMiles(c[0], c[1], fromEv.lat, fromEv.lng) < 30) ||
-          s.fromName.toLowerCase().includes(fromName) || s.toName.toLowerCase().includes(fromName)
-        );
-        const isToCovered = finalSegments.some(s =>
-          s.coordinates.some(c => calculateDistanceMiles(c[0], c[1], toEv.lat, toEv.lng) < 30) ||
-          s.fromName.toLowerCase().includes(toName) || s.toName.toLowerCase().includes(toName)
-        );
+        // 1. Check if already directly connected in finalSegments
+        const isPairConnected = finalSegments.some(s => {
+          const cStart = s.coordinates[0];
+          const cEnd = s.coordinates[s.coordinates.length - 1];
+          const dStart = calculateDistanceMiles(cStart[0], cStart[1], fromEv.lat, fromEv.lng);
+          const dEnd = calculateDistanceMiles(cEnd[0], cEnd[1], toEv.lat, toEv.lng);
+          if (dStart < 15 && dEnd < 15) return true;
+          const dStartRev = calculateDistanceMiles(cEnd[0], cEnd[1], fromEv.lat, fromEv.lng);
+          const dEndRev = calculateDistanceMiles(cStart[0], cStart[1], toEv.lat, toEv.lng);
+          if (dStartRev < 15 && dEndRev < 15) return true;
+          const sFrom = s.fromName.toLowerCase();
+          const sTo = s.toName.toLowerCase();
+          if ((sFrom.includes(fromName) || fromName.includes(sFrom)) &&
+              (sTo.includes(toName) || toName.includes(sTo))) {
+            return true;
+          }
+          if ((sFrom.includes(toName) || toName.includes(sFrom)) &&
+              (sTo.includes(fromName) || fromName.includes(sTo))) {
+            return true;
+          }
+          return false;
+        });
 
-        if (historicalSegments.length > 0 && isFromCovered && isToCovered) {
+        if (isPairConnected) {
           continue;
         }
-          const isDistinct = Math.abs(fromEv.lat - toEv.lat) > 0.0001 || Math.abs(fromEv.lng - toEv.lng) > 0.0001;
-          if (isDistinct) {
-            const rawDist = calculateDistanceMiles(fromEv.lat, fromEv.lng, toEv.lat, toEv.lng);
-            const dist = rawDist > 0 ? rawDist : 0.1;
-            const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
-            finalSegments.push({
-              id: `fallback_${fromEv.id}_${toEv.id}`,
-              fromName: fromEv.shortPlaceName || fromEv.locationName,
-              toName: toEv.shortPlaceName || toEv.locationName,
-              historicalRoadName: "Direct Path (Straight Line)",
-              mode: "land_walking",
-              distanceMiles: dist,
-              travelDays: estDays,
-              isScholarlyEstimate: true,
-              notes: `Direct path transit: ~${dist} mi (~${estDays}d travel)`,
-              coordinates: [
-                [fromEv.lat, fromEv.lng],
-                [toEv.lat, toEv.lng]
-              ]
-            });
-            allCoords.push([fromEv.lat, fromEv.lng], [toEv.lat, toEv.lng]);
+
+        // 2. Check if any segment in master HISTORICAL_ROAD_SEGMENTS connects this pair
+        let matchedHistorical: RouteSegment | null = null;
+        let isReversed = false;
+
+        for (const seg of Object.values(HISTORICAL_ROAD_SEGMENTS)) {
+          const sFrom = seg.fromName.toLowerCase();
+          const sTo = seg.toName.toLowerCase();
+          const cStart = seg.coordinates[0];
+          const cEnd = seg.coordinates[seg.coordinates.length - 1];
+
+          const dStart = calculateDistanceMiles(cStart[0], cStart[1], fromEv.lat, fromEv.lng);
+          const dEnd = calculateDistanceMiles(cEnd[0], cEnd[1], toEv.lat, toEv.lng);
+          if (dStart < 15 && dEnd < 15) {
+            matchedHistorical = seg;
+            isReversed = false;
+            break;
+          }
+
+          const dStartRev = calculateDistanceMiles(cEnd[0], cEnd[1], fromEv.lat, fromEv.lng);
+          const dEndRev = calculateDistanceMiles(cStart[0], cStart[1], toEv.lat, toEv.lng);
+          if (dStartRev < 15 && dEndRev < 15) {
+            matchedHistorical = seg;
+            isReversed = true;
+            break;
+          }
+
+          if ((sFrom.includes(fromName) || fromName.includes(sFrom)) && (sTo.includes(toName) || toName.includes(sTo))) {
+            matchedHistorical = seg;
+            isReversed = false;
+            break;
+          }
+          if ((sFrom.includes(toName) || toName.includes(sFrom)) && (sTo.includes(fromName) || fromName.includes(sTo))) {
+            matchedHistorical = seg;
+            isReversed = true;
+            break;
           }
         }
+
+        if (matchedHistorical) {
+          const coords = isReversed ? [...matchedHistorical.coordinates].reverse() : matchedHistorical.coordinates;
+          finalSegments.push({
+            ...matchedHistorical,
+            id: `${matchedHistorical.id}_dyn_${fromEv.id}_${toEv.id}`,
+            fromName: fromEv.shortPlaceName || fromEv.locationName,
+            toName: toEv.shortPlaceName || toEv.locationName,
+            coordinates: coords
+          });
+          coords.forEach(c => allCoords.push(c));
+          continue;
+        }
+
+        // 3. Fallback: Direct Path (No Recorded Road)
+        const isDistinct = Math.abs(fromEv.lat - toEv.lat) > 0.0001 || Math.abs(fromEv.lng - toEv.lng) > 0.0001;
+        if (isDistinct) {
+          const rawDist = calculateDistanceMiles(fromEv.lat, fromEv.lng, toEv.lat, toEv.lng);
+          const dist = rawDist > 0 ? rawDist : 0.1;
+          const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
+          finalSegments.push({
+            id: `fallback_${fromEv.id}_${toEv.id}`,
+            fromName: fromEv.shortPlaceName || fromEv.locationName,
+            toName: toEv.shortPlaceName || toEv.locationName,
+            historicalRoadName: "Direct Path (No Recorded Road)",
+            mode: "land_walking",
+            distanceMiles: dist,
+            travelDays: estDays,
+            isScholarlyEstimate: true,
+            notes: `Direct transit between ${fromEv.shortPlaceName || fromEv.locationName} and ${toEv.shortPlaceName || toEv.locationName} (~${dist} mi, ~${estDays}d travel) — no paved ancient road recorded.`,
+            coordinates: [
+              [fromEv.lat, fromEv.lng],
+              [toEv.lat, toEv.lng]
+            ]
+          });
+          allCoords.push([fromEv.lat, fromEv.lng], [toEv.lat, toEv.lng]);
+        } else if (fromName !== toName) {
+          // Adjacent landmark or sanctuary within same immediate locality
+          finalSegments.push({
+            id: `fallback_local_${fromEv.id}_${toEv.id}`,
+            fromName: fromEv.shortPlaceName || fromEv.locationName,
+            toName: toEv.shortPlaceName || toEv.locationName,
+            historicalRoadName: "Local Vicinity Path",
+            mode: "land_walking",
+            distanceMiles: 0.5,
+            travelDays: 0.1,
+            isScholarlyEstimate: true,
+            notes: `Adjacent biblical sites/landmarks situated in the same immediate locality.`,
+            coordinates: [
+              [fromEv.lat, fromEv.lng],
+              [toEv.lat + 0.003, toEv.lng + 0.003]
+            ]
+          });
+          allCoords.push([fromEv.lat, fromEv.lng], [toEv.lat + 0.003, toEv.lng + 0.003]);
+        }
       }
+    }
 
     // Secondary fallback: if no segments were created but physicalEvents > 1 and data.routeCoordinates has coordinates, connect them
     if (finalSegments.length === 0 && physicalEvents.length > 1 && data.routeCoordinates && data.routeCoordinates.length > 1) {
@@ -1352,7 +1516,8 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
   matchingKeys.forEach(key => {
       const parts = key.split('_');
       const chNum = parseInt(parts[1] || '0', 10);
-      const segs = getHistoricalRouteSegments(bookId, chNum);
+      const chapterData = getChapterGeoData(bookId, chNum);
+      const segs = chapterData.routeSegments || [];
       segs.forEach(s => {
         if (!seenSegmentIds.has(s.id)) {
           seenSegmentIds.add(s.id);
@@ -1360,26 +1525,39 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
         }
       });
 
-      const chapterData = CHAPTER_MICRO_EVENTS[key];
       chapterData.events.forEach(ev => {
-        if (ev.isReferencedOnly) {
-          if (!uniqueRef.has(ev.locationName)) {
-            uniqueRef.add(ev.locationName);
+        const cleanLoc = cleanDisambiguatedPlaceName(ev.locationName);
+        const cleanShort = cleanDisambiguatedPlaceName(ev.shortPlaceName || ev.locationName);
+        let cleanTitle = ev.title;
+        if (cleanTitle === ev.locationName || /\s+\d+$/.test(cleanTitle)) {
+          cleanTitle = cleanDisambiguatedPlaceName(cleanTitle);
+        }
+
+        const cleanedEv = {
+          ...ev,
+          locationName: cleanLoc,
+          shortPlaceName: cleanShort,
+          title: cleanTitle
+        };
+
+        if (cleanedEv.isReferencedOnly) {
+          if (!uniqueRef.has(cleanedEv.locationName)) {
+            uniqueRef.add(cleanedEv.locationName);
             allEvents.push({
-              ...ev,
+              ...cleanedEv,
               stepNumber: uniqueRef.size,
               id: `book_${bookId}_ref_${uniqueRef.size}`,
-              passageRef: ev.passageRef
+              passageRef: cleanedEv.passageRef
             });
           }
         } else {
-          if (!uniquePhysical.has(ev.locationName)) {
-            uniquePhysical.add(ev.locationName);
+          if (!uniquePhysical.has(cleanedEv.locationName)) {
+            uniquePhysical.add(cleanedEv.locationName);
             allEvents.push({
-              ...ev,
+              ...cleanedEv,
               stepNumber: uniquePhysical.size,
               id: `book_${bookId}_phys_${uniquePhysical.size}`,
-              passageRef: ev.passageRef
+              passageRef: cleanedEv.passageRef
             });
           }
         }
@@ -1390,6 +1568,86 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
 
   const cleanBook = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
 
+  // If no chapter-level segments were accumulated but the book has multiple places, connect them sequentially
+  if (allSegments.length === 0 && allEvents.length > 1) {
+    for (let i = 0; i < allEvents.length - 1; i++) {
+      const fromEv = allEvents[i];
+      const toEv = allEvents[i + 1];
+      const fromName = (fromEv.shortPlaceName || fromEv.locationName).toLowerCase();
+      const toName = (toEv.shortPlaceName || toEv.locationName).toLowerCase();
+
+      let matchedHistorical: RouteSegment | null = null;
+      let isReversed = false;
+
+      for (const seg of Object.values(HISTORICAL_ROAD_SEGMENTS)) {
+        const sFrom = seg.fromName.toLowerCase();
+        const sTo = seg.toName.toLowerCase();
+        const cStart = seg.coordinates[0];
+        const cEnd = seg.coordinates[seg.coordinates.length - 1];
+
+        const dStart = calculateDistanceMiles(cStart[0], cStart[1], fromEv.lat, fromEv.lng);
+        const dEnd = calculateDistanceMiles(cEnd[0], cEnd[1], toEv.lat, toEv.lng);
+        if (dStart < 15 && dEnd < 15) {
+          matchedHistorical = seg;
+          isReversed = false;
+          break;
+        }
+
+        const dStartRev = calculateDistanceMiles(cEnd[0], cEnd[1], fromEv.lat, fromEv.lng);
+        const dEndRev = calculateDistanceMiles(cStart[0], cStart[1], toEv.lat, toEv.lng);
+        if (dStartRev < 15 && dEndRev < 15) {
+          matchedHistorical = seg;
+          isReversed = true;
+          break;
+        }
+
+        if ((sFrom.includes(fromName) || fromName.includes(sFrom)) && (sTo.includes(toName) || toName.includes(sTo))) {
+          matchedHistorical = seg;
+          isReversed = false;
+          break;
+        }
+        if ((sFrom.includes(toName) || toName.includes(sFrom)) && (sTo.includes(fromName) || fromName.includes(sTo))) {
+          matchedHistorical = seg;
+          isReversed = true;
+          break;
+        }
+      }
+
+      if (matchedHistorical) {
+        const coords = isReversed ? [...matchedHistorical.coordinates].reverse() : matchedHistorical.coordinates;
+        allSegments.push({
+          ...matchedHistorical,
+          id: `${matchedHistorical.id}_book_${bookId}_${i}`,
+          fromName: fromEv.shortPlaceName || fromEv.locationName,
+          toName: toEv.shortPlaceName || toEv.locationName,
+          coordinates: coords
+        });
+      } else {
+        const rawDist = calculateDistanceMiles(fromEv.lat, fromEv.lng, toEv.lat, toEv.lng);
+        const dist = rawDist > 0 ? rawDist : 0.1;
+        const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
+        allSegments.push({
+          id: `book_${bookId}_seg_${i}`,
+          fromName: fromEv.shortPlaceName || fromEv.locationName,
+          toName: toEv.shortPlaceName || toEv.locationName,
+          historicalRoadName: "Direct Path (No Recorded Road)",
+          mode: "land_walking",
+          distanceMiles: dist,
+          travelDays: estDays,
+          isScholarlyEstimate: true,
+          notes: `Transit across ${cleanBook}: ${fromEv.shortPlaceName || fromEv.locationName} to ${toEv.shortPlaceName || toEv.locationName} (~${dist} mi, ~${estDays}d).`,
+          coordinates: [
+            [fromEv.lat, fromEv.lng],
+            [toEv.lat, toEv.lng]
+          ]
+        });
+      }
+    }
+  }
+
+  const allBookCoords: [number, number][] = [];
+  allSegments.forEach(s => s.coordinates.forEach(c => allBookCoords.push(c)));
+
   const result = {
     bookId: bookId.toLowerCase(),
     chapterNumber: 0,
@@ -1399,7 +1657,7 @@ export function getBookGeoData(bookId: string): ChapterGeoData | null {
     centerLng: allEvents[0].lng,
     defaultZoom: 6,
     events: allEvents,
-    routeCoordinates: [],
+    routeCoordinates: allBookCoords,
     routeSegments: allSegments
   };
 

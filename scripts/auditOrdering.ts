@@ -24,7 +24,7 @@ const referenceAnomalies: OrderAnomaly[] = [];
 
 for (const [chKey, chData] of Object.entries<any>(rawDb)) {
   const events = chData.events || [];
-  
+
   // 1. Check storyline events order
   const storyline = events.filter((e: any) => !e.isReferencedOnly);
   for (let i = 0; i < storyline.length - 1; i++) {

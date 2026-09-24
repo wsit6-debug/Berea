@@ -14,7 +14,7 @@ const chapterCache = new Map<string, Verse[]>();
 export function cleanApiText(raw: string): string {
   if (!raw) return '';
   let cleaned = raw;
-  
+
   // 1. Remove Strong's tag containers, footnotes, notes, superscripts, and subscripts with their inner contents
   cleaned = cleaned.replace(/<[sS][^>]*>[\s\S]*?<\/[sS]>/gi, '');
   cleaned = cleaned.replace(/<[fFnN][^>]*>[\s\S]*?<\/[fFnN]>/gi, '');
@@ -35,9 +35,9 @@ export function cleanApiText(raw: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
 
-  // 4. Remove attached Strong's numbers (e.g. "was2258", "man444", "Pharisees5330,", "named3686")
-  cleaned = cleaned.replace(/([a-zA-Z])\d+/g, '$1');
-  
+  // 4. Remove attached Strong's numbers (e.g. "was2258", "man444", "Pharisees5330,", "named3686", "Jews2453:")
+  cleaned = cleaned.replace(/([a-zA-Z,;:!?.])\d+/g, '$1');
+
   // 5. Remove standalone Strong's numbers (e.g. "1161", "846", "[1161]", "{G1161}")
   cleaned = cleaned.replace(/\b[GH]?\d{3,5}\b/g, '');
 
@@ -127,7 +127,7 @@ export async function fetchChapterFromYouVersion(
   version: TranslationId = 'KJV'
 ): Promise<Verse[]> {
   const cacheKey = `${version}_${bookId}_${chapterNum}`;
-  
+
   if (chapterCache.has(cacheKey)) {
     return chapterCache.get(cacheKey)!;
   }

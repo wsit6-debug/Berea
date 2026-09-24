@@ -1227,6 +1227,866 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
       [32.3000, 36.0000],
       [33.5100, 36.2900]
     ]
+  },
+
+  // ============================================================================
+  // GOSPELS & ACTS EXPANSION: ROMAN HIGHWAYS OF JUDAEA, GALILEE & SHARON
+  // ============================================================================
+  "nazareth_to_capernaum_via_maris": {
+    id: "nazareth_to_capernaum_via_maris",
+    fromName: "Nazareth",
+    toName: "Capernaum",
+    historicalRoadName: "Via Maris (Galilee Lake Branch)",
+    mode: "land_walking",
+    distanceMiles: 23,
+    travelDays: 1.2,
+    notes: "Matthew 4:13 & Mark 1: Jesus leaves Nazareth, travels northeast past Cana and the Horns of Hattin pass down to Magdala and Capernaum on the Sea of Galilee.",
+    coordinates: [
+      [32.7019, 35.2979], // Nazareth
+      [32.7300, 35.3200], // Gath-hepher / Reineh
+      [32.7480, 35.3380], // Cana
+      [32.8020, 35.4500], // Horns of Hattin pass
+      [32.8250, 35.5180], // Magdala on Sea of Galilee
+      [32.8550, 35.5450], // Plain of Gennesaret (Tabgha)
+      [32.8806, 35.5750]  // Capernaum
+    ]
+  },
+
+  "capernaum_to_bethsaida_lake_road": {
+    id: "capernaum_to_bethsaida_lake_road",
+    fromName: "Capernaum",
+    toName: "Bethsaida",
+    historicalRoadName: "Northern Sea of Galilee Shore Road",
+    mode: "land_walking",
+    distanceMiles: 4.5,
+    travelDays: 0.25,
+    notes: "Mark 6:45 & John 6: Shoreline road following the northern curvature of the Sea of Galilee across the mouth of the upper Jordan River into Bethsaida Julias.",
+    coordinates: [
+      [32.8806, 35.5750], // Capernaum
+      [32.8720, 35.5900], // Heptapegon (Tabgha springs)
+      [32.8950, 35.6180], // Jordan River delta
+      [32.9090, 35.6310]  // Bethsaida (et-Tell)
+    ]
+  },
+
+  "capernaum_to_tiberias_lakeside": {
+    id: "capernaum_to_tiberias_lakeside",
+    fromName: "Capernaum",
+    toName: "Tiberias",
+    historicalRoadName: "Galilean Lakeside Roman Road",
+    mode: "land_walking",
+    distanceMiles: 10,
+    travelDays: 0.5,
+    notes: "Matthew 9 & John 6:23: Roman lakeside military route connecting Capernaum through Magdala southward to the Herodian tetrarchic capital of Tiberias.",
+    coordinates: [
+      [32.8806, 35.5750], // Capernaum
+      [32.8550, 35.5450], // Tabgha
+      [32.8250, 35.5180], // Magdala
+      [32.7880, 35.5420]  // Tiberias
+    ]
+  },
+
+  "capernaum_to_nain_road": {
+    id: "capernaum_to_nain_road",
+    fromName: "Capernaum",
+    toName: "Nain",
+    historicalRoadName: "Valley of Jezreel Highway",
+    mode: "land_walking",
+    distanceMiles: 25,
+    travelDays: 1.5,
+    notes: "Luke 7:11: 'Soon afterward he went to a town called Nain.' Traversing the plain from Capernaum around the foot of Mount Tabor to the northern slope of the Hill of Moreh.",
+    coordinates: [
+      [32.8806, 35.5750], // Capernaum
+      [32.8250, 35.5180], // Magdala
+      [32.7480, 35.3380], // Cana vicinity
+      [32.6850, 35.3900], // Mount Tabor base
+      [32.6310, 35.3490]  // Nain (Hill of Moreh)
+    ]
+  },
+
+  "jerusalem_to_antipatris_beth_horon": {
+    id: "jerusalem_to_antipatris_beth_horon",
+    fromName: "Jerusalem",
+    toName: "Antipatris",
+    historicalRoadName: "Roman Military Highway (Ascent of Beth-Horon)",
+    mode: "land_walking",
+    distanceMiles: 38,
+    travelDays: 1,
+    notes: "Acts 23:31: Night march of the Roman cohort escorting Paul from the Antonia Fortress down the steep Beth-Horon pass to Antipatris.",
+    coordinates: [
+      [31.7767, 35.2342], // Jerusalem (Fortress Antonia)
+      [31.8480, 35.1850], // Gibeon
+      [31.8850, 35.1200], // Upper Beth-horon
+      [31.9050, 35.0600], // Lower Beth-horon pass
+      [32.0000, 34.9800], // Coastal plain entry
+      [32.0980, 34.9280]  // Antipatris (Aphek / Ras el-Ain)
+    ]
+  },
+
+  "antipatris_to_caesarea_via_maris": {
+    id: "antipatris_to_caesarea_via_maris",
+    fromName: "Antipatris",
+    toName: "Caesarea Maritima",
+    historicalRoadName: "Via Maris (Sharon Military Trunk)",
+    mode: "land_walking",
+    distanceMiles: 28,
+    travelDays: 1,
+    notes: "Acts 23:32: Mounted horsemen riding from Antipatris across the Sharon Plain directly to the Roman provincial governor's palace in Caesarea.",
+    coordinates: [
+      [32.0980, 34.9280], // Antipatris
+      [32.2200, 34.9300], // Sharon Plain
+      [32.3500, 34.9200], // Hadera basin
+      [32.5020, 34.8910]  // Caesarea Maritima
+    ]
+  },
+
+  "caesarea_to_joppa_coastal_road": {
+    id: "caesarea_to_joppa_coastal_road",
+    fromName: "Caesarea Maritima",
+    toName: "Joppa",
+    historicalRoadName: "Sharon Coastal Roman Highway",
+    mode: "land_walking",
+    distanceMiles: 34,
+    travelDays: 1.5,
+    notes: "Acts 10:23-24: Cornelius's centurions and Peter traveling along the sandy Sharon coast between Joppa harbor and the provincial capital at Caesarea.",
+    coordinates: [
+      [32.5020, 34.8910], // Caesarea Maritima
+      [32.3200, 34.8600], // Netanya shoreline
+      [32.1950, 34.8080], // Apollonia / Arsuf
+      [32.1000, 34.7800], // Yarkon River crossing
+      [32.0550, 34.7520]  // Joppa (Simon the Tanner's house)
+    ]
+  },
+
+  "joppa_to_lydda_roman_road": {
+    id: "joppa_to_lydda_roman_road",
+    fromName: "Joppa",
+    toName: "Lydda",
+    historicalRoadName: "Joppa-Jerusalem Roman Highway",
+    mode: "land_walking",
+    distanceMiles: 12,
+    travelDays: 0.5,
+    notes: "Acts 9:38: 'Since Lydda was near Joppa, the disciples sent two men to Peter.' Straight paved Roman highway across the fertile plain of Ono.",
+    coordinates: [
+      [32.0550, 34.7520], // Joppa
+      [32.0000, 34.8300], // Ono plain
+      [31.9510, 34.8880]  // Lydda (Lod)
+    ]
+  },
+
+  "lydda_to_jerusalem_ascent": {
+    id: "lydda_to_jerusalem_ascent",
+    fromName: "Lydda",
+    toName: "Jerusalem",
+    historicalRoadName: "Ascent of Beth-Horon to Jerusalem",
+    mode: "land_walking",
+    distanceMiles: 26,
+    travelDays: 1.5,
+    notes: "Acts 9: Primary Roman ascent from the coastal plain through Lower and Upper Beth-horon to the Judean mountain ridge and Jerusalem.",
+    coordinates: [
+      [31.9510, 34.8880], // Lydda (Lod)
+      [31.9050, 35.0600], // Lower Beth-horon
+      [31.8850, 35.1200], // Upper Beth-horon
+      [31.8480, 35.1850], // Gibeon
+      [31.7767, 35.2342]  // Jerusalem
+    ]
+  },
+
+  "tyre_to_sidon_highway": {
+    id: "tyre_to_sidon_highway",
+    fromName: "Tyre",
+    toName: "Sidon",
+    historicalRoadName: "Phoenician Royal Coastal Highway",
+    mode: "land_walking",
+    distanceMiles: 22,
+    travelDays: 1,
+    notes: "Mark 7:24-31 & Acts 27:3: Historic paved Phoenician royal road hugging the Mediterranean coastline through Zarephath (Sarepta).",
+    coordinates: [
+      [33.2705, 35.2038], // Tyre
+      [33.3600, 35.2500], // Litani River mouth
+      [33.4470, 35.2950], // Sarepta (Zarephath)
+      [33.5630, 35.3720]  // Sidon
+    ]
+  },
+
+  "sidon_to_antioch_highway": {
+    id: "sidon_to_antioch_highway",
+    fromName: "Sidon",
+    toName: "Antioch (Syria)",
+    historicalRoadName: "Syro-Phoenician Imperial Highway",
+    mode: "land_walking",
+    distanceMiles: 215,
+    travelDays: 10,
+    notes: "Acts 11:19 & Acts 15:3: Major imperial trunk highway northward along the Levant coast through Berytus (Beirut), Byblos, and Tripoli, ascending the Orontes valley into Syrian Antioch.",
+    coordinates: [
+      [33.5630, 35.3720], // Sidon
+      [33.8938, 35.5018], // Berytus (Beirut)
+      [34.1230, 35.6510], // Byblos
+      [34.4367, 35.8497], // Tripoli
+      [35.1000, 35.9500], // Tartus
+      [35.5317, 35.7917], // Laodicea ad Mare (Latakia)
+      [36.0500, 36.0500], // Orontes River gap
+      [36.2021, 36.1606]  // Antioch on the Orontes
+    ]
+  },
+
+  "bethany_to_jerusalem_road": {
+    id: "bethany_to_jerusalem_road",
+    fromName: "Bethany",
+    toName: "Jerusalem",
+    historicalRoadName: "Mount of Olives Pilgrim Way",
+    mode: "land_walking",
+    distanceMiles: 2,
+    travelDays: 0.1,
+    notes: "Matthew 21:1, Mark 11:1, Luke 19:29, John 12:12: The Palm Sunday Triumphal Entry path over the crest of the Mount of Olives past Bethphage and down through Gethsemane into Jerusalem.",
+    coordinates: [
+      [31.7700, 35.2600], // Bethany (Lazarus's home)
+      [31.7780, 35.2500], // Bethphage
+      [31.7790, 35.2440], // Mount of Olives summit
+      [31.7800, 35.2390], // Gethsemane
+      [31.7790, 35.2370], // Kidron Valley
+      [31.7767, 35.2342]  // Jerusalem (Golden Gate / Lions' Gate)
+    ]
+  },
+
+  "nazareth_to_bethlehem_hill_country": {
+    id: "nazareth_to_bethlehem_hill_country",
+    fromName: "Nazareth",
+    toName: "Bethlehem",
+    historicalRoadName: "The Way of the Patriarchs (Central Hill Country)",
+    mode: "land_walking",
+    distanceMiles: 80,
+    travelDays: 4,
+    notes: "Luke 2:4: Joseph and Mary's journey for the Roman census from Nazareth in Galilee south through Samaria along the ancient watershed ridge road to Bethlehem of Judea.",
+    coordinates: [
+      [32.7019, 35.2979], // Nazareth
+      [32.5600, 35.3200], // Plain of Esdraelon
+      [32.4200, 35.2400], // Dothan pass
+      [32.2760, 35.1950], // Samaria
+      [32.2133, 35.2819], // Shechem (Jacob's Well)
+      [32.0550, 35.2890], // Shiloh
+      [31.9300, 35.2200], // Bethel
+      [31.7767, 35.2342], // Jerusalem
+      [31.7054, 35.2024]  // Bethlehem
+    ]
+  },
+
+  "bethlehem_to_egypt_caravan_route": {
+    id: "bethlehem_to_egypt_caravan_route",
+    fromName: "Bethlehem",
+    toName: "Egypt",
+    historicalRoadName: "The Way of Shur / Coastal Road to Egypt",
+    mode: "desert_caravan",
+    distanceMiles: 195,
+    travelDays: 10,
+    notes: "Matthew 2:14: 'He rose and took the child and his mother by night and departed to Egypt.' Ancient caravan route past Hebron and Beersheba through Gaza and Pelusium to the Nile Delta.",
+    coordinates: [
+      [31.7054, 35.2024], // Bethlehem
+      [31.5290, 35.0930], // Hebron
+      [31.2450, 34.7900], // Beersheba
+      [31.5040, 34.4644], // Gaza
+      [31.2850, 34.2500], // Raphia
+      [31.1300, 33.8000], // Rhinocolura (El-Arish)
+      [31.0500, 32.5500], // Pelusium (Fortress frontier of Egypt)
+      [30.5000, 31.8000]  // Goshen / Nile Delta
+    ]
+  },
+  "patmos_to_ephesus_sea": {
+    id: "patmos_to_ephesus_sea",
+    fromName: "Island of Patmos",
+    toName: "Ephesus",
+    historicalRoadName: "Icarian Sea Crossing to Ephesus",
+    mode: "sea_sailing",
+    distanceMiles: 58,
+    travelDays: 1.5,
+    notes: "Revelation 1:9-11: John was on the island of Patmos when commanded to send the apocalypse to the seven churches of Asia, entering via Ephesus port.",
+    coordinates: [
+      [37.3250, 26.5417], // Patmos
+      [37.4500, 26.8500], // Fourni Islands passage
+      [37.7000, 27.0000], // Samos Strait
+      [37.9391, 27.3407]  // Ephesus (Panormus Port)
+    ]
+  },
+  "ephesus_to_smyrna_roman_road": {
+    id: "ephesus_to_smyrna_roman_road",
+    fromName: "Ephesus",
+    toName: "Smyrna",
+    historicalRoadName: "Ionian Coastal Roman Highway",
+    mode: "land_walking",
+    distanceMiles: 42,
+    travelDays: 2.1,
+    notes: "Revelation 2:1-8: Primary Roman paved postal trunk along the Cayster and Hermus valleys linking Ephesus with Smyrna (modern Izmir).",
+    coordinates: [
+      [37.9391, 27.3407], // Ephesus
+      [38.0800, 27.3500], // Metropolis (Torbali)
+      [38.2500, 27.2200], // Trianda pass
+      [38.4189, 27.1378]  // Smyrna (Izmir)
+    ]
+  },
+  "smyrna_to_pergamum_highway": {
+    id: "smyrna_to_pergamum_highway",
+    fromName: "Smyrna",
+    toName: "Pergamum",
+    historicalRoadName: "Aeolian Coastal Highway to Pergamum",
+    mode: "land_walking",
+    distanceMiles: 65,
+    travelDays: 3.2,
+    notes: "Revelation 2:8-12: Major Roman trunk road north through the Hermus plain, crossing the Caicus river valley to the imperial acropolis at Pergamum.",
+    coordinates: [
+      [38.4189, 27.1378], // Smyrna
+      [38.6000, 27.0600], // Menemen (Hermus River)
+      [38.7800, 27.0200], // Myrina
+      [38.9300, 27.0500], // Elaea (Port of Pergamum)
+      [39.1322, 27.1842]  // Pergamum Acropolis
+    ]
+  },
+  "pergamum_to_thyatira_highway": {
+    id: "pergamum_to_thyatira_highway",
+    fromName: "Pergamum",
+    toName: "Thyatira",
+    historicalRoadName: "Caicus-Hyrcanian Inland Roman Highway",
+    mode: "land_walking",
+    distanceMiles: 48,
+    travelDays: 2.4,
+    notes: "Revelation 2:12-18: Ancient road connecting Pergamum through the Bakirçay Valley past Kinik and Soma to the trade center of Thyatira.",
+    coordinates: [
+      [39.1322, 27.1842], // Pergamum
+      [39.0800, 27.3800], // Kinik
+      [39.1800, 27.6000], // Soma pass
+      [38.9202, 27.8365]  // Thyatira (Akhisar)
+    ]
+  },
+  "thyatira_to_sardis_highway": {
+    id: "thyatira_to_sardis_highway",
+    fromName: "Thyatira",
+    toName: "Sardis",
+    historicalRoadName: "Lydian Plain Post Highway",
+    mode: "land_walking",
+    distanceMiles: 38,
+    travelDays: 1.9,
+    notes: "Revelation 2:18-3:1: Roman postal road crossing the northern Lydian hills past the Gygean Lake (Marmara Gölü) to the ancient Lydian capital of Sardis.",
+    coordinates: [
+      [38.9202, 27.8365], // Thyatira
+      [38.7400, 27.9500], // Gygean Lake shore
+      [38.6000, 28.0200], // Hermus River crossing
+      [38.4883, 28.0403]  // Sardis
+    ]
+  },
+  "sardis_to_philadelphia_highway": {
+    id: "sardis_to_philadelphia_highway",
+    fromName: "Sardis",
+    toName: "Philadelphia",
+    historicalRoadName: "Cogamus Valley Imperial Highway",
+    mode: "land_walking",
+    distanceMiles: 30,
+    travelDays: 1.5,
+    notes: "Revelation 3:1-7: Roman highway southeast through the fertile volcanic Cogamus River valley to Philadelphia (Alasehir), 'Gateway to the East'.",
+    coordinates: [
+      [38.4883, 28.0403], // Sardis
+      [38.4200, 28.2200], // Salihli
+      [38.3700, 28.3800], // Cogamus basin
+      [38.3500, 28.5167]  // Philadelphia
+    ]
+  },
+  "philadelphia_to_laodicea_highway": {
+    id: "philadelphia_to_laodicea_highway",
+    fromName: "Philadelphia",
+    toName: "Laodicea",
+    historicalRoadName: "Maeander-Lycus Valley Highway",
+    mode: "land_walking",
+    distanceMiles: 46,
+    travelDays: 2.3,
+    notes: "Revelation 3:7-14: Imperial road connecting the Cogamus to the upper Maeander valley and into the Lycus tri-city area (Hierapolis, Colossae, Laodicea).",
+    coordinates: [
+      [38.3500, 28.5167], // Philadelphia
+      [38.1500, 28.7500], // Tripolis ad Maeandrum
+      [37.9200, 29.0800], // Hierapolis (Pamukkale springs)
+      [37.8358, 29.1075]  // Laodicea on the Lycus
+    ]
+  },
+  "moab_to_bethlehem_dead_sea_route": {
+    id: "moab_to_bethlehem_dead_sea_route",
+    fromName: "Highlands of Moab",
+    toName: "Bethlehem",
+    historicalRoadName: "Transjordan Highway & Ascent of Ziz",
+    mode: "desert_caravan",
+    distanceMiles: 48,
+    travelDays: 3.2,
+    notes: "Ruth 1:19: Naomi and Ruth's journey from the plateau of Moab across the Jordan valley/Dead Sea northern basin and up the Judean hills to Bethlehem.",
+    coordinates: [
+      [31.1806, 35.7014], // Moab Plateau (Kir-Hareseth / Kerak)
+      [31.4500, 35.7500], // Arnon Gorge crossing
+      [31.7500, 35.7200], // Plains of Moab (Nebo / Medeba)
+      [31.7614, 35.5583], // Jordan River Ford (Bethabara)
+      [31.7800, 35.3800], // Ascent of Adummim
+      [31.7043, 35.2076]  // Bethlehem
+    ]
+  },
+  "shittim_to_jordan_crossing_jericho": {
+    id: "shittim_to_jordan_crossing_jericho",
+    fromName: "Abel-shittim",
+    toName: "Jericho",
+    historicalRoadName: "Conquest Crossing of the Jordan",
+    mode: "land_walking",
+    distanceMiles: 16,
+    travelDays: 1.0,
+    notes: "Joshua 3:1: Israel sets out from Shittim, crosses the miraculously dried Jordan opposite Adam, and encamps at Gilgal before taking Jericho.",
+    coordinates: [
+      [31.8402, 35.6737], // Shittim (Tell el-Hammam)
+      [31.8200, 35.6000], // Jordan eastern terrace
+      [31.7614, 35.5583], // Jordan River ford / Adam cutoff
+      [31.8700, 35.4800], // Gilgal
+      [31.8717, 35.4446]  // Jericho (Tell es-Sultan)
+    ]
+  },
+  "bethlehem_to_valley_of_elah": {
+    id: "bethlehem_to_valley_of_elah",
+    fromName: "Bethlehem",
+    toName: "Valley of Elah",
+    historicalRoadName: "Judean Hill Descent to the Shephelah",
+    mode: "land_walking",
+    distanceMiles: 18,
+    travelDays: 1.0,
+    notes: "1 Samuel 17:17-20: David travels from his father's flocks in Bethlehem down the western Judean descent into the Valley of Elah between Socoh and Azekah.",
+    coordinates: [
+      [31.7043, 35.2076], // Bethlehem
+      [31.7100, 35.1200], // Husan / Wadi Fukin ridge
+      [31.6900, 35.0500], // Ephes-dammim
+      [31.6822, 34.9749], // Socoh
+      [31.6754, 34.9980]  // Valley of Elah brook
+    ]
+  },
+  "hebron_to_jerusalem_ridge_road": {
+    id: "hebron_to_jerusalem_ridge_road",
+    fromName: "Hebron",
+    toName: "Jerusalem",
+    historicalRoadName: "Way of the Patriarchs (Southern Ridge)",
+    mode: "land_walking",
+    distanceMiles: 21,
+    travelDays: 1.2,
+    notes: "2 Samuel 5:3-6: David anointed king over all Israel at Hebron, then marches his army north along the mountain watershed to take the Jebusite stronghold of Zion.",
+    coordinates: [
+      [31.5251, 35.1022], // Hebron
+      [31.5850, 35.1100], // Halhul
+      [31.6350, 35.1350], // Beth-zur
+      [31.7043, 35.2076], // Bethlehem
+      [31.7736, 35.2356]  // Jerusalem (City of David / Zion)
+    ]
+  },
+  "gilgal_to_bethel_jericho_jordan": {
+    id: "gilgal_to_bethel_jericho_jordan",
+    fromName: "Gilgal",
+    toName: "Jordan River",
+    historicalRoadName: "Elijah's Prophetic Circuit",
+    mode: "land_walking",
+    distanceMiles: 28,
+    travelDays: 1.5,
+    notes: "2 Kings 2:1-7: Elijah and Elisha journey from Gilgal to Bethel, down to Jericho, and across the parted Jordan River where Elijah is taken up in a whirlwind.",
+    coordinates: [
+      [31.9800, 35.2500], // Gilgal (Jiljiliya in Ephraim)
+      [31.9300, 35.2200], // Bethel
+      [31.8700, 35.3500], // Descent to Jericho oasis
+      [31.8717, 35.4446], // Jericho
+      [31.7614, 35.5583]  // Jordan River ford
+    ]
+  },
+  "babylon_to_jerusalem_exile_return": {
+    id: "babylon_to_jerusalem_exile_return",
+    fromName: "Babylon",
+    toName: "Jerusalem",
+    historicalRoadName: "Return from Babylonian Exile Caravan Route",
+    mode: "desert_caravan",
+    distanceMiles: 920,
+    travelDays: 115,
+    notes: "Ezra 7:9: 'On the first day of the first month he began to go up from Babylonia, and on the first day of the fifth month he came to Jerusalem' (four full months).",
+    coordinates: [
+      [32.5433, 44.4222], // Babylon
+      [33.3152, 44.3661], // Baghdad / Tigris corridor
+      [34.3500, 42.1000], // Hit on the Euphrates
+      [35.0000, 40.4000], // Mari / Dura-Europos
+      [35.3000, 39.0000], // Deir ez-Zor
+      [34.5600, 38.2700], // Tadmor (Palmyra oasis)
+      [33.5138, 36.2765], // Damascus
+      [32.9500, 35.7000], // Golan / Sea of Galilee entry
+      [32.2200, 35.2600], // Shechem
+      [31.7767, 35.2342]  // Jerusalem
+    ]
+  },
+  "susa_to_jerusalem_royal_road": {
+    id: "susa_to_jerusalem_royal_road",
+    fromName: "Susa (Shushan the Citadel)",
+    toName: "Jerusalem",
+    historicalRoadName: "Persian Imperial Royal Road to Jerusalem",
+    mode: "desert_caravan",
+    distanceMiles: 1120,
+    travelDays: 95,
+    notes: "Nehemiah 2:1-9: Nehemiah departs Susa with letters and military escorts from King Artaxerxes I, crossing the Euphrates Province ('Beyond the River') to rebuild Jerusalem's walls.",
+    coordinates: [
+      [32.1900, 48.2400], // Susa (Palace of Darius / Artaxerxes)
+      [32.5000, 46.5000], // Zagros foothill imperial route
+      [33.0900, 44.5800], // Ctesiphon / Tigris crossing
+      [33.3152, 44.3661], // Babylon / Northern Babylonia
+      [34.5600, 38.2700], // Palmyra (Tadmor)
+      [33.5138, 36.2765], // Damascus
+      [32.2200, 35.2600], // Samaria / Shechem
+      [31.7767, 35.2342]  // Jerusalem
+    ]
+  },
+  "corinth_to_ephesus_aegean_crossing": {
+    id: "corinth_to_ephesus_aegean_crossing",
+    fromName: "Corinth",
+    toName: "Ephesus",
+    historicalRoadName: "Saronic & Aegean Merchant Sea Track",
+    mode: "sea_sailing",
+    distanceMiles: 260,
+    travelDays: 5.5,
+    notes: "Acts 18:18-19, Acts 19:1: Paul sails from Cenchreae (Corinth's eastern port) across the Aegean Sea via the Cyclades directly to Ephesus.",
+    coordinates: [
+      [37.9058, 22.8787], // Corinth
+      [37.8860, 22.9900], // Cenchreae harbor
+      [37.7500, 23.5000], // Saronic Gulf
+      [37.6000, 24.3000], // Kea Strait
+      [37.5000, 25.1000], // Mykonos / Delos corridor
+      [37.7000, 26.5000], // Ikaria channel
+      [37.9391, 27.3407]  // Ephesus
+    ]
+  },
+  "jerusalem_to_jordan_baptism_site": {
+    id: "jerusalem_to_jordan_baptism_site",
+    fromName: "Jerusalem",
+    toName: "Jordan River (Bethany Beyond Jordan)",
+    historicalRoadName: "Descent of Adummim to Jordan Fords",
+    mode: "land_walking",
+    distanceMiles: 22,
+    travelDays: 1.2,
+    notes: "Matthew 3:5-6, Mark 1:5, John 1:28: 'Jerusalem and all Judea and all the region about the Jordan were going out to him and they were baptized by him in the river Jordan.'",
+    coordinates: [
+      [31.7767, 35.2342], // Jerusalem
+      [31.7750, 35.2600], // Bethany
+      [31.8150, 35.3600], // Ascent of Adummim (Inn of the Good Samaritan)
+      [31.8500, 35.4400], // Wadi Qelt exit at Jericho
+      [31.8380, 35.5480]  // Al-Maghtas (Bethany beyond the Jordan)
+    ]
+  },
+  "ramah_to_shiloh_ridge_road": {
+    id: "ramah_to_shiloh_ridge_road",
+    fromName: "Ramah",
+    toName: "Shiloh",
+    historicalRoadName: "Way of the Tabernacle (Central Ridge Road)",
+    mode: "land_walking",
+    distanceMiles: 17,
+    travelDays: 1.0,
+    notes: "1 Samuel 1:3, 19: Elkanah and Hannah's annual pilgrimage from Ramathaim-zophim along the Benjamin ridge road past Bethel to the sanctuary of the Ark at Shiloh.",
+    coordinates: [
+      [31.8543, 35.2316], // Ramah
+      [31.8900, 35.2200], // Mizpah / Beeroth
+      [31.9300, 35.2200], // Bethel
+      [32.0000, 35.2500], // Lebonah ascent
+      [32.0557, 35.2895]  // Shiloh
+    ]
+  },
+  "ark_journey_shiloh_to_philistia": {
+    id: "ark_journey_shiloh_to_philistia",
+    fromName: "Shiloh",
+    toName: "Ekron",
+    historicalRoadName: "Captivity Route of the Ark of the Covenant",
+    mode: "land_walking",
+    distanceMiles: 48,
+    travelDays: 2.8,
+    notes: "1 Samuel 4:1-5:10: The Ark carried from Shiloh to battle at Ebenezer/Aphek, captured by the Philistines, and moved between Ashdod, Gath, and Ekron.",
+    coordinates: [
+      [32.0557, 35.2895], // Shiloh
+      [32.1050, 34.9304], // Ebenezer / Aphek
+      [31.7572, 34.6578], // Ashdod (Temple of Dagon)
+      [31.6997, 34.8469], // Gath
+      [31.7775, 34.8519]  // Ekron
+    ]
+  },
+  "ark_return_ekron_to_kiriath_jearim": {
+    id: "ark_return_ekron_to_kiriath_jearim",
+    fromName: "Ekron",
+    toName: "Kiriath-jearim",
+    historicalRoadName: "Sorek Valley Route of the Ark",
+    mode: "land_walking",
+    distanceMiles: 20,
+    travelDays: 1.2,
+    notes: "1 Samuel 6:10-7:1: The Philistines return the Ark on a cart pulled by oxen up the Sorek Valley to Beth-shemesh, then escorted to the house of Abinadab at Kiriath-jearim.",
+    coordinates: [
+      [31.7775, 34.8519], // Ekron
+      [31.7650, 34.9000], // Timnah in Sorek Valley
+      [31.7506, 34.9747], // Beth-shemesh
+      [31.7800, 35.0300], // Eshtaol / Zorah pass
+      [31.8090, 35.1038]  // Kiriath-jearim (Hill of the Ark)
+    ]
+  },
+  "joshua_battle_of_gibeon_beth_horon": {
+    id: "joshua_battle_of_gibeon_beth_horon",
+    fromName: "Gilgal",
+    toName: "Makkedah",
+    historicalRoadName: "Ascent of Beth-Horon & Aijalon Valley Warpath",
+    mode: "land_walking",
+    distanceMiles: 34,
+    travelDays: 1.8,
+    notes: "Joshua 10:9-14: Joshua's night march from Gilgal to rescue Gibeon, pursuing the Amorite kings down the Ascent of Beth-Horon where the sun stood still over Aijalon.",
+    coordinates: [
+      [31.8700, 35.4800], // Gilgal
+      [31.8475, 35.1834], // Gibeon
+      [31.8950, 35.0836], // Upper & Lower Beth-horon
+      [31.8600, 35.0000], // Valley of Aijalon
+      [31.7002, 34.9357], // Azekah
+      [31.6500, 34.9000]  // Makkedah cave
+    ]
+  },
+  "deborah_barak_tabor_kishon_battle": {
+    id: "deborah_barak_tabor_kishon_battle",
+    fromName: "Mount Tabor",
+    toName: "Harosheth-hagoyim",
+    historicalRoadName: "Kishon Valley Battle Corridor",
+    mode: "land_walking",
+    distanceMiles: 21,
+    travelDays: 1.1,
+    notes: "Judges 4:12-16, 5:21: Barak leads 10,000 warriors down Mount Tabor to route Sisera's 900 iron chariots along the torrent of Kishon to Harosheth-hagoyim.",
+    coordinates: [
+      [32.6863, 35.3929], // Mount Tabor
+      [32.6500, 35.3000], // Plain of Esdraelon / En-dor
+      [32.6000, 35.2000], // Megiddo / Taanach waters
+      [32.7000, 35.1300], // Torrent of Kishon
+      [32.7200, 35.1000]  // Harosheth-hagoyim (Tell el-Harbaj)
+    ]
+  },
+  "gideon_harod_to_jordan_pursuit": {
+    id: "gideon_harod_to_jordan_pursuit",
+    fromName: "Spring of Harod",
+    toName: "Jordan River (Beth-barah)",
+    historicalRoadName: "Jezreel-Jordan Valley Warpath",
+    mode: "land_walking",
+    distanceMiles: 24,
+    travelDays: 1.3,
+    notes: "Judges 7:1, 22-24: Gideon's 300 men blow trumpets at the Spring of Harod and pursue the fleeing Midianite hordes past Beth-shittah down to the Jordan fords.",
+    coordinates: [
+      [32.5486, 35.3558], // Spring of Harod (Mount Gilboa)
+      [32.5200, 35.4300], // Beth-shittah
+      [32.5000, 35.5000], // Beth-shean / Scythopolis
+      [32.4000, 35.5300], // Abel-meholah
+      [32.3500, 35.5500]  // Fords of Beth-barah at the Jordan
+    ]
+  },
+  "david_flight_nob_to_adullam_engedi": {
+    id: "david_flight_nob_to_adullam_engedi",
+    fromName: "Nob",
+    toName: "En-gedi",
+    historicalRoadName: "Judean Wilderness Strongholds Trail",
+    mode: "land_walking",
+    distanceMiles: 52,
+    travelDays: 3.2,
+    notes: "1 Samuel 21-24: David flees Saul from Nob past Gath to the Cave of Adullam, relieves Keilah, hides in the Wilderness of Ziph, and shelters in the crags of En-gedi.",
+    coordinates: [
+      [31.7850, 35.2450], // Nob (Priestly city on Mount Scopus)
+      [31.6997, 34.8469], // Gath
+      [31.6517, 35.0017], // Cave of Adullam
+      [31.6137, 35.0036], // Keilah
+      [31.4800, 35.1500], // Wilderness of Ziph / Hachilah
+      [31.4500, 35.3833]  // En-gedi (Wild Goats Rocks)
+    ]
+  },
+  "kings_highway_transjordan_complete": {
+    id: "kings_highway_transjordan_complete",
+    fromName: "Kadesh-barnea",
+    toName: "Plains of Moab",
+    historicalRoadName: "The King's Highway (Derekh HaMelekh)",
+    mode: "desert_caravan",
+    distanceMiles: 165,
+    travelDays: 11.0,
+    notes: "Numbers 20:17, 21:21-24: 'Please let us pass through your land. We will go along the King's Highway.' Ancient arterial highway through Edom, Moab, and Amorite Heshbon to the Jordan.",
+    coordinates: [
+      [30.6483, 34.4222], // Kadesh-barnea
+      [30.8321, 35.0569], // Mount Hor (Aaron's Tomb / Petra)
+      [31.0000, 35.6000], // Bozrah (Edom)
+      [31.0500, 35.7000], // Brook Zered
+      [31.1806, 35.7014], // Kir-Hareseth (Moab)
+      [31.4500, 35.7500], // Arnon Gorge
+      [31.5000, 35.7800], // Dibon
+      [31.7200, 35.8000], // Medeba
+      [31.8008, 35.8091], // Heshbon
+      [31.8402, 35.6737]  // Plains of Moab opposite Jericho
+    ]
+  },
+  "elijah_cherith_to_zarephath": {
+    id: "elijah_cherith_to_zarephath",
+    fromName: "Brook Cherith",
+    toName: "Zarephath",
+    historicalRoadName: "Elijah's Drought Journey to Phoenicia",
+    mode: "land_walking",
+    distanceMiles: 125,
+    travelDays: 6.8,
+    notes: "1 Kings 17:3-10: Elijah hides by the Brook Cherith, then is commanded to walk through Galilee to Zarephath in Sidon where the widow's jar of oil does not fail.",
+    coordinates: [
+      [31.8500, 35.4500], // Brook Cherith (Wadi Qelt)
+      [32.1000, 35.5000], // Jordan Valley northward
+      [32.5000, 35.5000], // Beth-shean
+      [32.6500, 35.3000], // Jezreel Plain
+      [32.8000, 35.1000], // Ptolemais (Acco)
+      [33.2708, 35.1961], // Tyre
+      [33.4642, 35.2951]  // Zarephath (Sarepta)
+    ]
+  },
+  "carmel_to_jezreel_chariot_race": {
+    id: "carmel_to_jezreel_chariot_race",
+    fromName: "Mount Carmel",
+    toName: "Jezreel",
+    historicalRoadName: "Jezreel Valley Chariot Highway",
+    mode: "land_walking",
+    distanceMiles: 22,
+    travelDays: 1.1,
+    notes: "1 Kings 18:44-46: Following the fire from heaven on Mount Carmel, Ahab rides his chariot before the heavy rain, and the hand of the Lord is on Elijah as he runs before Ahab to the entrance of Jezreel.",
+    coordinates: [
+      [32.6725, 35.0233], // Mount Carmel (Muhraqa)
+      [32.6800, 35.1000], // Kishon River bank
+      [32.6200, 35.2000], // Plain of Megiddo
+      [32.5579, 35.3280]  // Royal Palace of Jezreel
+    ]
+  },
+  "damascus_to_samaria_jordan_route": {
+    id: "damascus_to_samaria_jordan_route",
+    fromName: "Damascus",
+    toName: "Samaria",
+    historicalRoadName: "Aram-Israel Highway via Beth-Shean",
+    mode: "land_walking",
+    distanceMiles: 110,
+    travelDays: 5.8,
+    notes: "2 Kings 5:1-14: Naaman the Syrian commander travels with chariots from Damascus to Samaria and down to the Jordan River where he dips seven times to be healed of leprosy.",
+    coordinates: [
+      [33.5138, 36.2765], // Damascus
+      [33.2000, 36.0000], // Golan Heights trunk road
+      [32.8500, 35.6500], // Hippos / Sea of Galilee southern exit
+      [32.5000, 35.5000], // Beth-shean gateway
+      [32.3500, 35.3000], // Dothan Valley
+      [32.2770, 35.1900], // Samaria (Capital of Israel)
+      [32.2000, 35.5000]  // Jordan River
+    ]
+  },
+  "jerusalem_to_riblah_babylonian_captivity": {
+    id: "jerusalem_to_riblah_babylonian_captivity",
+    fromName: "Jerusalem",
+    toName: "Riblah",
+    historicalRoadName: "Babylonian Captivity March",
+    mode: "desert_caravan",
+    distanceMiles: 235,
+    travelDays: 15.5,
+    notes: "2 Kings 25:4-7, Jeremiah 39:4-7: King Zedekiah flees by the King's Garden toward the Arabah, is captured in the plains of Jericho, and led to Nebuchadnezzar at Riblah in Hamath.",
+    coordinates: [
+      [31.7767, 35.2342], // Jerusalem
+      [31.8717, 35.4446], // Plains of Jericho
+      [32.4000, 35.5200], // Jordan Rift Valley
+      [32.8000, 35.6000], // Sea of Galilee
+      [33.5138, 36.2765], // Damascus
+      [34.1000, 36.4000], // Beqaa Valley / Baalbek
+      [34.4595, 36.5726]  // Riblah on the Orontes
+    ]
+  },
+  "jerusalem_to_samaria_ridge_road": {
+    id: "jerusalem_to_samaria_ridge_road",
+    fromName: "Jerusalem",
+    toName: "Samaria",
+    historicalRoadName: "Way of the Patriarchs (Northern Ridge)",
+    mode: "land_walking",
+    distanceMiles: 42,
+    travelDays: 2.2,
+    notes: "Central mountain ridge route linking the capital of Judah with the capital of the Northern Kingdom through Bethel, Shiloh, and Shechem.",
+    coordinates: [
+      [31.7767, 35.2342], // Jerusalem
+      [31.8543, 35.2316], // Ramah
+      [31.9300, 35.2200], // Bethel
+      [32.0557, 35.2895], // Shiloh
+      [32.2200, 35.2600], // Shechem (Mount Gerizim / Ebal)
+      [32.2770, 35.1900]  // Samaria (Sebaste)
+    ]
+  },
+  "dan_to_beersheba_national_highway": {
+    id: "dan_to_beersheba_national_highway",
+    fromName: "Dan",
+    toName: "Beersheba",
+    historicalRoadName: "The National Spine: From Dan to Beersheba",
+    mode: "land_walking",
+    distanceMiles: 145,
+    travelDays: 7.5,
+    notes: "Judges 20:1, 1 Samuel 3:20, 2 Samuel 3:10: The definitive biblical boundary of Israel from the northern headwaters at Tel Dan down the central ridge to Beersheba.",
+    coordinates: [
+      [33.2486, 35.6522], // Tel Dan
+      [33.0000, 35.5700], // Hazor
+      [32.8000, 35.5300], // Sea of Galilee
+      [32.6000, 35.3000], // Valley of Jezreel
+      [32.2200, 35.2600], // Shechem
+      [31.9300, 35.2200], // Bethel
+      [31.7767, 35.2342], // Jerusalem
+      [31.7043, 35.2076], // Bethlehem
+      [31.5251, 35.1022], // Hebron
+      [31.2450, 34.7900]  // Beersheba
+    ]
+  },
+  "via_dolorosa_calvary_route": {
+    id: "via_dolorosa_calvary_route",
+    fromName: "Praetorium (Antonia Fortress)",
+    toName: "Golgotha (Calvary)",
+    historicalRoadName: "Via Dolorosa (The Way of the Cross)",
+    mode: "land_walking",
+    distanceMiles: 0.6,
+    travelDays: 0.1,
+    notes: "Matthew 27:31-33, Mark 15:20-22, Luke 23:26-33, John 19:16-18: The path from Pilate's judgment seat outside the city walls to the place of the skull.",
+    coordinates: [
+      [31.7797, 35.2345], // Antonia Fortress / Praetorium
+      [31.7792, 35.2325], // Ecce Homo arch
+      [31.7790, 35.2305], // Tyropoeon Valley crossing
+      [31.7785, 35.2297]  // Golgotha / Church of the Holy Sepulchre
+    ]
+  },
+  "laodicea_to_hierapolis_road": {
+    id: "laodicea_to_hierapolis_road",
+    fromName: "Laodicea",
+    toName: "Hierapolis",
+    historicalRoadName: "Lycus Valley Roman Road",
+    mode: "land_walking",
+    distanceMiles: 7,
+    travelDays: 0.4,
+    notes: "Colossians 4:13: Paul commends Epaphras for his deep concern for those in Laodicea and Hierapolis across the Lycus river basin.",
+    coordinates: [
+      [37.8358, 29.1075], // Laodicea on the Lycus
+      [37.8800, 29.1150], // Lycus River ford
+      [37.9250, 29.1200]  // Hierapolis (thermal travertine terraces)
+    ]
+  },
+  "zorah_to_eshtaol_sorek_route": {
+    id: "zorah_to_eshtaol_sorek_route",
+    fromName: "Zorah",
+    toName: "Eshtaol",
+    historicalRoadName: "Danite Homeland Highway (Valley of Sorek)",
+    mode: "land_walking",
+    distanceMiles: 3,
+    travelDays: 0.2,
+    notes: "Judges 13:25, 16:31: 'The Spirit of the Lord began to stir him in Mahaneh-dan, between Zorah and Eshtaol.'",
+    coordinates: [
+      [31.7800, 34.9900], // Zorah (Birthplace of Samson)
+      [31.7800, 35.0000], // Camp of Dan (Mahaneh-dan)
+      [31.7800, 35.0100]  // Eshtaol
+    ]
+  },
+  "ammon_to_moab_highway": {
+    id: "ammon_to_moab_highway",
+    fromName: "Rabbah of Ammon",
+    toName: "Kir of Moab",
+    historicalRoadName: "Transjordan Royal Highway",
+    mode: "desert_caravan",
+    distanceMiles: 75,
+    travelDays: 4.5,
+    notes: "Ancient King's Highway trunk linking the Ammonite capital at Rabbah (Amman) southward across the plateau through Medeba and the Arnon Gorge to Moab.",
+    coordinates: [
+      [31.9500, 35.9300], // Rabbah of Ammon
+      [31.8008, 35.8091], // Heshbon
+      [31.7200, 35.8000], // Medeba
+      [31.5000, 35.7800], // Dibon
+      [31.4500, 35.7500], // Arnon Gorge
+      [31.1806, 35.7014]  // Kir-Hareseth (Moab)
+    ]
   }
 };
 
@@ -1241,7 +2101,24 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "gaza_to_azotus_via_maris",
     "azotus_to_caesarea_via_maris"
   ],
-  "acts_9": ["jerusalem_to_damascus_road"],
+  "acts_9": [
+    "jerusalem_to_damascus_road",
+    "joppa_to_lydda_roman_road",
+    "lydda_to_jerusalem_ascent"
+  ],
+  "acts_10": [
+    "caesarea_to_joppa_coastal_road"
+  ],
+  "acts_11": [
+    "caesarea_to_joppa_coastal_road",
+    "joppa_to_lydda_roman_road",
+    "sidon_to_antioch_highway",
+    "tyre_to_sidon_highway"
+  ],
+  "acts_12": [
+    "caesarea_to_jerusalem_ascent",
+    "tyre_to_sidon_highway"
+  ],
   "acts_13": [
     "antioch_to_seleucia_pieria",
     "seleucia_to_salamis_sea",
@@ -1259,6 +2136,12 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "pisidian_antioch_to_perga_return",
     "perga_to_attalia_highway",
     "attalia_to_seleucia_sea"
+  ],
+  "acts_15": [
+    "sidon_to_antioch_highway",
+    "tyre_to_sidon_highway",
+    "ptolemais_to_caesarea_road",
+    "caesarea_to_jerusalem_ascent"
   ],
   "acts_16": [
     "derbe_to_lystra_via_sebaste",
@@ -1285,6 +2168,9 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "jerusalem_to_syrian_antioch",
     "antioch_through_galatia_phrygia"
   ],
+  "acts_19": [
+    "corinth_to_ephesus_aegean_crossing"
+  ],
   "acts_20": [
     "troas_to_assos_roman_road",
     "assos_to_mitylene_sea",
@@ -1299,6 +2185,16 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "ptolemais_to_caesarea_road",
     "caesarea_to_jerusalem_ridge_road"
   ],
+  "acts_22": [
+    "jerusalem_to_damascus_road"
+  ],
+  "acts_23": [
+    "jerusalem_to_antipatris_beth_horon",
+    "antipatris_to_caesarea_via_maris"
+  ],
+  "acts_26": [
+    "jerusalem_to_damascus_road"
+  ],
   "acts_27": [
     "caesarea_to_sidon_myra_sea",
     "myra_to_crete_fair_havens",
@@ -1310,12 +2206,66 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   ],
 
   // Gospels
-  "luke_2": ["nazareth_to_bethlehem_jordan_valley"],
-  "luke_10": ["jerusalem_to_jericho_road"],
-  "luke_24": ["jerusalem_to_emmaus_roman_road"],
-  "john_4": ["galilee_to_jerusalem_via_samaria"],
+  "matthew_2": ["nazareth_to_bethlehem_hill_country", "bethlehem_to_egypt_caravan_route"],
+  "matthew_3": ["jerusalem_to_jordan_baptism_site"],
+  "matthew_4": ["nazareth_to_capernaum_via_maris"],
+  "matthew_8": ["capernaum_to_bethsaida_lake_road"],
+  "matthew_11": ["capernaum_to_bethsaida_lake_road", "tyre_to_sidon_highway"],
+  "matthew_15": ["tyre_to_sidon_highway"],
   "matthew_16": ["capernaum_to_caesarea_philippi"],
+  "matthew_17": ["nazareth_to_capernaum_via_maris"],
+  "matthew_20": ["jerusalem_to_jericho_road"],
+  "matthew_21": ["bethany_to_jerusalem_road"],
+  "matthew_26": ["bethany_to_jerusalem_road"],
+
+  "mark_1": ["jerusalem_to_jordan_baptism_site", "nazareth_to_capernaum_via_maris"],
+  "mark_6": ["capernaum_to_bethsaida_lake_road"],
+  "mark_7": ["tyre_to_sidon_highway"],
   "mark_8": ["capernaum_to_caesarea_philippi"],
+  "mark_9": ["nazareth_to_capernaum_via_maris"],
+  "mark_10": ["jerusalem_to_jericho_road"],
+  "mark_11": ["bethany_to_jerusalem_road"],
+  "mark_14": ["bethany_to_jerusalem_road"],
+
+  "luke_2": ["nazareth_to_bethlehem_hill_country", "nazareth_to_bethlehem_jordan_valley"],
+  "luke_3": ["jerusalem_to_jordan_baptism_site"],
+  "luke_4": ["nazareth_to_capernaum_via_maris", "tyre_to_sidon_highway"],
+  "luke_7": ["capernaum_to_nain_road"],
+  "luke_9": ["capernaum_to_caesarea_philippi", "capernaum_to_bethsaida_lake_road"],
+  "luke_10": ["jerusalem_to_jericho_road", "tyre_to_sidon_highway"],
+  "luke_17": ["galilee_to_jerusalem_via_samaria"],
+  "luke_18": ["jerusalem_to_jericho_road"],
+  "luke_19": ["jerusalem_to_jericho_road", "bethany_to_jerusalem_road"],
+  "luke_24": ["jerusalem_to_emmaus_roman_road", "bethany_to_jerusalem_road"],
+
+  "john_1": ["nazareth_to_capernaum_via_maris", "capernaum_to_bethsaida_lake_road"],
+  "john_2": ["nazareth_to_capernaum_via_maris", "galilee_to_jerusalem_via_samaria"],
+  "john_3": ["jerusalem_to_jordan_baptism_site"],
+  "john_4": ["galilee_to_jerusalem_via_samaria", "nazareth_to_capernaum_via_maris"],
+  "john_6": ["capernaum_to_tiberias_lakeside", "capernaum_to_bethsaida_lake_road"],
+  "john_11": ["bethany_to_jerusalem_road"],
+  "john_12": ["bethany_to_jerusalem_road"],
+
+  // Revelation - The Seven Churches of Asia Circular Postal Highway
+  "revelation_1": [
+    "patmos_to_ephesus_sea",
+    "ephesus_to_smyrna_roman_road",
+    "smyrna_to_pergamum_highway",
+    "pergamum_to_thyatira_highway",
+    "thyatira_to_sardis_highway",
+    "sardis_to_philadelphia_highway",
+    "philadelphia_to_laodicea_highway"
+  ],
+  "revelation_2": [
+    "ephesus_to_smyrna_roman_road",
+    "smyrna_to_pergamum_highway",
+    "pergamum_to_thyatira_highway"
+  ],
+  "revelation_3": [
+    "thyatira_to_sardis_highway",
+    "sardis_to_philadelphia_highway",
+    "philadelphia_to_laodicea_highway"
+  ],
 
   // Old Testament
   "genesis_12": ["way_of_the_patriarchs_complete"],
@@ -1328,11 +2278,54 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   "exodus_17": ["exodus_redsea_to_mount_sinai"],
   "exodus_18": ["exodus_redsea_to_mount_sinai"],
   "exodus_19": ["exodus_redsea_to_mount_sinai"],
+  "joshua_2": ["shittim_to_jordan_crossing_jericho"],
+  "joshua_3": ["shittim_to_jordan_crossing_jericho"],
+  "joshua_4": ["shittim_to_jordan_crossing_jericho"],
+  "joshua_6": ["shittim_to_jordan_crossing_jericho"],
+  "ruth_1": ["moab_to_bethlehem_dead_sea_route"],
+  "1samuel_17": ["bethlehem_to_valley_of_elah"],
+  "2samuel_5": ["hebron_to_jerusalem_ridge_road"],
+  "2samuel_6": ["hebron_to_jerusalem_ridge_road"],
   "1kings_19": [
     "jezreel_to_beersheba_ridge_road",
     "beersheba_to_mount_sinai",
     "sinai_to_damascus_desert_highway"
   ],
+  "2kings_2": ["gilgal_to_bethel_jericho_jordan"],
+  "1chronicles_11": ["hebron_to_jerusalem_ridge_road"],
+  "ezra_7": ["babylon_to_jerusalem_exile_return"],
+  "ezra_8": ["babylon_to_jerusalem_exile_return"],
+  "nehemiah_2": ["susa_to_jerusalem_royal_road"],
+  "numbers_20": ["kings_highway_transjordan_complete"],
+  "numbers_21": ["kings_highway_transjordan_complete"],
+  "joshua_10": ["joshua_battle_of_gibeon_beth_horon"],
+  "judges_4": ["deborah_barak_tabor_kishon_battle"],
+  "judges_5": ["deborah_barak_tabor_kishon_battle"],
+  "judges_7": ["gideon_harod_to_jordan_pursuit"],
+  "1samuel_1": ["ramah_to_shiloh_ridge_road"],
+  "1samuel_4": ["ark_journey_shiloh_to_philistia"],
+  "1samuel_5": ["ark_journey_shiloh_to_philistia"],
+  "1samuel_6": ["ark_return_ekron_to_kiriath_jearim"],
+  "1samuel_21": ["david_flight_nob_to_adullam_engedi"],
+  "1samuel_22": ["david_flight_nob_to_adullam_engedi"],
+  "1samuel_23": ["david_flight_nob_to_adullam_engedi"],
+  "1kings_17": ["elijah_cherith_to_zarephath"],
+  "1kings_18": ["carmel_to_jezreel_chariot_race"],
+  "2kings_5": ["damascus_to_samaria_jordan_route"],
+  "2kings_25": ["jerusalem_to_riblah_babylonian_captivity"],
+  "jeremiah_39": ["jerusalem_to_riblah_babylonian_captivity"],
+  "matthew_27": ["via_dolorosa_calvary_route"],
+  "mark_15": ["via_dolorosa_calvary_route"],
+  "luke_23": ["via_dolorosa_calvary_route"],
+  "john_19": ["via_dolorosa_calvary_route"],
+  "colossians_4": ["laodicea_to_hierapolis_road"],
+  "judges_13": ["zorah_to_eshtaol_sorek_route"],
+  "judges_16": ["zorah_to_eshtaol_sorek_route"],
+  "judges_20": ["dan_to_beersheba_national_highway"],
+  "1samuel_3": ["dan_to_beersheba_national_highway"],
+  "2samuel_3": ["dan_to_beersheba_national_highway"],
+  "1kings_12": ["jerusalem_to_samaria_ridge_road"],
+  "1kings_16": ["jerusalem_to_samaria_ridge_road"],
   "jonah_1": ["joppa_to_mediterranean_sea"],
   "jonah_3": ["jonah_journey_to_nineveh"]
 };

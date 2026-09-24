@@ -88,7 +88,7 @@ export function checkIsWordsOfJesus(
   if (isNaN(ch) || isNaN(v)) return false;
 
   const bookId = getCanonicalBookCategory(bookName);
-  
+
   // STRICT GUARD: If book is not in the 9 valid NT books, it CANNOT be words of Jesus!
   if (!RED_LETTER_VALID_BOOKS.has(bookId)) {
     return false;
@@ -276,9 +276,14 @@ export function renderRedLetterContent(
   if (!text) return null;
 
   if (!showRedLetter || !isWordsOfJesus) {
-    const colorStyle = { color: isSelected ? '#26221F' : '#38332E' };
-    const className = isSelected ? 'text-[#26221F]' : 'text-[#38332E]';
-    return renderWithCharacters(text, colorStyle, className, onCharClick, matchedCharacters, selectedCharacter, allowedCharacters);
+    return (
+      <span
+        className={isSelected ? 'text-[#26221F]' : 'text-[#38332E]'}
+        style={{ color: isSelected ? '#26221F' : '#38332E' }}
+      >
+        {text}
+      </span>
+    );
   }
 
   const segments = parseVerseSegments(text, isWordsOfJesus, bookId, chapterNum, verseNum);

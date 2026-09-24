@@ -37,7 +37,7 @@ interface BereaAiPanelProps {
   selectedVerse: Verse | null;
   selectedVerseRange?: { start: number; end: number } | null;
   onVerseRangeChange?: (range: { start: number; end: number } | null) => void;
-  onNavigateToChapterAndVerse?: (chapterNum: number, verseNum: number) => void;
+  onNavigateToChapterAndVerse?: (chapterNum: number, verseNum: number, range?: { start: number; end: number } | null) => void;
   chapterVerses?: Verse[];
   activeLens: DenominationalLens;
   onLensChange: (lens: DenominationalLens) => void;
@@ -864,8 +864,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   type="button"
                   onClick={() => handleAudienceChange('small_group')}
                   className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'small_group'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
+                    ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                    : 'text-[#78716C] hover:text-[#26221F]'
                     }`}
                   title="Practical small group discussion, fellowship, and personal application"
                 >
@@ -877,8 +877,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   type="button"
                   onClick={() => handleAudienceChange('deep_exegesis')}
                   className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'deep_exegesis'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
+                    ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                    : 'text-[#78716C] hover:text-[#26221F]'
                     }`}
                   title="Pastoral exegesis, linguistic grammar, confessional dogmatics, and historical setting"
                 >
@@ -890,8 +890,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   type="button"
                   onClick={() => handleAudienceChange('youth_family')}
                   className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'youth_family'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
+                    ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                    : 'text-[#78716C] hover:text-[#26221F]'
                     }`}
                   title="Engaging storytelling, real-world scenarios, and family discussion prompts"
                 >
@@ -936,8 +936,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     type="button"
                     onClick={() => setStudyGuideScope('chapter')}
                     className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'chapter'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
                       }`}
                     title="Default: Complete chapter study guide"
                   >
@@ -949,8 +949,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     type="button"
                     onClick={() => setStudyGuideScope('verse')}
                     className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'verse'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
                       }`}
                     title="Focus on an individual verse"
                   >
@@ -967,8 +967,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       }
                     }}
                     className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'range'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
                       }`}
                     title="Custom verse range"
                   >
@@ -2335,24 +2335,30 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     </span>
                     <button
                       onClick={() => {
-                        if (onNavigateToChapterAndVerse && currentEvent.passageRef) {
-                          try {
-                            const match = currentEvent.passageRef.match(/(\d+):(\d+)/);
-                            if (match) {
-                              const chapterNum = parseInt(match[1], 10);
-                              const verseNum = parseInt(match[2], 10);
-                              if (!isNaN(chapterNum) && !isNaN(verseNum)) {
-                                onNavigateToChapterAndVerse(chapterNum, verseNum);
-                                return;
-                              }
-                            }
-                          } catch(e) {}
+                        let targetVerse = currentEvent.verseRange ? currentEvent.verseRange[0] : 1;
+                        let targetChapter = currentChapter;
+                        if (currentEvent.passageRef) {
+                          const match = currentEvent.passageRef.match(/(\d+):(\d+)/);
+                          if (match) {
+                            const c = parseInt(match[1], 10);
+                            const v = parseInt(match[2], 10);
+                            if (!isNaN(c)) targetChapter = c;
+                            if (!isNaN(v)) targetVerse = v;
+                          }
                         }
-                        if (onVerseRangeChange && currentEvent.verseRange) {
-                          onVerseRangeChange({ start: currentEvent.verseRange[0], end: currentEvent.verseRange[1] });
+                        const targetRange = currentEvent.verseRange
+                          ? { start: currentEvent.verseRange[0], end: currentEvent.verseRange[1] }
+                          : { start: targetVerse, end: targetVerse };
+
+                        if (onVerseRangeChange) {
+                          onVerseRangeChange(targetRange);
+                        }
+                        if (onNavigateToChapterAndVerse) {
+                          onNavigateToChapterAndVerse(targetChapter, targetVerse, targetRange);
                         }
                       }}
-                      className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold hover:bg-[#F2E8D5] transition-colors shadow-sm cursor-pointer"
+                      className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold hover:bg-[#F2E8D5] transition-colors shadow-sm cursor-pointer active:scale-95"
+                      title={`Highlight ${currentEvent.passageRef} in Scripture`}
                     >
                       Mentioned in {currentEvent.passageRef}
                     </button>
