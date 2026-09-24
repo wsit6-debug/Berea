@@ -2216,6 +2216,60 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
       [31.1000, 35.8500], // Iye-abarim
       [31.4650, 35.7900]  // Arnon Gorge
     ]
+  },
+
+  "arnon_to_plains_of_moab": {
+    id: "arnon_to_plains_of_moab",
+    fromName: "Valley of the Arnon",
+    toName: "Plains of Moab",
+    historicalRoadName: "The King's Highway (Arnon to Plains of Moab)",
+    mode: "desert_caravan",
+    distanceMiles: 32,
+    travelDays: 2.0,
+    notes: "Numbers 21:20: Israel travels from the Arnon northward through the plateau of Moab to the top of Pisgah overlooking the wilderness and the Plains of Moab.",
+    coordinates: [
+      [31.4650, 35.7900], // Valley of the Arnon
+      [31.5000, 35.7700], // Dibon
+      [31.7167, 35.7833], // Medeba
+      [31.7683, 35.7253], // Mount Pisgah / Mount Nebo
+      [31.8402, 35.6737]  // Plains of Moab (opposite Jericho)
+    ]
+  },
+
+  "sychar_to_cana_galilee": {
+    id: "sychar_to_cana_galilee",
+    fromName: "Sychar",
+    toName: "Cana of Galilee",
+    historicalRoadName: "Way of the Patriarchs (Northern Spur to Lower Galilee)",
+    mode: "land_walking",
+    distanceMiles: 34,
+    travelDays: 1.5,
+    notes: "John 4:43-46: Jesus continues northward from Sychar through the Samarian hill country and Jezreel Valley into Lower Galilee at Cana.",
+    coordinates: [
+      [32.2133, 35.2819], // Sychar / Shechem (Jacob's Well)
+      [32.2800, 35.2600], // Samaria (Sebaste pass)
+      [32.4000, 35.2500], // Dothan Valley entry into Jezreel
+      [32.6100, 35.3100], // Plain of Esdraelon / Mount Tabor flank
+      [32.7460, 35.3380]  // Cana of Galilee
+    ]
+  },
+
+  "bethel_to_hebron_ridge_road": {
+    id: "bethel_to_hebron_ridge_road",
+    fromName: "Bethel",
+    toName: "Hebron",
+    historicalRoadName: "Way of the Patriarchs (Judean Ridge Highway)",
+    mode: "land_walking",
+    distanceMiles: 32,
+    travelDays: 1.6,
+    notes: "Genesis 13:18: Abram moves southward along the Judean watershed ridge past Jerusalem and Bethlehem to dwell by the oaks of Mamre at Hebron.",
+    coordinates: [
+      [31.9300, 35.2200], // Bethel
+      [31.8480, 35.1850], // Gibeon / Mizpah
+      [31.7767, 35.2342], // Jerusalem
+      [31.7054, 35.2024], // Bethlehem
+      [31.5292, 35.1039]  // Hebron (Mamre)
+    ]
   }
 };
 
@@ -2261,9 +2315,6 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "pisidian_antioch_to_iconium",
     "iconium_to_lystra_outbound",
     "lystra_to_derbe_outbound",
-    "derbe_to_lystra_return",
-    "lystra_to_iconium_return",
-    "iconium_to_pisidian_antioch_return",
     "pisidian_antioch_to_perga_return",
     "perga_to_attalia_highway",
     "attalia_to_seleucia_sea"
@@ -2360,7 +2411,7 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   "mark_11": ["bethany_to_jerusalem_road"],
   "mark_14": ["bethany_to_jerusalem_road"],
 
-  "luke_2": ["nazareth_to_bethlehem_hill_country", "nazareth_to_bethlehem_jordan_valley"],
+  "luke_2": ["nazareth_to_bethlehem_hill_country"],
   "luke_3": ["jerusalem_to_jordan_baptism_site"],
   "luke_4": ["nazareth_to_capernaum_via_maris", "tyre_to_sidon_highway"],
   "luke_7": ["capernaum_to_nain_road"],
@@ -2374,7 +2425,7 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   "john_1": ["nazareth_to_capernaum_via_maris", "capernaum_to_bethsaida_lake_road"],
   "john_2": ["nazareth_to_capernaum_via_maris", "galilee_to_jerusalem_via_samaria"],
   "john_3": ["jerusalem_to_jordan_baptism_site"],
-  "john_4": ["jerusalem_to_sychar_ridge_road", "galilee_to_jerusalem_via_samaria", "nazareth_to_capernaum_via_maris"],
+  "john_4": ["jerusalem_to_sychar_ridge_road", "sychar_to_cana_galilee", "nazareth_to_capernaum_via_maris"],
   "john_6": ["jerusalem_to_sea_of_galilee", "capernaum_to_tiberias_lakeside", "capernaum_to_bethsaida_lake_road"],
   "john_11": ["bethany_to_jerusalem_road"],
   "john_12": ["bethany_to_jerusalem_road"],
@@ -2402,10 +2453,10 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
 
   // Old Testament
   "genesis_12": ["way_of_the_patriarchs_complete"],
-  "genesis_13": ["egypt_to_bethel_via_maris", "way_of_the_patriarchs_complete"],
+  "genesis_13": ["egypt_to_bethel_via_maris", "bethel_to_hebron_ridge_road"],
   "genesis_22": ["way_of_the_patriarchs_complete"],
   "exodus_13": ["exodus_rameses_to_redsea"],
-  "exodus_14": ["etham_to_pihahiroth_red_sea", "exodus_rameses_to_redsea"],
+  "exodus_14": ["etham_to_pihahiroth_red_sea"],
   "exodus_15": ["exodus_redsea_to_mount_sinai"],
   "exodus_16": ["exodus_redsea_to_mount_sinai"],
   "exodus_17": ["exodus_redsea_to_mount_sinai"],
@@ -2430,7 +2481,7 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   "ezra_8": ["babylon_to_jerusalem_exile_return"],
   "nehemiah_2": ["susa_to_jerusalem_royal_road"],
   "numbers_20": ["kings_highway_transjordan_complete"],
-  "numbers_21": ["mount_hor_to_arnon_kings_highway", "kings_highway_transjordan_complete"],
+  "numbers_21": ["mount_hor_to_arnon_kings_highway", "arnon_to_plains_of_moab"],
   "joshua_10": ["joshua_battle_of_gibeon_beth_horon"],
   "judges_4": ["deborah_barak_tabor_kishon_battle"],
   "judges_5": ["deborah_barak_tabor_kishon_battle"],

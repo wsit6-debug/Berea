@@ -1459,6 +1459,43 @@ export const CHAPTER_DEPARTURE_LINKS: Record<string, ChapterDepartureLink> = {
   }
 };
 
+export const NON_JOURNEY_BOOKS = new Set([
+  // Wisdom & Poetic Literature
+  'job', 'psalms', 'proverbs', 'ecclesiastes', 'songofsolomon', 'lamentations',
+  // Prophetic Oracles & Visions (Jonah is a historical narrative journey)
+  'isaiah', 'jeremiah', 'ezekiel', 'daniel', 'hosea', 'joel', 'amos', 'obadiah',
+  'micah', 'nahum', 'habakkuk', 'zephaniah', 'haggai', 'zechariah', 'malachi',
+  // Epistles & Doctrinal Letters
+  'romans', '1corinthians', '2corinthians', 'galatians', 'ephesians',
+  'philippians', 'colossians', '1thessalonians', '2thessalonians',
+  '1timothy', '2timothy', 'titus', 'philemon', 'hebrews', 'james',
+  '1peter', '2peter', '1john', '2john', '3john', 'jude'
+]);
+
+export const LIST_AND_BOUNDARY_CHAPTERS = new Set([
+  'genesis_10', // Table of Nations
+  '1kings_4',   // Solomon's twelve administrative districts
+  'joshua_11',  // Conquered northern kings list
+  'joshua_12',  // Kings conquered by Moses and Joshua
+  'joshua_13',  // Land yet unconquered & Transjordan division
+  'joshua_14',  // Inheritance distribution at Gilgal
+  'joshua_15',  // Judah tribal boundary and town lists
+  'joshua_16',  // Ephraim boundary
+  'joshua_17',  // Manasseh allotment
+  'joshua_18',  // Survey of remaining land & Benjamin boundary
+  'joshua_19',  // Simeon, Zebulun, Issachar, Asher, Naphtali, Dan allotments
+  'joshua_21',  // Levitical cities list
+  'numbers_1',  // First census
+  'numbers_2',  // Camp arrangement
+  'numbers_3',  // Levite census
+  'numbers_26', // Second census
+  'numbers_34', // Borders of Canaan
+  '1chronicles_1', '1chronicles_2', '1chronicles_3', '1chronicles_4',
+  '1chronicles_5', '1chronicles_6', '1chronicles_7', '1chronicles_8',
+  '1chronicles_9', '1chronicles_24', '1chronicles_25', '1chronicles_26', '1chronicles_27',
+  'ezra_2', 'nehemiah_3', 'nehemiah_7', 'nehemiah_11', 'nehemiah_12'
+]);
+
 export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGeoData {
   const key = `${bookId.toLowerCase()}_${chapterNum}`;
   const historicalSegments = getHistoricalRouteSegments(bookId, chapterNum);
@@ -1492,9 +1529,19 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
       if (key === 'acts_8' && (cleanLoc.includes('Samaria') || cleanLoc.includes('Gaza') || cleanLoc.includes('Azotus') || cleanLoc.includes('Caesarea'))) {
         modifiedEv.isReferencedOnly = false;
       }
-      // In Acts 16, Jerusalem (council ref), Thyatira (origin), Asia/Bithynia (forbidden/prevented) are referenced
+      // In Acts 16, Jerusalem (council ref), Thyatira (origin), Asia/Bithynia (forbidden/prevented), Phrygia/Galatia/Mysia (regions) are referenced
       if (key === 'acts_16') {
-        if (['Jerusalem', 'Thyatira', 'Asia', 'Bithynia', 'Greece', 'Macedonia'].includes(cleanLoc)) {
+        if (['Jerusalem', 'Thyatira', 'Asia', 'Bithynia', 'Greece', 'Macedonia', 'Phrygia', 'Galatia', 'Mysia'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      // In Acts 2 (Pentecost nations) and Acts 7 (Stephen's historical speech), non-Jerusalem places are referenced
+      if ((key === 'acts_2' || key === 'acts_7') && cleanLoc !== 'Jerusalem') {
+        modifiedEv.isReferencedOnly = true;
+      }
+      // In Acts 27, broad territories, seas, and passing references are referenced; actual ports are physical
+      if (key === 'acts_27') {
+        if (['Cyprus', 'Cilicia', 'Pamphylia', 'Lycia', 'Crete', 'Adriatic Sea', 'Salmone', 'Phoenix', 'Lasea', 'Syrtis', 'Asia', 'Italy', 'Alexandria', 'Thessalonica', 'Adramyttium'].includes(cleanLoc)) {
           modifiedEv.isReferencedOnly = true;
         }
       }
@@ -1709,7 +1756,7 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
     });
 
     const physicalEvents = renumberedEvents.filter(e => !e.isReferencedOnly);
-    const targetEvents = physicalEvents.length > 1 ? physicalEvents : (renumberedEvents.length > 1 ? renumberedEvents : []);
+    const targetEvents = physicalEvents;
 
     // Assemble final route segments: historical segments + master dictionary matching + straight line fallback
     const finalSegments: RouteSegment[] = [...historicalSegments];
@@ -1718,8 +1765,12 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
     // Collect coordinates from explicit historical segments
     historicalSegments.forEach(s => s.coordinates.forEach(c => allCoords.push(c)));
 
-    // For any consecutive events, resolve from master HISTORICAL_ROAD_SEGMENTS dictionary or fallback
-    if (targetEvents.length > 1) {
+    const isNonJourney = NON_JOURNEY_BOOKS.has(bookId.toLowerCase()) || (bookId.toLowerCase() === 'revelation' && chapterNum > 3);
+    const isListOrBoundary = LIST_AND_BOUNDARY_CHAPTERS.has(key);
+
+    // If explicit curated historical segments exist, those are the authoritative routes for the chapter.
+    // Never generate straight-line fallbacks or duplicate dynamic overlays on top of curated routes!
+    if (historicalSegments.length === 0 && !isNonJourney && !isListOrBoundary && targetEvents.length > 1) {
       for (let i = 0; i < targetEvents.length - 1; i++) {
         const fromEv = targetEvents[i];
         const toEv = targetEvents[i + 1];
@@ -1727,34 +1778,7 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
         const fromName = (fromEv.shortPlaceName || fromEv.locationName).toLowerCase();
         const toName = (toEv.shortPlaceName || toEv.locationName).toLowerCase();
 
-        // 1. Check if already directly connected in finalSegments
-        const isPairConnected = finalSegments.some(s => {
-          const cStart = s.coordinates[0];
-          const cEnd = s.coordinates[s.coordinates.length - 1];
-          const dStart = calculateDistanceMiles(cStart[0], cStart[1], fromEv.lat, fromEv.lng);
-          const dEnd = calculateDistanceMiles(cEnd[0], cEnd[1], toEv.lat, toEv.lng);
-          if (dStart < 15 && dEnd < 15) return true;
-          const dStartRev = calculateDistanceMiles(cEnd[0], cEnd[1], fromEv.lat, fromEv.lng);
-          const dEndRev = calculateDistanceMiles(cStart[0], cStart[1], toEv.lat, toEv.lng);
-          if (dStartRev < 15 && dEndRev < 15) return true;
-          const sFrom = s.fromName.toLowerCase();
-          const sTo = s.toName.toLowerCase();
-          if ((sFrom.includes(fromName) || fromName.includes(sFrom)) &&
-              (sTo.includes(toName) || toName.includes(sTo))) {
-            return true;
-          }
-          if ((sFrom.includes(toName) || toName.includes(sFrom)) &&
-              (sTo.includes(fromName) || fromName.includes(sTo))) {
-            return true;
-          }
-          return false;
-        });
-
-        if (isPairConnected) {
-          continue;
-        }
-
-        // 2. Check if any segment in master HISTORICAL_ROAD_SEGMENTS connects this pair
+        // 1. Check if any segment in master HISTORICAL_ROAD_SEGMENTS connects this pair
         let matchedHistorical: RouteSegment | null = null;
         let isReversed = false;
 
@@ -1805,28 +1829,29 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
           continue;
         }
 
-        // 3. Fallback: Direct Path (No Recorded Road)
+        // 2. Direct Path Fallback: Only for plausible local daily journeys (dist <= 35 miles)
         const isDistinct = Math.abs(fromEv.lat - toEv.lat) > 0.0001 || Math.abs(fromEv.lng - toEv.lng) > 0.0001;
         if (isDistinct) {
-          const rawDist = calculateDistanceMiles(fromEv.lat, fromEv.lng, toEv.lat, toEv.lng);
-          const dist = rawDist > 0 ? rawDist : 0.1;
-          const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
-          finalSegments.push({
-            id: `fallback_${fromEv.id}_${toEv.id}`,
-            fromName: fromEv.shortPlaceName || fromEv.locationName,
-            toName: toEv.shortPlaceName || toEv.locationName,
-            historicalRoadName: "Direct Path (No Recorded Road)",
-            mode: "land_walking",
-            distanceMiles: dist,
-            travelDays: estDays,
-            isScholarlyEstimate: true,
-            notes: `Direct transit between ${fromEv.shortPlaceName || fromEv.locationName} and ${toEv.shortPlaceName || toEv.locationName} (~${dist} mi, ~${estDays}d travel) — no paved ancient road recorded.`,
-            coordinates: [
-              [fromEv.lat, fromEv.lng],
-              [toEv.lat, toEv.lng]
-            ]
-          });
-          allCoords.push([fromEv.lat, fromEv.lng], [toEv.lat, toEv.lng]);
+          const dist = calculateDistanceMiles(fromEv.lat, fromEv.lng, toEv.lat, toEv.lng);
+          if (dist <= 35 && dist > 0.01) {
+            const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
+            finalSegments.push({
+              id: `fallback_${fromEv.id}_${toEv.id}`,
+              fromName: fromEv.shortPlaceName || fromEv.locationName,
+              toName: toEv.shortPlaceName || toEv.locationName,
+              historicalRoadName: "Local Transit Track",
+              mode: "land_walking",
+              distanceMiles: dist,
+              travelDays: estDays,
+              isScholarlyEstimate: true,
+              notes: `Local walking connection between ${fromEv.shortPlaceName || fromEv.locationName} and ${toEv.shortPlaceName || toEv.locationName} (~${dist} mi, ~${estDays}d travel).`,
+              coordinates: [
+                [fromEv.lat, fromEv.lng],
+                [toEv.lat, toEv.lng]
+              ]
+            });
+            allCoords.push([fromEv.lat, fromEv.lng], [toEv.lat, toEv.lng]);
+          }
         } else if (fromName !== toName) {
           // Adjacent landmark or sanctuary within same immediate locality
           finalSegments.push({
@@ -1849,39 +1874,15 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
       }
     }
 
-    // Secondary fallback: if no segments were created but physicalEvents > 1 and data.routeCoordinates has coordinates, connect them
-    if (finalSegments.length === 0 && physicalEvents.length > 1 && data.routeCoordinates && data.routeCoordinates.length > 1) {
-      for (let i = 0; i < data.routeCoordinates.length - 1; i++) {
-        const c1 = data.routeCoordinates[i];
-        const c2 = data.routeCoordinates[i + 1];
-        if (Math.abs(c1[0] - c2[0]) > 0.0001 || Math.abs(c1[1] - c2[1]) > 0.0001) {
-          const rawDist = calculateDistanceMiles(c1[0], c1[1], c2[0], c2[1]);
-          const dist = rawDist > 0 ? rawDist : 0.1;
-          const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
-          const p1: [number, number] = [c1[0], c1[1]];
-          const p2: [number, number] = [c2[0], c2[1]];
-          finalSegments.push({
-            id: `route_coord_${i}_${i+1}`,
-            fromName: targetEvents[i]?.shortPlaceName || targetEvents[i]?.locationName || `Stop ${i + 1}`,
-            toName: targetEvents[i+1]?.shortPlaceName || targetEvents[i+1]?.locationName || `Stop ${i + 2}`,
-            historicalRoadName: "Direct Path (Straight Line)",
-            mode: "land_walking",
-            distanceMiles: dist,
-            travelDays: estDays,
-            isScholarlyEstimate: true,
-            notes: `Transit route: ~${dist} mi (~${estDays}d travel)`,
-            coordinates: [p1, p2]
-          });
-          allCoords.push(p1, p2);
-        }
-      }
-    }
+    const hasSegments = finalSegments.length > 0;
 
     return {
       ...data,
       events: renumberedEvents,
-      routeSegments: finalSegments.length > 0 ? finalSegments : undefined,
-      routeCoordinates: allCoords.length > 0 ? allCoords : data.routeCoordinates
+      routeSegments: hasSegments ? finalSegments : undefined,
+      routeCoordinates: hasSegments
+        ? (allCoords.length > 0 ? allCoords : undefined)
+        : (isNonJourney || isListOrBoundary ? undefined : (data.routeCoordinates && data.routeCoordinates.length > 1 ? data.routeCoordinates : undefined))
     };
   }
 
