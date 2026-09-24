@@ -2088,6 +2088,135 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
       [31.1806, 35.7014]  // Kir-Hareseth (Moab)
     ]
   }
+,
+
+  "antioch_to_derbe_cilician_gates": {
+    id: "antioch_to_derbe_cilician_gates",
+    fromName: "Antioch (Syria)",
+    toName: "Derbe",
+    historicalRoadName: "Via Tauri (Cilician Gates Roman Highway)",
+    mode: "land_walking",
+    distanceMiles: 235,
+    travelDays: 12,
+    notes: "Acts 15:41–16:1: Paul and Silas traveling from Syrian Antioch northwest through Cilicia and the historic Cilician Gates mountain pass to Derbe.",
+    coordinates: [
+      [36.2021, 36.1606], // Antioch (Syria)
+      [36.5872, 36.1735], // Alexandretta / Belen Pass (Syrian Gates)
+      [36.9167, 35.3167], // Adana (Cilician Plain)
+      [36.9167, 34.8953], // Tarsus
+      [37.2889, 34.7944], // Cilician Gates (Gülek Boğazı)
+      [37.4000, 33.7000], // Eregli (Heraclea Cybistra)
+      [37.3481, 33.3592]  // Derbe (Kerti Hüyük)
+    ]
+  },
+
+  "ephesus_to_troas_coastal_highway": {
+    id: "ephesus_to_troas_coastal_highway",
+    fromName: "Ephesus",
+    toName: "Troas",
+    historicalRoadName: "Roman Asia Coastal Highway",
+    mode: "land_walking",
+    distanceMiles: 165,
+    travelDays: 8.5,
+    notes: "Acts 20:1–6: Paul departing Ephesus northward along the Aegean coast through Smyrna and Pergamum to Troas and Macedonia.",
+    coordinates: [
+      [37.9497, 27.3639], // Ephesus
+      [38.4192, 27.1287], // Smyrna
+      [39.1233, 27.1842], // Pergamum
+      [39.5833, 26.6833], // Adramyttium
+      [39.7558, 26.1625]  // Alexandria Troas
+    ]
+  },
+
+  "etham_to_pihahiroth_red_sea": {
+    id: "etham_to_pihahiroth_red_sea",
+    fromName: "Etham",
+    toName: "Pi-hahiroth",
+    historicalRoadName: "Way of the Red Sea Wilderness",
+    mode: "land_walking",
+    distanceMiles: 26,
+    travelDays: 1.5,
+    notes: "Exodus 14:1–2: Turning back from the edge of the wilderness at Etham to camp before Pi-hahiroth between Migdol and the sea.",
+    coordinates: [
+      [30.3000, 32.3000], // Etham
+      [30.1200, 32.4200], // Great Bitter Lake basin
+      [29.9667, 32.5500]  // Pi-hahiroth (Suez shore)
+    ]
+  },
+
+  "egypt_to_bethel_via_maris": {
+    id: "egypt_to_bethel_via_maris",
+    fromName: "Egypt",
+    toName: "Bethel",
+    historicalRoadName: "Way of the South (Negev Ascent)",
+    mode: "land_walking",
+    distanceMiles: 195,
+    travelDays: 10,
+    notes: "Genesis 13:1–3: Abram journeying up out of Egypt into the Negev, returning by stages to the altar between Bethel and Ai.",
+    coordinates: [
+      [30.7870, 31.8210], // Nile Delta (Egypt)
+      [31.1300, 33.8000], // Wadi el-Arish (Brook of Egypt)
+      [31.2447, 34.8410], // Beersheba
+      [31.5290, 35.1030], // Hebron
+      [31.7767, 35.2345], // Jerusalem ridge
+      [31.9300, 35.2200]  // Bethel & Ai altar
+    ]
+  },
+
+  "jerusalem_to_sychar_ridge_road": {
+    id: "jerusalem_to_sychar_ridge_road",
+    fromName: "Jerusalem",
+    toName: "Sychar",
+    historicalRoadName: "Way of the Patriarchs (Samaria Highway)",
+    mode: "land_walking",
+    distanceMiles: 34,
+    travelDays: 1.8,
+    notes: "John 4:3–5: Jesus leaving Judea and passing through Samaria to the city of Sychar near Jacob's Well.",
+    coordinates: [
+      [31.7767, 35.2345], // Jerusalem
+      [31.9300, 35.2200], // Bethel
+      [32.0500, 35.2600], // Shiloh
+      [32.2094, 35.2839]  // Sychar (Jacob's Well)
+    ]
+  },
+
+  "jerusalem_to_sea_of_galilee": {
+    id: "jerusalem_to_sea_of_galilee",
+    fromName: "Jerusalem",
+    toName: "Sea of Galilee",
+    historicalRoadName: "Jordan Valley & Central Ridge Route",
+    mode: "land_walking",
+    distanceMiles: 82,
+    travelDays: 4,
+    notes: "John 6:1: Jesus departed from Jerusalem to the other side of the Sea of Galilee, which is the Sea of Tiberias.",
+    coordinates: [
+      [31.7767, 35.2345], // Jerusalem
+      [31.9300, 35.2200], // Bethel
+      [32.2133, 35.2819], // Shechem
+      [32.5000, 35.3000], // En-gannim (Jenin)
+      [32.7000, 35.5000], // Jordan outlet
+      [32.7940, 35.5310]  // Tiberias (Sea of Galilee)
+    ]
+  },
+
+  "mount_hor_to_arnon_kings_highway": {
+    id: "mount_hor_to_arnon_kings_highway",
+    fromName: "Mount Hor",
+    toName: "Valley of the Arnon",
+    historicalRoadName: "King's Highway (Edom Bypass)",
+    mode: "land_walking",
+    distanceMiles: 85,
+    travelDays: 4.5,
+    notes: "Numbers 21:4–13: Israel setting out from Mount Hor by way of the Red Sea to compass Edom, arriving at the Arnon Gorge.",
+    coordinates: [
+      [30.3167, 35.4000], // Mount Hor
+      [29.8000, 35.2000], // Gulf of Aqaba approach
+      [30.2000, 35.8000], // Punon (Feinan)
+      [30.8000, 35.9000], // Oboth
+      [31.1000, 35.8500], // Iye-abarim
+      [31.4650, 35.7900]  // Arnon Gorge
+    ]
+  }
 };
 
 /**
@@ -2097,6 +2226,7 @@ export const HISTORICAL_ROAD_SEGMENTS: Record<string, RouteSegment> = {
 export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   // Acts of the Apostles
   "acts_8": [
+    "jerusalem_to_samaria_ridge_road",
     "jerusalem_to_gaza_desert_road",
     "gaza_to_azotus_via_maris",
     "azotus_to_caesarea_via_maris"
@@ -2128,6 +2258,7 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "pisidian_antioch_to_iconium"
   ],
   "acts_14": [
+    "pisidian_antioch_to_iconium",
     "iconium_to_lystra_outbound",
     "lystra_to_derbe_outbound",
     "derbe_to_lystra_return",
@@ -2144,6 +2275,7 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "caesarea_to_jerusalem_ascent"
   ],
   "acts_16": [
+    "antioch_to_derbe_cilician_gates",
     "derbe_to_lystra_via_sebaste",
     "lystra_to_iconium_via_sebaste",
     "iconium_to_troas_via_phrygia",
@@ -2172,6 +2304,7 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
     "corinth_to_ephesus_aegean_crossing"
   ],
   "acts_20": [
+    "ephesus_to_troas_coastal_highway",
     "troas_to_assos_roman_road",
     "assos_to_mitylene_sea",
     "mitylene_to_chios_samos_sea",
@@ -2241,8 +2374,8 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   "john_1": ["nazareth_to_capernaum_via_maris", "capernaum_to_bethsaida_lake_road"],
   "john_2": ["nazareth_to_capernaum_via_maris", "galilee_to_jerusalem_via_samaria"],
   "john_3": ["jerusalem_to_jordan_baptism_site"],
-  "john_4": ["galilee_to_jerusalem_via_samaria", "nazareth_to_capernaum_via_maris"],
-  "john_6": ["capernaum_to_tiberias_lakeside", "capernaum_to_bethsaida_lake_road"],
+  "john_4": ["jerusalem_to_sychar_ridge_road", "galilee_to_jerusalem_via_samaria", "nazareth_to_capernaum_via_maris"],
+  "john_6": ["jerusalem_to_sea_of_galilee", "capernaum_to_tiberias_lakeside", "capernaum_to_bethsaida_lake_road"],
   "john_11": ["bethany_to_jerusalem_road"],
   "john_12": ["bethany_to_jerusalem_road"],
 
@@ -2269,10 +2402,10 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
 
   // Old Testament
   "genesis_12": ["way_of_the_patriarchs_complete"],
-  "genesis_13": ["way_of_the_patriarchs_complete"],
+  "genesis_13": ["egypt_to_bethel_via_maris", "way_of_the_patriarchs_complete"],
   "genesis_22": ["way_of_the_patriarchs_complete"],
   "exodus_13": ["exodus_rameses_to_redsea"],
-  "exodus_14": ["exodus_rameses_to_redsea"],
+  "exodus_14": ["etham_to_pihahiroth_red_sea", "exodus_rameses_to_redsea"],
   "exodus_15": ["exodus_redsea_to_mount_sinai"],
   "exodus_16": ["exodus_redsea_to_mount_sinai"],
   "exodus_17": ["exodus_redsea_to_mount_sinai"],
@@ -2297,7 +2430,7 @@ export const CHAPTER_ROUTE_SEGMENT_KEYS: Record<string, string[]> = {
   "ezra_8": ["babylon_to_jerusalem_exile_return"],
   "nehemiah_2": ["susa_to_jerusalem_royal_road"],
   "numbers_20": ["kings_highway_transjordan_complete"],
-  "numbers_21": ["kings_highway_transjordan_complete"],
+  "numbers_21": ["mount_hor_to_arnon_kings_highway", "kings_highway_transjordan_complete"],
   "joshua_10": ["joshua_battle_of_gibeon_beth_horon"],
   "judges_4": ["deborah_barak_tabor_kishon_battle"],
   "judges_5": ["deborah_barak_tabor_kishon_battle"],

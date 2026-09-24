@@ -76,7 +76,7 @@ function createEventIcon(ev: ChapterGeoEvent, isCurrent: boolean) {
           pointer-events: none;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         ">
-          ${escapeHtml(placeLabel)} ${ev.isEducatedGuess ? '<span title="Educated Guess" style="font-size: 8.5px; opacity: 0.65; font-weight: normal;">(est)</span>' : ''}
+          ${escapeHtml(placeLabel)} ${ev.isDeparturePoint && ev.departureFromChapter ? `<span style="font-size: 8px; font-weight: 800; background: #EEF2FF; color: #4338CA; padding: 1px 3.5px; border-radius: 3px; border: 1px solid #C7D2FE; margin-left: 2px;">FROM ${escapeHtml(ev.departureFromChapter.toUpperCase())}</span>` : ''} ${ev.isEducatedGuess ? '<span title="Educated Guess" style="font-size: 8.5px; opacity: 0.65; font-weight: normal;">(est)</span>' : ''}
         </div>
       </div>
     `,
@@ -100,6 +100,7 @@ function bindEventPopup(
         <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D; flex-shrink: 0;">
           ${ev.isReferencedOnly ? 'Reference' : 'Storyline'} ${escapeHtml(ev.stepNumber)} • ${escapeHtml(ev.passageRef)}
         </span>
+        ${ev.isDeparturePoint ? `<span style="font-size: 9px; font-weight: 800; background: #EEF2FF; color: #4338CA; padding: 2px 6px; border-radius: 4px; border: 1px solid #C7D2FE; white-space: nowrap;">Departed from ${escapeHtml(ev.departureFromChapter || 'Prev Chapter')}</span>` : ''}
         ${ev.isEducatedGuess ? `<span style="font-size: 9px; font-weight: 700; background: #FFF3CD; color: #856404; padding: 2px 4px; border-radius: 4px; border: 1px solid #FFEEBA; white-space: nowrap;">Educated Guess</span>` : ''}
       </div>
       <h4 style="margin: 0 0 3px 0; font-size: 13px; font-weight: 700; color: #78471F;">${escapeHtml(ev.title)}</h4>
@@ -722,9 +723,16 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
               </span>
             )}
           </div>
-          <span className="text-[9.5px] text-[#78716C] truncate block leading-none mt-0.5 max-w-[140px]">
-            {ev.title}
-          </span>
+          <div className="flex items-center gap-1 mt-0.5">
+            {ev.isDeparturePoint && ev.departureFromChapter && (
+              <span className="text-[8.5px] font-bold bg-[#EEF2FF] text-[#4338CA] px-1 py-0.2 rounded border border-[#C7D2FE] flex-shrink-0">
+                From {ev.departureFromChapter}
+              </span>
+            )}
+            <span className="text-[9.5px] text-[#78716C] truncate block leading-none max-w-[130px]">
+              {ev.title}
+            </span>
+          </div>
         </div>
       </button>
     );

@@ -40,6 +40,8 @@ export interface ChapterGeoEvent {
   icon?: string;
   isEducatedGuess?: boolean;
   isReferencedOnly?: boolean;
+  isDeparturePoint?: boolean;
+  departureFromChapter?: string;
   distanceFromPrevious?: number;
 }
 
@@ -1095,6 +1097,368 @@ import GEO_DATABASE from './geoDatabase.json';
 
 export const CHAPTER_MICRO_EVENTS: Record<string, ChapterGeoData> = GEO_DATABASE as Record<string, ChapterGeoData>;
 
+
+export interface ChapterDepartureLink {
+  fromChapterLabel: string;
+  locationName: string;
+  shortPlaceName?: string;
+  modernLocation: string;
+  lat: number;
+  lng: number;
+  passageRef: string;
+  title?: string;
+  description: string;
+  theologicalSignificance?: string;
+}
+
+export const CHAPTER_DEPARTURE_LINKS: Record<string, ChapterDepartureLink> = {
+  // Acts of the Apostles
+  "acts_8": {
+    fromChapterLabel: "Acts 7",
+    locationName: "Jerusalem",
+    shortPlaceName: "Jerusalem",
+    modernLocation: "Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "Acts 8:1",
+    title: "Jerusalem (Departure)",
+    description: "Following Stephen's martyrdom in Acts 7, severe persecution arose against the church in Jerusalem, scattering believers abroad and sending Philip north to preach Christ in Samaria.",
+    theologicalSignificance: "The sovereign dispersal of the gospel seed beyond Judea into Samaria in fulfillment of Acts 1:8."
+  },
+  "acts_10": {
+    fromChapterLabel: "Acts 9",
+    locationName: "Joppa",
+    shortPlaceName: "Joppa",
+    modernLocation: "Jaffa, Tel Aviv, Israel",
+    lat: 32.0536,
+    lng: 34.7558,
+    passageRef: "Acts 10:23",
+    title: "Joppa (Departure)",
+    description: "Seaport town where Peter was lodging with Simon the tanner at the close of Acts 9 (Acts 9:43), departing northward along the coast to Caesarea to visit the Roman centurion Cornelius.",
+    theologicalSignificance: "The Holy Spirit orchestrating the historic breakthrough of the gospel to the Gentile world."
+  },
+  "acts_14": {
+    fromChapterLabel: "Acts 13",
+    locationName: "Antioch (Pisidia)",
+    shortPlaceName: "Antioch (Pisidia)",
+    modernLocation: "Yalvac, Isparta, Turkey",
+    lat: 38.3050,
+    lng: 31.1890,
+    passageRef: "Acts 14:1",
+    title: "Antioch in Pisidia (Departure)",
+    description: "Paul and Barnabas were expelled from Pisidian Antioch at the close of Acts 13 (Acts 13:51), shaking the dust from their feet and journeying southeast along the Via Sebaste toward Iconium.",
+    theologicalSignificance: "Apostolic perseverance under persecution, opening the door of faith across southern Galatia."
+  },
+  "acts_16": {
+    fromChapterLabel: "Acts 15",
+    locationName: "Antioch (Syria)",
+    shortPlaceName: "Antioch (Syria)",
+    modernLocation: "Antakya, Hatay, Turkey",
+    lat: 36.2021,
+    lng: 36.1606,
+    passageRef: "Acts 16:1",
+    title: "Antioch in Syria (Departure)",
+    description: "The sending mother church in Syrian Antioch where Paul and Silas set out on the Second Missionary Journey (Acts 15:40-41), traversing through Syria and Cilicia to reach Derbe.",
+    theologicalSignificance: "The launch of the second missionary campaign delivering the Jerusalem Council decrees to the churches."
+  },
+  "acts_17": {
+    fromChapterLabel: "Acts 16",
+    locationName: "Philippi",
+    shortPlaceName: "Philippi",
+    modernLocation: "Krinides, Kavala, Greece",
+    lat: 41.0135,
+    lng: 24.2866,
+    passageRef: "Acts 17:1",
+    title: "Philippi (Departure)",
+    description: "Point of departure along the Via Egnatia where Paul and Silas departed after their miraculous release from prison and encouragement of the brethren in Lydia's home (Acts 16:40).",
+    theologicalSignificance: "The gospel advancing westward along the premier Roman military artery into the heart of Macedonia."
+  },
+  "acts_18": {
+    fromChapterLabel: "Acts 17",
+    locationName: "Athens",
+    shortPlaceName: "Athens",
+    modernLocation: "Athens, Greece",
+    lat: 37.9715,
+    lng: 23.7257,
+    passageRef: "Acts 18:1",
+    title: "Athens (Departure)",
+    description: "Paul departed from Athens following his proclamation of the Unknown God on the Areopagus (Acts 17:22-34), journeying across the Isthmus of Corinth to found the church in Corinth.",
+    theologicalSignificance: "Transitioning from philosophical inquiry in Athens to establishing an enduring apostolic community in Corinth."
+  },
+  "acts_20": {
+    fromChapterLabel: "Acts 19",
+    locationName: "Ephesus",
+    shortPlaceName: "Ephesus",
+    modernLocation: "Selcuk, Izmir, Turkey",
+    lat: 37.9497,
+    lng: 27.3639,
+    passageRef: "Acts 20:1",
+    title: "Ephesus (Departure)",
+    description: "Following the great uproar in the theater of Ephesus at the close of Acts 19, Paul called the disciples, embraced them, and departed northward toward Troas and Macedonia.",
+    theologicalSignificance: "Triumphant perseverance of the apostolic mission following public spiritual confrontation in Asia."
+  },
+  "acts_21": {
+    fromChapterLabel: "Acts 20",
+    locationName: "Miletus",
+    shortPlaceName: "Miletus",
+    modernLocation: "Balat, Didim, Turkey",
+    lat: 37.5305,
+    lng: 27.2783,
+    passageRef: "Acts 21:1",
+    title: "Miletus (Departure)",
+    description: "Ancient Ionian seaport where Paul knelt in prayer and bade an affectionate farewell to the Ephesian elders on the beach (Acts 20:36-38), boarding ship to launch straight for Cos.",
+    theologicalSignificance: "Steadfast resolve to complete the ministry received from the Lord Jesus, traveling toward Jerusalem."
+  },
+  "acts_27": {
+    fromChapterLabel: "Acts 26",
+    locationName: "Caesarea",
+    shortPlaceName: "Caesarea",
+    modernLocation: "Caesarea Maritima, Israel",
+    lat: 32.5011,
+    lng: 34.8916,
+    passageRef: "Acts 27:1",
+    title: "Caesarea (Departure)",
+    description: "Roman provincial capital and deep-water harbor where Paul was imprisoned under Felix and Festus (Acts 23-26), from whose docks he was embarked under Julius the centurion for Rome.",
+    theologicalSignificance: "The sovereign outworking of divine providence carrying the apostle to testify before Caesar in Rome."
+  },
+
+  // Exodus & Wilderness Journeys
+  "exodus_13": {
+    fromChapterLabel: "Exodus 12",
+    locationName: "Rameses",
+    shortPlaceName: "Rameses",
+    modernLocation: "Qantir / Tell el-Dab'a, Egypt",
+    lat: 30.7870,
+    lng: 31.8210,
+    passageRef: "Exodus 13:20",
+    title: "Rameses (Departure)",
+    description: "The starting hub of the Exodus in the land of Goshen from which Israel marched out by their armies at the close of Passover night.",
+    theologicalSignificance: "The great redemption from Egyptian bondage under the blood of the Passover Lamb."
+  },
+  "exodus_14": {
+    fromChapterLabel: "Exodus 13",
+    locationName: "Etham",
+    shortPlaceName: "Etham",
+    modernLocation: "Ismailia / Lake Timsah, Egypt",
+    lat: 30.3000,
+    lng: 32.3000,
+    passageRef: "Exodus 14:1",
+    title: "Etham (Departure)",
+    description: "Encampment on the edge of the wilderness at the close of Exodus 13 (Exod 13:20), from which the Lord commanded Israel to turn back and camp before Pi-hahiroth by the sea.",
+    theologicalSignificance: "God leading His people into humanly impassable terrain to demonstrate His supreme triumph over Pharaoh."
+  },
+  "exodus_16": {
+    fromChapterLabel: "Exodus 15",
+    locationName: "Elim",
+    shortPlaceName: "Elim",
+    modernLocation: "Wadi Gharandel, Sinai Peninsula",
+    lat: 29.3000,
+    lng: 33.0000,
+    passageRef: "Exodus 16:1",
+    title: "Elim (Departure)",
+    description: "Oasis of twelve springs and seventy palm trees where Israel camped in Exodus 15:27, journeying southward into the Wilderness of Sin.",
+    theologicalSignificance: "Moving from refreshing rest into the desert proving ground of daily dependency upon divine bread."
+  },
+  "exodus_17": {
+    fromChapterLabel: "Exodus 16",
+    locationName: "Wilderness of Sin",
+    shortPlaceName: "Wilderness of Sin",
+    modernLocation: "El-Markha Plain, Sinai Peninsula",
+    lat: 28.9000,
+    lng: 33.3000,
+    passageRef: "Exodus 17:1",
+    title: "Wilderness of Sin (Departure)",
+    description: "The desert plain of the manna and quail in Exodus 16, from which the congregation journeyed by stages according to the commandment of Yahweh toward Rephidim.",
+    theologicalSignificance: "The guided stages of pilgrimage under the pillar of cloud and fire."
+  },
+  "exodus_19": {
+    fromChapterLabel: "Exodus 17",
+    locationName: "Rephidim",
+    shortPlaceName: "Rephidim",
+    modernLocation: "Wadi Feiran, Sinai Peninsula",
+    lat: 28.6500,
+    lng: 33.8000,
+    passageRef: "Exodus 19:1",
+    title: "Rephidim (Departure)",
+    description: "Valley of the water from the rock and victory over Amalek in Exodus 17, from which Israel set out to pitch camp before the Mount of God.",
+    theologicalSignificance: "Arrival at Sinai for the solemn giving of the Law and the establishment of the Mosaic Covenant."
+  },
+
+  // Numbers & Joshua
+  "numbers_12": {
+    fromChapterLabel: "Numbers 11",
+    locationName: "Hazeroth",
+    shortPlaceName: "Hazeroth",
+    modernLocation: "Ain Hudra, Sinai Peninsula",
+    lat: 28.7500,
+    lng: 34.4000,
+    passageRef: "Numbers 12:16",
+    title: "Hazeroth (Departure)",
+    description: "Encampment where Miriam was healed of leprosy at the close of Numbers 11-12, from which Israel journeyed toward the Wilderness of Paran.",
+    theologicalSignificance: "The ongoing sanctification and march of Israel toward the threshold of the Promised Land."
+  },
+  "numbers_21": {
+    fromChapterLabel: "Numbers 20",
+    locationName: "Mount Hor",
+    shortPlaceName: "Mount Hor",
+    modernLocation: "Jabal Harun near Petra, Jordan",
+    lat: 30.3167,
+    lng: 35.4000,
+    passageRef: "Numbers 21:4",
+    title: "Mount Hor (Departure)",
+    description: "Mountain site of Aaron's death at the close of Numbers 20, from which Israel journeyed along the Way of the Red Sea to bypass the border of Edom.",
+    theologicalSignificance: "Transition in priestly leadership and miraculous healing through the Bronze Serpent."
+  },
+  "joshua_3": {
+    fromChapterLabel: "Joshua 2",
+    locationName: "Shittim",
+    shortPlaceName: "Shittim",
+    modernLocation: "Tell el-Hammam, Jordan",
+    lat: 31.8300,
+    lng: 35.6300,
+    passageRef: "Joshua 3:1",
+    title: "Shittim (Departure)",
+    description: "Acacia plain in Moab where Joshua sent forth the two spies in Joshua 2, rising early in the morning to lead the nation to the edge of the flooded Jordan River.",
+    theologicalSignificance: "The morning of faith stepping into the flooded waters of Jordan to inherit the land."
+  },
+  "joshua_6": {
+    fromChapterLabel: "Joshua 5",
+    locationName: "Gilgal",
+    shortPlaceName: "Gilgal",
+    modernLocation: "Jericho Plain, West Bank",
+    lat: 31.8600,
+    lng: 35.4800,
+    passageRef: "Joshua 6:1",
+    title: "Gilgal (Departure)",
+    description: "Covenant camp where Israel renewed circumcision and observed Passover in Joshua 5, marching out in obedience to encircle the fortress of Jericho.",
+    theologicalSignificance: "Spiritual renewal and worship preceding the supernatural victory of faith."
+  },
+
+  // Patriarchal Journeys
+  "genesis_12": {
+    fromChapterLabel: "Genesis 11",
+    locationName: "Haran",
+    shortPlaceName: "Haran",
+    modernLocation: "Harran, Sanliurfa, Turkey",
+    lat: 36.8647,
+    lng: 39.0272,
+    passageRef: "Genesis 12:4",
+    title: "Haran (Departure)",
+    description: "Upper Mesopotamian trading crossroad where Terah died in Genesis 11:32, from which 75-year-old Abram departed in faith to the land God would show him.",
+    theologicalSignificance: "The inaugural obedience of faith that established the Abrahamic Covenant."
+  },
+  "genesis_13": {
+    fromChapterLabel: "Genesis 12",
+    locationName: "Egypt",
+    shortPlaceName: "Egypt (Nile Delta)",
+    modernLocation: "Nile Delta, Egypt",
+    lat: 30.7870,
+    lng: 31.8210,
+    passageRef: "Genesis 13:1",
+    title: "Egypt (Departure)",
+    description: "Abram went up out of Egypt following the famine at the close of Genesis 12, returning through the Negev to his former altar between Bethel and Ai.",
+    theologicalSignificance: "Repentant return from earthly refuge to the altar of renewed worship."
+  },
+  "genesis_28": {
+    fromChapterLabel: "Genesis 27",
+    locationName: "Beersheba",
+    shortPlaceName: "Beersheba",
+    modernLocation: "Tel Be'er Sheva, Israel",
+    lat: 31.2447,
+    lng: 34.8410,
+    passageRef: "Genesis 28:10",
+    title: "Beersheba (Departure)",
+    description: "Southern patriarchal well city where Jacob received Isaac's blessing in Genesis 27, fleeing from Esau toward Haran and stopping at Bethel for the ladder vision.",
+    theologicalSignificance: "God's unconditional covenant grace meeting the fugitive patriarch in the desert."
+  },
+
+  // Gospels
+  "luke_4": {
+    fromChapterLabel: "Luke 3",
+    locationName: "Jordan River (Bethany Beyond Jordan)",
+    shortPlaceName: "Jordan River",
+    modernLocation: "Al-Maghtas, Jordan",
+    lat: 31.8386,
+    lng: 35.5492,
+    passageRef: "Luke 4:1",
+    title: "Jordan River (Departure)",
+    description: "Site of Jesus's baptism by John at the close of Luke 3, returning full of the Holy Spirit to endure the desert temptation and preach in Nazareth.",
+    theologicalSignificance: "The Spirit-anointed start of the Messianic ministry following baptism and temptation."
+  },
+  "luke_7": {
+    fromChapterLabel: "Luke 6",
+    locationName: "Capernaum",
+    shortPlaceName: "Capernaum",
+    modernLocation: "Kfar Nahum, Sea of Galilee, Israel",
+    lat: 32.8808,
+    lng: 35.5753,
+    passageRef: "Luke 7:1",
+    title: "Capernaum (Departure)",
+    description: "Galilean headquarters where Jesus taught the Sermon on the Plain in Luke 6 and healed the centurion's servant, departing southwest to raise the widow's son at Nain.",
+    theologicalSignificance: "The compassionate authority of Christ reversing death across Galilee."
+  },
+  "luke_24": {
+    fromChapterLabel: "Luke 23",
+    locationName: "Jerusalem",
+    shortPlaceName: "Jerusalem",
+    modernLocation: "Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "Luke 24:13",
+    title: "Jerusalem (Departure)",
+    description: "City of the crucifixion and empty tomb in Luke 23-24, where two disciples departed that same day for Emmaus, joined by the risen Lord.",
+    theologicalSignificance: "The living Christ explaining all the Scriptures concerning Himself on the road to Emmaus."
+  },
+  "john_2": {
+    fromChapterLabel: "John 1",
+    locationName: "Bethany Beyond Jordan",
+    shortPlaceName: "Bethany Beyond Jordan",
+    modernLocation: "Al-Maghtas, Jordan",
+    lat: 31.8386,
+    lng: 35.5492,
+    passageRef: "John 2:1",
+    title: "Bethany Beyond Jordan (Departure)",
+    description: "Where John the Baptist proclaimed 'Behold the Lamb of God' in John 1:28, departing into Galilee for the wedding at Cana on the third day.",
+    theologicalSignificance: "Transition from the herald's testimony to the manifestation of Christ's glory in Cana."
+  },
+  "john_4": {
+    fromChapterLabel: "John 3",
+    locationName: "Jerusalem / Judean Countryside",
+    shortPlaceName: "Judea",
+    modernLocation: "Judean Hills / Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "John 4:3",
+    title: "Judea (Departure)",
+    description: "Jesus departed from Judea where His disciples were baptizing in John 3:22, must needs pass through Samaria to Sychar on His journey to Galilee.",
+    theologicalSignificance: "The gospel breaking cultural and racial barriers to offer the Water of Life."
+  },
+  "john_6": {
+    fromChapterLabel: "John 5",
+    locationName: "Jerusalem",
+    shortPlaceName: "Jerusalem",
+    modernLocation: "Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "John 6:1",
+    title: "Jerusalem (Departure)",
+    description: "Following the healing at Bethesda in John 5, Jesus departed from Jerusalem to the other side of the Sea of Galilee (Sea of Tiberias).",
+    theologicalSignificance: "Moving from confrontation with Jerusalem leaders to feeding the multitudes on the Galilean mountain."
+  },
+  "john_11": {
+    fromChapterLabel: "John 10",
+    locationName: "Bethany Beyond Jordan",
+    shortPlaceName: "Bethany Beyond Jordan",
+    modernLocation: "Al-Maghtas, Jordan",
+    lat: 31.8386,
+    lng: 35.5492,
+    passageRef: "John 11:7",
+    title: "Bethany Beyond Jordan (Departure)",
+    description: "The retreat place beyond the Jordan where John at first baptized (John 10:40), where Jesus heard of Lazarus's illness and returned toward Bethany near Jerusalem.",
+    theologicalSignificance: "Advancing into mortal hostility to demonstrate that Christ is the Resurrection and the Life."
+  }
+};
+
 export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGeoData {
   const key = `${bookId.toLowerCase()}_${chapterNum}`;
   const historicalSegments = getHistoricalRouteSegments(bookId, chapterNum);
@@ -1118,6 +1482,14 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
 
       // In Acts 17, Amphipolis, Apollonia, Thessalonica, Berea, Athens are physical stops
       if (key === 'acts_17' && ['Amphipolis', 'Apollonia', 'Thessalonica'].includes(cleanLoc)) {
+        modifiedEv.isReferencedOnly = false;
+      }
+      // In Acts 10, Caesarea is the physical destination where Peter arrives at Cornelius's house
+      if (key === 'acts_10' && cleanLoc === 'Caesarea') {
+        modifiedEv.isReferencedOnly = false;
+      }
+      // In Acts 8, Samaria, Gaza, Azotus, Caesarea are Philip's physical journey stops
+      if (key === 'acts_8' && (cleanLoc.includes('Samaria') || cleanLoc.includes('Gaza') || cleanLoc.includes('Azotus') || cleanLoc.includes('Caesarea'))) {
         modifiedEv.isReferencedOnly = false;
       }
       // In Acts 16, Jerusalem (council ref), Thyatira (origin), Asia/Bithynia (forbidden/prevented) are referenced
@@ -1267,6 +1639,60 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
         const jerusalemEv = events.splice(jerusalemIdx, 1)[0];
         const newCaesareaIdx = events.findIndex(e => e.locationName.includes('Caesarea'));
         events.splice(newCaesareaIdx + 1, 0, jerusalemEv);
+      }
+    }
+
+    // Chapter Narrative Continuity: Inject or flag departure location from previous chapter
+    const departureLink = CHAPTER_DEPARTURE_LINKS[key];
+    if (departureLink) {
+      const depName = departureLink.locationName.toLowerCase();
+      const existingIdx = events.findIndex(e => {
+        const cleanName = cleanDisambiguatedPlaceName(e.locationName).toLowerCase();
+        const shortName = cleanDisambiguatedPlaceName(e.shortPlaceName || '').toLowerCase();
+        return cleanName === depName || shortName === depName || cleanName.includes(depName) || depName.includes(cleanName);
+      });
+
+      // Special cases where the departure point is also a return destination later in the chapter
+      const isReturnDestination = (key === 'acts_14' || key === 'acts_20');
+
+      if (existingIdx !== -1 && !isReturnDestination) {
+        const matchEv = events[existingIdx];
+        matchEv.isDeparturePoint = true;
+        matchEv.departureFromChapter = departureLink.fromChapterLabel;
+        if (!matchEv.title.includes('(Departure)')) {
+          matchEv.title = `${matchEv.title} (Departure)`;
+        }
+        if (existingIdx > 0) {
+          events.splice(existingIdx, 1);
+          events.unshift(matchEv);
+        }
+      } else if (existingIdx === 0 && isReturnDestination) {
+        events[0].isDeparturePoint = true;
+        events[0].departureFromChapter = departureLink.fromChapterLabel;
+        if (!events[0].title.includes('(Departure)')) {
+          events[0].title = `${events[0].title} (Departure)`;
+        }
+      } else {
+        // Prepend departure event at the front of the chapter itinerary
+        const depEvent: ChapterGeoEvent = {
+          id: `${key}_departure`,
+          stepNumber: 1,
+          title: departureLink.title || `${departureLink.shortPlaceName || departureLink.locationName} (Departure)`,
+          passageRef: departureLink.passageRef,
+          verseRange: [1, 1],
+          locationName: departureLink.locationName,
+          shortPlaceName: departureLink.shortPlaceName || departureLink.locationName,
+          modernLocation: departureLink.modernLocation,
+          lat: departureLink.lat,
+          lng: departureLink.lng,
+          description: departureLink.description,
+          theologicalSignificance: departureLink.theologicalSignificance || '',
+          isEducatedGuess: false,
+          isReferencedOnly: false,
+          isDeparturePoint: true,
+          departureFromChapter: departureLink.fromChapterLabel
+        };
+        events.unshift(depEvent);
       }
     }
 
