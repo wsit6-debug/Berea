@@ -1,12 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Network, Search, Loader2, Sparkles, BookOpen } from 'lucide-react';
+import { Network, Search, Loader2, Sparkles, BookOpen, ArrowLeft, ExternalLink } from 'lucide-react';
 import { generateTypologyTracker, hasAlternateMotif } from '../services/aiService';
 import { TypologyMotif } from '../types';
+import { BIBLE_BOOKS } from '../data/bibleData';
 
 interface TypologyPanelProps {
   currentBook: string;
   currentChapter: number;
   chapterText: string;
+  onNavigateToPassage?: (bookId: string, chapterNum: number, verseNum?: number) => void;
+}
+
+interface HistoryItem {
+  bookId: string;
+  bookName: string;
+  chapterNum: number;
+  verseNum?: number;
+}
+
+interface ParsedRef {
+  display: string;
+  bookName: string;
+  bookId: string;
+  chapter: number;
+  verse?: number;
 }
 
 const LOADING_PHASES = [
@@ -16,7 +33,72 @@ const LOADING_PHASES = [
   'Mapping canonical trajectory to New Creation...'
 ];
 
-const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapter, chapterText }) => {
+function resolveBookMatch(rawName: string) {
+  if (!rawName) return null;
+  const cleaned = rawName.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  let found = BIBLE_BOOKS.find(
+    b => b.id.toLowerCase() === cleaned || b.name.toLowerCase().replace(/[^a-z0-9]/g, '') === cleaned
+  );
+  if (found) return found;
+
+  found = BIBLE_BOOKS.find(b => b.abbreviation.toLowerCase() === cleaned);
+  if (found) return found;
+
+  if (cleaned === 'psalm') return BIBLE_BOOKS.find(b => b.id === 'psalms');
+  if (cleaned === 'songofsongs' || cleaned === 'canticles') return BIBLE_BOOKS.find(b => b.id === 'songofsolomon');
+
+  found = BIBLE_BOOKS.find(
+    b => b.name.toLowerCase().replace(/[^a-z0-9]/g, '').startsWith(cleaned) || cleaned.startsWith(b.id)
+  );
+  return found || null;
+}
+
+function parseReferences(refStr: string, fallbackBookName: string): ParsedRef[] {
+  if (!refStr) return [];
+  const parts = refStr.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+  const results: ParsedRef[] = [];
+  let lastBookName = fallbackBookName;
+
+  for (const part of parts) {
+    const match = part.match(/^([1-3]?\s*[A-Za-z]+(?:\s+(?:of\s+)?[A-Za-z]+)?)\s+(\d+)(?::(\d+)(?:[–-]\d+)?)?/i);
+    if (match) {
+      lastBookName = match[1].trim();
+      const chapter = parseInt(match[2], 10);
+      const verse = match[3] ? parseInt(match[3], 10) : undefined;
+      const resolved = resolveBookMatch(lastBookName);
+      if (resolved) {
+        results.push({
+          display: part,
+          bookName: resolved.name,
+          bookId: resolved.id,
+          chapter,
+          verse
+        });
+      }
+    } else {
+      const numMatch = part.match(/^(\d+)(?::(\d+)(?:[–-]\d+)?)?/);
+      if (numMatch && lastBookName) {
+        const chapter = parseInt(numMatch[1], 10);
+        const verse = numMatch[2] ? parseInt(numMatch[2], 10) : undefined;
+        const resolved = resolveBookMatch(lastBookName);
+        if (resolved) {
+          results.push({
+            display: `${resolved.name} ${part}`,
+            bookName: resolved.name,
+            bookId: resolved.id,
+            chapter,
+            verse
+          });
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapter, chapterText, onNavigateToPassage }) => {
   const [motifData, setMotifData] = useState<TypologyMotif | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState('');
@@ -24,6 +106,7 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
   const [loadingPhaseMessage, setLoadingPhaseMessage] = useState(LOADING_PHASES[0]);
   const [error, setError] = useState<string | null>(null);
   const phaseTimerRef = useRef<number | null>(null);
+  const [historyStack, setHistoryStack] = useState<HistoryItem[]>([]);
 
   // Automatically load typology whenever book or chapter changes
   useEffect(() => {
@@ -90,8 +173,60 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
     }
   };
 
+  const handleNavigateToRef = (target: ParsedRef) => {
+    if (!onNavigateToPassage) return;
+
+    const currentBookObj = resolveBookMatch(currentBook);
+    const originBookId = currentBookObj ? currentBookObj.id : currentBook.toLowerCase();
+
+    // If navigating to a different passage, record current location on the history stack
+    if (originBookId !== target.bookId || currentChapter !== target.chapter) {
+      setHistoryStack(prev => [
+        ...prev,
+        {
+          bookId: originBookId,
+          bookName: currentBookObj ? currentBookObj.name : currentBook,
+          chapterNum: currentChapter
+        }
+      ]);
+    }
+
+    onNavigateToPassage(target.bookId, target.chapter, target.verse);
+  };
+
+  const handleGoBack = () => {
+    if (historyStack.length === 0 || !onNavigateToPassage) return;
+
+    const newStack = [...historyStack];
+    const previous = newStack.pop()!;
+    setHistoryStack(newStack);
+    onNavigateToPassage(previous.bookId, previous.chapterNum, previous.verseNum);
+  };
+
+  const lastHistory = historyStack.length > 0 ? historyStack[historyStack.length - 1] : null;
+
   return (
     <div className="flex flex-col h-full bg-[#FAF7F2] p-4 overflow-y-auto">
+      {/* Cross-reference Back Navigation Banner */}
+      {lastHistory && (
+        <div className="sticky top-0 z-20 mb-3 bg-[#F4EFE6] border border-[#B4793D]/30 shadow-xs rounded-xl p-2 flex items-center justify-between animate-fadeIn">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center gap-2 text-xs font-semibold text-[#8C5D2E] hover:text-[#5C3814] transition-colors cursor-pointer group"
+          >
+            <div className="w-6 h-6 rounded-md bg-[#B4793D]/15 group-hover:bg-[#B4793D]/25 flex items-center justify-center transition-colors">
+              <ArrowLeft className="w-3.5 h-3.5 text-[#8C5D2E]" />
+            </div>
+            <span>
+              Back to <strong className="font-bold underline decoration-[#B4793D]/50">{lastHistory.bookName} {lastHistory.chapterNum}</strong>
+            </span>
+          </button>
+          <span className="text-[10px] uppercase font-bold text-[#A8A29E] tracking-wider px-1.5">
+            Cross-Referencing
+          </span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-bold text-[#26221F] flex items-center gap-2">
           <Network className="w-4 h-4 text-[#B4793D]" />
@@ -209,23 +344,45 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
           </div>
 
           <div className="relative border-l-2 border-[#EBE5DC] ml-3 pl-4 space-y-6">
-            {motifData.nodes.map((node, i) => (
-              <div key={i} className="relative">
-                {/* Node indicator */}
-                <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[#B4793D] border-2 border-[#FAF7F2]" />
-                
-                <div className="bg-white border border-[#EBE5DC] rounded-xl p-3 shadow-xs">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider">{node.era}</span>
-                    <span className="text-[9px] font-mono text-[#78716C] bg-[#FAF7F2] px-1.5 py-0.5 rounded border border-[#EBE5DC]">{node.reference}</span>
+            {motifData.nodes.map((node, i) => {
+              const parsedList = parseReferences(node.reference, currentBook);
+
+              return (
+                <div key={i} className="relative">
+                  {/* Node indicator */}
+                  <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[#B4793D] border-2 border-[#FAF7F2]" />
+                  
+                  <div className="bg-white border border-[#EBE5DC] rounded-xl p-3 shadow-xs">
+                    <div className="flex flex-wrap justify-between items-start gap-1 mb-1.5">
+                      <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider">{node.era}</span>
+                      
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {parsedList.length > 0 ? (
+                          parsedList.map((pRef, pIdx) => (
+                            <button
+                              key={pIdx}
+                              onClick={() => handleNavigateToRef(pRef)}
+                              title={`Navigate to ${pRef.display} for cross-referencing`}
+                              className="text-[9.5px] font-mono font-medium text-[#78716C] hover:text-[#8C5D2E] bg-[#FAF7F2] hover:bg-[#F3ECE0] px-2 py-0.5 rounded-md border border-[#EBE5DC] hover:border-[#B4793D]/50 transition-colors cursor-pointer"
+                            >
+                              {pRef.display}
+                            </button>
+                          ))
+                        ) : (
+                          <span className="text-[9.5px] font-mono text-[#78716C] bg-[#FAF7F2] px-2 py-0.5 rounded-md border border-[#EBE5DC]">
+                            {node.reference}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="font-semibold text-xs text-[#26221F] mb-1">{node.event}</div>
+                    <p className="text-[11px] text-[#57524E] leading-relaxed italic">
+                      {node.significance}
+                    </p>
                   </div>
-                  <div className="font-semibold text-xs text-[#26221F] mb-1">{node.event}</div>
-                  <p className="text-[11px] text-[#57524E] leading-relaxed italic">
-                    {node.significance}
-                  </p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {hasAlternateMotif(`${currentBook} ${currentChapter}`, motifData.motif) && (

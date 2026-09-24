@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Verse, Chapter, TranslationId } from '../data/bibleData';
-import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Trophy } from 'lucide-react';
+import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, ChevronDown, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
 import {
@@ -60,6 +60,7 @@ interface BibleReaderProps {
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
   isLastChapterOfBook?: boolean;
   onOpenBookmarks?: () => void;
+  onOpenBookSelector?: () => void;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -82,7 +83,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onCreateStudyGuide,
   onOpenQuiz,
   isLastChapterOfBook = false,
-  onOpenBookmarks
+  onOpenBookmarks,
+  onOpenBookSelector
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
@@ -356,18 +358,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             <button
               onClick={onPrevChapter}
               disabled={isFirstChapter}
-              className="p-1 rounded-full text-[#78716C] hover:text-[#26221F] hover:bg-white disabled:opacity-25 transition-all"
+              className="p-1 rounded-full text-[#78716C] hover:text-[#26221F] hover:bg-white disabled:opacity-25 transition-all cursor-pointer"
               title="Previous Chapter"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs font-semibold text-[#26221F] px-1.5 font-heading whitespace-nowrap">
-              {bookName} {chapter.chapterNumber}
-            </span>
+            <button
+              onClick={onOpenBookSelector}
+              className="text-xs font-semibold text-[#26221F] hover:text-[#B4793D] px-2 py-0.5 rounded-full hover:bg-white/80 transition-all font-heading whitespace-nowrap cursor-pointer flex items-center gap-1 group"
+              title="Choose Book & Chapter"
+            >
+              <span>{bookName} {chapter.chapterNumber}</span>
+              <ChevronDown className="w-3 h-3 text-[#A8A29E] group-hover:text-[#B4793D] transition-colors" />
+            </button>
             <button
               onClick={onNextChapter}
               disabled={isLastChapter}
-              className="p-1 rounded-full text-[#78716C] hover:text-[#26221F] hover:bg-white disabled:opacity-25 transition-all"
+              className="p-1 rounded-full text-[#78716C] hover:text-[#26221F] hover:bg-white disabled:opacity-25 transition-all cursor-pointer"
               title="Next Chapter"
             >
               <ChevronRight className="w-3.5 h-3.5" />

@@ -67,19 +67,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="h-4 w-px bg-[#EBE5DC] hidden sm:block"></div>
 
-          {/* Book & Chapter Selector Button */}
-          <button
-            onClick={onOpenBookSelector}
-            className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
-            title="Choose Book & Chapter"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-[#B4793D]" />
-            <span className="font-semibold text-xs text-[#26221F] group-hover:text-[#B4793D] transition-colors truncate max-w-[100px] sm:max-w-none">
-              {currentBookName} {currentChapterNum}
-            </span>
-            <ChevronDown className="w-3 h-3 text-[#A8A29E]" />
-          </button>
-
           {/* 1. TOP GLOBAL DENOMINATION SELECTOR */}
           <div className="relative">
             <button

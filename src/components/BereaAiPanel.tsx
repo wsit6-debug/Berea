@@ -47,6 +47,7 @@ interface BereaAiPanelProps {
   activeQuizType?: 'chapter' | 'book' | null;
   onQuizTypeChange?: (type: 'chapter' | 'book' | null) => void;
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
+  onNavigateToPassage?: (bookId: string, chapterNum: number, verseNum?: number) => void;
 }
 
 export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
@@ -65,7 +66,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   onTabChange,
   activeQuizType,
   onQuizTypeChange,
-  onOpenQuiz
+  onOpenQuiz,
+  onNavigateToPassage
 }) => {
   const [internalTab, setInternalTab] = useState<BereaAiTab>(externalTab || 'overview');
 
@@ -1349,6 +1351,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   currentBook={currentBook}
                   currentChapter={currentChapter}
                   chapterText={wholeChapterText}
+                  onNavigateToPassage={onNavigateToPassage}
                 />
               </div>
             )}
