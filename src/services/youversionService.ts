@@ -14,7 +14,7 @@ const chapterCache = new Map<string, Verse[]>();
 export function cleanApiText(raw: string): string {
   if (!raw) return '';
   let cleaned = raw;
-
+  
   // 1. Remove Strong's tag containers, footnotes, notes, superscripts, and subscripts with their inner contents
   cleaned = cleaned.replace(/<[sS][^>]*>[\s\S]*?<\/[sS]>/gi, '');
   cleaned = cleaned.replace(/<[fFnN][^>]*>[\s\S]*?<\/[fFnN]>/gi, '');
@@ -35,9 +35,9 @@ export function cleanApiText(raw: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
 
-  // 4. Remove attached Strong's numbers (e.g. "was2258", "man444", "Pharisees5330,", "named3686", "Jews2453:")
-  cleaned = cleaned.replace(/([a-zA-Z,;:!?.])\d+/g, '$1');
-
+  // 4. Remove attached Strong's numbers (e.g. "was2258", "man444", "Pharisees5330,", "named3686")
+  cleaned = cleaned.replace(/([a-zA-Z])\d+/g, '$1');
+  
   // 5. Remove standalone Strong's numbers (e.g. "1161", "846", "[1161]", "{G1161}")
   cleaned = cleaned.replace(/\b[GH]?\d{3,5}\b/g, '');
 
@@ -127,7 +127,7 @@ export async function fetchChapterFromYouVersion(
   version: TranslationId = 'KJV'
 ): Promise<Verse[]> {
   const cacheKey = `${version}_${bookId}_${chapterNum}`;
-
+  
   if (chapterCache.has(cacheKey)) {
     return chapterCache.get(cacheKey)!;
   }
@@ -149,11 +149,9 @@ export async function fetchChapterFromYouVersion(
                   cleanText[k] = cleanApiText(val);
                 });
               }
-              const isJesus = checkIsWordsOfJesus(bookId, chapterNum, v.verseNumber);
               return {
                 ...v,
-                text: cleanText,
-                isWordsOfJesus: isJesus
+                text: cleanText
               };
             });
             chapterCache.set(cacheKey, sanitizedVerses);
@@ -184,7 +182,7 @@ export async function fetchChapterFromYouVersion(
       const data: Array<{ pk: number; verse: number; text: string }> = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         const verses: Verse[] = data.map(item => {
-          const hasWj = /<(?:span\s+class=["'][^"']*\bwj\b|wj\b)/i.test(item.text || '');
+          const hasWj = /<(?:span\s+class=["'][^"']*\bwj\b|wj\b)/i.test(item.text);
           const isJesus = Boolean(hasWj || checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text));
           return {
             verseNumber: item.verse,
