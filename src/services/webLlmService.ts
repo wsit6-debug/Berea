@@ -72,11 +72,26 @@ export function deduplicateRepetitions(text: string): string {
   return cleanedLines.join('\n').trim();
 }
 
+export interface GenerateLocalOptions {
+  temperature?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  max_tokens?: number;
+}
+
 export async function generateLocalAiResponse(
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   onProgress?: (progress: { text: string; progress: number }) => void,
-  skipDeduplication: boolean = false
+  skipDeduplication: boolean = false,
+  options?: GenerateLocalOptions
 ): Promise<string> {
+  const temperature = options?.temperature ?? 0.6;
+  const top_p = options?.top_p ?? 0.9;
+  const max_tokens = options?.max_tokens ?? 1200;
+  const frequency_penalty = options?.frequency_penalty ?? 0.5;
+  const presence_penalty = options?.presence_penalty ?? 0.4;
+
   // 1. Try local Ollama server if available (e.g. http://localhost:11434)
   try {
     let ollamaRes: Response;
@@ -89,8 +104,8 @@ export async function generateLocalAiResponse(
           messages,
           stream: false,
           options: {
-            temperature: 0.1,
-            top_p: 0.1
+            temperature: Math.min(temperature, 0.2),
+            top_p: Math.min(top_p, 0.2)
           }
         })
       });
@@ -104,8 +119,8 @@ export async function generateLocalAiResponse(
           messages,
           stream: false,
           options: {
-            temperature: 0.1,
-            top_p: 0.1
+            temperature: Math.min(temperature, 0.2),
+            top_p: Math.min(top_p, 0.2)
           }
         })
       });
@@ -123,11 +138,11 @@ export async function generateLocalAiResponse(
     const engine = await getOrInitLocalEngine(onProgress);
     const reply = await engine.chat.completions.create({
       messages,
-      temperature: 0.6,
-      top_p: 0.9,
-      frequency_penalty: 0.5,
-      presence_penalty: 0.4,
-      max_tokens: 1200
+      temperature,
+      top_p,
+      frequency_penalty,
+      presence_penalty,
+      max_tokens
     });
 
     const rawContent = reply.choices[0]?.message?.content || '';

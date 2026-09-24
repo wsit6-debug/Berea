@@ -271,6 +271,7 @@ export function App() {
               }}
               isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
               onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+              onOpenBookSelector={() => setIsBookSelectorOpen(true)}
               onOpenQuiz={(type) => {
                 setQuizType(type);
                 setAiPanelTab('quiz');
@@ -303,6 +304,7 @@ export function App() {
                   setAiPanelTab('quiz');
                   setIsAiPanelOpen(true);
                 }}
+                onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
               />
             </div>
           )}

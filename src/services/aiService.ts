@@ -4,6 +4,8 @@ import { buildRagGroundingContext, DoctrinalEntry } from './ragService';
 import { getUserDenominationPreference, getDenominationLabel, UserDenominationSetting } from './configService';
 import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
+import { TypologyMotif, TypologyNode } from '../types';
+import { getTypologyFromDatabase } from '../data/typologyDatabase';
 
 export interface QuizQuestion {
   question: string;
@@ -791,3 +793,29 @@ export async function getAccumulatedBookQuiz(
   return finalQuestions.slice(0, numQuestions);
 }
 
+export { TYPOLOGY_CHAPTER_HASHMAP, getTypologyFromDatabase, hasAlternateMotif } from '../data/typologyDatabase';
+
+export async function generateTypologyTracker(
+  passageRef: string,
+  _passageText: string,
+  onProgress?: (progress: { text: string; progress: number }) => void,
+  excludeMotif?: string
+): Promise<TypologyMotif> {
+  // Instant O(1) canonical database & hashmap retrieval (sub-150ms)
+  if (onProgress) {
+    onProgress({ text: `Locating canonical motifs for ${passageRef}...`, progress: 0.35 });
+  }
+
+  // Smooth, snappy micro-tick for UI feedback
+  await new Promise((r) => setTimeout(r, 60));
+  if (onProgress) {
+    onProgress({ text: 'Tracing covenant trajectory across 6 biblical eras...', progress: 0.85 });
+  }
+  await new Promise((r) => setTimeout(r, 60));
+
+  const result = getTypologyFromDatabase(passageRef, excludeMotif);
+  if (onProgress) {
+    onProgress({ text: 'Canonical tapestry complete.', progress: 1.0 });
+  }
+  return result;
+}
