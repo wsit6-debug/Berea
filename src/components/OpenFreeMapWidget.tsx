@@ -158,7 +158,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
   const activeDragElement = useRef<HTMLElement | null>(null);
 
   // Default to pure Ancient Shaded Relief (100% roadless, 0 modern buildings)
-  const [mapStyle, setMapStyle] = useState<'relief' | 'physical' | 'satellite'>('relief');
+  const [mapStyle, setMapStyle] = useState<'relief' | 'satellite'>('relief');
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'storyline' | 'references'>('storyline');
   const [activeStorylineIndex, setActiveStorylineIndex] = useState<number>(0);
@@ -345,14 +345,7 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
       maxNativeZoom: 12,
       maxZoom: 16
     },
-    // 2. Physical Landforms & Biomes: Macro physical terrain (0 roads, 0 buildings)
-    physical: {
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
-      attribution: '&copy; Esri &mdash; Physical Landforms (Roadless)',
-      maxNativeZoom: 8,
-      maxZoom: 16
-    },
-    // 3. Pure Satellite Landscape: High-resolution photographic landscape (0 vector road overlays)
+    // 2. Pure Satellite Landscape: Raw high-resolution photographic landscape (0 vector road overlays)
     satellite: {
       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       attribution: '&copy; Esri World Imagery (Photographic)',
@@ -776,13 +769,6 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
               title="Ancient Shaded Mountain Relief (0 Roads, 0 Buildings)"
             >
               Relief
-            </button>
-            <button
-              onClick={() => setMapStyle('physical')}
-              className={`ios-segment-pill !text-[10px] !py-0.5 !px-2.5 ${mapStyle === 'physical' ? 'active' : ''}`}
-              title="Physical Landforms & Biomes (0 Roads, 0 Buildings)"
-            >
-              Physical
             </button>
             <button
               onClick={() => setMapStyle('satellite')}
