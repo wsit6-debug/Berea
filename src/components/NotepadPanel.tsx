@@ -4,9 +4,9 @@ import {
   BookOpen, Sparkles, Type, Minus, AlignLeft,
   List, CheckSquare, Quote, FileText, Bookmark,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ExternalLink, RotateCcw, Layers,
-  Send, ArrowDownToLine, Highlighter, Eye, LayoutTemplate
+  Send, ArrowDownToLine, Highlighter, Eye, LayoutTemplate, Bold, Italic, Search
 } from 'lucide-react';
-import { Verse, TranslationId } from '../data/bibleData';
+import { Verse, TranslationId, BIBLE_BOOKS } from '../data/bibleData';
 import { DenominationalLens } from '../data/theologyData';
 import { NoteTab, NotepadState, NoteFontFamily, NoteFontSize } from '../types';
 import {
@@ -88,6 +88,21 @@ export function htmlToPlainText(html: string): string {
   return temp.innerText || temp.textContent || '';
 }
 
+export function getPassageBadge(book?: string, chapter?: number): string | null {
+  if (!book || !chapter) return null;
+  const match = BIBLE_BOOKS.find(
+    b => b.name.toLowerCase() === book.toLowerCase() || b.id.toLowerCase() === book.toLowerCase()
+  );
+  if (match) {
+    return `${match.abbreviation} ${chapter}`;
+  }
+  const words = book.trim().split(/\s+/);
+  if (words.length > 1) {
+    return `${words[0].charAt(0)}${words[1].substring(0, 3)} ${chapter}`;
+  }
+  return `${book.substring(0, 3)} ${chapter}`;
+}
+
 interface NotepadPanelProps {
   currentBook: string;
   currentChapter: number;
@@ -108,6 +123,7 @@ interface NotepadPanelProps {
   onToggleHighlighterMode?: () => void;
   activeHighlightColor?: 'yellow' | 'green' | 'red' | 'blue';
   onSelectHighlightColor?: (color: 'yellow' | 'green' | 'red' | 'blue') => void;
+  onSelectPassage?: (bookId: string, chapterNum: number) => void;
 }
 
 export const NotepadPanel: React.FC<NotepadPanelProps> = ({
@@ -125,7 +141,8 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
   isHighlighterMode: externalHighlighterMode,
   onToggleHighlighterMode: externalToggleHighlighterMode,
   activeHighlightColor: externalHighlightColor,
-  onSelectHighlightColor: externalSetHighlightColor
+  onSelectHighlightColor: externalSetHighlightColor,
+  onSelectPassage
 }) => {
   const [internalNotepadState, setInternalNotepadState] = useState<NotepadState>(() =>
     loadNotepadState(currentBook, currentChapter)
@@ -143,9 +160,11 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
   const [aiQuery, setAiQuery] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [aiResponse, setAiResponse] = useState<{ prompt: string; text: string; citation?: string } | null>(null);
-  const [isAiBoxExpanded, setIsAiBoxExpanded] = useState(true);
+  const [isAiBoxExpanded, setIsAiBoxExpanded] = useState(false);
   const [aiCopied, setAiCopied] = useState(false);
   const [aiInserted, setAiInserted] = useState(false);
+  const [tabSearchQuery, setTabSearchQuery] = useState('');
+  const [showStyleMenu, setShowStyleMenu] = useState(false);
 
   const [internalHighlightColor, setInternalHighlightColor] = useState<'yellow' | 'green' | 'red' | 'blue'>('yellow');
   const activeHighlightColor = externalHighlightColor || internalHighlightColor;
@@ -174,6 +193,7 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
   const activeTabIdRef = useRef<string | null>(null);
   const fontMenuRef = useRef<HTMLDivElement>(null);
   const journalMenuRef = useRef<HTMLDivElement>(null);
+  const styleMenuRef = useRef<HTMLDivElement>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-save whenever notepadState changes
@@ -191,6 +211,9 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
       }
       if (journalMenuRef.current && !journalMenuRef.current.contains(e.target as Node)) {
         setShowJournalMenu(false);
+      }
+      if (styleMenuRef.current && !styleMenuRef.current.contains(e.target as Node)) {
+        setShowStyleMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -214,20 +237,11 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
     });
   }, []);
 
-  // ONLY show tabs that correlate to this specific page (e.g. Genesis 24) plus the universal General Journal.
-  // General Journal is always the FIRST referenced tab that doesn't move, and everything else comes after it.
-  const generalJournalTab = notepadState.tabs.find(t => !t.book && !t.chapter);
-  const pageSpecificTabs = notepadState.tabs.filter(
-    t => t.book === currentBook && t.chapter === currentChapter && t.id !== generalJournalTab?.id
-  );
+  // All note tabs are visible in the tabs bar at the top so notes are never hidden or lost across chapters!
+  const visibleTabs = notepadState.tabs;
 
-  const visibleTabs = [
-    ...(generalJournalTab ? [generalJournalTab] : []),
-    ...pageSpecificTabs
-  ];
-
-  // Active Tab - fallback to first visible tab if current activeTab is from another chapter
-  const activeTab = visibleTabs.find(t => t.id === notepadState.activeTabId) || visibleTabs[0] || notepadState.tabs[0];
+  // Active Tab from all available tabs
+  const activeTab = notepadState.tabs.find(t => t.id === notepadState.activeTabId) || notepadState.tabs[0];
 
   // Active typography options
   const activeFontFamilyId = activeTab?.fontFamily || notepadState.globalFontFamily || 'sans';
@@ -236,17 +250,16 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
   const currentFontConfig = FONT_FAMILY_OPTIONS.find(f => f.id === activeFontFamilyId) || FONT_FAMILY_OPTIONS[1];
   const currentSizeConfig = FONT_SIZE_OPTIONS.find(s => s.id === activeFontSizeId) || FONT_SIZE_OPTIONS[1];
 
-  // Track previous book/chapter to detect navigation
+  // Track previous book/chapter to detect navigation (only used if NotepadPanel is standalone)
   const prevChapterRef = useRef<{ book: string; chapter: number }>({
     book: currentBook,
     chapter: currentChapter
   });
 
-  // AUTOMATIC PAGE SYNC:
-  // When navigating chapters (e.g. Genesis 24), find or initialize the dedicated page journal
-  // for this chapter and ensure it's selected unless the user was explicitly working on the General Journal.
-  // General Journal always remains the first tab; page journals and new tabs come after it.
+  // Standalone chapter sync (only active if externalSetNotepadState is not provided)
   useEffect(() => {
+    if (externalSetNotepadState) return;
+
     const prev = prevChapterRef.current;
     if (prev.book === currentBook && prev.chapter === currentChapter) {
       return;
@@ -262,24 +275,21 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
 
       let otherTabs = current.tabs.filter(t => t.id !== general?.id);
       if (!pageTab) {
-        // Create the dedicated blank journal for this chapter
         const pageTitle = `${currentBook} ${currentChapter} Journal`;
         pageTab = createNewNoteTab(pageTitle, currentBook, currentChapter);
         pageTab.content = '';
         pageTab.fontFamily = currentActive?.fontFamily || current.globalFontFamily || 'sans';
         pageTab.fontSize = currentActive?.fontSize || current.globalFontSize || 'sm';
-        // Place pageTab right after general journal, before other older section tabs
         otherTabs = [pageTab, ...otherTabs.filter(t => t.id !== pageTab!.id)];
       }
 
       return {
         ...current,
         tabs: general ? [general, ...otherTabs] : [pageTab, ...otherTabs],
-        // Revert to the dedicated page journal unless user is on the General Journal
         activeTabId: isCurrentlyInGeneral ? current.activeTabId : pageTab.id
       };
     });
-  }, [currentBook, currentChapter]);
+  }, [currentBook, currentChapter, externalSetNotepadState]);
 
   // Scroll tabs container smoothly left or right
   const handleScrollTabs = (direction: 'left' | 'right') => {
@@ -657,13 +667,18 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
     handleContentChange(editorRef.current.innerHTML);
   };
 
-  const handleHeading = () => {
+  const handleFormatBlock = (tag: string) => {
     if (!editorRef.current) return;
     editorRef.current.focus();
     restoreSelection();
-    document.execCommand('formatBlock', false, '<h3>');
+    document.execCommand('formatBlock', false, tag);
     saveSelection();
     handleContentChange(editorRef.current.innerHTML);
+    setShowStyleMenu(false);
+  };
+
+  const handleHeading = (level: 'h1' | 'h2' | 'h3' = 'h3') => {
+    handleFormatBlock(`<${level}>`);
   };
 
   const handleBulletList = () => {
@@ -671,6 +686,15 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
     editorRef.current.focus();
     restoreSelection();
     document.execCommand('insertUnorderedList', false);
+    saveSelection();
+    handleContentChange(editorRef.current.innerHTML);
+  };
+
+  const handleOrderedList = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+    document.execCommand('insertOrderedList', false);
     saveSelection();
     handleContentChange(editorRef.current.innerHTML);
   };
@@ -868,226 +892,91 @@ ${noteText}
     { label: '❓ Questions', prompt: `Provide 3 deep reflection and discussion questions for ${currentBook} ${currentChapter}.` }
   ];
 
+  // Filter tabs for document switcher search
+  const filteredTabs = visibleTabs.filter(t => {
+    if (!tabSearchQuery.trim()) return true;
+    const q = tabSearchQuery.toLowerCase();
+    return t.title.toLowerCase().includes(q) || (t.book && t.book.toLowerCase().includes(q));
+  });
+
   // Stats
   const wordCount = activeTab?.content?.trim() ? activeTab.content.trim().split(/\s+/).length : 0;
   const charCount = activeTab?.content?.length || 0;
+  const activeBadge = getPassageBadge(activeTab?.book, activeTab?.chapter);
 
   return (
-    <div className="flex flex-col h-full bg-white text-[#26221F] select-text">
-      {/* 1. TABS HEADER STRIP WITH SLIDER */}
+    <div className="flex flex-col h-full bg-[#FAF9F6] text-[#26221F] select-text relative overflow-hidden font-sans">
+      {/* 1. TOP DOCUMENT NAVIGATION BAR (Single Row) */}
       <div
-        className="border-b px-2 py-1.5 flex flex-col gap-1.5 flex-shrink-0 transition-colors"
-        style={{
-          borderBottomColor: 'var(--clean-accent-border, #EBE5DC)',
-          backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)'
-        }}
+        className="px-3 sm:px-4 py-2 border-b flex items-center justify-between bg-white shrink-0 gap-2 select-none"
+        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
       >
-        <div className="flex items-center gap-1">
-          {/* Left Slider Button */}
-          <button
-            onClick={() => handleScrollTabs('left')}
-            className="p-1 rounded-md bg-white hover:bg-[var(--clean-highlight-cream,#FAF5ED)] text-[#78716C] hover:text-[#26221F] transition-colors shrink-0 border shadow-2xs"
-            style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-            title="Slide journals left"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Scrollable Journal Slider Track */}
-          <div
-            ref={tabsContainerRef}
-            className="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto py-0.5 custom-scrollbar scroll-smooth"
-            style={{ scrollbarWidth: 'thin' }}
-          >
-            {visibleTabs.map(tab => {
-              const isActive = tab.id === activeTab?.id;
-              const isEditing = editingTabId === tab.id;
-
-              return (
-                <div
-                  key={tab.id}
-                  data-tab-id={tab.id}
-                  onClick={() => handleSelectTab(tab.id)}
-                  className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-all border shrink-0 max-w-[140px]"
-                  style={isActive ? {
-                    backgroundColor: '#FFFFFF',
-                    borderColor: 'var(--clean-accent-border-strong, #B4793D)',
-                    boxShadow: '0 0 0 1px var(--clean-accent-border, rgba(180,121,61,0.3))',
-                    color: '#26221F',
-                    fontWeight: 700
-                  } : {
-                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                    color: '#78716C'
+        {/* Left: Document Switcher Dropdown & Add Button */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="relative" ref={journalMenuRef}>
+            <button
+              onClick={() => setShowJournalMenu(prev => !prev)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[#FAF7F2] text-[#26221F] text-xs sm:text-sm font-semibold transition-all border border-transparent hover:border-[#E8E2D8] max-w-[240px] sm:max-w-[300px] truncate group"
+              title="Switch note or view all journals"
+            >
+              <FileText className="w-4 h-4 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
+              <span className="truncate">{activeTab?.title || 'Untitled Note'}</span>
+              {activeBadge && (
+                <span
+                  className="text-[9.5px] font-mono px-1.5 py-0.2 rounded shrink-0 border uppercase font-bold"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                    color: 'var(--clean-accent-dark, #B4793D)',
+                    borderColor: 'var(--clean-accent-border, #E2D5C3)'
                   }}
-                  title={tab.title}
                 >
-                  {/* Active Accent Dot */}
-                  {isActive && (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ backgroundColor: 'var(--clean-accent-caramel, #B4793D)' }}
-                    />
-                  )}
+                  {activeBadge}
+                </span>
+              )}
+              <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 shrink-0" />
+            </button>
 
-                  {/* Chapter tag pill on tab */}
-                  {tab.book && tab.chapter && (
-                    <span
-                      className="text-[9px] px-1 py-0.2 rounded font-sans uppercase tracking-wider font-bold transition-colors border"
-                      style={isActive ? {
-                        backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
-                        color: 'var(--clean-accent-dark, #B4793D)',
-                        borderColor: 'var(--clean-accent-border, rgba(180,121,61,0.3))'
-                      } : {
-                        backgroundColor: 'var(--clean-bg, #EBE5DC)',
-                        color: '#78716C',
-                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                      }}
-                    >
-                      {tab.book.substring(0, 3)} {tab.chapter}
-                    </span>
-                  )}
-
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editingTabTitle}
-                      onChange={e => setEditingTabTitle(e.target.value)}
-                      onBlur={handleSaveRenameTab}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleSaveRenameTab();
-                        if (e.key === 'Escape') setEditingTabId(null);
-                      }}
-                      autoFocus
-                      className="w-24 bg-white border rounded px-1 py-0.5 text-xs text-[#26221F] outline-none"
-                      style={{ borderColor: 'var(--clean-accent-border-strong, #B4793D)' }}
-                      onClick={e => e.stopPropagation()}
-                    />
-                  ) : (
-                    <span
-                      onDoubleClick={e => handleStartRenameTab(tab, e)}
-                      className="truncate flex-1 min-w-0"
-                    >
-                      {tab.title}
-                    </span>
-                  )}
-
-                  {/* Edit tab title button */}
-                  {!isEditing && isActive && (
-                    <button
-                      onClick={e => handleStartRenameTab(tab, e)}
-                      className="opacity-0 group-hover:opacity-100 hover:text-[var(--clean-accent-caramel,#B4793D)] transition-opacity p-0.5 rounded"
-                      title="Rename journal"
-                    >
-                      <Edit2 className="w-2.5 h-2.5" />
+            {/* Document Switcher Dropdown Menu */}
+            {showJournalMenu && (
+              <div
+                className="absolute left-0 mt-1 w-72 sm:w-80 bg-white border rounded-xl shadow-xl p-1.5 z-40 animate-fadeIn"
+                style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+              >
+                {/* Search Bar inside Switcher */}
+                <div className="px-3 py-1.5 border rounded-lg flex items-center gap-2 mb-1.5 bg-[#FAF7F2] border-[#EBE5DC]">
+                  <Search className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={tabSearchQuery}
+                    onChange={e => setTabSearchQuery(e.target.value)}
+                    placeholder="Search all notes & journals..."
+                    className="w-full text-xs outline-none bg-transparent text-[#26221F] placeholder:text-stone-400 border-none"
+                    style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
+                    autoFocus
+                  />
+                  {tabSearchQuery && (
+                    <button onClick={() => setTabSearchQuery('')} className="text-stone-400 hover:text-stone-700">
+                      <X className="w-3 h-3" />
                     </button>
                   )}
-
-                  {/* Close/Delete tab button */}
-                  <button
-                    onClick={e => handleDeleteTab(tab.id, e)}
-                    className={`p-0.5 rounded-full hover:bg-[var(--clean-highlight-cream,#EBE5DC)] text-[#A8A29E] hover:text-rose-600 transition-colors ${isActive ? 'opacity-70 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      }`}
-                    title={notepadState.tabs.length <= 1 ? 'Clear note' : 'Close journal'}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
                 </div>
-              );
-            })}
 
-            {/* Add New Blank Tab Button */}
-            <button
-              onClick={handleAddTab}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#78716C] hover:text-[#26221F] bg-white hover:bg-[var(--clean-highlight-cream,#FAF5ED)] transition-colors border border-dashed shrink-0"
-              style={{ borderColor: 'var(--clean-accent-border, #DCD5C9)' }}
-              title="Create new blank tab dedicated to this section"
-            >
-              <Plus className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-              <span>New Tab</span>
-            </button>
-          </div>
-
-          {/* Right Slider Button */}
-          <button
-            onClick={() => handleScrollTabs('right')}
-            className="p-1 rounded-md bg-white hover:bg-[var(--clean-highlight-cream,#FAF5ED)] text-[#78716C] hover:text-[#26221F] transition-colors shrink-0 border shadow-2xs"
-            style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-            title="Slide tabs right"
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* 2. ACTIVE TAB INDICATOR & SECTION TABS QUICK SWITCHER BAR */}
-        <div
-          className="flex items-center justify-between pt-1 border-t text-xs text-[#78716C] px-0.5"
-          style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <span
-              className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded border"
-              style={{
-                color: 'var(--clean-accent-dark, #78471F)',
-                backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
-                borderColor: 'var(--clean-accent-border, #E2D5C3)'
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                style={{ backgroundColor: 'var(--clean-accent-caramel, #B4793D)' }}
-              />
-              Active Tab:
-            </span>
-            <span className="font-bold text-[#26221F] truncate text-xs">
-              {activeTab?.title || 'Untitled'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-[1px] h-3.5 bg-[var(--clean-border,#DCD5C9)]" />
-
-            {/* Section Tabs Switcher Dropdown */}
-            <div className="relative shrink-0" ref={journalMenuRef}>
-              <button
-                onClick={() => setShowJournalMenu(prev => !prev)}
-                className="flex items-center gap-1 px-2 py-0.5 bg-white hover:bg-[var(--clean-highlight-cream,#FAF7F2)] border rounded text-[10.5px] font-semibold text-[#26221F] transition-colors shadow-2xs"
-                style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-                title={`View tabs dedicated to ${currentBook} ${currentChapter} and switch directly`}
-              >
-                <Layers className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-                <span>Section Tabs ({visibleTabs.length})</span>
-                <ChevronDown className="w-2.5 h-2.5 text-[#78716C]" />
-              </button>
-
-              {showJournalMenu && (
-                <div
-                  className="absolute right-0 mt-1 w-64 bg-white border rounded-xl shadow-xl p-1.5 z-30 animate-fadeIn"
-                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-                >
-                  <div
-                    className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-[#78716C] border-b mb-1 flex items-center justify-between"
-                    style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
-                  >
-                    <span>Section Tabs</span>
-                    <span
-                      className="font-mono text-[9px] font-bold"
-                      style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
-                    >
-                      {currentBook.substring(0, 3)} {currentChapter}
-                    </span>
-                  </div>
-                  <div className="max-h-56 overflow-y-auto custom-scrollbar space-y-0.5">
-                    {visibleTabs.map((tab, idx) => {
+                {/* Notes List */}
+                <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-0.5 py-1">
+                  {filteredTabs.length === 0 ? (
+                    <div className="text-xs text-stone-400 text-center py-3">No matching notes found</div>
+                  ) : (
+                    filteredTabs.map((tab) => {
                       const isTabActive = tab.id === activeTab?.id;
+                      const badge = getPassageBadge(tab.book, tab.chapter);
                       return (
-                        <button
+                        <div
                           key={tab.id}
                           onClick={() => {
                             handleSelectTab(tab.id);
                             setShowJournalMenu(false);
                           }}
-                          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left"
+                          className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer group"
                           style={isTabActive ? {
                             backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
                             color: 'var(--clean-accent-dark, #B4793D)',
@@ -1096,153 +985,130 @@ ${noteText}
                             color: '#26221F'
                           }}
                         >
-                          <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             {isTabActive ? (
-                              <Check className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                              <Check className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
                             ) : (
-                              <span className="w-3.5 text-[10px] text-[var(--clean-text-tertiary,#A8A29E)] font-mono text-center shrink-0">
-                                {idx + 1}
-                              </span>
+                              <FileText className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                             )}
                             <span className="truncate">{tab.title}</span>
                           </div>
-                          {tab.book && tab.chapter ? (
-                            <span
-                              className="text-[9px] px-1 py-0.5 rounded font-mono shrink-0 border"
-                              style={{
-                                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                                color: 'var(--clean-accent-dark, #78716C)',
-                                borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                              }}
-                            >
-                              {tab.book.substring(0, 3)} {tab.chapter}
-                            </span>
-                          ) : (
-                            <span
-                              className="text-[9px] px-1 py-0.5 rounded font-mono shrink-0 border"
-                              style={{
-                                backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
-                                color: 'var(--clean-accent-dark, #B4793D)',
-                                borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                              }}
-                            >
-                              General
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleAddTab();
-                      setShowJournalMenu(false);
-                    }}
-                    className="w-full mt-1 pt-1.5 border-t flex items-center justify-center gap-1 text-[11px] font-semibold p-1.5 rounded-lg transition-colors hover:bg-[var(--clean-highlight-cream,#FAF5ED)]"
-                    style={{
-                      borderTopColor: 'var(--clean-accent-border, #EBE5DC)',
-                      color: 'var(--clean-accent-dark, #B4793D)'
-                    }}
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Create Tab for this Section</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* 2. TYPOGRAPHY & CHAPTER CONTROLS TOOLBAR */}
-      <div
-        className="flex flex-wrap items-center justify-between gap-1.5 px-3 py-1.5 bg-white border-b text-xs"
-        style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
-      >
-        {/* Left: Chapter Link Indicator & Toggle */}
-        <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {badge ? (
+                              <span
+                                className="text-[9px] px-1 py-0.5 rounded font-mono border"
+                                style={{
+                                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                  color: '#78716C',
+                                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                                }}
+                              >
+                                {badge}
+                              </span>
+                            ) : (
+                              <span
+                                className="text-[9px] px-1 py-0.5 rounded font-mono border"
+                                style={{
+                                  backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                                  color: 'var(--clean-accent-dark, #B4793D)',
+                                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                                }}
+                              >
+                                General
+                              </span>
+                            )}
+
+                            {/* Delete tab button */}
+                            {notepadState.tabs.length > 1 && (
+                              <button
+                                onClick={e => handleDeleteTab(tab.id, e)}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-stone-200/60 text-stone-400 hover:text-rose-600 transition-all"
+                                title="Close note"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Bottom Action: Create Note */}
+                <button
+                  onClick={() => {
+                    handleAddTab();
+                    setShowJournalMenu(false);
+                  }}
+                  className="w-full mt-1 pt-2 border-t flex items-center justify-center gap-1.5 text-xs font-semibold p-1.5 rounded-lg transition-colors hover:bg-[var(--clean-highlight-cream,#FAF5ED)]"
+                  style={{
+                    borderTopColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-accent-dark, #B4793D)'
+                  }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Note for {currentBook} {currentChapter}</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Create Note Button */}
           <button
-            onClick={handleToggleCurrentChapterLink}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors border"
-            style={activeTab?.book && activeTab?.chapter ? {
-              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-              color: 'var(--clean-accent-dark, #B4793D)',
-              borderColor: 'var(--clean-accent-border, #E2D5C3)'
-            } : {
-              backgroundColor: '#F5F5F4',
-              color: '#78716C',
-              borderColor: '#E7E5E4'
-            }}
-            title={activeTab?.book ? 'Click to set as General (unbound) note' : `Click to link to ${currentBook} ${currentChapter}`}
+            onClick={handleAddTab}
+            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-500 hover:text-[#26221F] transition-colors shrink-0"
+            title="Create new note"
           >
-            <BookOpen className="w-3 h-3" />
-            <span>
-              {activeTab?.book && activeTab?.chapter
-                ? `${activeTab.book} ${activeTab.chapter}`
-                : 'General Note (Click to link)'}
-            </span>
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Right Actions: Summarize, AI Assist Toggle, Typography, Preview & Export */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Summarize Button (Safe in Top Bar) */}
+          <button
+            onClick={handleSummarizeNotes}
+            disabled={isAiThinking}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white border border-stone-200 hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] text-stone-700 hover:text-[var(--clean-accent-dark,#B4793D)] shadow-2xs transition-all disabled:opacity-50"
+            title="Summarize your notes with Berea AI"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+            <span>Summarize</span>
           </button>
 
-          {/* Quick Insert Scripture Quote Button */}
-          {selectedVerse && (
-            <>
-              <div className="w-[1px] h-3.5 bg-[#DCD5C9] mx-0.5 shrink-0" />
-              <button
-                onClick={handleInsertScripture}
-                className="inline-flex items-center gap-1 px-2 py-0.5 hover:bg-[var(--clean-highlight-cream,#FAF7F2)] text-[#57524E] hover:text-[#26221F] border rounded-full text-[11px] font-medium transition-colors"
-                style={{
-                  backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                }}
-                title={`Insert ${currentBook} ${currentChapter}:${selectedVerse.verseNumber} into note`}
-              >
-                <Sparkles className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-                <span>Quote v.{selectedVerse.verseNumber}</span>
-              </button>
-            </>
-          )}
-
-          {/* Dedicated Separation Line */}
-          <div className="w-[1px] h-3.5 bg-[#DCD5C9] mx-0.5 shrink-0" />
-
-          {/* Auto-Sync Page Indicator */}
-          <div
-            className="text-[10.5px] px-2 py-0.5 rounded-full shrink-0 font-medium flex items-center gap-1.5 border"
-            style={{
-              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-              color: 'var(--clean-accent-dark, #78471F)',
-              borderColor: 'var(--clean-accent-border, #E2D5C3)'
-            }}
-            title={`Auto-synced to current page: ${currentBook} ${currentChapter}`}
+          {/* AI Assist Toggle Button */}
+          <button
+            onClick={() => setIsAiBoxExpanded(prev => !prev)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all border shadow-2xs ${
+              isAiBoxExpanded
+                ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] border-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-dark,#B4793D)] ring-1 ring-[var(--clean-accent-caramel,#B4793D)]'
+                : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
+            }`}
+            title="Toggle AI Companion assistant drawer"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold">{currentBook.substring(0, 3)} {currentChapter}</span>
-            <span className="text-[9px] text-[#A67035] hidden sm:inline">(synced)</span>
-          </div>
-        </div>
+            <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+            <span>AI Assist</span>
+          </button>
 
-        {/* Right: Font Family & Font Size Adjusters */}
-        <div className="flex items-center gap-1.5 ml-auto">
-          {/* Font Family Dropdown */}
+          {/* Font & Typography Menu */}
           <div className="relative" ref={fontMenuRef}>
             <button
               onClick={() => setShowFontMenu(prev => !prev)}
-              className="flex items-center gap-1.5 px-2 py-0.5 bg-[#FAF7F2] hover:bg-[#F0ECE4] border rounded text-[11px] text-[#26221F] font-medium transition-colors"
-              style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-              title="Change note font family"
+              className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+              title="Font family & size"
             >
-              <Type className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-              <span className="font-semibold">{currentFontConfig.label}</span>
-              <ChevronDown className="w-2.5 h-2.5 text-stone-400" />
+              <Type className="w-3.5 h-3.5" />
             </button>
 
             {showFontMenu && (
               <div
-                className="absolute right-0 mt-1 w-44 bg-white border rounded-xl shadow-lg p-1 z-30 animate-fadeIn"
+                className="absolute right-0 mt-1 w-48 bg-white border rounded-xl shadow-xl p-2 z-40 animate-fadeIn"
                 style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
               >
                 <div className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-stone-400">
-                  Select Font Style
+                  Font Family
                 </div>
                 {FONT_FAMILY_OPTIONS.map(font => (
                   <button
@@ -1257,398 +1123,388 @@ ${noteText}
                     }}
                   >
                     <span>{font.label}</span>
-                    <span className="text-[10px] opacity-60">Sample</span>
+                    {activeFontFamilyId === font.id && <Check className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />}
                   </button>
                 ))}
+
+                <div className="border-t my-1.5 pt-1.5 px-2">
+                  <div className="text-[10px] uppercase font-bold tracking-wider text-stone-400 mb-1">
+                    Font Size
+                  </div>
+                  <div className="flex items-center justify-between bg-stone-50 border rounded-lg px-2 py-1">
+                    <button
+                      onClick={() => handleStepFontSize('down')}
+                      disabled={activeFontSizeId === 'xs'}
+                      className="p-0.5 text-stone-600 hover:text-black disabled:opacity-30"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="text-xs font-mono font-medium text-stone-700">
+                      {currentSizeConfig.pxLabel}
+                    </span>
+                    <button
+                      onClick={() => handleStepFontSize('up')}
+                      disabled={activeFontSizeId === 'xl'}
+                      className="p-0.5 text-stone-600 hover:text-black disabled:opacity-30"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Font Size Stepper */}
-          <div
-            className="flex items-center bg-[#FAF7F2] border rounded px-1 py-0.5 gap-1"
-            style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-          >
-            <button
-              onClick={() => handleStepFontSize('down')}
-              disabled={activeFontSizeId === 'xs'}
-              className="p-0.5 text-stone-600 hover:text-black disabled:opacity-30 transition-colors"
-              title="Decrease font size"
-            >
-              <Minus className="w-3 h-3" />
-            </button>
-            <span className="text-[10.5px] font-mono font-medium px-1 text-stone-600">
-              {currentSizeConfig.pxLabel}
-            </span>
-            <button
-              onClick={() => handleStepFontSize('up')}
-              disabled={activeFontSizeId === 'xl'}
-              className="p-0.5 text-stone-600 hover:text-black disabled:opacity-30 transition-colors"
-              title="Increase font size"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
-          </div>
-
-          {/* Dedicated Separation Line */}
-          <div className="w-[1px] h-4 bg-[#DCD5C9] mx-0.5 shrink-0" />
-
-          {/* Summarize Notes Button */}
+          {/* Preview / Edit Toggle */}
           <button
-            onClick={handleSummarizeNotes}
-            disabled={isAiThinking}
-            className="inline-flex items-center gap-1 px-2 py-0.5 border rounded text-[11px] font-semibold transition-colors disabled:opacity-50"
-            style={{
-              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-              color: 'var(--clean-accent-dark, #B4793D)',
-              borderColor: 'var(--clean-accent-border, #E2D5C3)'
-            }}
-            title="Summarize your notes for this journal using AI"
+            type="button"
+            onClick={() => setIsPreviewMode(prev => !prev)}
+            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+            title={isPreviewMode ? 'Switch to Edit mode' : 'Switch to Markdown Preview'}
           >
-            <Sparkles className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-            <span className="hidden sm:inline">Summarize</span>
+            {isPreviewMode ? <Edit2 className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" /> : <Eye className="w-3.5 h-3.5" />}
           </button>
 
-          {/* Dedicated Separation Line */}
-          <div className="w-[1px] h-4 bg-[#DCD5C9] mx-0.5 shrink-0" />
+          {/* Copy Note */}
+          <button
+            onClick={handleCopyNote}
+            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+            title="Copy entire note"
+          >
+            {copiedNotification ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
 
-          {/* Note Actions: Copy & Download */}
-          <div className="flex items-center gap-0.5">
-            <button
-              onClick={handleCopyNote}
-              className="p-1 rounded hover:bg-[#FAF7F2] text-stone-500 hover:text-stone-800 transition-colors"
-              title="Copy note to clipboard"
-            >
-              {copiedNotification ? (
-                <Check className="w-3.5 h-3.5 text-emerald-600 animate-bounce" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
-              )}
-            </button>
-            <button
-              onClick={() => activeTab && downloadNoteAsFile(activeTab)}
-              className="p-1 rounded hover:bg-[#FAF7F2] text-stone-500 hover:text-stone-800 transition-colors"
-              title="Download as Markdown file"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {/* Download Note */}
+          <button
+            onClick={() => activeTab && downloadNoteAsFile(activeTab)}
+            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+            title="Download note as file (.txt)"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
-      {/* 3. FORMATTING QUICK TOOLBAR (Live Bold & Directly Selectable 4-Color Highlighter) */}
+      {/* 2. SINGLE NOTION-STYLE FORMATTING TOOLBAR */}
       <div
-        className="flex items-center gap-1.5 px-3 py-1 bg-[#FAF8F5] border-b text-stone-500 text-xs overflow-x-auto custom-scrollbar"
-        style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
+        className="px-3 sm:px-4 py-1.5 border-b bg-[#FCFBF9] flex items-center justify-between text-xs text-stone-700 shrink-0 gap-1.5 overflow-x-auto no-scrollbar flex-nowrap"
+        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
       >
-        {/* Bold Button */}
-        <button
-          type="button"
-          onMouseDown={e => e.preventDefault()}
-          onClick={handleToggleBold}
-          className="px-2.5 py-1 font-bold hover:bg-[#EBE5DC] bg-white rounded text-stone-800 transition-colors text-xs flex items-center justify-center border hover:border-stone-300 active:scale-95 shadow-2xs"
-          style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-          title="Bold (Selection or Cursor) - Cmd+B / Ctrl+B"
-        >
-          B
-        </button>
+        <div className="flex items-center gap-1 shrink-0 flex-nowrap">
+          {/* Heading Style Dropdown */}
+          <div className="relative" ref={styleMenuRef}>
+            <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => setShowStyleMenu(prev => !prev)}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-stone-200/60 font-medium text-xs text-stone-700 transition-colors"
+              title="Text style"
+            >
+              <span>Heading</span>
+              <ChevronDown className="w-3 h-3 text-stone-400" />
+            </button>
 
-        {/* Dedicated Separation Line */}
-        <div className="w-[1px] h-4 bg-[#DCD5C9] mx-1 shrink-0" />
+            {showStyleMenu && (
+              <div className="absolute left-0 mt-1 w-32 bg-white border border-stone-200 rounded-lg shadow-lg p-1 z-30 animate-fadeIn">
+                <button
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleFormatBlock('<p>')}
+                  className="w-full text-left px-2 py-1 rounded text-xs hover:bg-stone-100"
+                >
+                  Normal text
+                </button>
+                <button
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleHeading('h1')}
+                  className="w-full text-left px-2 py-1 rounded text-base font-bold hover:bg-stone-100"
+                >
+                  Heading 1
+                </button>
+                <button
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleHeading('h2')}
+                  className="w-full text-left px-2 py-1 rounded text-sm font-semibold hover:bg-stone-100"
+                >
+                  Heading 2
+                </button>
+                <button
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleHeading('h3')}
+                  className="w-full text-left px-2 py-1 rounded text-xs font-semibold hover:bg-stone-100"
+                >
+                  Heading 3
+                </button>
+              </div>
+            )}
+          </div>
 
-        {/* Highlight Swatches Palette: Yellow, Green, Red, Blue usable for left side book or notes */}
-        <div
-          className="flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all"
-          style={isHighlighterMode ? {
-            backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
-            borderColor: 'var(--clean-accent-border-strong, #B4793D)'
-          } : {
-            backgroundColor: '#FFFFFF',
-            borderColor: 'var(--clean-accent-border, #EBE5DC)'
-          }}
-        >
+          <div className="w-[1px] h-3.5 bg-stone-300 mx-0.5 shrink-0" />
+
+          {/* Bold & Italic */}
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
-            onClick={handleToggleHighlighterButton}
-            className="p-1 rounded transition-all flex items-center gap-1 mr-0.5"
-            style={isHighlighterMode ? {
-              backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
-              color: '#FFFFFF'
-            } : undefined}
-            title={
-              selectedVerse
-                ? `Highlight v.${selectedVerse.verseNumber} on book side (Strictly saved to "${activeTab?.title}")`
-                : isHighlighterMode
-                  ? 'Highlighter mode active on book side — click to turn off'
-                  : `Highlighter tool (${activeHighlightColor}) — click to turn on or highlight selection`
-            }
+            onClick={handleToggleBold}
+            className="p-1 hover:bg-stone-200/60 rounded text-stone-700 hover:text-black transition-colors"
+            title="Bold (Cmd+B)"
           >
-            <Highlighter className={`w-3 h-3 ${isHighlighterMode ? 'text-white' : ''}`} style={!isHighlighterMode ? { color: 'var(--clean-accent-caramel, #B4793D)' } : undefined} />
-            <span className={`font-bold text-[11px] ${isHighlighterMode ? 'text-white' : 'text-stone-700'}`}>H</span>
+            <Bold className="w-3.5 h-3.5" />
           </button>
 
-          {/* Small internal divider */}
-          <div className="w-[1px] h-3.5 mx-0.5 shrink-0 bg-[#DCD5C9]" />
-
-          {/* 4 Dedicated Color Buttons */}
-          {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
-            const cfg = HIGHLIGHT_CONFIG[color];
-            const isCurrent = activeHighlightColor === color;
-            return (
-              <button
-                key={color}
-                type="button"
-                onMouseDown={e => e.preventDefault()}
-                onClick={() => handleApplyHighlight(color)}
-                className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${isCurrent
-                    ? 'ring-2 ring-stone-800 ring-offset-1 scale-105 shadow-xs'
-                    : 'hover:scale-105 opacity-85 hover:opacity-100'
-                  }`}
-                style={{
-                  backgroundColor: cfg.bg,
-                  border: `1.5px solid ${cfg.border}`
-                }}
-                title={`Highlight in ${cfg.label} (Strictly confined to "${activeTab?.title}")`}
-              >
-                {isCurrent && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: cfg.text }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Dedicated Separation Line */}
-        <div className="w-[1px] h-4 bg-[#DCD5C9] mx-1 shrink-0" />
-
-        {/* Text Styling (Italic, Heading) */}
-        <div className="flex items-center gap-0.5">
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
             onClick={handleToggleItalic}
-            className="px-2 py-1 italic font-serif hover:bg-[#EBE5DC] rounded text-stone-700 transition-colors"
-            title="Italic (Cmd+I / Ctrl+I)"
+            className="p-1 hover:bg-stone-200/60 rounded text-stone-700 hover:text-black transition-colors"
+            title="Italic (Cmd+I)"
           >
-            I
+            <Italic className="w-3.5 h-3.5" />
           </button>
-          <button
-            type="button"
-            onMouseDown={e => e.preventDefault()}
-            onClick={handleHeading}
-            className="px-2 py-1 font-semibold hover:bg-[#EBE5DC] rounded text-stone-700 transition-colors text-xs"
-            title="Heading 3"
-          >
-            H3
-          </button>
-        </div>
 
-        {/* Dedicated Separation Line */}
-        <div className="w-[1px] h-4 bg-[#DCD5C9] mx-1 shrink-0" />
+          <div className="w-[1px] h-3.5 bg-stone-300 mx-0.5 shrink-0" />
 
-        {/* Structure Elements (List, Checklist, Quote, Divider) */}
-        <div className="flex items-center gap-0.5">
+          {/* Lists, Quote, Divider */}
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
             onClick={handleBulletList}
-            className="p-1.5 hover:bg-[#EBE5DC] rounded text-stone-700 transition-colors"
+            className="p-1 hover:bg-stone-200/60 rounded text-stone-700 hover:text-black transition-colors"
             title="Bullet List"
           >
             <List className="w-3.5 h-3.5" />
           </button>
+
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={handleOrderedList}
+            className="px-1.5 py-0.5 hover:bg-stone-200/60 rounded text-[11px] font-mono font-bold text-stone-700 hover:text-black transition-colors"
+            title="Numbered List"
+          >
+            1.
+          </button>
+
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
             onClick={handleTaskItem}
-            className="p-1.5 hover:bg-[#EBE5DC] rounded text-stone-700 transition-colors"
-            title="Checklist / Task"
+            className="p-1 hover:bg-stone-200/60 rounded text-stone-700 hover:text-black transition-colors"
+            title="Checklist"
           >
             <CheckSquare className="w-3.5 h-3.5" />
           </button>
+
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
             onClick={handleQuoteBlock}
-            className="p-1.5 hover:bg-[#EBE5DC] rounded text-stone-700 transition-colors"
+            className="p-1 hover:bg-stone-200/60 rounded text-stone-700 hover:text-black transition-colors"
             title="Quote Block"
           >
             <Quote className="w-3.5 h-3.5" />
           </button>
+
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
             onClick={handleHorizontalRule}
-            className="px-2 py-1 hover:bg-[#EBE5DC] rounded text-[11px] text-stone-700 font-mono transition-colors"
-            title="Horizontal Rule / Divider"
+            className="p-1 hover:bg-stone-200/60 rounded text-stone-700 hover:text-black transition-colors"
+            title="Divider Line"
           >
-            Divider
+            <Minus className="w-3.5 h-3.5" />
           </button>
-        </div>
 
-        {/* Dedicated Separation Line */}
-        <div className="w-[1px] h-4 bg-[#DCD5C9] mx-1 shrink-0" />
+          <div className="w-[1px] h-3.5 bg-stone-300 mx-0.5 shrink-0" />
 
-        {/* Structured Outlines & Section Demarcation */}
-        <div className="flex items-center gap-1">
+          {/* Sleek Highlighter */}
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-stone-200 bg-white shadow-2xs shrink-0">
+            <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={handleToggleHighlighterButton}
+              className="p-0.5 rounded text-stone-700 hover:text-black"
+              title="Highlight selection"
+            >
+              <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+            </button>
+            <div className="w-[1px] h-3 bg-stone-200 shrink-0" />
+            {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
+              const cfg = HIGHLIGHT_CONFIG[color];
+              const isCurrent = activeHighlightColor === color;
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleApplyHighlight(color)}
+                  className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-all ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100'}`}
+                  style={{ backgroundColor: cfg.bg, border: `1px solid ${cfg.border}` }}
+                  title={`Highlight in ${cfg.label}`}
+                />
+              );
+            })}
+          </div>
+
+          <div className="w-[1px] h-3.5 bg-stone-300 mx-0.5 shrink-0" />
+
+          {/* Quick Quote Active Verse */}
+          {selectedVerse && (
+            <button
+              onClick={handleInsertScripture}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white hover:bg-[var(--clean-highlight-cream,#FAF3E8)] border border-stone-200 hover:border-[var(--clean-accent-caramel,#B4793D)] text-[11px] font-medium text-[#26221F] shadow-2xs transition-colors shrink-0"
+              title={`Quote ${currentBook} ${currentChapter}:${selectedVerse.verseNumber} into note`}
+            >
+              <Quote className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+              <span>Quote v.{selectedVerse.verseNumber}</span>
+            </button>
+          )}
+
+          {/* Structured Outline Insert */}
           <button
             type="button"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertOutline}
-            className="px-2 py-0.5 bg-white rounded text-[11px] font-semibold transition-all flex items-center gap-1 shadow-2xs active:scale-95 border"
-            style={{
-              borderColor: 'var(--clean-accent-border, #E2D5C3)',
-              color: 'var(--clean-accent-dark, #B4793D)'
-            }}
-            title="Insert Structured Study Outline (Header, Scripture, Notes, Application)"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white hover:bg-[var(--clean-highlight-cream,#FAF3E8)] border border-stone-200 hover:border-[var(--clean-accent-caramel,#B4793D)] text-[11px] font-semibold text-[var(--clean-accent-dark,#B4793D)] shadow-2xs transition-colors shrink-0"
+            title="Insert study outline template"
           >
-            <LayoutTemplate className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-            <span>Outline</span>
-          </button>
-          <button
-            type="button"
-            onMouseDown={e => e.preventDefault()}
-            onClick={handleInsertHeaderBox}
-            className="px-1.5 py-0.5 bg-white hover:bg-stone-50 border text-stone-700 rounded text-[11px] transition-all shadow-2xs active:scale-95"
-            style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
-            title="Insert a dedicated Section Header box"
-          >
-            + Header Box
+            <LayoutTemplate className="w-3 h-3" />
+            <span>+ Outline</span>
           </button>
         </div>
 
-        {/* Dedicated Separation Line */}
-        <div className="w-[1px] h-4 bg-[#DCD5C9] mx-1 shrink-0" />
-
-        {/* Edit vs Preview Toggle Button */}
-        <button
-          type="button"
-          onClick={() => setIsPreviewMode(prev => !prev)}
-          className="ml-auto px-2.5 py-1 rounded text-[11px] font-semibold transition-colors flex items-center gap-1 border"
-          style={isPreviewMode ? {
-            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-            color: 'var(--clean-accent-dark, #B4793D)',
-            borderColor: 'var(--clean-accent-border, #E2D5C3)'
-          } : {
-            backgroundColor: '#FFFFFF',
-            color: '#57524E',
-            borderColor: 'var(--clean-accent-border, #E2D5C3)'
-          }}
-          title={isPreviewMode ? 'Switch to edit mode' : 'Preview formatted text, bold & highlights'}
-        >
-          {isPreviewMode ? (
-            <>
-              <Edit2 className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-              <span>Edit</span>
-            </>
-          ) : (
-            <>
-              <Eye className="w-3 h-3 text-stone-500" />
-              <span>Preview</span>
-            </>
-          )}
-        </button>
-
-        {copiedNotification && (
-          <span className="text-[10.5px] text-emerald-600 font-medium animate-fadeIn ml-1">
-            Copied!
+        {/* Right Status Indicator */}
+        <div className="flex items-center gap-2 text-[10.5px] text-stone-500 font-mono shrink-0 ml-auto">
+          <span className="text-emerald-700 flex items-center gap-1 font-sans">
+            <Check className="w-3 h-3" />
+            <span>Saved</span>
           </span>
-        )}
+          <span>•</span>
+          <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+        </div>
       </div>
 
-      {/* 4. MAIN NOTE EDITOR AREA */}
-      <div 
-        className="flex-1 flex flex-col p-3 gap-2.5 overflow-hidden"
-        style={{ backgroundColor: 'var(--clean-surface-subtle, #FAF8F5)' }}
-      >
-        {/* Header Section: Outlined Title Input + Context Metadata */}
-        <div className="flex flex-col gap-1.5 shrink-0">
+      {/* 3. DISTRACTION-FREE NOTION/CRAFT DOCUMENT CANVAS */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-10 lg:px-12 py-6 sm:py-8 flex flex-col custom-scrollbar bg-white">
+        <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col">
+          {/* Note Title Input (Large Notion-Style Header) */}
           <input
             type="text"
             value={activeTab?.title || ''}
             onChange={e => handleTitleChange(e.target.value)}
-            placeholder="Title of this note..."
-            className="w-full px-3 py-2 text-base sm:text-lg font-bold text-[#26221F] bg-white border rounded-lg outline-none transition-all shadow-2xs focus:ring-2 focus:ring-[var(--clean-accent-caramel,#B4793D)]/25"
+            placeholder="Untitled Note"
+            className="w-full text-2xl sm:text-3xl font-bold font-heading text-[#26221F] placeholder:text-stone-300 bg-transparent border-none outline-none mb-2 pb-1"
             style={{
-              borderColor: 'var(--clean-accent-border, #DCD5C9)',
-              borderWidth: '1.5px',
-              fontFamily: currentFontConfig.cssFamily
+              fontFamily: currentFontConfig.cssFamily,
+              border: 'none',
+              outline: 'none',
+              boxShadow: 'none'
             }}
           />
-          <div className="flex items-center justify-between text-[11px] text-[var(--clean-text-secondary,#78716C)] px-1">
-            <span className="font-semibold text-[var(--clean-accent-caramel,#B4793D)] flex items-center gap-1">
-              <span>📖</span>
-              <span>{activeTab?.book && activeTab?.chapter ? `${activeTab.book} ${activeTab.chapter} Journal` : 'General Journal'}</span>
-            </span>
-            <span className="text-[10px] font-mono opacity-60">
-              {activeTab?.updatedAt ? new Date(activeTab.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-            </span>
-          </div>
-        </div>
 
-        {/* Clear Separation Line between Header and Writing Space */}
-        <div
-          className="w-full border-b shrink-0"
-          style={{ borderColor: 'var(--clean-accent-border, #E2D9CC)' }}
-        />
-
-        {/* Outlined Writing Space: Clearly framed box where the user writes */}
-        <div
-          className="flex-1 min-h-0 flex flex-col rounded-xl border bg-white shadow-2xs overflow-hidden transition-colors"
-          style={{
-            borderColor: 'var(--clean-accent-border, #DCD5C9)',
-            borderWidth: '1.5px'
-          }}
-        >
-          {isPreviewMode ? (
-            <div
-              className="w-full h-full overflow-y-auto custom-scrollbar p-3.5 select-text"
-              style={{
-                fontFamily: currentFontConfig.cssFamily,
-                fontSize: currentSizeConfig.cssSize
-              }}
-            >
-              {activeTab?.content?.trim() ? (
-                <MarkdownTheologyRenderer content={activeTab.content} />
-              ) : (
-                <span className="text-stone-300 italic">This note is currently empty. Click "Edit" above to type.</span>
-              )}
-            </div>
-          ) : (
-            <div className="relative w-full h-full flex flex-col p-3.5">
-              {/* Quick Outline Starter Banner for Empty Notes */}
-              {(!activeTab?.content || activeTab.content.trim() === '') && (
-                <div
-                  className="mb-2 p-2 rounded-lg border flex items-center justify-between gap-2 select-none animate-fadeIn shrink-0"
-                  style={{
-                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                  }}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <LayoutTemplate className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-                    <span className="text-[11px] text-[#26221F] font-medium">
-                      Need structured section headers and outlines?
-                    </span>
-                  </div>
+          {/* Document Context Metadata Row */}
+          <div className="flex items-center justify-between text-xs text-stone-500 pb-3 mb-4 border-b border-stone-100 flex-wrap gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {activeTab?.book && activeTab?.chapter ? (
+                <div className="flex items-center gap-1.5">
                   <button
-                    type="button"
-                    onClick={handleInsertOutline}
-                    className="px-2 py-0.5 bg-white border rounded text-[10.5px] font-semibold transition-all shadow-2xs active:scale-95 shrink-0"
-                    style={{
-                      borderColor: 'var(--clean-accent-border-strong, #D4A373)',
-                      color: 'var(--clean-accent-dark, #B4793D)'
+                    onClick={() => {
+                      if (onSelectPassage && activeTab.book && activeTab.chapter) {
+                        const targetBook = BIBLE_BOOKS.find(
+                          b => b.name.toLowerCase() === activeTab.book!.toLowerCase() || b.id.toLowerCase() === activeTab.book!.toLowerCase()
+                        );
+                        if (targetBook) {
+                          onSelectPassage(targetBook.id, activeTab.chapter);
+                        }
+                      }
                     }}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FAF5ED] border border-[#E8E2D8] text-[var(--clean-accent-dark,#B4793D)] font-semibold hover:bg-[#F5ECE0] transition-colors"
+                    title={`Open ${activeTab.book} ${activeTab.chapter} in Bible reader`}
                   >
-                    + Insert Study Outline
+                    <BookOpen className="w-3 h-3" />
+                    <span>{activeTab.book} {activeTab.chapter}</span>
+                    <ExternalLink className="w-2.5 h-2.5 ml-0.5 opacity-70" />
+                  </button>
+                  <button
+                    onClick={handleToggleCurrentChapterLink}
+                    className="text-[10px] text-stone-400 hover:text-stone-700 underline"
+                    title="Change to general note"
+                  >
+                    Unlink
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 font-medium">
+                    General Reflection
+                  </span>
+                  <button
+                    onClick={handleToggleCurrentChapterLink}
+                    className="text-[10px] text-[var(--clean-accent-caramel,#B4793D)] hover:underline"
+                    title={`Link note to ${currentBook} ${currentChapter}`}
+                  >
+                    Link to {currentBook} {currentChapter}
                   </button>
                 </div>
               )}
+            </div>
 
+            <div className="flex items-center gap-3 text-[11px] text-stone-400 font-mono shrink-0">
+              <span>{activeTab?.updatedAt ? new Date(activeTab.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</span>
+              <span>•</span>
+              <span>{currentFontConfig.label}</span>
+            </div>
+          </div>
+
+          {/* Quick Outline Starter Banner for Empty Notes */}
+          {(!activeTab?.content || activeTab.content.trim() === '') && (
+            <div
+              className="p-3 mb-4 rounded-xl border flex items-center justify-between gap-3 select-none animate-fadeIn"
+              style={{
+                backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <LayoutTemplate className="w-4 h-4 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
+                <span className="text-xs text-[#26221F] font-medium">
+                  Looking for structure? Insert a study outline with key verses, themes & observations.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleInsertOutline}
+                className="px-3 py-1 bg-white border rounded-lg text-xs font-bold transition-all shadow-2xs hover:bg-[#FAF3E8] shrink-0"
+                style={{
+                  borderColor: 'var(--clean-accent-border-strong, #D4A373)',
+                  color: 'var(--clean-accent-dark, #B4793D)'
+                }}
+              >
+                + Insert Outline
+              </button>
+            </div>
+          )}
+
+          {/* Rich Text Editor or Markdown Preview */}
+          <div className="flex-1 flex flex-col relative min-h-[350px]">
+            {isPreviewMode ? (
+              <div
+                className="w-full h-full overflow-y-auto custom-scrollbar select-text leading-relaxed p-1"
+                style={{
+                  fontFamily: currentFontConfig.cssFamily,
+                  fontSize: currentSizeConfig.cssSize
+                }}
+              >
+                {activeTab?.content?.trim() ? (
+                  <MarkdownTheologyRenderer content={activeTab.content} />
+                ) : (
+                  <span className="text-stone-300 italic">This note is currently empty. Click "Edit" above to start typing.</span>
+                )}
+              </div>
+            ) : (
               <div
                 ref={editorRef}
                 contentEditable
@@ -1657,101 +1513,105 @@ ${noteText}
                 onMouseUp={saveSelection}
                 onKeyUp={saveSelection}
                 onSelect={saveSelection}
-                onBlur={saveSelection}
-                data-placeholder="Write your study notes, reflections, sermon points, or verse comparisons here... Use B to bold, H to highlight (Yellow, Green, Red, Blue), or click Outline above."
-                className="rich-notepad-editor w-full flex-1 outline-none text-[#26221F] leading-relaxed overflow-y-auto custom-scrollbar p-1 bg-transparent select-text"
+                onBlur={() => {
+                  handleEditorInput();
+                  saveSelection();
+                }}
+                data-placeholder="Start typing your study notes, reflections, or sermon points here..."
+                className="rich-notepad-editor w-full flex-1 outline-none text-[#26221F] leading-relaxed p-1 bg-transparent select-text"
                 style={{
                   fontFamily: currentFontConfig.cssFamily,
                   fontSize: currentSizeConfig.cssSize,
                   lineHeight: activeFontFamilyId === 'script' ? '1.9' : '1.7'
                 }}
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* 5. DEDICATED ASK AI COMPANION BOX (Google Docs Gemini style) */}
+      {/* 4. COLLAPSIBLE AI ASSISTANT DRAWER (Non-Intrusive, Preserves 80%+ Writing Space) */}
       <div
-        className="border-t p-2 flex flex-col gap-1.5 flex-shrink-0"
+        className="border-t flex flex-col flex-shrink-0 transition-all select-none"
         style={{
           borderTopColor: 'var(--clean-accent-border, #EBE5DC)',
           backgroundColor: 'var(--clean-highlight-cream, #FAF8F5)'
         }}
       >
-        {/* Header with Title & Collapse Toggle */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-1.5">
-            <div
-              className="w-4 h-4 rounded border flex items-center justify-center"
-              style={{
-                backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
-                borderColor: 'var(--clean-accent-border, #E2D5C3)'
-              }}
-            >
-              <Sparkles className="w-2.5 h-2.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-            </div>
-            <span
-              className="text-[11px] font-bold"
-              style={{ color: 'var(--clean-accent-dark, #26221F)' }}
-            >
-              Ask AI Companion
-            </span>
-            <span className="text-[9.5px] text-[#78716C] hidden sm:inline">
-              • Works alongside your notes
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {aiResponse && (
-              <button
-                onClick={() => setAiResponse(null)}
-                className="text-[10px] text-stone-500 hover:text-stone-800 px-1.5 py-0.5 rounded hover:bg-stone-200/60 transition-colors"
-                title="Dismiss AI response"
-              >
-                Clear
-              </button>
-            )}
+        {/* Collapsed State Bar */}
+        {!isAiBoxExpanded ? (
+          <div className="px-3 sm:px-4 py-2 pr-32 flex items-center justify-between text-xs text-stone-600">
             <button
-              onClick={() => setIsAiBoxExpanded(prev => !prev)}
-              className="p-0.5 rounded text-stone-500 hover:text-stone-800 transition-colors"
-              title={isAiBoxExpanded ? 'Minimize AI companion' : 'Expand AI companion'}
+              onClick={() => setIsAiBoxExpanded(true)}
+              className="flex items-center gap-2 hover:text-[var(--clean-accent-dark,#B4793D)] font-medium transition-colors"
             >
-              {isAiBoxExpanded ? (
-                <ChevronDown className="w-3.5 h-3.5" />
-              ) : (
-                <ChevronUp className="w-3.5 h-3.5" />
-              )}
+              <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+              <span>Ask Berea AI Assistant about notes & Scripture</span>
+            </button>
+
+            <button
+              onClick={() => setIsAiBoxExpanded(true)}
+              className="p-1 rounded text-stone-400 hover:text-stone-700 flex items-center gap-1 shrink-0"
+              title="Open AI companion"
+            >
+              <span className="text-[10px] text-stone-400 hidden sm:inline">Expand</span>
+              <ChevronUp className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
+        ) : (
+          /* Expanded State Drawer */
+          <div className="p-3 pb-4 pr-32 flex flex-col gap-2 animate-fadeIn max-h-60 overflow-y-auto custom-scrollbar">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+                <span className="text-xs font-bold text-[#26221F]">
+                  Berea AI Companion
+                </span>
+                <span className="text-[10px] text-[#78716C] hidden sm:inline">
+                  • Connected to your notes & Scripture
+                </span>
+              </div>
 
-        {isAiBoxExpanded && (
-          <>
-            {/* AI Response Card (Compact, Non-Intrusive, Scrollable so editor is never covered) */}
+              <div className="flex items-center gap-1">
+                {aiResponse && (
+                  <button
+                    onClick={() => setAiResponse(null)}
+                    className="text-[10px] text-stone-500 hover:text-stone-800 px-1.5 py-0.5 rounded hover:bg-stone-200/60"
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsAiBoxExpanded(false)}
+                  className="p-1 rounded text-stone-500 hover:text-stone-800"
+                  title="Minimize AI companion"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* AI Response Card */}
             {aiResponse && (
               <div
-                className="bg-white border rounded-xl p-2.5 shadow-xs flex flex-col gap-1.5 max-h-40 overflow-y-auto custom-scrollbar animate-fadeIn flex-shrink-0"
+                className="bg-white border rounded-xl p-2.5 shadow-xs flex flex-col gap-1.5 max-h-36 overflow-y-auto custom-scrollbar"
                 style={{ borderColor: 'var(--clean-accent-border, #E2D5C3)' }}
               >
                 <div className="flex items-center justify-between border-b border-stone-100 pb-1 sticky top-0 bg-white z-10">
-                  <span
-                    className="text-[10px] font-bold flex items-center gap-1 truncate max-w-[200px]"
-                    style={{ color: 'var(--clean-accent-dark, #78471F)' }}
-                  >
-                    <Sparkles className="w-2.5 h-2.5 shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                  <span className="text-[10.5px] font-bold text-[#78471F] flex items-center gap-1 truncate max-w-[220px]">
+                    <Sparkles className="w-2.5 h-2.5 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
                     <span className="truncate">{aiResponse.prompt}</span>
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={handleInsertAiResponse}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 border rounded text-[10px] font-semibold transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 border rounded text-[10px] font-semibold transition-colors shadow-2xs"
                       style={{
                         backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
                         color: 'var(--clean-accent-dark, #B4793D)',
                         borderColor: 'var(--clean-accent-border, #E2D5C3)'
                       }}
-                      title="Insert AI content directly into your note"
                     >
                       {aiInserted ? (
                         <>
@@ -1767,45 +1627,27 @@ ${noteText}
                     </button>
                     <button
                       onClick={handleCopyAiResponse}
-                      className="p-1 rounded hover:bg-stone-100 text-stone-500 hover:text-stone-800 transition-colors"
+                      className="p-1 rounded hover:bg-stone-100 text-stone-500 hover:text-stone-800"
                       title="Copy response"
                     >
-                      {aiCopied ? (
-                        <Check className="w-3 h-3 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
+                      {aiCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                     </button>
                     <button
                       onClick={() => setAiResponse(null)}
-                      className="p-1 rounded hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-colors"
-                      title="Close response"
+                      className="p-1 rounded hover:bg-stone-100 text-stone-400 hover:text-stone-700"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
 
-                <div className="text-xs text-[var(--clean-text-primary,#26221F)] leading-relaxed select-text">
+                <div className="text-xs text-[#26221F] leading-relaxed select-text">
                   <MarkdownTheologyRenderer content={aiResponse.text} />
                 </div>
-
-                {aiResponse.citation && (
-                  <div
-                    className="text-[9.5px] px-2 py-0.5 rounded border font-mono"
-                    style={{
-                      backgroundColor: 'var(--clean-highlight-cream, #FAF8F5)',
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                      color: 'var(--clean-accent-dark, #78716C)'
-                    }}
-                  >
-                    Ref: {aiResponse.citation}
-                  </div>
-                )}
               </div>
             )}
 
-            {/* AI Thinking State */}
+            {/* AI Thinking Animation */}
             {isAiThinking && (
               <div
                 className="flex items-center gap-2 p-2 rounded-xl text-xs animate-pulse border"
@@ -1815,8 +1657,8 @@ ${noteText}
                   color: 'var(--clean-accent-dark, #78471F)'
                 }}
               >
-                <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-                <span className="text-[11px] font-medium">Consulting Scripture & confessional standards for your notes...</span>
+                <Sparkles className="w-3.5 h-3.5 animate-spin text-[var(--clean-accent-caramel,#B4793D)]" />
+                <span className="text-[11px] font-medium">Synthesizing Scripture context and your notes...</span>
               </div>
             )}
 
@@ -1833,7 +1675,7 @@ ${noteText}
                     }
                   }}
                   disabled={isAiThinking}
-                  className="px-2 py-0.5 rounded-full border text-[10px] font-medium transition-colors whitespace-nowrap disabled:opacity-50 shrink-0"
+                  className="px-2 py-0.5 rounded-full border text-[10.5px] font-medium transition-colors whitespace-nowrap disabled:opacity-50 shrink-0"
                   style={s.action === 'summarize' ? {
                     backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
                     borderColor: 'var(--clean-accent-border-strong, #B4793D)',
@@ -1856,7 +1698,7 @@ ${noteText}
                 e.preventDefault();
                 handleAskAi();
               }}
-              className="flex items-center gap-1.5 bg-white border rounded-xl px-2.5 py-1.5 transition-all shadow-xs"
+              className="flex items-center gap-2 bg-white border rounded-xl px-3 py-1.5 transition-all shadow-xs"
               style={{ borderColor: 'var(--clean-accent-border, #E2D5C3)' }}
             >
               <input
@@ -1869,57 +1711,24 @@ ${noteText}
                     : `Ask AI to explain ${currentBook} ${currentChapter}, provide insights, draft outline...`
                 }
                 disabled={isAiThinking}
-                className="flex-1 bg-transparent text-xs text-[#26221F] placeholder:text-[#A8A29E] outline-none"
+                className="flex-1 bg-transparent text-xs text-[#26221F] placeholder:text-stone-400 outline-none border-none"
+                style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
               />
 
               <button
                 type="submit"
                 disabled={!aiQuery.trim() || isAiThinking}
-                className="p-1 rounded-lg text-white disabled:opacity-30 transition-colors shrink-0"
+                className="p-1.5 rounded-lg text-white disabled:opacity-30 transition-colors shrink-0"
                 style={{ backgroundColor: 'var(--clean-accent-caramel, #B4793D)' }}
-                title="Ask AI"
+                title="Send query"
               >
                 <Send className="w-3 h-3" />
               </button>
             </form>
-          </>
+          </div>
         )}
-      </div>
-
-      {/* 6. STATUS FOOTER */}
-      <div
-        className="flex items-center justify-between px-3 py-1.5 border-t text-[10.5px] text-[#78716C] flex-shrink-0 select-none"
-        style={{
-          borderTopColor: 'var(--clean-accent-border, #EBE5DC)',
-          backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)'
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-emerald-700">
-            <Check className="w-3 h-3" />
-            <span>Saved locally ({lastSavedTime})</span>
-          </span>
-          <span>•</span>
-          <span>
-            {wordCount} {wordCount === 1 ? 'word' : 'words'}
-          </span>
-          <span>•</span>
-          <span>{charCount} chars</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span
-            className="font-mono text-[9.5px] px-1.5 py-0.5 rounded border"
-            style={{
-              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-              borderColor: 'var(--clean-accent-border, #EBE5DC)',
-              color: 'var(--clean-accent-dark, #78716C)'
-            }}
-          >
-            {currentFontConfig.label} • {currentSizeConfig.pxLabel}
-          </span>
-        </div>
       </div>
     </div>
   );
 };
+

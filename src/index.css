@@ -43,6 +43,54 @@
   padding: 0;
 }
 
+/* Modern Clean Form Control Normalization: Strips early 2000s/OS default borders & bevels */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: transparent;
+}
+
+input[type="text"],
+input[type="search"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+textarea {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Chrome / Safari number spinner styling */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
   background-color: var(--clean-bg);
@@ -401,12 +449,29 @@ button:active:not(:disabled) {
   flex: 1 1 0%;
 }
 
-.flex-shrink-0 {
+.flex-shrink-0,
+.shrink-0 {
   flex-shrink: 0;
 }
 
 .flex-wrap {
   flex-wrap: wrap;
+}
+
+.flex-nowrap {
+  flex-wrap: nowrap;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.min-w-fit {
+  min-width: fit-content;
 }
 
 .items-center {
@@ -779,6 +844,10 @@ button:active:not(:disabled) {
 
 .max-w-7xl {
   max-width: 80rem;
+}
+
+.max-w-\[1740px\] {
+  max-width: 1740px;
 }
 
 .max-w-\[100px\] {
@@ -1156,6 +1225,10 @@ button:active:not(:disabled) {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
+.rounded-sm {
+  border-radius: 0.125rem;
+}
+
 .rounded {
   border-radius: 0.25rem;
 }
@@ -1174,6 +1247,10 @@ button:active:not(:disabled) {
 
 .rounded-2xl {
   border-radius: 1rem;
+}
+
+.rounded-3xl {
+  border-radius: 1.5rem;
 }
 
 .rounded-full {
@@ -1225,6 +1302,36 @@ button:active:not(:disabled) {
 .border-transparent {
   border-color: transparent;
 }
+
+.border-none,
+.border-0 {
+  border: none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+}
+
+.border-stone-100 {
+  border-color: #F5F5F4 !important;
+}
+
+.border-stone-200 {
+  border-color: #E7E5E4 !important;
+}
+
+.border-stone-300 {
+  border-color: #D6D3D1 !important;
+}
+
+.outline-none,
+.focus\:outline-none:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.shadow-none {
+  box-shadow: none !important;
+}
+
 
 /* Clean Warm Backgrounds */
 .bg-transparent {
@@ -2094,20 +2201,71 @@ mark.hl-blue {
   font-style: italic;
 }
 
+.rich-notepad-editor ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.rich-notepad-editor ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.rich-notepad-editor li {
+  display: list-item !important;
+  margin: 0.25rem 0 !important;
+}
+
+.rich-notepad-editor hr {
+  border: none !important;
+  border-top: 1.5px solid var(--clean-accent-border, #E2D9CC) !important;
+  margin: 12px 0 !important;
+}
+
+.rich-notepad-editor b,
+.rich-notepad-editor strong {
+  font-weight: 700 !important;
+}
+
+.rich-notepad-editor i,
+.rich-notepad-editor em {
+  font-style: italic !important;
+}
+
+.rich-notepad-editor h1 {
+  font-size: 1.4em !important;
+  font-weight: 800 !important;
+  color: #1C1917 !important;
+  margin: 14px 0 6px 0 !important;
+}
+
+.rich-notepad-editor h2 {
+  font-size: 1.25em !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+  margin: 12px 0 4px 0 !important;
+}
+
 .rich-notepad-editor h3 {
-  font-size: 1.15em;
-  font-weight: 700;
-  color: #26221F;
-  margin-top: 12px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid #EBE5DC;
-  padding-bottom: 2px;
+  font-size: 1.1em !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+  margin: 10px 0 4px 0 !important;
+  border-bottom: 1px solid var(--clean-accent-border, #EBE5DC) !important;
+  padding-bottom: 2px !important;
+}
+
+.rich-notepad-editor mark {
+  border-radius: 3px !important;
+  padding: 1px 4px !important;
 }
 
 /* Rich text editable placeholder */
 .rich-notepad-editor:empty::before {
   content: attr(data-placeholder);
-  color: #cbd5e1;
+  color: #94A3B8;
   pointer-events: none;
   font-style: italic;
 }

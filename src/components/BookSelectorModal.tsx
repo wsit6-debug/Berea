@@ -103,9 +103,12 @@ export const BookSelectorModal: React.FC<BookSelectorModalProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                color: 'var(--clean-text-primary, #26221F)'
+                color: 'var(--clean-text-primary, #26221F)',
+                border: 'none',
+                outline: 'none',
+                boxShadow: 'none'
               }}
-              className="flex-1 bg-transparent text-xs placeholder-[var(--clean-text-secondary,#A8A29E)] focus:outline-none min-w-0"
+              className="flex-1 bg-transparent text-xs placeholder-[var(--clean-text-secondary,#A8A29E)] focus:outline-none min-w-0 border-none"
             />
             {searchQuery && (
               <button

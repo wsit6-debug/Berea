@@ -28,8 +28,8 @@ import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
 export type SettingsTab = 'theme' | 'feedback';
 
 export interface SettingsWidgetProps {
-  onOpenThemeStudio: () => void;
-  onOpenFeedbackModal: () => void;
+  onOpenThemeStudio?: () => void;
+  onOpenFeedbackModal?: () => void;
 }
 
 const ORIGINAL_DEFAULT_PRESET: ThemeConfig = {
@@ -152,57 +152,53 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
     (currentTheme.bgMode === 'warm' || currentTheme.bgHex === '#FAF7F2');
 
   return (
-    <>
-      {/* FLOATING BOTTOM-RIGHT SETTINGS BUTTON */}
-      <div
-        className="fixed bottom-5 right-5 z-50 select-none"
-        style={{ position: 'fixed', bottom: '1.25rem', right: '1.25rem', zIndex: 60 }}
+    <div className="relative flex-shrink-0">
+      {/* HEADER SETTINGS BUTTON */}
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setIsOpen(prev => !prev)}
+        className={`ios-glass-btn transition-all !px-2.5 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer flex-shrink-0 whitespace-nowrap ${
+          isOpen ? 'active font-bold shadow-sm' : ''
+        }`}
+        style={
+          isOpen
+            ? {
+                backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                color: '#FFFFFF'
+              }
+            : {
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                color: 'var(--clean-text-primary, #26221F)'
+              }
+        }
+        aria-label="Open Settings"
+        title="Settings (Theme & Feedback)"
       >
-        <button
-          ref={triggerRef}
-          type="button"
-          onClick={() => setIsOpen(prev => !prev)}
-          className="group flex items-center gap-2 px-3.5 py-2 rounded-full shadow-[0_6px_24px_rgba(0,0,0,0.18)] border transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+        <Settings
+          className={`w-3.5 h-3.5 transition-transform duration-300 flex-shrink-0 ${
+            isOpen ? 'rotate-90' : 'group-hover:rotate-45'
+          }`}
           style={{
-            backgroundColor: isOpen
-              ? 'var(--clean-accent-caramel, #B4793D)'
-              : 'var(--clean-surface, #FFFFFF)',
-            borderColor: isOpen
-              ? 'var(--clean-accent-dark, #78471F)'
-              : 'var(--clean-accent-border, #EBE5DC)',
             color: isOpen
-              ? 'var(--clean-accent-contrast-text, #FFFFFF)'
-              : 'var(--clean-text-primary, #26221F)'
+              ? '#FFFFFF'
+              : 'var(--clean-accent-caramel, #B4793D)'
           }}
-          aria-label="Open Settings"
-          title="Settings"
-        >
-          <Settings
-            className={`w-4 h-4 transition-transform duration-300 ${
-              isOpen ? 'rotate-90' : 'group-hover:rotate-45'
-            }`}
-            style={{
-              color: isOpen
-                ? 'var(--clean-accent-contrast-text, #FFFFFF)'
-                : 'var(--clean-accent-caramel, #B4793D)'
-            }}
-          />
+        />
 
-          <span className="text-xs font-bold font-heading">
-            Settings
-          </span>
-        </button>
-      </div>
+        <span className="text-xs font-semibold whitespace-nowrap">
+          Settings
+        </span>
+      </button>
 
-      {/* Floating Settings Popover Panel - Exactly Same Length and Width Across Tabs */}
+      {/* Settings Popover Panel - Drops down from top bar directly under button */}
       {isOpen && (
         <div
           ref={popoverRef}
-          className="fixed bottom-20 right-5 z-50 flex flex-col rounded-2xl border shadow-2xl backdrop-blur-xl animate-fadeIn overflow-hidden"
+          className="absolute top-full right-0 mt-2 z-50 flex flex-col rounded-2xl border shadow-2xl backdrop-blur-xl animate-fadeIn overflow-hidden"
           style={{
-            position: 'fixed',
-            bottom: '4.75rem',
-            right: '1.25rem',
             zIndex: 70,
             width: '380px',
             maxWidth: 'calc(100vw - 2.5rem)',
@@ -474,7 +470,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
                       type="button"
                       onClick={() => {
                         setIsOpen(false);
-                        onOpenThemeStudio();
+                        onOpenThemeStudio?.();
                       }}
                       className="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                       style={{
@@ -524,7 +520,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
                       type="button"
                       onClick={() => {
                         setIsOpen(false);
-                        onOpenFeedbackModal();
+                        onOpenFeedbackModal?.();
                       }}
                       className="w-full py-2.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 border"
                       style={{
@@ -561,6 +557,6 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };

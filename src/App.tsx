@@ -20,12 +20,11 @@ import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { ColorThemeWheel } from './components/ColorThemeWheel';
-import { SettingsWidget } from './components/SettingsWidget';
 import { FeedbackModal } from './components/FeedbackModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
 import { BereaAiTab, NotepadState } from './types';
-import { loadNotepadState, saveNotepadState } from './services/notepadService';
+import { loadNotepadState, saveNotepadState, createNewNoteTab } from './services/notepadService';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -99,45 +98,53 @@ export function App() {
     setNotepadState(prev => {
       const general = prev.tabs.find(t => !t.book && !t.chapter);
       let pageTab = prev.tabs.find(t => t.book === currentBookName && t.chapter === chapterNum);
-      const otherTabs = prev.tabs.filter(t => t.id !== general?.id);
+
+      // Clean up only auto-generated empty untouched chapter tabs from other chapters
+      const cleanedTabs = prev.tabs.filter(t => {
+        // Keep General Journal
+        if (!t.book && !t.chapter) return true;
+        // Keep current chapter's tab
+        if (t.book === currentBookName && t.chapter === chapterNum) return true;
+        // Keep tabs with text content
+        const rawContent = (t.content || '').replace(/<[^>]*>/g, '').trim();
+        if (rawContent.length > 0 || (t.content && t.content.includes('<img'))) return true;
+        // Keep tabs with verse highlights
+        if (t.verseHighlights && Object.keys(t.verseHighlights).length > 0) return true;
+        // Keep customized/renamed tabs
+        if (t.title !== `${t.book} ${t.chapter} Journal`) return true;
+        // Prune untouched empty auto-generated tabs from other chapters
+        return false;
+      });
 
       if (!pageTab) {
-        pageTab = {
-          id: `tab-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-          title: `${currentBookName} ${chapterNum} Journal`,
-          content: '',
-          book: currentBookName,
-          chapter: chapterNum,
-          fontFamily: prev.globalFontFamily || 'sans',
-          fontSize: prev.globalFontSize || 'sm',
-          verseHighlights: {},
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        };
+        pageTab = createNewNoteTab(`${currentBookName} ${chapterNum} Journal`, currentBookName, chapterNum);
+        pageTab.fontFamily = prev.globalFontFamily || 'sans';
+        pageTab.fontSize = prev.globalFontSize || 'sm';
+        cleanedTabs.push(pageTab);
       }
 
       const isCurrentlyGeneral = prev.activeTabId === general?.id;
-      const nextTabs = general ? [general, pageTab, ...otherTabs.filter(t => t.id !== pageTab!.id)] : [pageTab, ...otherTabs.filter(t => t.id !== pageTab!.id)];
 
       return {
         ...prev,
-        tabs: nextTabs,
+        tabs: cleanedTabs,
         activeTabId: isCurrentlyGeneral ? prev.activeTabId : pageTab.id
       };
     });
   }, [currentBookName, chapterNum]);
 
-  // Compute active tab and its scoped verse highlights
-  const generalJournalTab = notepadState.tabs.find(t => !t.book && !t.chapter);
-  const pageSpecificTabs = notepadState.tabs.filter(
-    t => t.book === currentBookName && t.chapter === chapterNum && t.id !== generalJournalTab?.id
-  );
-  const visibleTabs = [
-    ...(generalJournalTab ? [generalJournalTab] : []),
-    ...pageSpecificTabs
-  ];
-  const activeTab = visibleTabs.find(t => t.id === notepadState.activeTabId) || visibleTabs[0] || notepadState.tabs[0];
-  const activeTabHighlights = activeTab?.verseHighlights || {};
+  // Persist notepadState to localStorage on any state update
+  useEffect(() => {
+    saveNotepadState(notepadState);
+  }, [notepadState]);
+
+  // Active tab is strictly the selected tab from all tabs
+  const activeTab = notepadState.tabs.find(t => t.id === notepadState.activeTabId) || notepadState.tabs[0];
+  const activeTabHighlights = (activeTab?.book === currentBookName && activeTab?.chapter === chapterNum)
+    ? (activeTab?.verseHighlights || {})
+    : (!activeTab?.book && !activeTab?.chapter)
+      ? (activeTab?.verseHighlights || {})
+      : {};
 
   // Toggle verse highlight strictly scoped to the active note tab
   const handleToggleVerseHighlight = useCallback((
@@ -340,14 +347,15 @@ export function App() {
         onOpenNotepad={() => setActiveSidebar(prev => prev === 'notepad' ? null : 'notepad')}
         isNotepadActive={activeSidebar === 'notepad'}
         onOpenColorScheme={() => setIsColorSchemeOpen(true)}
+        onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onLogout={handleLogout}
       />
 
       {/* Main App Workspace: Clean Scripture Reading + Berea AI Guide or Notepad */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden">
-        <div className={`flex-1 grid grid-cols-1 ${activeSidebar ? 'lg:grid-cols-12' : 'max-w-4xl mx-auto w-full'} gap-3 h-full min-h-0 overflow-hidden`}>
+      <main className="flex-1 max-w-[1740px] w-full mx-auto px-2 sm:px-4 lg:px-6 py-2 flex flex-col min-h-0 overflow-hidden">
+        <div className={`flex-1 grid grid-cols-1 ${activeSidebar ? 'lg:grid-cols-12' : 'max-w-5xl mx-auto w-full'} gap-3 sm:gap-4 h-full min-h-0 overflow-hidden`}>
           {/* Bible Reader Pane */}
-          <div className={`${activeSidebar ? 'lg:col-span-7' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
+          <div className={`${activeSidebar ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
             <BibleReader
               bookName={currentBook.name}
               chapter={currentChapter}
@@ -392,7 +400,7 @@ export function App() {
 
           {/* Berea AI Guide Inspector Sidebar */}
           {activeSidebar === 'guide' && (
-            <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
               <BereaAiPanel
                 currentBook={currentBook.name}
                 currentChapter={chapterNum}
@@ -413,7 +421,7 @@ export function App() {
 
           {/* Dedicated Notepad Sidebar (Independent Tab) */}
           {activeSidebar === 'notepad' && (
-            <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
               <div
                 className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
                 style={{
@@ -482,6 +490,7 @@ export function App() {
                     onToggleHighlighterMode={() => setIsHighlighterMode(prev => !prev)}
                     activeHighlightColor={activeHighlightColor}
                     onSelectHighlightColor={setActiveHighlightColor}
+                    onSelectPassage={handleSelectPassage}
                   />
                 </div>
               </div>
@@ -530,12 +539,6 @@ export function App() {
         currentVerseNum={selectedVerse?.verseNumber}
         activeLens={activeLens}
         activeTranslation={activeTranslation}
-      />
-
-      {/* Floating Settings Widget (Bottom-Right: Holds Color Scheme and Feedback) */}
-      <SettingsWidget
-        onOpenThemeStudio={() => setIsColorSchemeOpen(true)}
-        onOpenFeedbackModal={() => setIsFeedbackModalOpen(true)}
       />
     </div>
   );

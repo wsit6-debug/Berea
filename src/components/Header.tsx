@@ -4,12 +4,14 @@ import {
   TRANSLATIONS,
   TranslationId,
   TranslationInfo,
-  getApprovedTranslationsForDenomination
+  getApprovedTranslationsForDenomination,
+  getTranslationColor
 } from '../data/bibleData';
 import { DENOMINATIONS, DenominationConfig, DenominationalLens } from '../data/theologyData';
 
 import { BereaLogo } from './BereaLogo';
 import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
+import { SettingsWidget } from './SettingsWidget';
 
 interface HeaderProps {
   currentBookName: string;
@@ -26,6 +28,7 @@ interface HeaderProps {
   onOpenNotepad?: () => void;
   isNotepadActive?: boolean;
   onOpenColorScheme?: () => void;
+  onOpenFeedback?: () => void;
   onLogout?: () => void;
 }
 
@@ -44,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNotepad,
   isNotepadActive = false,
   onOpenColorScheme,
+  onOpenFeedback,
   onLogout
 }) => {
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
@@ -63,9 +67,9 @@ export const Header: React.FC<HeaderProps> = ({
         color: 'var(--clean-header-text, #26221F)'
       }}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+      <div className="max-w-[1740px] mx-auto w-full px-1 sm:px-3 flex items-center justify-between gap-2 sm:gap-3">
         {/* Left: Brand & Navigation */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 flex-nowrap">
           <div
             onClick={onOpenAbout}
             className="flex items-center cursor-pointer group pr-2"
@@ -188,6 +192,10 @@ export const Header: React.FC<HeaderProps> = ({
               className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
               title="Select Scripture Translation (Approved for your denomination)"
             >
+              <span
+                className="w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: getTranslationColor(activeTranslation).primary }}
+              />
               <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors">
                 {activeTranslation}
               </span>
@@ -247,6 +255,10 @@ export const Header: React.FC<HeaderProps> = ({
                     >
                       <div className="flex-1 pr-2">
                         <div className="flex items-center gap-1.5 mb-0.5">
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: getTranslationColor(t.id).primary }}
+                          />
                           <span className="font-bold text-xs">
                             {t.id}
                           </span>
@@ -294,34 +306,37 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center/Right: Clean Controls & AI Guide Toggle */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Quick Spotlight Search */}
+        {/* Center: Search Omnibar filling the large open space */}
+        <div className="flex-1 max-w-md mx-2 sm:mx-4 flex items-center justify-center min-w-0">
           <button
             onClick={onOpenSearch}
             style={{
               backgroundColor: 'var(--clean-surface, #FFFFFF)',
-              borderColor: 'var(--clean-accent-caramel, #B4793D)',
+              borderColor: 'var(--clean-border, #EBE5DC)',
               color: 'var(--clean-text-primary, #26221F)'
             }}
-            className="ios-glass-btn !px-2.5 !py-1 cursor-pointer select-none"
-            title="Search (⌘K)"
+            className="w-full max-w-sm ios-glass-btn !px-3 !py-1 cursor-pointer select-none flex items-center justify-between shadow-xs transition-all hover:border-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0"
+            title="Search Scripture, topics, notes (⌘K)"
           >
-            <Search className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-            <span className="hidden lg:inline text-xs font-normal">Search scripture, topics...</span>
+            <div className="flex items-center gap-2 truncate">
+              <Search className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0" />
+              <span className="text-xs font-normal text-stone-500 truncate">Search scripture, topics...</span>
+            </div>
             <kbd
-              className="hidden sm:inline-block text-[9.5px] font-mono px-1.5 py-0.5 rounded border"
+              className="text-[9.5px] font-mono px-1.5 py-0.5 rounded border flex-shrink-0 ml-2"
               style={{
-                backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
+                borderColor: 'var(--clean-border, #EBE5DC)',
                 color: 'var(--clean-text-secondary, #78716C)'
               }}
             >
               ⌘K
             </kbd>
           </button>
+        </div>
 
-
+        {/* Right: Workspace Tools, Settings & Logout */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 flex-nowrap">
 
           {/* Notepad Top Tab */}
           {onOpenNotepad && (
@@ -336,12 +351,13 @@ export const Header: React.FC<HeaderProps> = ({
                   }
                   : {
                     backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                    borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: 'var(--clean-border, #EBE5DC)',
                     color: 'var(--clean-text-primary, #26221F)'
                   }
               }
-              className={`ios-glass-btn transition-all !px-3 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${isNotepadActive ? 'active font-bold shadow-sm' : ''
-                }`}
+              className={`ios-glass-btn transition-all !px-2.5 sm:!px-3 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
+                isNotepadActive ? 'active font-bold shadow-sm' : ''
+              }`}
               title="Open Personal Notepad (⌘N)"
             >
               <NotebookPen
@@ -375,7 +391,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }
                   : {
                     backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                    borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: 'var(--clean-border, #EBE5DC)',
                     color: 'var(--clean-text-primary, #26221F)'
                   }
               }
@@ -401,15 +417,23 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          <div className="h-4 w-px bg-[var(--clean-border,#EBE5DC)] hidden sm:block"></div>
+
+          {/* Settings Button (Theme & Feedback) */}
+          <SettingsWidget
+            onOpenThemeStudio={onOpenColorScheme}
+            onOpenFeedbackModal={onOpenFeedback}
+          />
+
           {/* Lock / Log Out Button */}
           {onLogout && (
             <button
               onClick={onLogout}
               style={{
                 backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                borderColor: 'var(--clean-accent-caramel, #B4793D)'
+                borderColor: 'var(--clean-border, #EBE5DC)'
               }}
-              className="ios-glass-btn hover:!text-red-600 hover:!border-red-400 hover:!bg-red-500/10 !p-1.5 transition-all cursor-pointer"
+              className="ios-glass-btn hover:!text-red-600 hover:!border-red-400 hover:!bg-red-500/10 !p-1.5 transition-all cursor-pointer flex-shrink-0"
               title="Lock & Log Out"
               aria-label="Lock and log out"
             >

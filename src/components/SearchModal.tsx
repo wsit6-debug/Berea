@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, BookOpen, MapPin, Sparkles, ChevronRight, RefreshCw, ChevronDown, Check } from 'lucide-react';
-import { TranslationId, getApprovedTranslationsForDenomination, TRANSLATIONS } from '../data/bibleData';
+import { TranslationId, getApprovedTranslationsForDenomination, TRANSLATIONS, getTranslationColor } from '../data/bibleData';
 import { BIBLICAL_LOCATIONS } from '../data/geoData';
 import { THEOLOGICAL_INSIGHTS, DenominationalLens, DENOMINATIONS } from '../data/theologyData';
 import { searchEntireBible, BibleSearchResult, parsePassageReference } from '../services/youversionService';
@@ -139,7 +139,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-16 p-3 sm:p-4 bg-black/30 backdrop-blur-xl animate-fadeIn select-none">
       <div 
-        className="bg-white border rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_20px_50px_rgba(180,160,140,0.2)]"
+        className="bg-white border rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_20px_50px_rgba(180,160,140,0.2)] overflow-hidden"
         style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
       >
         {/* Spotlight Search Bar with Integrated Translation Selector */}
@@ -151,7 +151,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           }}
         >
           <div 
-            className="flex-1 flex items-center gap-2.5 bg-white border rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-[var(--clean-accent-caramel,#B4793D)]/30 shadow-xs transition-all"
+            className="flex-1 flex items-center gap-2.5 bg-white border rounded-full px-3.5 py-1.5 focus-within:ring-2 focus-within:ring-[var(--clean-accent-caramel,#B4793D)]/30 shadow-xs transition-all"
             style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
           >
             <Search className="w-4 h-4 shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
@@ -161,7 +161,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={`Search ${searchTranslation} scripture, theological topics, biblical places...`}
-              className="flex-1 bg-transparent text-[#26221F] placeholder-[#A8A29E] text-sm focus:outline-none font-normal min-w-0"
+              className="flex-1 bg-transparent text-[#26221F] placeholder-[#A8A29E] text-sm focus:outline-none font-normal min-w-0 border-none"
+              style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
             />
             {query && (
               <button
@@ -177,10 +178,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           <div className="relative shrink-0" ref={translationDropdownRef}>
             <button
               onClick={() => setShowTranslationDropdown((prev) => !prev)}
-              className="ios-glass-btn !text-xs !py-1.5 !px-2.5 flex items-center gap-1.5 border shadow-xs cursor-pointer bg-white"
+              className="ios-glass-btn !rounded-full !text-xs !py-1.5 !px-3 flex items-center gap-1.5 border shadow-xs cursor-pointer bg-white"
               style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
               title="Change search translation"
             >
+              <span
+                className="w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: getTranslationColor(searchTranslation).primary }}
+              />
               <span className="font-bold text-[#26221F]">{searchTranslation}</span>
               <span 
                 className="hidden sm:inline text-[9.5px] px-1.5 py-0.2 rounded font-medium border"
@@ -247,7 +252,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                     value={translationSearch}
                     onChange={(e) => setTranslationSearch(e.target.value)}
                     placeholder="Filter translation name or code..."
-                    className="flex-1 bg-transparent text-xs text-[#26221F] placeholder-[#A8A29E] focus:outline-none"
+                    className="flex-1 bg-transparent text-xs text-[#26221F] placeholder-[#A8A29E] focus:outline-none border-none"
+                    style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
                     autoFocus
                   />
                   {translationSearch && (
@@ -285,6 +291,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                       >
                         <div className="flex-1 pr-2 min-w-0">
                           <div className="flex items-center gap-1.5 mb-0.5">
+                            <span
+                              className="w-1.5 h-1.5 rounded-full shrink-0"
+                              style={{ backgroundColor: getTranslationColor(t.id).primary }}
+                            />
                             <span className="font-bold text-xs shrink-0" style={{ color: isSelected ? '#FFFFFF' : '#26221F' }}>
                               {t.id}
                             </span>
@@ -399,7 +409,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         )}
 
         {/* Results Container */}
-        <div className="flex-1 overflow-y-auto p-3.5 space-y-4 custom-scrollbar bg-white select-text rounded-b-2xl">
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-4 custom-scrollbar bg-white select-text">
           {isSearching && verseResults.length === 0 && (
             <div className="py-12 flex flex-col items-center justify-center text-[#78716C] text-xs gap-2">
               <RefreshCw className="w-4 h-4 animate-spin" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
@@ -430,9 +440,23 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                     style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-xs text-[#26221F] group-hover:text-[var(--clean-accent-dark,#78471F)] flex items-center gap-1">
+                      <span className="font-semibold text-xs text-[#26221F] group-hover:text-[var(--clean-accent-dark,#78471F)] flex items-center gap-1.5">
                         <span>{v.bookName} {v.chapterNum}:{v.verseNum}</span>
-                        <span className="text-[9.5px] text-[#A8A29E] font-mono">({v.translation})</span>
+                        {(() => {
+                          const tColor = getTranslationColor(v.translation);
+                          return (
+                            <span
+                              className="text-[9.5px] px-1.5 py-0.2 rounded font-mono font-bold"
+                              style={{
+                                backgroundColor: tColor.bg,
+                                color: tColor.primary,
+                                border: `1px solid ${tColor.border}`
+                              }}
+                            >
+                              {v.translation}
+                            </span>
+                          );
+                        })()}
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-transform group-hover:translate-x-0.5" />
                     </div>

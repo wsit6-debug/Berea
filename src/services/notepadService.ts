@@ -85,22 +85,11 @@ export function loadNotepadState(fallbackBook?: string, fallbackChapter?: number
       return getDefaultNotepadState(fallbackBook, fallbackChapter);
     }
 
-    // Clean any old template text that might have been saved in localStorage
-    const cleanedTabs: NoteTab[] = parsed.tabs.map((t: NoteTab) => {
-      let content = t.content || '';
-      if (
-        content.includes('Observations') ||
-        content.includes('Key themes:') ||
-        content.includes('Personal Reflections & Prayers') ||
-        content.includes('Jot down sermon notes')
-      ) {
-        content = '';
-      }
-      return {
-        ...t,
-        content
-      };
-    });
+    // Preserve existing note contents intact
+    const cleanedTabs: NoteTab[] = parsed.tabs.map((t: NoteTab) => ({
+      ...t,
+      content: t.content || ''
+    }));
 
     // Ensure valid activeTabId
     const activeExists = cleanedTabs.some((t: NoteTab) => t.id === parsed.activeTabId);

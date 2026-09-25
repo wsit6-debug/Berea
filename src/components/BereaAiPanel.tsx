@@ -5,7 +5,7 @@ import {
   History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
-import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
+import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage } from '../services/aiService';
@@ -137,6 +137,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   // Study Guide Scope: whole chapter, individual verse, range, or custom specific verses
   type StudyGuideScope = 'chapter' | 'verse' | 'range' | 'custom';
   const [studyGuideScope, setStudyGuideScope] = useState<StudyGuideScope>('chapter');
+
+  // Overview Tab Interactive State
+  const [activeKeyWordIndex, setActiveKeyWordIndex] = useState<number>(0);
+  const [expandedDoctrinalEntries, setExpandedDoctrinalEntries] = useState<Record<string, boolean>>({});
 
   // Start Verse & Multi-Verse Range State
   const [manualStartVerseNum, setManualStartVerseNum] = useState<number>(activeVerseNum);
@@ -955,8 +959,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                           value={customVerseInput}
                           onChange={(e) => handleCustomVerseInputChange(e.target.value)}
                           placeholder="e.g. 1, 12, 23"
-                          className="w-28 text-xs font-bold font-mono text-[#26221F] bg-white border rounded-md px-2 py-1 focus:outline-none shadow-2xs"
-                          style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                          className="w-28 text-xs font-bold font-mono text-[#26221F] bg-white border rounded-lg px-2.5 py-1 focus:outline-none shadow-2xs"
+                          style={{ border: '1px solid var(--clean-accent-border, #EBE5DC)', outline: 'none' }}
                         />
                         {customVerseNumbers.length > 0 && (
                           <button
@@ -1299,7 +1303,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                           className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none"
                           style={{
                             backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
-                            borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                            border: '1px solid var(--clean-accent-border, #EBE5DC)',
+                            outline: 'none'
                           }}
                         />
                         <button
@@ -1578,6 +1583,73 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 {insight.conciseOverview}
               </p>
 
+              {/* Key Word Translation & Pronunciation Badge directly in Overview */}
+              {insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0 && (() => {
+                const currentTermIndex = activeKeyWordIndex % insight.originalLanguageInsights.length;
+                const activeTerm = insight.originalLanguageInsights[currentTermIndex] || insight.originalLanguageInsights[0];
+
+                return (
+                  <div
+                    className="p-2.5 rounded-lg border bg-white space-y-1.5 shadow-2xs"
+                    style={{
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                      borderLeftWidth: '3.5px',
+                      borderLeftColor: 'var(--clean-accent-caramel, #B4793D)'
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                        style={{ color: 'var(--clean-accent-dark, #854D0E)' }}
+                      >
+                        <Languages className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+                        Key Word Translation &amp; Pronunciation
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-mono text-stone-400 font-medium">
+                          {activeTerm.strongsRef}
+                        </span>
+                        {insight.originalLanguageInsights.length > 1 && (
+                          <div className="flex items-center gap-0.5 ml-1 bg-stone-100 p-0.5 rounded-sm">
+                            {insight.originalLanguageInsights.map((t, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setActiveKeyWordIndex(idx)}
+                                className={`text-[8.5px] px-1 py-0.2 rounded font-mono font-medium transition-colors ${
+                                  currentTermIndex === idx
+                                    ? 'bg-[var(--clean-accent-caramel,#B4793D)] text-white'
+                                    : 'text-stone-500 hover:text-stone-800'
+                                }`}
+                                title={`View ${t.term}`}
+                              >
+                                {idx + 1}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-bold text-sm text-[var(--clean-accent-dark,#B4793D)] font-serif">
+                        {activeTerm.term}
+                      </span>
+                      <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--clean-highlight-cream,#FAF5ED)] text-[#26221F] border border-[var(--clean-accent-border,#EBE5DC)]">
+                        {activeTerm.originalScript}
+                      </span>
+                      <span className="text-xs font-mono text-[var(--clean-accent-dark,#8C5E2E)] font-medium">
+                        /{activeTerm.transliteration}/
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-[#57524E] leading-relaxed">
+                      {activeTerm.nuance}
+                    </p>
+                  </div>
+                );
+              })()}
+
               {/* Lens Perspective */}
               <div
                 className="p-2 rounded-lg bg-white border text-xs space-y-0.5"
@@ -1598,35 +1670,72 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             </div>
 
             {/* Doctrinal Confessional Grounding (RAG Verified Sources) */}
-            {activeDoctrinalSources.length > 0 && (
-              <div
-                className="p-2.5 rounded-xl border space-y-1.5 text-xs animate-fadeIn shadow-2xs"
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  borderColor: 'var(--clean-accent-border, #DCF0E2)',
-                  borderLeftWidth: '4px',
-                  borderLeftColor: 'var(--clean-accent-caramel, #059669)'
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[9.5px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                    Official Confessional Standard ({activeDenom.traditionGroup})
-                  </span>
-                  <span className="text-[9px] font-mono text-emerald-900 bg-white px-1.5 py-0.2 rounded border border-emerald-200">
-                    {activeDoctrinalSources[0].citation}
-                  </span>
-                </div>
-                <div className="p-2 rounded-lg bg-white border border-[var(--clean-accent-border,#DCF0E2)] space-y-1">
-                  <div className="font-semibold text-[11px] text-[#26221F]">
-                    {activeDoctrinalSources[0].documentTitle}
+            {activeDoctrinalSources.length > 0 && (() => {
+              const source = activeDoctrinalSources[0];
+              const sourceKey = source.id || `${source.documentTitle}_${source.citation}`;
+              const isExpanded = Boolean(expandedDoctrinalEntries[sourceKey]);
+              const rawCore = source.coreDoctrine || '';
+              const fullText = source.fullExcerpt || rawCore;
+              const hasLongerExcerpt = Boolean(source.fullExcerpt && source.fullExcerpt.trim().length > rawCore.trim().length);
+              const endsWithEllipsis = rawCore.trim().endsWith('...') || rawCore.trim().endsWith('…');
+              const canExpand = hasLongerExcerpt || endsWithEllipsis;
+              const displayText = isExpanded ? fullText : rawCore;
+
+              return (
+                <div
+                  className="p-2.5 rounded-xl border space-y-1.5 text-xs animate-fadeIn shadow-2xs"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderColor: 'var(--clean-accent-border, #DCF0E2)',
+                    borderLeftWidth: '4px',
+                    borderLeftColor: 'var(--clean-accent-caramel, #059669)'
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9.5px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                      Official Confessional Standard ({activeDenom.traditionGroup})
+                    </span>
+                    <span className="text-[9px] font-mono text-emerald-900 bg-white px-1.5 py-0.2 rounded border border-emerald-200">
+                      {source.citation}
+                    </span>
                   </div>
-                  <p className="text-[10.5px] text-[#57524E] leading-relaxed italic">
-                    "{activeDoctrinalSources[0].coreDoctrine}"
-                  </p>
+                  <div
+                    onClick={() => {
+                      if (canExpand) {
+                        setExpandedDoctrinalEntries(prev => ({
+                          ...prev,
+                          [sourceKey]: !prev[sourceKey]
+                        }));
+                      }
+                    }}
+                    className={`p-2 rounded-lg bg-white border border-[var(--clean-accent-border,#DCF0E2)] space-y-1 transition-all select-text ${
+                      canExpand ? 'cursor-pointer hover:bg-emerald-50/40 group' : ''
+                    }`}
+                    title={canExpand ? (isExpanded ? "Click to collapse" : "Click to view full unabridged text") : undefined}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-[11px] text-[#26221F]">
+                        {source.documentTitle}
+                      </div>
+                      {canExpand && (
+                        <span className="text-[9.5px] font-semibold text-emerald-700 group-hover:text-emerald-900 inline-flex items-center gap-0.5">
+                          {isExpanded ? '▲ Collapse' : '▼ Read full text'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10.5px] text-[#57524E] leading-relaxed italic">
+                      "{displayText}"
+                    </p>
+                    {canExpand && !isExpanded && (
+                      <div className="text-[9.5px] font-medium text-emerald-600/90 group-hover:text-emerald-800 flex items-center gap-1">
+                        <span>(Click to expand full text)</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Original Language Nuance */}
             {insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0 && (
@@ -1894,9 +2003,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder={`Ask anything about ${currentVerseRef} or theology...`}
-                className="flex-1 bg-white border rounded-full px-3 py-1.5 text-xs text-[#26221F] placeholder-[#A8A29E] focus:outline-none transition-colors shadow-2xs"
+                className="flex-1 bg-white border rounded-full px-3.5 py-1.5 text-xs text-[#26221F] placeholder-[#A8A29E] focus:outline-none transition-colors shadow-2xs"
                 style={{
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  border: '1px solid var(--clean-accent-border, #EBE5DC)',
+                  outline: 'none'
                 }}
               />
               <button
@@ -1926,9 +2036,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             </div>
 
             {/* Translation Pills */}
-            <div className="ios-segmented-capsule flex-wrap">
+            <div className="flex flex-wrap gap-1 p-1 rounded-lg border bg-[var(--clean-surface-subtle,#FAF7F2)] border-[var(--clean-border-soft,#EBE5DC)]">
               {TRANSLATIONS.map((t) => {
                 const isSelected = comparisonTranslations.includes(t.id);
+                const colorTheme = getTranslationColor(t.id);
                 return (
                   <button
                     key={t.id}
@@ -1939,42 +2050,89 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setComparisonTranslations(prev => [...prev, t.id]);
                       }
                     }}
-                    className={`ios-segment-pill !text-[10.5px] !py-0.2 !px-2 ${isSelected ? 'active' : ''}`}
+                    style={
+                      isSelected
+                        ? {
+                            backgroundColor: colorTheme.badgeBg,
+                            borderColor: colorTheme.badgeBg,
+                            color: colorTheme.badgeText,
+                            boxShadow: `0 2px 6px ${colorTheme.primary}40`
+                          }
+                        : {
+                            backgroundColor: '#FFFFFF',
+                            borderColor: 'var(--clean-border-soft, #EBE5DC)',
+                            color: '#57524E'
+                          }
+                    }
+                    className="text-[11px] font-semibold py-1 px-2.5 rounded-md border transition-all cursor-pointer select-none flex items-center gap-1.5"
+                    title={`${t.name} (${t.year})`}
                   >
-                    {t.id}
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: isSelected ? colorTheme.badgeText : colorTheme.primary
+                      }}
+                    />
+                    <span>{t.id}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Translation Cards */}
-            <div className="space-y-1.5">
+            {/* Translation Cards with Unique Distinct Colors */}
+            <div className="space-y-2">
               {comparisonTranslations.map((tId) => {
                 const tObj = TRANSLATIONS.find(x => x.id === tId);
+                const colorTheme = getTranslationColor(tId);
                 const rawCompareText = (selectedVerse?.text && (selectedVerse.text[tId] || selectedVerse.text['KJV'] || Object.values(selectedVerse.text)[0])) || 'Loading scripture...';
                 const verseText = cleanApiText(rawCompareText);
 
                 return (
                   <div
                     key={tId}
-                    className="p-2.5 rounded-lg border space-y-0.5"
+                    className="p-3 rounded-xl border space-y-1.5 transition-all shadow-xs"
                     style={{
-                      backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      backgroundColor: colorTheme.bg,
+                      borderColor: colorTheme.border,
+                      borderLeftWidth: '4px',
+                      borderLeftColor: colorTheme.primary
                     }}
                   >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="font-semibold text-xs"
-                        style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
-                      >
-                        {tObj?.name} ({tId})
-                      </span>
-                      <span className="text-[9px] text-[#78716C]">{tObj?.year}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide shrink-0 shadow-2xs"
+                          style={{
+                            backgroundColor: colorTheme.badgeBg,
+                            color: colorTheme.badgeText
+                          }}
+                        >
+                          {tId}
+                        </span>
+                        <span
+                          className="font-bold text-xs truncate"
+                          style={{ color: colorTheme.text }}
+                          title={tObj?.name}
+                        >
+                          {tObj?.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 text-[10px] font-mono">
+                        <span
+                          className="px-1.5 py-0.5 rounded border text-[9px] font-medium"
+                          style={{
+                            borderColor: colorTheme.border,
+                            color: colorTheme.text,
+                            backgroundColor: 'rgba(255,255,255,0.7)'
+                          }}
+                        >
+                          {tObj?.philosophy.split('/')[0].trim()}
+                        </span>
+                        <span className="text-stone-500 font-medium">{tObj?.year}</span>
+                      </div>
                     </div>
                     <p
-                      className="font-scripture text-[11.5px] text-[#38332E] leading-relaxed pl-1.5 border-l-2"
-                      style={{ borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)' }}
+                      className="font-scripture text-xs text-[#26221F] leading-relaxed pl-1"
                     >
                       {verseText}
                     </p>
