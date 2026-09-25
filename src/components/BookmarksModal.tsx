@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Bookmark, Search, X, Trash2, Copy, Check, ArrowRight, ArrowUpDown, GripHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { BookmarkedVerse, useBookmarkedVerses, removeBookmark, clearAllBookmarks, getCanonicalBookIndex } from '../services/bookmarkService';
+import { AnimatedPresence } from './AnimatedPresence';
 
 interface BookmarksModalProps {
   isOpen: boolean;
@@ -178,12 +179,12 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
   };
 
   // Do not render anything if modal is closed
-  if (!isOpen) return null;
-
   return (
+    <AnimatedPresence isVisible={isOpen} duration={250}>
+      {(isClosing) => (
     <div
       ref={modalRef}
-      className="fixed z-50 bg-[#FAF7F2] rounded-2xl flex flex-col overflow-hidden select-auto transition-[max-height] duration-200"
+      className={`fixed z-50 bg-[#FAF7F2] rounded-2xl flex flex-col overflow-hidden select-auto transition-[max-height] duration-200 ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -485,5 +486,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
         </>
       )}
     </div>
+      )}
+    </AnimatedPresence>
   );
 };

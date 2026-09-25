@@ -12,7 +12,6 @@ import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiServ
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
-import { CharacterPanel } from './CharacterPanel';
 import { VerseOfTheDay } from './VerseOfTheDay';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
 import { AppliedAiLogo } from './AppliedAiLogo';
@@ -718,13 +717,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             <span className="truncate">Quiz</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('characters')}
-            className={`ios-segment-pill flex-1 min-w-[90px] !text-[11px] !py-0.5 ${activeTab === 'characters' ? 'active' : ''}`}
-          >
-            <Users className="w-3 h-3" />
-            <span>Characters</span>
-          </button>
         </div>
 
         {onClose && (
@@ -743,7 +735,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         className="flex-1 overflow-y-auto p-0 flex flex-col custom-scrollbar bg-white text-[#26221F]"
         style={{ backgroundColor: '#FFFFFF', color: '#26221F' }}
       >
-        <div className={activeTab === 'characters' ? 'hidden' : 'p-3 space-y-2.5 flex-1'}>
+        <div className="p-3 space-y-2.5 flex-1">
           {/* STUDY GUIDE TAB */}
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
@@ -2740,17 +2732,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         )}
         
         </div>
-
-        {/* CHARACTERS TAB */}
-        {activeTab === 'characters' && (
-          <div className="h-full flex flex-col flex-1 pb-3">
-            <CharacterPanel 
-              charId={selectedCharacter || null} 
-              bookName={currentBook}
-              chapter={{ chapterNumber: currentChapter, summary: '', verses: chapterVerses || [] }}
-            />
-          </div>
-        )}
       </div>
 
       {/* George Fox Applied AI Institute 'Be Known' Footer */}

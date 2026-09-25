@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { characterMap } from '../data/characterData';
 import { BIBLICAL_LOCATIONS, ANCIENT_BIBLICAL_REGIONS } from '../data/geoData';
 import { generateLocalAiResponse } from './webLlmService';
@@ -200,6 +200,247 @@ Return ONLY a valid JSON array of names that are strictly referring to an indivi
   return new Set<string>();
 }
 
+function CharacterHighlightNode({
+  charId,
+  part,
+  className,
+  colorStyle,
+  isSelected,
+  hue,
+  onCharClick
+}: {
+  charId: string;
+  part: string;
+  className: string;
+  colorStyle: React.CSSProperties;
+  isSelected: boolean;
+  hue: number;
+  onCharClick?: (charId: string) => void;
+}) {
+  const spanRef = React.useRef<HTMLSpanElement>(null);
+  const [popoverState, setPopoverState] = useState<{ rect: DOMRect, containerRect: DOMRect, isClosing: boolean, isOpening: boolean } | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const profile = characterMap[charId];
+
+  // Use a ref to hold the latest state so we don't have to re-attach event listeners on every state change,
+  // which causes React 18 bubbling bugs where the window catches the same click that opened it.
+  const stateRef = React.useRef(popoverState);
+  stateRef.current = popoverState;
+
+  React.useEffect(() => {
+    const handleCloseAll = (e?: Event) => {
+      const current = stateRef.current;
+      if (!current || current.isClosing) return;
+      
+      // If it's a window click, ignore it if the click originated from inside our own component
+      if (e && e.type === 'click' && spanRef.current && spanRef.current.contains(e.target as Node)) {
+        return;
+      }
+
+      setPopoverState({ ...current, isClosing: true, isOpening: false });
+      setTimeout(() => {
+        setPopoverState(curr => curr?.isClosing ? null : curr);
+        setIsExpanded(false);
+      }, 300);
+    };
+
+    window.addEventListener('berea-close-character-popovers', handleCloseAll);
+    window.addEventListener('click', handleCloseAll, { capture: true });
+    
+    return () => {
+      window.removeEventListener('berea-close-character-popovers', handleCloseAll);
+      window.removeEventListener('click', handleCloseAll, { capture: true });
+    };
+  }, []); // Run only once on mount
+
+  const togglePopover = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const current = stateRef.current;
+    if (current && !current.isClosing) {
+      setPopoverState({ ...current, isClosing: true, isOpening: false });
+      setTimeout(() => {
+        setPopoverState(curr => curr?.isClosing ? null : curr);
+        setIsExpanded(false);
+      }, 300);
+    } else if (spanRef.current) {
+      window.dispatchEvent(new CustomEvent('berea-close-character-popovers'));
+      
+      const container = spanRef.current.closest('.overflow-y-auto') || document.body;
+      setPopoverState({ 
+        rect: spanRef.current.getBoundingClientRect(), 
+        containerRect: container.getBoundingClientRect(),
+        isClosing: false,
+        isOpening: true
+      });
+      setIsExpanded(false);
+      
+      // Trigger the opening animation on the next frame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setPopoverState(curr => curr ? { ...curr, isOpening: false } : null);
+        });
+      });
+    }
+  };
+
+  const closePopover = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const current = stateRef.current;
+    if (current && !current.isClosing) {
+      setPopoverState({ ...current, isClosing: true, isOpening: false });
+      setTimeout(() => {
+        setPopoverState(curr => curr?.isClosing ? null : curr);
+        setIsExpanded(false);
+      }, 300);
+    }
+  };
+
+  if (isSelected) {
+    return (
+      <span
+        className={`rounded px-1 transition-colors ${className}`}
+        style={{ ...colorStyle, backgroundColor: `hsl(${hue}, 70%, 85%)`, color: `hsl(${hue}, 80%, 30%)`, fontWeight: 'bold' }}
+      >
+        {part}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`relative inline-block group ${popoverState && !popoverState.isClosing ? 'z-50' : 'z-auto'}`} ref={spanRef}>
+      <span
+        onClick={togglePopover}
+        className={`cursor-pointer hover:bg-black/5 rounded px-0.5 transition-colors ${className}`}
+        style={{ ...colorStyle, color: `hsl(${hue}, 70%, 35%)`, fontWeight: 'bold' }}
+        title={`View profile for ${part}`}
+      >
+        {part}
+      </span>
+      {popoverState && profile && (() => {
+        const { rect, containerRect, isClosing, isOpening } = popoverState;
+        
+        // Determine if we should open upwards or downwards based on the container position
+        const isTopHalf = rect.top < containerRect.top + containerRect.height / 2;
+        
+        const boxWidth = isExpanded ? 340 : 280;
+        const boxHeight = isExpanded ? 420 : 280;
+        const halfWidth = boxWidth / 2;
+        
+        // Calculate shift to keep the box from bleeding off the edges of the scrolling container
+        const centerX = rect.left + rect.width / 2;
+        let shiftX = 0;
+        
+        if (centerX + halfWidth + 10 > containerRect.right) {
+          shiftX = containerRect.right - (centerX + halfWidth + 20);
+        } else if (centerX - halfWidth - 10 < containerRect.left) {
+          shiftX = containerRect.left - (centerX - halfWidth - 20);
+        }
+
+        const isAnimatingOut = isClosing || isOpening;
+
+        return (
+          <span 
+            className="absolute z-[99999] rounded-2xl text-sm font-sans flex flex-col justify-between text-left"
+            style={{ 
+              cursor: 'default', 
+              lineHeight: '1.4',
+              backgroundColor: '#FDFBF7',
+              borderColor: '#B4793D',
+              borderWidth: '2px',
+              borderStyle: 'solid',
+              boxShadow: '0 20px 50px -12px rgba(0,0,0,0.5)',
+              width: `${boxWidth}px`,
+              height: `${boxHeight}px`,
+              top: isTopHalf ? '100%' : 'auto',
+              bottom: isTopHalf ? 'auto' : '100%',
+              marginTop: isTopHalf ? '15px' : '0',
+              marginBottom: isTopHalf ? '0' : '15px',
+              left: '50%',
+              transform: `translateX(calc(-50% + ${shiftX}px)) scale(${isAnimatingOut ? 0.85 : 1}) translateY(${isAnimatingOut ? (isTopHalf ? -15 : 15) : 0}px)`,
+              opacity: isAnimatingOut ? 0 : 1,
+              transition: 'opacity 0.25s ease-out, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transformOrigin: isTopHalf ? 'top center' : 'bottom center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* The Arrow Tail */}
+            <div 
+              style={{
+                position: 'absolute',
+                left: `calc(50% - ${shiftX}px)`,
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '18px',
+                height: '18px',
+                backgroundColor: '#FDFBF7',
+                top: isTopHalf ? '-10px' : 'auto',
+                bottom: isTopHalf ? 'auto' : '-10px',
+                borderTop: isTopHalf ? '2px solid #B4793D' : 'none',
+                borderLeft: isTopHalf ? '2px solid #B4793D' : 'none',
+                borderBottom: isTopHalf ? 'none' : '2px solid #B4793D',
+                borderRight: isTopHalf ? 'none' : '2px solid #B4793D',
+                borderTopLeftRadius: isTopHalf ? '3px' : '0',
+                borderBottomRightRadius: isTopHalf ? '0' : '3px',
+                transition: 'left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+              }}
+            />
+            
+            <div className="flex flex-col h-full overflow-hidden p-5 z-10 relative">
+              <span className="flex justify-between items-start border-b pb-2 mb-3 shrink-0" style={{ borderColor: '#E6DCCC' }}>
+                <span className="flex flex-col">
+                  <span className="font-bold text-xl" style={{ color: '#26221F' }}>{profile.name}</span>
+                  <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#B4793D' }}>{profile.meaning}</span>
+                </span>
+                <button onClick={closePopover} className="text-2xl px-1 -mt-1 leading-none transition-colors" style={{ color: '#A8A29E' }} onMouseEnter={(e) => e.currentTarget.style.color = '#26221F'} onMouseLeave={(e) => e.currentTarget.style.color = '#A8A29E'}>&times;</button>
+              </span>
+              
+              <div className={`flex-grow relative ${isExpanded ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}`}>
+                {profile.aiBiography ? (
+                  <span 
+                    className="text-sm leading-relaxed" 
+                    style={{ 
+                      color: '#5C5449',
+                      display: isExpanded ? 'block' : '-webkit-box',
+                      WebkitLineClamp: isExpanded ? 'unset' : 5,
+                      WebkitBoxOrient: isExpanded ? 'unset' : 'vertical',
+                      overflow: isExpanded ? 'visible' : 'hidden',
+                      textOverflow: isExpanded ? 'clip' : 'ellipsis'
+                    }}
+                  >
+                    {profile.aiBiography.split('\n').map((paragraph, idx) => (
+                      <React.Fragment key={idx}>
+                        {paragraph}
+                        {idx < (profile.aiBiography || '').split('\n').length - 1 && <><br /><br /></>}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-sm italic" style={{ color: '#A8A29E' }}>No biography available.</span>
+                )}
+              </div>
+              
+              {!isExpanded && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(true);
+                  }}
+                  className="mt-3 px-4 py-3 rounded-xl font-bold text-sm transition-colors shadow-md w-full flex justify-center items-center gap-2 shrink-0"
+                  style={{ backgroundColor: '#26221F', color: 'white' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B4793D'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#26221F'}
+                >
+                  <span>Read Full Profile</span>
+                  <span className="text-lg">↓</span>
+                </button>
+              )}
+            </div>
+          </span>
+        );
+      })()}
+    </span>
+  );
+}
+
 export function renderWithCharacters(
   text: string,
   colorStyle: React.CSSProperties,
@@ -242,33 +483,17 @@ export function renderWithCharacters(
               matchedCharacters.add(charId);
             }
 
-            // If it's selected, highlight it prominently
-            if (isSelected) {
-              return (
-                <span
-                  key={i}
-                  className={`rounded px-1 transition-colors ${className}`}
-                  style={{ ...colorStyle, backgroundColor: `hsl(${hue}, 70%, 85%)`, color: `hsl(${hue}, 80%, 30%)`, fontWeight: 'bold' }}
-                >
-                  {part}
-                </span>
-              );
-            }
-            
-            // If it's not selected, render as a clickable link
             return (
-              <span
+              <CharacterHighlightNode
                 key={i}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCharClick?.(charId);
-                }}
-                className={`cursor-pointer hover:bg-black/5 rounded px-0.5 transition-colors ${className}`}
-                style={{ ...colorStyle, color: `hsl(${hue}, 70%, 35%)`, fontWeight: 'bold' }}
-                title={`View profile for ${part}`}
-              >
-                {part}
-              </span>
+                charId={charId}
+                part={part}
+                className={className}
+                colorStyle={colorStyle}
+                isSelected={isSelected}
+                hue={hue}
+                onCharClick={onCharClick}
+              />
             );
           }
         }

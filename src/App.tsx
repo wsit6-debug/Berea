@@ -18,6 +18,7 @@ import { NotepadPanel } from './components/NotepadPanel';
 import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
+import { AnimatedPresence } from './components/AnimatedPresence';
 import { LoginScreen } from './components/LoginScreen';
 import { ColorThemeWheel } from './components/ColorThemeWheel';
 import { FeedbackModal } from './components/FeedbackModal';
@@ -426,16 +427,15 @@ export function App() {
               }}
               onSelectCharacter={(charId) => {
                 setSelectedCharacter(charId);
-                setAiPanelTab('characters');
-                setActiveSidebar('guide');
               }}
               selectedCharacter={selectedCharacter}
             />
           </div>
 
           {/* Berea AI Guide Inspector Sidebar */}
-          {activeSidebar === 'guide' && (
-            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+          <AnimatedPresence isVisible={activeSidebar === 'guide'} duration={250}>
+            {(isClosing) => (
+              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
               <BereaAiPanel
                 currentBook={currentBook.name}
                 currentChapter={chapterNum}
@@ -461,11 +461,13 @@ export function App() {
                 onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
               />
             </div>
-          )}
+            )}
+          </AnimatedPresence>
 
           {/* Dedicated Notepad Sidebar (Independent Tab) */}
-          {activeSidebar === 'notepad' && (
-            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+          <AnimatedPresence isVisible={activeSidebar === 'notepad'} duration={250}>
+            {(isClosing) => (
+              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
               <div
                 className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
                 style={{
@@ -539,7 +541,8 @@ export function App() {
                 </div>
               </div>
             </div>
-          )}
+            )}
+          </AnimatedPresence>
         </div>
       </main>
 
@@ -591,6 +594,7 @@ export function App() {
         onClose={() => setIsBookmarksModalOpen(false)}
         onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
       />
+
     </div>
   );
 }

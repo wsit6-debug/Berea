@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, BookOpen, MapPin, Sparkles, ChevronRight, RefreshCw, ChevronDown, Check } from 'lucide-react';
+import { AnimatedPresence } from './AnimatedPresence';
+
 import { TranslationId, getApprovedTranslationsForDenomination, TRANSLATIONS, getTranslationColor } from '../data/bibleData';
 import { BIBLICAL_LOCATIONS } from '../data/geoData';
 import { THEOLOGICAL_INSIGHTS, DenominationalLens, DENOMINATIONS } from '../data/theologyData';
@@ -76,9 +78,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
     };
   }, [query, searchTranslation, isOpen]);
 
-  if (!isOpen) return null;
-
-  const cleanQuery = query.toLowerCase().trim();
+    const cleanQuery = query.toLowerCase().trim();
 
   // Search Locations
   const geoResults = cleanQuery.length > 1
@@ -137,9 +137,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-16 p-3 sm:p-4 bg-black/30 backdrop-blur-xl animate-fadeIn select-none">
+    <AnimatedPresence isVisible={isOpen} duration={250}>
+      {(isClosing) => (
+    <div className={`fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-16 p-3 sm:p-4 bg-black/30 backdrop-blur-xl ${isClosing ? 'animate-fadeOut' : 'animate-fadeIn'} select-none`}>
       <div 
-        className="bg-white border rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_20px_50px_rgba(180,160,140,0.2)] overflow-hidden"
+        className={`bg-white border rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_20px_50px_rgba(180,160,140,0.2)] overflow-hidden ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
         style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
       >
         {/* Spotlight Search Bar with Integrated Translation Selector */}
@@ -552,5 +554,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         </div>
       </div>
     </div>
+      )}
+    </AnimatedPresence>
   );
 };
