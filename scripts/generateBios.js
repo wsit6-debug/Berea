@@ -55,7 +55,7 @@ async function run() {
   const characterDataStr = fs.readFileSync(characterDataPath, 'utf-8');
   
   const charactersToProcess = [];
-  const regex = /'([^']+)':\s*\{\s*id:\s*'[^']+',\s*name:\s*'([^']+)'(.*?)\}/g;
+  const regex = /'([^']+)':\s*\{\s*id:\s*'[^']+',\s*name:\s*'([^']+)'(.*?)\}/gs;
   let match;
   
   while ((match = regex.exec(characterDataStr)) !== null) {
@@ -69,7 +69,7 @@ async function run() {
     }
     
     // Skip if we already generated it
-    if (generatedBios[id] && generatedBios[id].aiBiography) {
+    if (generatedBios[id] && generatedBios[id].aiBiography !== undefined) {
       continue;
     }
 
