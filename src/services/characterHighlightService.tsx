@@ -1,14 +1,122 @@
 import React from 'react';
 import { characterMap } from '../data/characterData';
+import { BIBLICAL_LOCATIONS, ANCIENT_BIBLICAL_REGIONS } from '../data/geoData';
+import { generateLocalAiResponse } from './webLlmService';
 
-// Common English words that happen to be obscure biblical names
-const IGNORED_NAMES = new Set(['put', 'so', 'on', 'no', 'do', 'as', 'let', 'us', 'or', 'are', 'will', 'some', 'all', 'any']);
+// Collect all known geographic locations and regions from application geo-data
+const GEO_LOCATIONS = new Set<string>();
+
+ANCIENT_BIBLICAL_REGIONS.forEach(r => {
+  if (r.name) GEO_LOCATIONS.add(r.name.toLowerCase().trim());
+  if (r.ancientName) GEO_LOCATIONS.add(r.ancientName.toLowerCase().trim());
+});
+
+Object.values(BIBLICAL_LOCATIONS).forEach(loc => {
+  if (loc.id) {
+    GEO_LOCATIONS.add(loc.id.toLowerCase().replace(/_/g, '-'));
+    GEO_LOCATIONS.add(loc.id.toLowerCase().replace(/_/g, ' '));
+  }
+  if (loc.name) {
+    const cleanName = loc.name.replace(/\(.*?\)/g, '').split(/[—/&,]/)[0].trim().toLowerCase();
+    if (cleanName) GEO_LOCATIONS.add(cleanName);
+  }
+  if (loc.ancientName) {
+    const cleanAnc = loc.ancientName.replace(/\(.*?\)/g, '').split(/[—/&,]/)[0].trim().toLowerCase();
+    if (cleanAnc) GEO_LOCATIONS.add(cleanAnc);
+  }
+});
+
+// Names that can refer to either a historical person (e.g. Genesis genealogy / eponymous patriarch)
+// or a geographic location (city, mountain, river, region).
+export const AMBIGUOUS_PLACE_NAMES = new Set<string>([
+  'canaan', 'shechem', 'hebron', 'jordan', 'moab', 'gilead', 'midian', 'seir', 'ebal',
+  'sidon', 'tarshish', 'dan', 'eden', 'jezreel', 'penuel', 'tekoa', 'anathoth', 'nebo',
+  'laish', 'arad', 'jabesh', 'shimron', 'jabal', 'uz', 'ophir', 'havilah', 'asshur',
+  'elam', 'aram', 'cush', 'mizraim', 'put', 'lud', 'haran', 'mamre', 'sheva', 'gad'
+]);
+
+// Pure geographic locations and non-character words that should never be treated as persons
+export const PURE_PLACES_AND_WORDS = new Set<string>([
+  'put', 'so', 'on', 'no', 'do', 'as', 'let', 'us', 'or', 'are', 'will', 'some', 'all', 'any',
+  'am', 'an', 'at', 'be', 'by', 'he', 'if', 'in', 'is', 'it', 'me', 'my', 'of', 'to', 'we',
+  'man', 'men', 'son', 'ark',
+  'egypt', 'babylon', 'babel', 'tyre', 'damascus', 'nazareth', 'jerusalem', 'bethlehem',
+  'jericho', 'bethel', 'beersheba', 'shiloh', 'gilgal', 'joppa', 'gath', 'gaza', 'ashdod',
+  'ashkelon', 'ekron', 'caesarea', 'antioch', 'rome', 'corinth', 'ephesus', 'philippi',
+  'colossae', 'thessalonica', 'berea', 'athens', 'troas', 'patmos', 'sardis', 'smyrna',
+  'pergamum', 'thyatira', 'philadelphia', 'laodicea', 'sinai', 'ararat', 'ur', 'bashan',
+  'ammon', 'edom', 'goshen', 'mesopotamia', 'syria', 'judea', 'samaria', 'galilee',
+  'decapolis', 'perea', 'phoenicia', 'macedonia', 'achaia', 'asia', 'cyprus', 'crete',
+  'malta', 'shinar', 'moriah', 'zion', 'calvary', 'golgotha', 'gethsemane', 'bethany',
+  'bethsaida', 'capernaum', 'cana', 'emmaus', 'nain', 'sychar', 'lydda', 'arimathea',
+  'jabbok', 'cherith', 'kidron', 'hinnom', 'carmel', 'hermon', 'tabor', 'gerizim',
+  'peor', 'hor', 'lebanon', 'sirion', 'senir', 'parpar', 'abana', 'euphrates', 'tigris',
+  'hiddekel', 'gihon', 'pishon', 'kadesh', 'kadesh-barnea', 'marah', 'elim', 'rephidim',
+  'ezion-geber', 'ramah', 'mizpah', 'gibeah', 'gibeon', 'nob', 'en-gedi', 'engedi',
+  'masada', 'lachish', 'gezer', 'megiddo', 'hazor', 'succoth', 'mahanaim', 'ramoth',
+  'ramoth-gilead', 'aroe', 'medeba', 'heshbon', 'dibon', 'bozrah', 'sela', 'petra',
+  'paran', 'zoar', 'sodom', 'gomorrah', 'admah', 'zeboiim', 'akkad', 'erech', 'calneh',
+  'nineveh', 'calah', 'rehoboth', 'carchemish', 'armageddon',
+  'caesar', 'caesar-augustus', 'aeneas', 'ishi', 'hattush', 'izziah'
+]);
+
+export function isPlaceOrNonCharacter(charId: string, charName?: string, bio?: string): boolean {
+  const lowerId = charId.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const lowerName = (charName || charId).toLowerCase();
+  
+  if (PURE_PLACES_AND_WORDS.has(lowerId) || PURE_PLACES_AND_WORDS.has(lowerName)) {
+    return true;
+  }
+  if (AMBIGUOUS_PLACE_NAMES.has(lowerId) || AMBIGUOUS_PLACE_NAMES.has(lowerName)) {
+    return true;
+  }
+  if (GEO_LOCATIONS.has(lowerId) || GEO_LOCATIONS.has(lowerName)) {
+    return true;
+  }
+  if (bio) {
+    if (
+      /not a (person|biblical (character|figure)|human)/i.test(bio) ||
+      /rather a (city|town|place|location|region|mountain|river|valley|seaport)/i.test(bio) ||
+      /is not a biblical/i.test(bio)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function isCharacterHighlighted(
+  charId: string,
+  charName: string,
+  aiVerifiedPeople?: Set<string> | null
+): boolean {
+  const lowerId = charId.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const lowerName = charName.toLowerCase();
+
+  // 1. Pure places and common words are never characters
+  if (PURE_PLACES_AND_WORDS.has(lowerId) || PURE_PLACES_AND_WORDS.has(lowerName)) {
+    return false;
+  }
+  if (GEO_LOCATIONS.has(lowerId) || GEO_LOCATIONS.has(lowerName)) {
+    if (!AMBIGUOUS_PLACE_NAMES.has(lowerId) && !AMBIGUOUS_PLACE_NAMES.has(lowerName)) {
+      return false;
+    }
+  }
+
+  // 2. Ambiguous place names: only highlight if AI explicitly confirmed as a person in this chapter
+  if (AMBIGUOUS_PLACE_NAMES.has(lowerId) || AMBIGUOUS_PLACE_NAMES.has(lowerName)) {
+    return Boolean(aiVerifiedPeople && (aiVerifiedPeople.has(lowerId) || aiVerifiedPeople.has(lowerName)));
+  }
+
+  // 3. Real biblical characters (Eve, Adam, Abraham, Sarah, Noah, Moses, Jesus, God, etc.): ALWAYS highlight!
+  return true;
+}
 
 // Sort names by length descending so longer names match first
 const sortedNames = Object.values(characterMap)
+  .filter(c => c.name.length > 2) // Ignore tiny 1-2 letter names to avoid false positives
+  .filter(c => !PURE_PLACES_AND_WORDS.has(c.id.toLowerCase()) && !PURE_PLACES_AND_WORDS.has(c.name.toLowerCase()))
   .map(c => c.name)
-  .filter(n => n.length > 2) // Ignore tiny 1-2 letter names to avoid false positives
-  .filter(n => !IGNORED_NAMES.has(n.toLowerCase())) // Ignore common English words
   .sort((a, b) => b.length - a.length);
 
 function escapeRegExp(string: string) {
@@ -19,17 +127,91 @@ const namesPattern = sortedNames.map(escapeRegExp).join('|');
 // Using 'g' instead of 'gi' for case-sensitive matching so we don't highlight lowercase verbs (e.g. "mark", "job")
 const characterRegex = new RegExp(`(?<![a-zA-Z\\-])(${namesPattern})(?![a-zA-Z\\-])`, 'g');
 
+/**
+ * AI-assisted chapter analysis: disambiguates candidate names that could be either a person or a place
+ */
+export async function detectChapterPersonsWithAi(
+  bookName: string,
+  chapterNum: number,
+  verseTexts: string[]
+): Promise<Set<string>> {
+  const cacheKey = `berea_chapter_ambiguous_v3_${bookName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${chapterNum}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.map((n: string) => n.toLowerCase().replace(/[^a-z0-9]/g, '-')));
+      }
+    }
+  } catch (_) {
+    // ignore localStorage errors
+  }
+
+  const fullText = verseTexts.join(' ');
+  // Identify ambiguous candidate names present in this chapter
+  const ambiguousCandidates: string[] = [];
+  for (const name of AMBIGUOUS_PLACE_NAMES) {
+    const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+    const reg = new RegExp(`\\b${escapeRegExp(capitalized)}\\b`);
+    if (reg.test(fullText)) {
+      ambiguousCandidates.push(capitalized);
+    }
+  }
+
+  if (ambiguousCandidates.length === 0) {
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify([]));
+    } catch (_) {}
+    return new Set<string>();
+  }
+
+  const snippet = fullText.slice(0, 1500);
+  const prompt = `You are a biblical scholar analyzing scripture text to distinguish individual persons from places, cities, nations, or regions.
+Context: ${bookName} Chapter ${chapterNum}.
+Text snippet: "${snippet}"
+
+Ambiguous names to classify: ${JSON.stringify(ambiguousCandidates)}.
+
+Task: For each name above, determine whether it refers to an individual PERSON / divine figure in this specific chapter, or if it refers to a PLACE (city, nation, region, landmark, river, mountain).
+Return ONLY a valid JSON array of names that are strictly referring to an individual PERSON in this chapter: e.g. ["Name1"]. If none refer to a person, return []. Do not return markdown, code fences, or any other text.`;
+
+  try {
+    const response = await generateLocalAiResponse([
+      { role: 'system', content: 'You are a biblical scholar. Always return a raw JSON array.' },
+      { role: 'user', content: prompt }
+    ], undefined, true);
+
+    const jsonMatch = response.match(/\[[\s\S]*?\]/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed)) {
+        const resultIds = parsed.map((n: string) => n.toLowerCase().replace(/[^a-z0-9]/g, '-'));
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(resultIds));
+        } catch (_) {}
+        return new Set<string>(resultIds);
+      }
+    }
+  } catch (err) {
+    console.warn('AI chapter person disambiguation fallback:', err);
+  }
+
+  return new Set<string>();
+}
+
 export function renderWithCharacters(
   text: string,
   colorStyle: React.CSSProperties,
   className: string,
   onCharClick?: (charId: string) => void,
   matchedCharacters?: Set<string>,
-  selectedCharacter?: string | null
+  selectedCharacter?: string | null,
+  allowedCharacters?: Set<string> | null
 ): React.ReactNode {
   if (!text) return null;
 
-  // If no click handler, just return the text as is (or we could still highlight without clicking)
+  // If no click handler, just return the text as is
   if (!onCharClick) {
     return <span className={className} style={colorStyle}>{text}</span>;
   }
@@ -42,8 +224,10 @@ export function renderWithCharacters(
       {parts.map((part, i) => {
         if (i % 2 !== 0) {
           const charId = part.toLowerCase().replace(/[^a-z0-9]/g, '-');
-          // If the character is in our map, give it a hash color
-          if (characterMap[charId]) {
+          const isHighlighted = isCharacterHighlighted(charId, part, allowedCharacters);
+
+          // If the character is in our map and verified as a character
+          if (characterMap[charId] && isHighlighted) {
             const hash = charId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
             const hue = hash % 360;
             const isSelected = charId === selectedCharacter;

@@ -5429,5 +5429,109 @@
   },
   "jesus": {
     "aiBiography": "Jesus of Nazareth is the central figure of the Christian faith, believed to be the incarnate Son of God and the promised Messiah (Christ) of the Old Testament. According to the Gospels, He conducted a transformative Galilean and Judean ministry marked by miraculous healings, profound parables, and a radical reinterpretation of the Mosaic Law centered on love and the Kingdom of God. His crucifixion by Roman authorities and subsequent bodily resurrection form the cornerstone of Christian theology, offering redemption and eternal life to humanity and fulfilling God's ultimate salvific plan."
+  },
+  "abraham": {
+    "aiBiography": "Abraham is the founding patriarch of Israel and father of the faithful, called by God from Ur to journey to the Promised Land. Through God's unconditional covenant, Abraham was promised land, innumerable descendants, and that all nations of the earth would be blessed through his seed, ultimately fulfilled in Jesus Christ.",
+    "headshotUrl": null
+  },
+  "sarah": {
+    "aiBiography": "Sarah is the wife of Abraham and the matriarch of Israel who, despite her barrenness and advanced age, miraculously conceived and gave birth to Isaac according to God's promise. Scripture honors her as an enduring example of faith and holy hope.",
+    "headshotUrl": null
+  },
+  "peter": {
+    "aiBiography": "Simon Peter, a Galilean fisherman called by Jesus, became the outspoken leader of the Twelve Apostles. Renamed Peter (Cephas) by Christ, he confessed Jesus as the Messiah, was restored after his threefold denial, and preached boldly at Pentecost to spearhead the early church.",
+    "headshotUrl": null
+  },
+  "simon-peter": {
+    "aiBiography": "Simon Peter was among the innermost circle of Jesus' disciples alongside James and John. Witness to the Transfiguration and the Resurrection, Peter became a foundational pillar of the apostolic church and author of two canonical epistles.",
+    "headshotUrl": null
+  },
+  "paul": {
+    "aiBiography": "Paul of Tarsus, formerly Saul the zealous Pharisee, encountered the risen Christ on the road to Damascus in a miraculous conversion. He became the foremost missionary, theologian, and apostle to the Gentile world, planting churches across the Roman Empire and penning thirteen New Testament epistles.",
+    "headshotUrl": null
+  },
+  "saul-of-tarsus": {
+    "aiBiography": "Saul of Tarsus was a brilliant Pharisee educated under Gamaliel who initially persecuted the early Christian church. After an encounter with the glorified Jesus, he became the Apostle Paul.",
+    "headshotUrl": null
+  },
+  "esther": {
+    "aiBiography": "Esther (Hadassah), a Jewish orphan raised by Mordecai in Susa, became Queen of the Persian Empire under King Ahasuerus (Xerxes). At profound personal peril ('If I perish, I perish'), she exposed Haman's genocidal plot and delivered her people from annihilation, commemorated in the Feast of Purim.",
+    "headshotUrl": null
+  },
+  "john-the-baptist": {
+    "aiBiography": "John the Baptist, son of Zechariah and Elizabeth, was the prophet designated by God to prepare the way of the Lord. Preaching a baptism of repentance in the wilderness of Judea, he identified Jesus as the 'Lamb of God who takes away the sin of the world' and baptized Him in the Jordan River.",
+    "headshotUrl": null
+  },
+  "mary-magdalene": {
+    "aiBiography": "Mary Magdalene was a devoted disciple delivered by Jesus from seven demons who supported His ministry, stood faithfully beside the Cross, and was granted the high privilege of being the first witness to the risen Lord on Easter morning.",
+    "headshotUrl": null
+  },
+  "barnabas": {
+    "aiBiography": "Barnabas (Joseph of Cyprus) was a generous Levite known as the 'Son of Encouragement.' He validated Paul to the skeptical Jerusalem apostles, co-led the first missionary journey, and nurtured young leaders like John Mark.",
+    "headshotUrl": null
+  },
+  "mark": {
+    "aiBiography": "John Mark was an early church associate of Paul, Barnabas, and Peter, credited by church tradition with authoring the Gospel of Mark under Peter's eyewitness guidance.",
+    "headshotUrl": null
+  },
+  "john-mark": {
+    "aiBiography": "John Mark whose mother's house hosted the Jerusalem believers in prayer, served alongside Paul and Barnabas on missionary journeys and became a valued apostolic helper.",
+    "headshotUrl": null
+  },
+  "pontius-pilate": {
+    "aiBiography": "Pontius Pilate was the fifth Roman equestrian prefect of the province of Judea (AD 26–36). Though declaring Jesus innocent of treason, he capitulated to political pressure and handed Him over to be crucified.",
+    "headshotUrl": null
+  },
+  "judas-iscariot": {
+    "aiBiography": "Judas Iscariot was one of Jesus' Twelve chosen disciples and keeper of the moneybag who betrayed his Lord to the chief priests for thirty pieces of silver, tragically fulfilling prophetic Scripture before taking his own life.",
+    "headshotUrl": null
+  },
+  "zacchaeus": {
+    "aiBiography": "Zacchaeus was a wealthy chief tax collector in Jericho who climbed a sycamore tree to see Jesus. After Jesus stayed at his home, Zacchaeus demonstrated genuine repentance by giving half his goods to the poor and restoring fourfold any defrauded money.",
+    "headshotUrl": null
+  },
+  "christ": {
+    "aiBiography": "Jesus Christ is the eternal Son of God, incarnate Lord, and promised Messiah who fulfilled the Law and Prophets through His sinless life, sacrificial atoning death, bodily resurrection, and ascension to the right hand of the Father.",
+    "headshotUrl": null
+  },
+  "holy-spirit": {
+    "aiBiography": "The Holy Spirit is the third Person of the Holy Trinity, co-equal and co-eternal with the Father and the Son, who inspired Holy Scripture, regenerates believers, indwells the Church, and empowers God's people for witness and sanctification.",
+    "headshotUrl": null
+  },
+  "jethro": {
+    "aiBiography": "Jethro (Reuel) was the priest of Midian who welcomed Moses into his household, gave him his daughter Zipporah in marriage, and later offered wise counsel on delegating judicial leadership in Israel.",
+    "headshotUrl": null
+  },
+  "shadrach": {
+    "aiBiography": "Shadrach (Hananiah) was a faithful Jewish noble exiled to Babylon who refused to bow to Nebuchadnezzar's golden image and was miraculously delivered unharmed from the burning fiery furnace.",
+    "headshotUrl": null
+  },
+  "meshach": {
+    "aiBiography": "Meshach (Mishael) was one of Daniel's companions in Babylon who exhibited unwavering fidelity to the living God when facing death in the fiery furnace alongside Shadrach and Abednego.",
+    "headshotUrl": null
+  },
+  "abednego": {
+    "aiBiography": "Abednego (Azariah) chose the fiery furnace rather than idolatry in Babylon, witnessed with his companions by King Nebuchadnezzar with a fourth divine figure 'like a son of the gods' in the midst of the flames.",
+    "headshotUrl": null
+  },
+  "joseph-of-arimathea": {
+    "aiBiography": "Joseph of Arimathea was a wealthy, honorable member of the Sanhedrin and secret disciple of Jesus who boldly requested Christ's body from Pilate and laid Him in his own newly hewn rock tomb.",
+    "headshotUrl": null
+  },
+  "simon-of-cyrene": {
+    "aiBiography": "Simon of Cyrene, a North African Jew in Jerusalem for Passover, was compelled by Roman soldiers to carry Jesus' cross to Golgotha. His sons Alexander and Rufus became known members of the early church.",
+    "headshotUrl": null
+  },
+  "simon-the-zealot": {
+    "aiBiography": "Simon the Zealot was one of the Twelve Apostles chosen by Jesus, historically belonging to the patriotic Jewish nationalist movement before dedicating his life to the Gospel of Christ.",
+    "headshotUrl": null
+  },
+  "james-son-of-alphaeus": {
+    "aiBiography": "James the son of Alphaeus was one of the Twelve Apostles of Jesus, often identified with 'James the Less,' who served faithfully in the early apostolic mission.",
+    "headshotUrl": null
+  },
+  "festus": {
+    "aiBiography": "Porcius Festus succeeded Felix as Roman procurator of Judea around AD 59. When trying Paul in Caesarea, he granted Paul's legal appeal as a Roman citizen to be tried before Caesar in Rome.",
+    "headshotUrl": null
   }
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { Sparkles, User } from 'lucide-react';
 import { characterMap } from '../data/characterData';
 import { Chapter } from '../data/bibleData';
+import { isPlaceOrNonCharacter } from '../services/characterHighlightService';
 
 interface CharacterPanelProps {
   charId: string | null;
@@ -10,7 +11,8 @@ interface CharacterPanelProps {
 }
 
 export const CharacterPanel: React.FC<CharacterPanelProps> = ({ charId, bookName, chapter }) => {
-  const character = charId ? characterMap[charId] : null;
+  const isExcluded = !charId || isPlaceOrNonCharacter(charId, undefined, characterMap[charId]?.aiBiography);
+  const character = !isExcluded && charId ? characterMap[charId] : null;
 
   if (!charId || !character) {
     return (
