@@ -348,9 +348,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                         placeholder="e.g. Fr. Thomas / Pastor Michael"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full text-xs bg-[#FAF7F2] border border-[#EBE5DC] rounded-xl px-3 py-2 text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#B4793D]"
-                      >
-                      </input>
+                        className="w-full text-xs bg-[#FAF7F2] border rounded-xl px-3 py-2 text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none"
+                        style={{ border: '1px solid #EBE5DC', outline: 'none' }}
+                      />
                     </div>
 
                     <div>
@@ -362,9 +362,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                         placeholder="e.g. St. Peter's / Grace Community"
                         value={church}
                         onChange={(e) => setChurch(e.target.value)}
-                        className="w-full text-xs bg-[#FAF7F2] border border-[#EBE5DC] rounded-xl px-3 py-2 text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#B4793D]"
-                      >
-                      </input>
+                        className="w-full text-xs bg-[#FAF7F2] border rounded-xl px-3 py-2 text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none"
+                        style={{ border: '1px solid #EBE5DC', outline: 'none' }}
+                      />
                     </div>
                   </div>
 
@@ -375,7 +375,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full text-xs bg-[#FAF7F2] border border-[#EBE5DC] rounded-xl px-3 py-2 text-[#26221F] focus:outline-none focus:border-[#B4793D]"
+                      className="w-full text-xs bg-[#FAF7F2] border rounded-xl px-3 py-2 text-[#26221F] focus:outline-none"
+                      style={{ border: '1px solid #EBE5DC', outline: 'none' }}
                     >
                       <option>Theological & Doctrinal Soundness</option>
                       <option>Patristic / Church Father Commentary Accuracy</option>
@@ -396,7 +397,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                       placeholder={`Tell us what is working well, what theological nuances need adjustment, or what features would aid your pastoral study of ${passageString}...`}
                       value={comments}
                       onChange={(e) => setComments(e.target.value)}
-                      className="w-full text-xs bg-[#FAF7F2] border border-[#EBE5DC] rounded-xl p-3 text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#B4793D] resize-none leading-relaxed"
+                      className="w-full text-xs bg-[#FAF7F2] border rounded-xl p-3 text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none resize-none leading-relaxed"
+                      style={{ border: '1px solid #EBE5DC', outline: 'none' }}
                     />
                   </div>
 

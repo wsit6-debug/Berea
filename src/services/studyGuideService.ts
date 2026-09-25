@@ -337,16 +337,17 @@ export function generateStudyGuideContent(
   verseLemmas?: { word: string; transliteration: string; strongs?: string; definition?: string }[],
   existingSupportingPassages?: SupportingPassage[],
   audience: StudyGuideAudience = 'small_group',
-  endVerseNumber?: number
+  endVerseNumber?: number,
+  customPassageRef?: string
 ): StudyGuide {
   const cleanBook = formatBookDisplayName(book);
   const isMultiVerse = Boolean(endVerseNumber && verseNumber && endVerseNumber > verseNumber);
-  const isWholeChapter = !verseNumber && !endVerseNumber;
-  const passageRef = isMultiVerse
+  const isWholeChapter = !verseNumber && !endVerseNumber && !customPassageRef;
+  const passageRef = customPassageRef || (isMultiVerse
     ? `${cleanBook} ${chapter}:${verseNumber}–${endVerseNumber}`
     : isWholeChapter
       ? `${cleanBook} ${chapter}`
-      : `${cleanBook} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`;
+      : `${cleanBook} ${chapter}${verseNumber ? `:${verseNumber}` : ''}`);
 
   const denom = DENOMINATIONS.find(d => d.id === lens) || DENOMINATIONS[0];
   const insight = getTheologicalInsight(book, chapter, verseNumber, verseText, verseLemmas, endVerseNumber);

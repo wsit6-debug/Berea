@@ -24,6 +24,29 @@ export interface StudyGuide {
 
 export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'typology';
 
+export type NoteFontFamily = 'serif' | 'sans' | 'mono' | 'script';
+export type NoteFontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl';
+
+export interface NoteTab {
+  id: string;
+  title: string;
+  content: string;
+  book?: string; // e.g. "Genesis", "John" or undefined for general
+  chapter?: number; // e.g. 1
+  fontFamily?: NoteFontFamily;
+  fontSize?: NoteFontSize;
+  verseHighlights?: Record<number, 'yellow' | 'green' | 'red' | 'blue'>; // verseNumber -> color
+  updatedAt: number;
+  createdAt: number;
+}
+
+export interface NotepadState {
+  tabs: NoteTab[];
+  activeTabId: string;
+  globalFontFamily: NoteFontFamily;
+  globalFontSize: NoteFontSize;
+}
+
 export interface TypologyNode {
   era: 'Creation & Patriarchs' | 'Exodus & Kingdom' | 'Prophets' | 'Gospels' | 'Acts & Epistles' | 'Revelation';
   reference: string;

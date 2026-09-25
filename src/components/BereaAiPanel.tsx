@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, Trophy, HelpCircle, Network
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages, Trophy, HelpCircle, Network
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
-import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
+import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
@@ -169,7 +169,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     }
   }, [activeQuizType, currentBook, currentChapter]);
   const [comparisonTranslations, setComparisonTranslations] = useState<TranslationId[]>(['ESV', 'KJV', 'NIV']);
-  const [showDenomModal, setShowDenomModal] = useState(false);
 
   const activeVerseNum = selectedVerse?.verseNumber || 1;
   const currentVerseRef = `${currentBook} ${currentChapter}:${activeVerseNum}`;
@@ -231,13 +230,44 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     }
   });
 
-  // Study Guide Scope: default is whole chapter, individual verse and range are options
-  type StudyGuideScope = 'chapter' | 'verse' | 'range';
+  // Study Guide Scope: whole chapter, individual verse, range, or custom specific verses
+  type StudyGuideScope = 'chapter' | 'verse' | 'range' | 'custom';
   const [studyGuideScope, setStudyGuideScope] = useState<StudyGuideScope>('chapter');
+
+  // Overview Tab Interactive State
+  const [activeKeyWordIndex, setActiveKeyWordIndex] = useState<number>(0);
+  const [expandedDoctrinalEntries, setExpandedDoctrinalEntries] = useState<Record<string, boolean>>({});
 
   // Start Verse & Multi-Verse Range State
   const [manualStartVerseNum, setManualStartVerseNum] = useState<number>(activeVerseNum);
   const [endVerseNum, setEndVerseNum] = useState<number>(activeVerseNum);
+
+  // Custom Specific Verses State (e.g. 1, 12, 23)
+  const [customVerseNumbers, setCustomVerseNumbers] = useState<number[]>([activeVerseNum]);
+  const [customVerseInput, setCustomVerseInput] = useState<string>(String(activeVerseNum));
+
+  const handleCustomVerseInputChange = (val: string) => {
+    setCustomVerseInput(val);
+    const parsed = val
+      .split(/[\s,]+/)
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n >= 1 && n <= maxChapterVerses);
+    const uniqueSorted = Array.from(new Set(parsed)).sort((a, b) => a - b);
+    setCustomVerseNumbers(uniqueSorted);
+  };
+
+  const toggleCustomVerseNumber = (vNum: number) => {
+    setCustomVerseNumbers(prev => {
+      let next: number[];
+      if (prev.includes(vNum)) {
+        next = prev.filter(x => x !== vNum);
+      } else {
+        next = [...prev, vNum].sort((a, b) => a - b);
+      }
+      setCustomVerseInput(next.join(', '));
+      return next;
+    });
+  };
 
   // Sync manualStartVerseNum with activeVerseNum or selectedVerseRange on external navigation
   useEffect(() => {
@@ -305,10 +335,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     if (studyGuideScope === 'verse') {
       return `${currentBook} ${currentChapter}:${manualStartVerseNum}`;
     }
+    if (studyGuideScope === 'custom') {
+      const sorted = [...customVerseNumbers].sort((a, b) => a - b);
+      if (sorted.length === 0) return `${currentBook} ${currentChapter}`;
+      return `${currentBook} ${currentChapter}:${sorted.join(', ')}`;
+    }
     return effectiveEndVerse > effectiveStartVerse
       ? `${currentBook} ${currentChapter}:${effectiveStartVerse}–${effectiveEndVerse}`
       : `${currentBook} ${currentChapter}:${effectiveStartVerse}`;
-  }, [studyGuideScope, currentBook, currentChapter, manualStartVerseNum, effectiveStartVerse, effectiveEndVerse]);
+  }, [studyGuideScope, currentBook, currentChapter, manualStartVerseNum, customVerseNumbers, effectiveStartVerse, effectiveEndVerse]);
 
   // Text content analyzed for Study Guide
   const studyGuideTextToAnalyze = useMemo(() => {
@@ -325,8 +360,18 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       }
       return currentVerseText;
     }
+    if (studyGuideScope === 'custom') {
+      if (!chapterVerses || chapterVerses.length === 0) return currentVerseText;
+      const sorted = [...customVerseNumbers].sort((a, b) => a - b);
+      const matched = chapterVerses.filter(v => sorted.includes(v.verseNumber));
+      if (matched.length === 0) return currentVerseText;
+      return matched.map(v => {
+        const raw = v.text[activeTranslation] || v.text['KJV'] || Object.values(v.text)[0] || '';
+        return `[${v.verseNumber}] ${cleanApiText(raw)}`;
+      }).join(' ');
+    }
     return combinedRangeText;
-  }, [studyGuideScope, wholeChapterText, manualStartVerseNum, chapterVerses, activeTranslation, currentVerseText, combinedRangeText]);
+  }, [studyGuideScope, wholeChapterText, manualStartVerseNum, customVerseNumbers, chapterVerses, activeTranslation, currentVerseText, combinedRangeText]);
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -348,6 +393,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     const audienceToUse = overrideAudience || selectedAudience;
     let targetVerseNumber: number | undefined = undefined;
     let targetEndVerseNumber: number | undefined = undefined;
+    let customPassageRef: string | undefined = undefined;
 
     if (studyGuideScope === 'verse') {
       targetVerseNumber = manualStartVerseNum;
@@ -355,6 +401,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     } else if (studyGuideScope === 'range') {
       targetVerseNumber = effectiveStartVerse;
       targetEndVerseNumber = overrideEndVerse !== undefined ? overrideEndVerse : (effectiveEndVerse > effectiveStartVerse ? effectiveEndVerse : undefined);
+    } else if (studyGuideScope === 'custom') {
+      const sorted = [...customVerseNumbers].sort((a, b) => a - b);
+      targetVerseNumber = sorted[0];
+      targetEndVerseNumber = sorted.length > 1 ? sorted[sorted.length - 1] : undefined;
+      customPassageRef = `${currentBook} ${currentChapter}:${sorted.join(', ')}`;
     } else {
       // 'chapter' (default)
       targetVerseNumber = undefined;
@@ -371,7 +422,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       studyGuideScope === 'verse' ? selectedVerse?.greekHebrew : undefined,
       isSamePassage ? currentGuide?.supportingPassages : undefined,
       audienceToUse,
-      targetEndVerseNumber
+      targetEndVerseNumber,
+      customPassageRef
     );
     const updated = saveStudyGuide(guide);
     setSavedGuides(updated);
@@ -383,7 +435,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     setSelectedAudience(newAudience);
     try {
       localStorage.setItem('berea_study_guide_audience', newAudience);
-    } catch {}
+    } catch { }
     // Do NOT auto-generate; user clicks Generate when ready
   };
 
@@ -470,9 +522,9 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           <div class="meta">Tradition: ${activeDenom.name} · Depth: ${audienceLabel} · Created: ${new Date(currentGuide.createdAt).toLocaleDateString()}</div>
           <h2>Context Snapshot</h2>
           <div>${formatContextSnapshotForDisplay(currentGuide.contextSnapshot)
-            .replace(/^### (.*)$/gm, '<h3 style="color:#B4793D; font-size:14px; margin:16px 0 6px; border-bottom:1px solid #EBE5DC; padding-bottom:3px;">$1</h3>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/^> (.*)$/gm, '<blockquote style="margin:8px 0; padding:6px 12px; border-left:3px solid #B4793D; background:#FAF7F2; font-style:italic; color:#57524E;">$1</blockquote>')}</div>
+        .replace(/^### (.*)$/gm, '<h3 style="color:#B4793D; font-size:14px; margin:16px 0 6px; border-bottom:1px solid #EBE5DC; padding-bottom:3px;">$1</h3>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^> (.*)$/gm, '<blockquote style="margin:8px 0; padding:6px 12px; border-left:3px solid #B4793D; background:#FAF7F2; font-style:italic; color:#57524E;">$1</blockquote>')}</div>
           ${currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? `
             <h2>Supporting Scriptures & Cross-References</h2>
             <ul style="padding-left: 20px;">
@@ -598,143 +650,87 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const activeDenom = DENOMINATIONS.find(d => d.id === activeLens) || DENOMINATIONS[0];
 
   return (
-    <div className="berea-ai-inspector flex flex-col h-full bg-white text-[#26221F] border border-[#EBE5DC] rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(180,160,140,0.06)]">
-      {/* Inspector Header */}
-      <div className="px-3.5 py-2.5 bg-[#FAF7F2] border-b border-[#EBE5DC] flex items-center justify-between select-none flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-md bg-gradient-to-br from-[#B4793D] to-[#8C5E32] flex items-center justify-center text-white shadow-xs">
-            <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-heading font-semibold text-xs text-[#26221F]">Berea AI Guide</h3>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* Denominational Lens Selector Pill */}
-          <button
-            onClick={() => setShowDenomModal(!showDenomModal)}
-            className="ios-glass-btn !text-[10.5px] !py-0.5 !px-2 hover:border-[#D4A373]"
-            title="Change theological lens"
-          >
-            <span className="text-[11px]">{activeDenom.icon}</span>
-            <span className="truncate max-w-[110px] font-medium">{activeDenom.traditionGroup}</span>
-            <Sliders className="w-2.5 h-2.5 text-[#A8A29E]" />
-          </button>
-
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="ios-icon-btn !w-5 !h-5 text-xs text-[#78716C] hover:text-[#26221F]"
-              title="Close Guide"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Denominational Lens Dropdown Modal */}
-      {showDenomModal && (
-        <div className="p-3 bg-white border-b border-[#EBE5DC] animate-fadeIn select-none shadow-xs">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-[#26221F] flex items-center gap-1.5">
-              <Sliders className="w-3 h-3 text-[#B4793D]" /> Confessional Tradition
-            </span>
-            <button
-              onClick={() => setShowDenomModal(false)}
-              className="ios-icon-btn !w-5 !h-5 text-xs"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-64 overflow-y-auto custom-scrollbar">
-            {DENOMINATIONS.map((denom) => (
-              <button
-                key={denom.id}
-                onClick={() => {
-                  onLensChange(denom.id);
-                  setShowDenomModal(false);
-                }}
-                className={`text-left p-2 rounded-lg text-xs transition-all border ${activeLens === denom.id
-                  ? 'bg-[#FAF3E8] border-[#B4793D] text-[#78471F] font-semibold shadow-xs'
-                  : 'bg-white border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED]'
-                  }`}
-              >
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-xs">{denom.icon}</span>
-                  <span className="font-semibold text-[11px] truncate">{denom.name}</span>
-                </div>
-                <div className="text-[9.5px] text-[#8C827A] line-clamp-1">{denom.tagline}</div>
-                <div className="text-[8.5px] text-[#A8A29E] truncate font-mono mt-0.5">{denom.confessionalStandard.split(',')[0]}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Segmented Tab Capsule */}
-      <div className="p-1.5 border-b border-[#EBE5DC] bg-[#FAF7F2] flex justify-center select-none flex-shrink-0">
-        <div className="ios-segmented-capsule w-full flex-wrap justify-center gap-1">
+    <div
+      className="berea-ai-inspector flex flex-col h-full bg-white text-[#26221F] border border-[var(--clean-accent-border,#EBE5DC)] rounded-2xl overflow-hidden shadow-xs"
+      style={{ backgroundColor: '#FFFFFF' }}
+    >
+      {/* Segmented Tab Capsule / Header */}
+      <div
+        className="p-1.5 px-2.5 border-b border-[var(--clean-accent-border,#EBE5DC)] flex items-center gap-1.5 select-none flex-shrink-0"
+        style={{ backgroundColor: '#FFFFFF', color: '#26221F' }}
+      >
+        <div className="ios-segmented-capsule flex-1 flex overflow-x-auto gap-0.5">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'overview' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'overview' ? 'active' : ''}`}
             title="Passage Overview"
           >
-            <BookOpen className="w-3 h-3" />
-            <span>Overview</span>
+            <BookOpen className="w-3 h-3 shrink-0" />
+            <span className="truncate">Overview</span>
           </button>
 
           <button
             onClick={() => setActiveTab('studyGuide')}
-            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'studyGuide' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'studyGuide' ? 'active' : ''}`}
             title="Study Guide Generator"
           >
-            <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
-            <span>Study Guide</span>
+            <BookOpenCheck className="w-3 h-3 shrink-0" />
+            <span className="truncate">Study Guide</span>
           </button>
 
           <button
             onClick={() => setActiveTab('chat')}
-            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'chat' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[65px] ${activeTab === 'chat' ? 'active' : ''}`}
             title="Ask AI Assistant"
           >
-            <MessageSquare className="w-3 h-3" />
-            <span>Ask AI</span>
+            <MessageSquare className="w-3 h-3 shrink-0" />
+            <span className="truncate">Ask AI</span>
           </button>
 
           <button
             onClick={() => setActiveTab('compare')}
-            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'compare' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[70px] ${activeTab === 'compare' ? 'active' : ''}`}
             title="Parallel Comparison"
           >
-            <Columns className="w-3 h-3" />
-            <span>Compare</span>
+            <Columns className="w-3 h-3 shrink-0" />
+            <span className="truncate">Compare</span>
           </button>
 
           <button
             onClick={() => setActiveTab('map')}
-            className={`ios-segment-pill flex-1 min-w-[90px] !text-[10.5px] !py-0.5 ${activeTab === 'map' ? 'active' : ''}`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'map' ? 'active' : ''}`}
             title="Biblical Atlas"
           >
-            <MapPin className="w-3 h-3" />
-            <span>Atlas</span>
+            <MapPin className="w-3 h-3 shrink-0" />
+            <span className="truncate">Atlas</span>
           </button>
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 p-2 border-b-2 transition-all ${
-              activeTab === 'quiz' ? 'border-[#B4793D] text-[#B4793D] bg-white' : 'border-transparent text-[#78716C] hover:text-[#26221F] hover:bg-[#FAF9F6]'
-            }`}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'quiz' ? 'active' : ''}`}
+            title="Interactive Quiz"
           >
-            <HelpCircle className="w-4 h-4" />
-            <span className="text-[10px] font-medium tracking-wide">Quiz</span>
+            <HelpCircle className="w-3 h-3 shrink-0" />
+            <span className="truncate">Quiz</span>
           </button>
         </div>
+
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
+            title="Close Guide"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Tab Contents */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-white">
+      <div
+        className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-white text-[#26221F]"
+        style={{ backgroundColor: '#FFFFFF', color: '#26221F' }}
+      >
         {/* STUDY GUIDE TAB */}
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
@@ -761,102 +757,177 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             {studyGuideMode === 'discussion' && (
               <>
             {/* 1. Audience / Depth Selector Bar */}
-            <div className="p-2.5 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] shadow-xs space-y-2">
+            <div
+              className="p-2.5 rounded-xl border shadow-xs space-y-2"
+              style={{
+                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+            >
               <div className="flex items-center justify-between px-1">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-1.5">
-                  <Sliders className="w-3.5 h-3.5 text-[#B4793D]" />
+                <span
+                  className="text-[10.5px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                  style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                >
+                  <Sliders className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                   Study Guide Depth
                 </span>
-                <span className="text-[10px] text-[#B4793D] font-medium bg-white px-2 py-0.5 rounded-full border border-[#EBE5DC]">
-                  {selectedAudience === 'deep_exegesis' ? 'Pastoral & Exegetical' : selectedAudience === 'youth_family' ? 'Youth & Family' : 'Small Group'}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowSavedGuidesDrawer(!showSavedGuidesDrawer)}
+                    className="ios-glass-btn !text-[10px] !py-0.5 !px-2"
+                    style={{
+                      borderColor: showSavedGuidesDrawer ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                      color: 'var(--clean-accent-dark, #8C5E2E)'
+                    }}
+                    title="View Saved Study Guides"
+                  >
+                    <History className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    <span>Saved</span>
+                    <span
+                      className="text-[9px] font-bold px-1 rounded-full bg-white border"
+                      style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                    >
+                      {savedGuides.length}
+                    </span>
+                  </button>
+                  <span
+                    className="text-[10px] font-medium bg-white px-2 py-0.5 rounded-full border"
+                    style={{
+                      color: 'var(--clean-accent-dark, #8C5E2E)',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
+                  >
+                    {selectedAudience === 'deep_exegesis' ? 'Pastoral & Exegetical' : selectedAudience === 'youth_family' ? 'Youth & Family' : 'Small Group'}
+                  </span>
+                </div>
               </div>
 
               {/* Segmented Audience Control */}
-              <div className="flex rounded-lg bg-[#EFE9DF] p-0.5 gap-0.5">
+              <div
+                className="flex rounded-lg p-0.5 gap-0.5 border"
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('small_group')}
-                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
-                    selectedAudience === 'small_group'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
-                  }`}
+                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
+                  style={{
+                    backgroundColor: selectedAudience === 'small_group' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                    borderColor: selectedAudience === 'small_group' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                    color: selectedAudience === 'small_group' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                    fontWeight: selectedAudience === 'small_group' ? 700 : 600,
+                    boxShadow: selectedAudience === 'small_group' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
                   title="Practical small group discussion, fellowship, and personal application"
                 >
-                  <Users className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <Users className="w-3.5 h-3.5" style={{ color: selectedAudience === 'small_group' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                   <span>Small Group</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('deep_exegesis')}
-                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
-                    selectedAudience === 'deep_exegesis'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
-                  }`}
+                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
+                  style={{
+                    backgroundColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                    borderColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                    color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                    fontWeight: selectedAudience === 'deep_exegesis' ? 700 : 600,
+                    boxShadow: selectedAudience === 'deep_exegesis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
                   title="Pastoral exegesis, linguistic grammar, confessional dogmatics, and historical setting"
                 >
-                  <GraduationCap className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <GraduationCap className="w-3.5 h-3.5" style={{ color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                   <span>Deep Exegesis</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('youth_family')}
-                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
-                    selectedAudience === 'youth_family'
-                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                      : 'text-[#78716C] hover:text-[#26221F]'
-                  }`}
+                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
+                  style={{
+                    backgroundColor: selectedAudience === 'youth_family' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                    borderColor: selectedAudience === 'youth_family' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                    color: selectedAudience === 'youth_family' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                    fontWeight: selectedAudience === 'youth_family' ? 700 : 600,
+                    boxShadow: selectedAudience === 'youth_family' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
                   title="Engaging storytelling, real-world scenarios, and family discussion prompts"
                 >
-                  <Baby className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <Baby className="w-3.5 h-3.5" style={{ color: selectedAudience === 'youth_family' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
                   <span>Youth & Family</span>
                 </button>
               </div>
 
               {/* Passage Scope & Verse Range Controls */}
-              <div className="pt-2 border-t border-[#EBE5DC]/80 space-y-2">
+              <div
+                className="pt-2 border-t space-y-2"
+                style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#78716C] flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <span
+                    className="text-[10.5px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                  >
+                    <Layers className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                     Passage Scope
                   </span>
-                  <span className="text-[11px] font-mono text-[#B4793D] font-bold bg-white px-2 py-0.5 rounded-full border border-[#EBE5DC]">
+                  <span
+                    className="text-[11px] font-mono font-bold bg-white px-2 py-0.5 rounded-full border"
+                    style={{
+                      color: 'var(--clean-accent-dark, #8C5E2E)',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
+                  >
                     {effectiveStudyGuideRef}
                   </span>
                 </div>
 
-                {/* 3-Option Segmented Control: Whole Chapter vs Individual Verse vs Verse Range */}
-                <div className="grid grid-cols-3 rounded-lg bg-[#EFE9DF] p-0.5 gap-0.5">
+                {/* 4-Option Segmented Control: Whole Chapter vs Individual Verse vs Verse Range vs Specific Verses */}
+                <div
+                  className="grid grid-cols-2 sm:grid-cols-4 rounded-lg p-0.5 gap-0.5 border"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('chapter')}
-                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
-                      studyGuideScope === 'chapter'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
-                    }`}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'chapter' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'chapter' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'chapter' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'chapter' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'chapter' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
                     title="Default: Complete chapter study guide"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>Whole Chapter</span>
+                    <BookOpen className="w-3 h-3" style={{ color: studyGuideScope === 'chapter' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
+                    <span className="truncate">Whole Chapter</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('verse')}
-                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
-                      studyGuideScope === 'verse'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
-                    }`}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'verse' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'verse' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'verse' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'verse' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'verse' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
                     title="Focus on an individual verse"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>Individual Verse</span>
+                    <FileText className="w-3 h-3" style={{ color: studyGuideScope === 'verse' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
+                    <span className="truncate">Single Verse</span>
                   </button>
 
                   <button
@@ -867,33 +938,66 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setEndVerseNum(Math.min(manualStartVerseNum + 1, maxChapterVerses));
                       }
                     }}
-                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${
-                      studyGuideScope === 'range'
-                        ? 'bg-white text-[#26221F] shadow-xs font-semibold'
-                        : 'text-[#78716C] hover:text-[#26221F]'
-                    }`}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'range' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'range' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'range' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'range' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'range' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
                     title="Custom verse range"
                   >
-                    <Layers className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>Verse Range</span>
+                    <Layers className="w-3 h-3" style={{ color: studyGuideScope === 'range' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
+                    <span className="truncate">Verse Range</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStudyGuideScope('custom')}
+                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
+                    style={{
+                      backgroundColor: studyGuideScope === 'custom' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      borderColor: studyGuideScope === 'custom' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                      color: studyGuideScope === 'custom' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
+                      fontWeight: studyGuideScope === 'custom' ? 700 : 600,
+                      boxShadow: studyGuideScope === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                    title="Pick custom verses (e.g. 1, 12, 23)"
+                  >
+                    <ListFilter className="w-3 h-3" style={{ color: studyGuideScope === 'custom' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
+                    <span className="truncate">Pick Verses</span>
                   </button>
                 </div>
 
                 {/* Scope Specific Configuration */}
                 {studyGuideScope === 'chapter' && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/90 border border-[#EBE5DC]">
+                  <div
+                    className="flex items-center justify-between p-2 rounded-lg bg-white/90 border"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                       <span className="text-xs text-[#57524E] font-medium">Complete chapter study guide (Default)</span>
                     </div>
-                    <span className="text-[10px] font-mono font-semibold text-[#B4793D] bg-[#FAF5ED] px-2 py-0.5 rounded border border-[#EBE5DC]">
+                    <span
+                      className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded border"
+                      style={{
+                        color: 'var(--clean-accent-dark, #8C5E2E)',
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
                       {chapterVerses?.length || 0} verses
                     </span>
                   </div>
                 )}
 
                 {studyGuideScope === 'verse' && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/90 border border-[#EBE5DC]">
+                  <div
+                    className="flex items-center justify-between p-2 rounded-lg bg-white/90 border"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  >
                     <span className="text-xs text-[#57524E] font-medium">Select Passage Verse:</span>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-semibold text-[#78716C]">{currentBook} {currentChapter}:</span>
@@ -903,7 +1007,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                           const val = Number(e.target.value);
                           setManualStartVerseNum(val);
                         }}
-                        className="text-xs font-bold text-[#26221F] bg-white border border-[#EBE5DC] rounded-md px-2 py-1 focus:outline-none focus:border-[#B4793D] shadow-2xs cursor-pointer"
+                        className="text-xs font-bold text-[#26221F] bg-white border rounded-md px-2 py-1 focus:outline-none shadow-2xs cursor-pointer"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
                       >
                         {Array.from({ length: maxChapterVerses }, (_, i) => i + 1).map(num => (
                           <option key={num} value={num}>
@@ -916,7 +1021,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 )}
 
                 {studyGuideScope === 'range' && (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/90 border border-[#EBE5DC] gap-2">
+                  <div
+                    className="flex items-center justify-between p-2 rounded-lg bg-white/90 border gap-2"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  >
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] font-medium text-[#78716C]">From:</span>
                       <select
@@ -928,7 +1036,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                             setEndVerseNum(val);
                           }
                         }}
-                        className="text-xs font-bold text-[#26221F] bg-white border border-[#EBE5DC] rounded-md px-2 py-1 focus:outline-none focus:border-[#B4793D] shadow-2xs cursor-pointer"
+                        className="text-xs font-bold text-[#26221F] bg-white border rounded-md px-2 py-1 focus:outline-none shadow-2xs cursor-pointer"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
                       >
                         {Array.from({ length: maxChapterVerses }, (_, i) => i + 1).map(num => (
                           <option key={num} value={num}>
@@ -938,7 +1047,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       </select>
                     </div>
 
-                    <ArrowRight className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <ArrowRight className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
 
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] font-medium text-[#78716C]">Through:</span>
@@ -948,7 +1057,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                           const val = Number(e.target.value);
                           setEndVerseNum(val);
                         }}
-                        className="text-xs font-bold text-[#26221F] bg-white border border-[#EBE5DC] rounded-md px-2 py-1 focus:outline-none focus:border-[#B4793D] shadow-2xs cursor-pointer"
+                        className="text-xs font-bold text-[#26221F] bg-white border rounded-md px-2 py-1 focus:outline-none shadow-2xs cursor-pointer"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
                       >
                         {Array.from({ length: Math.max(1, maxChapterVerses - manualStartVerseNum + 1) }, (_, i) => manualStartVerseNum + i).map(num => (
                           <option key={num} value={num}>
@@ -959,58 +1069,102 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Study Guide Action Bar */}
-            <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] flex items-center justify-between gap-2 shadow-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#FAF0E1] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
-                  <BookOpenCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#26221F]">{effectiveStudyGuideRef}</span>
-                    <span className="text-[9.5px] text-[#B4793D] font-mono font-medium px-1.5 py-0.2 rounded bg-white border border-[#EBE5DC]">
-                      {activeDenom.name}
-                    </span>
+                {studyGuideScope === 'custom' && (
+                  <div
+                    className="p-2.5 rounded-lg bg-white/90 border space-y-2"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-[#57524E] font-medium">
+                        Type or tap verses:
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-[#78716C]">{currentBook} {currentChapter}:</span>
+                        <input
+                          type="text"
+                          value={customVerseInput}
+                          onChange={(e) => handleCustomVerseInputChange(e.target.value)}
+                          placeholder="e.g. 1, 12, 23"
+                          className="w-28 text-xs font-bold font-mono text-[#26221F] bg-white border rounded-lg px-2.5 py-1 focus:outline-none shadow-2xs"
+                          style={{ border: '1px solid var(--clean-accent-border, #EBE5DC)', outline: 'none' }}
+                        />
+                        {customVerseNumbers.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomVerseNumbers([]);
+                              setCustomVerseInput('');
+                            }}
+                            className="text-[10px] text-[#A8A29E] hover:text-[var(--clean-accent-caramel,#B4793D)] px-1 py-0.5 rounded"
+                            title="Clear selection"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quick tap chips for chapter verses */}
+                    <div
+                      className="flex flex-wrap gap-1 max-h-24 overflow-y-auto custom-scrollbar p-1 rounded-md border"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
+                      {Array.from({ length: maxChapterVerses }, (_, i) => i + 1).map((vNum) => {
+                        const isPicked = customVerseNumbers.includes(vNum);
+                        return (
+                          <button
+                            key={vNum}
+                            type="button"
+                            onClick={() => toggleCustomVerseNumber(vNum)}
+                            className={`w-6 h-6 rounded text-[10px] font-mono font-semibold transition-all flex items-center justify-center border ${isPicked
+                                ? 'text-white shadow-2xs'
+                                : 'bg-white text-[#78716C] hover:text-[#26221F]'
+                              }`}
+                            style={isPicked ? {
+                              backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                              borderColor: 'var(--clean-accent-border-strong, #B4793D)'
+                            } : {
+                              borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                            }}
+                            title={`Toggle verse ${vNum}`}
+                          >
+                            {vNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="text-[10.5px] text-[#78716C] px-0.5">
+                      {customVerseNumbers.length === 0
+                        ? 'No verses selected (click chips or enter comma-separated numbers)'
+                        : `${customVerseNumbers.length} verse${customVerseNumbers.length > 1 ? 's' : ''} selected: v.${[...customVerseNumbers].sort((a, b) => a - b).join(', ')}`}
+                    </div>
                   </div>
-                  <p className="text-[10.5px] text-[#78716C] leading-none mt-0.5">
-                    {studyGuideScope === 'chapter' ? 'Complete Chapter Guide' : selectedAudience === 'deep_exegesis' ? 'Pastoral Exegesis Guide' : selectedAudience === 'youth_family' ? 'Family & Youth Guide' : 'Small Group Study Guide'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setShowSavedGuidesDrawer(!showSavedGuidesDrawer)}
-                  className={`ios-glass-btn !text-[10.5px] !py-1 !px-2 ${showSavedGuidesDrawer ? 'border-[#B4793D] text-[#B4793D]' : ''}`}
-                  title="View Saved Study Guides"
-                >
-                  <History className="w-3 h-3 text-[#B4793D]" />
-                  <span className="hidden sm:inline">Saved</span>
-                  <span className="text-[9px] font-bold px-1 rounded-full bg-white border border-[#EBE5DC]">
-                    {savedGuides.length}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => handleGenerateStudyGuide()}
-                  className="clean-caramel-btn !text-[11px] !py-1 !px-2.5 shadow-xs"
-                  title="Generate Study Guide"
-                >
-                  <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-                  <span>Generate</span>
-                </button>
+                )}
               </div>
             </div>
+
 
             {/* Saved Guides Drawer */}
             {showSavedGuidesDrawer && (
-              <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC] space-y-2 animate-fadeIn shadow-2xs">
+              <div
+                className="p-3 rounded-xl border space-y-2 animate-fadeIn shadow-2xs"
+                style={{
+                  backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-[#78716C] tracking-wider flex items-center gap-1">
-                    <History className="w-3 h-3 text-[#B4793D]" /> Saved Study Guides ({savedGuides.length})
+                  <span
+                    className="text-[10px] uppercase font-bold tracking-wider flex items-center gap-1"
+                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                  >
+                    <History className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    Saved Study Guides ({savedGuides.length})
                   </span>
                   <button
                     onClick={() => setShowSavedGuidesDrawer(false)}
@@ -1033,15 +1187,28 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                             setCurrentGuide(g);
                             setShowSavedGuidesDrawer(false);
                           }}
-                          className={`p-2 rounded-lg text-xs flex items-center justify-between gap-2 cursor-pointer transition-all border ${isSelected
-                            ? 'bg-white border-[#B4793D] shadow-xs text-[#26221F]'
-                            : 'bg-white/80 border-[#EBE5DC] hover:bg-white text-[#57524E]'
-                            }`}
+                          className="p-2 rounded-lg text-xs flex items-center justify-between gap-2 cursor-pointer transition-all border"
+                          style={isSelected ? {
+                            backgroundColor: '#FFFFFF',
+                            borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                            color: '#26221F'
+                          } : {
+                            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                            borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                            color: '#57524E'
+                          }}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-semibold text-xs text-[#26221F]">{g.passageRef}</span>
-                              <span className="text-[9px] font-medium leading-none px-1.5 py-0.5 rounded-full bg-[#FAF0E1] text-[#B4793D] border border-[#D4A373]/30 inline-flex items-center gap-1">
+                              <span
+                                className="text-[9px] font-medium leading-none px-1.5 py-0.5 rounded-full border inline-flex items-center gap-1"
+                                style={{
+                                  backgroundColor: 'var(--clean-highlight-cream, #FAF0E1)',
+                                  color: 'var(--clean-accent-dark, #B4793D)',
+                                  borderColor: 'var(--clean-accent-border, #D4A373)'
+                                }}
+                              >
                                 {g.audience === 'deep_exegesis' ? (
                                   <>
                                     <GraduationCap className="w-2 h-2 shrink-0" />
@@ -1090,7 +1257,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <div className="flex items-center justify-between gap-2 px-1 text-xs">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-bold text-[#26221F] text-xs">{currentGuide.passageRef}</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FAF0E1] text-[#B4793D] border border-[#D4A373]/40 flex items-center gap-1">
+                    <span
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF0E1)',
+                        color: 'var(--clean-accent-dark, #B4793D)',
+                        borderColor: 'var(--clean-accent-border, #D4A373)'
+                      }}
+                    >
                       {currentGuide.audience === 'deep_exegesis' ? (
                         <>
                           <GraduationCap className="w-3 h-3" />
@@ -1109,7 +1283,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       )}
                     </span>
                     {currentGuide.confessionCited && (
-                      <span className="text-[9.5px] text-[#78716C] bg-[#FAF7F2] px-1.5 py-0.5 rounded border border-[#EBE5DC] truncate max-w-[200px]" title={currentGuide.confessionCited}>
+                      <span
+                        className="text-[9.5px] px-1.5 py-0.5 rounded border truncate max-w-[200px]"
+                        style={{
+                          backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                          color: 'var(--clean-accent-dark, #78716C)',
+                          borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                        }}
+                        title={currentGuide.confessionCited}
+                      >
                         {currentGuide.confessionCited}
                       </span>
                     )}
@@ -1118,22 +1300,46 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
                 {/* Original Language Badge */}
                 {currentGuide.originalLanguageNote && (
-                  <div className="p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EBE5DC]/80 shadow-2xs">
-                    <div className="text-[10px] text-[#57524E] flex items-center gap-1 bg-white p-1.5 rounded-lg border border-[#EBE5DC]/60">
-                      <span className="font-bold text-[#B4793D] font-mono">Original Language:</span>
+                  <div
+                    className="p-2.5 rounded-xl border shadow-2xs"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
+                  >
+                    <div
+                      className="text-[10px] text-[#57524E] flex items-center gap-1 bg-white p-1.5 rounded-lg border"
+                      style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                    >
+                      <span
+                        className="font-bold font-mono"
+                        style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                      >
+                        Original Language:
+                      </span>
                       <span className="truncate">{currentGuide.originalLanguageNote}</span>
                     </div>
                   </div>
                 )}
 
                 {/* 1. Context Snapshot Accordion */}
-                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                <div
+                  className="rounded-xl border overflow-hidden shadow-2xs"
+                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
                   <button
                     onClick={() => toggleSection('context')}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                    className="w-full px-3 py-2 flex items-center justify-between text-left transition-colors border-b"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                      borderBottomColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
                   >
-                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span
+                      className="text-xs font-bold flex items-center gap-1.5"
+                      style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                    >
+                      <BookOpen className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                       Context Snapshot
                     </span>
                     {openSections.context ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
@@ -1146,13 +1352,23 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
 
                 {/* 2. Supporting Passages & Cross-References Accordion */}
-                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                <div
+                  className="rounded-xl border overflow-hidden shadow-2xs"
+                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
                   <button
                     onClick={() => toggleSection('supportingPassages')}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                    className="w-full px-3 py-2 flex items-center justify-between text-left transition-colors border-b"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                      borderBottomColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
                   >
-                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
-                      <Bookmark className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span
+                      className="text-xs font-bold flex items-center gap-1.5"
+                      style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                    >
+                      <Bookmark className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                       Supporting Passages {currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? `(${currentGuide.supportingPassages.length})` : ''}
                     </span>
                     {openSections.supportingPassages ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
@@ -1163,9 +1379,21 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       {currentGuide.supportingPassages && currentGuide.supportingPassages.length > 0 ? (
                         <div className="space-y-2">
                           {currentGuide.supportingPassages.map((p, idx) => (
-                            <div key={idx} className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC]/80 space-y-1 text-xs">
+                            <div
+                              key={idx}
+                              className="p-2.5 rounded-lg border space-y-1 text-xs"
+                              style={{
+                                backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                              }}
+                            >
                               <div className="flex items-center justify-between gap-1">
-                                <span className="font-bold text-[#B4793D] font-mono">{p.ref}</span>
+                                <span
+                                  className="font-bold font-mono"
+                                  style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                                >
+                                  {p.ref}
+                                </span>
                                 <button
                                   onClick={() => handleRemoveSupportingPassage(p.ref)}
                                   className="text-[#A8A29E] hover:text-red-600 p-0.5 rounded transition-colors"
@@ -1178,7 +1406,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                                 <p className="text-[11px] font-medium text-[#78716C] italic">{p.note}</p>
                               )}
                               {p.text && (
-                                <p className="text-[11.5px] text-[#44403C] leading-relaxed pl-2 border-l-2 border-[#D4A373]/50">
+                                <p
+                                  className="text-[11.5px] text-[#44403C] leading-relaxed pl-2 border-l-2"
+                                  style={{ borderLeftColor: 'var(--clean-accent-border-strong, #D4A373)' }}
+                                >
                                   "{p.text}"
                                 </p>
                               )}
@@ -1196,12 +1427,21 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                           value={newPassageRefInput}
                           onChange={(e) => setNewPassageRefInput(e.target.value)}
                           placeholder="Add passage (e.g. Malachi 4:5, Matt 11:14)..."
-                          className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-[#EBE5DC] focus:outline-none focus:border-[#B4793D] bg-[#FAF7F2]/50 text-[#26221F] placeholder:text-[#A8A29E]"
+                          className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border text-[#26221F] placeholder:text-[#A8A29E] focus:outline-none"
+                          style={{
+                            backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                            border: '1px solid var(--clean-accent-border, #EBE5DC)',
+                            outline: 'none'
+                          }}
                         />
                         <button
                           type="submit"
                           disabled={!newPassageRefInput.trim() || isAddingPassage}
-                          className="ios-glass-btn !text-xs !py-1.5 !px-2.5 bg-white text-[#B4793D] font-medium border border-[#EBE5DC] hover:border-[#B4793D] disabled:opacity-50"
+                          className="ios-glass-btn !text-xs !py-1.5 !px-2.5 bg-white font-medium border disabled:opacity-50"
+                          style={{
+                            color: 'var(--clean-accent-dark, #8C5E2E)',
+                            borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                          }}
                         >
                           {isAddingPassage ? 'Adding...' : '+ Add'}
                         </button>
@@ -1211,13 +1451,23 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
 
                 {/* 3. Icebreaker Questions Accordion */}
-                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                <div
+                  className="rounded-xl border overflow-hidden shadow-2xs"
+                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
                   <button
                     onClick={() => toggleSection('icebreakers')}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                    className="w-full px-3 py-2 flex items-center justify-between text-left transition-colors border-b"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                      borderBottomColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
                   >
-                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span
+                      className="text-xs font-bold flex items-center gap-1.5"
+                      style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                       Icebreaker Questions (2)
                     </span>
                     {openSections.icebreakers ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
@@ -1225,8 +1475,22 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   {openSections.icebreakers && (
                     <div className="p-3 bg-white space-y-2">
                       {currentGuide.icebreakers.map((q, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC]/80 text-xs text-[#38332E] flex items-start gap-2">
-                          <span className="w-4 h-4 rounded-full bg-[#FAF0E1] text-[#B4793D] font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-lg border text-xs text-[#38332E] flex items-start gap-2"
+                          style={{
+                            backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                            borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                          }}
+                        >
+                          <span
+                            className="w-4 h-4 rounded-full font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5 border"
+                            style={{
+                              backgroundColor: 'var(--clean-highlight-cream, #FAF0E1)',
+                              color: 'var(--clean-accent-dark, #B4793D)',
+                              borderColor: 'var(--clean-accent-border, #D4A373)'
+                            }}
+                          >
                             {idx + 1}
                           </span>
                           <span className="leading-relaxed">{q}</span>
@@ -1237,13 +1501,23 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
 
                 {/* 3. Deep Discussion Prompts Accordion */}
-                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                <div
+                  className="rounded-xl border overflow-hidden shadow-2xs"
+                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
                   <button
                     onClick={() => toggleSection('deepPrompts')}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                    className="w-full px-3 py-2 flex items-center justify-between text-left transition-colors border-b"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                      borderBottomColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
                   >
-                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span
+                      className="text-xs font-bold flex items-center gap-1.5"
+                      style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                       Deep Discussion Prompts (3)
                     </span>
                     {openSections.deepPrompts ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
@@ -1251,8 +1525,22 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   {openSections.deepPrompts && (
                     <div className="p-3 bg-white space-y-2">
                       {currentGuide.deepPrompts.map((p, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-[#FAF5ED] border border-[#EBE5DC] text-xs text-[#38332E] flex items-start gap-2">
-                          <span className="w-4 h-4 rounded-full bg-[#FAF0E1] text-[#B4793D] font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-lg border text-xs text-[#38332E] flex items-start gap-2"
+                          style={{
+                            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                            borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                          }}
+                        >
+                          <span
+                            className="w-4 h-4 rounded-full font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5 border"
+                            style={{
+                              backgroundColor: 'var(--clean-highlight-cream, #FAF0E1)',
+                              color: 'var(--clean-accent-dark, #B4793D)',
+                              borderColor: 'var(--clean-accent-border, #D4A373)'
+                            }}
+                          >
                             {idx + 1}
                           </span>
                           <span className="leading-relaxed">{p}</span>
@@ -1263,13 +1551,23 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
 
                 {/* 4. Actionable Takeaway Accordion */}
-                <div className="rounded-xl border border-[#EBE5DC] overflow-hidden shadow-2xs">
+                <div
+                  className="rounded-xl border overflow-hidden shadow-2xs"
+                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
                   <button
                     onClick={() => toggleSection('application')}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] hover:bg-[#FAF5ED] flex items-center justify-between text-left transition-colors border-b border-[#EBE5DC]/60"
+                    className="w-full px-3 py-2 flex items-center justify-between text-left transition-colors border-b"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                      borderBottomColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
                   >
-                    <span className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-[#B4793D]" />
+                    <span
+                      className="text-xs font-bold flex items-center gap-1.5"
+                      style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                    >
+                      <Check className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                       Actionable Takeaway
                     </span>
                     {openSections.application ? <ChevronUp className="w-3.5 h-3.5 text-[#A8A29E]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#A8A29E]" />}
@@ -1282,7 +1580,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
 
                 {/* Actions Bar */}
-                <div className="p-2 bg-[#FAF7F2] rounded-xl border border-[#EBE5DC] flex items-center justify-between gap-1.5">
+                <div
+                  className="p-2 rounded-xl border flex items-center justify-between gap-1.5"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
                   <button
                     onClick={handleCopyGuide}
                     className="ios-glass-btn text-xs !py-1 !px-2.5 text-[#57524E] hover:text-[#26221F] flex items-center gap-1"
@@ -1302,6 +1606,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   </button>
 
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleGenerateStudyGuide()}
+                      className="ios-glass-btn text-xs !py-1 !px-2 text-[#57524E] hover:text-[#26221F] flex items-center gap-1"
+                      title="Regenerate guide"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                      <span>Regenerate</span>
+                    </button>
+
                     <button
                       onClick={handlePrintGuide}
                       className="ios-glass-btn text-xs !py-1 !px-2 text-[#57524E] hover:text-[#26221F] flex items-center gap-1"
@@ -1323,12 +1636,29 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             ) : (
               /* Empty State */
-              <div className="p-6 rounded-2xl bg-[#FAF5ED] border border-[#EBE5DC] text-center space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-white border border-[#EBE5DC] flex items-center justify-center text-[#B4793D] mx-auto shadow-xs">
+              <div
+                className="p-6 rounded-2xl border text-center space-y-3"
+                style={{
+                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl bg-white border flex items-center justify-center mx-auto shadow-xs"
+                  style={{
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-accent-caramel, #B4793D)'
+                  }}
+                >
                   <BookOpenCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-serif text-sm font-bold text-[#26221F]">Study Guide Generator</h4>
+                  <h4
+                    className="font-serif text-sm font-bold"
+                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                  >
+                    Study Guide Generator
+                  </h4>
                   <p className="text-xs text-[#78716C] max-w-xs mx-auto mt-1">
                     Generate an organized discussion guide with context, icebreakers, deep theological prompts, and application for <strong className="text-[#26221F]">{effectiveStudyGuideRef}</strong>.
                   </p>
@@ -1361,13 +1691,30 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {activeTab === 'overview' && (
           <div key={`${currentBook}_${currentChapter}_${isRangeActive ? `${selectedVerseRange!.start}_${selectedVerseRange!.end}` : activeVerseNum}`} className="space-y-2.5 animate-fadeIn">
             {/* Main Overview Card */}
-            <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] space-y-2 shadow-xs">
+            <div
+              className="p-3 rounded-xl border space-y-2 shadow-xs"
+              style={{
+                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                borderLeftWidth: '4px',
+                borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
+              }}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-[#B4793D]" />
+                <span
+                  className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                  style={{ color: 'var(--clean-accent-dark, #854D0E)' }}
+                >
+                  <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-dark, #854D0E)' }} />
                   Theological Synthesis
                 </span>
-                <span className="text-[9.5px] text-[#78471F] font-semibold bg-white px-2 py-0.2 rounded-full border border-[#EBE5DC]">
+                <span
+                  className="text-[9.5px] font-bold bg-white px-2 py-0.5 rounded-full border shadow-2xs"
+                  style={{
+                    color: 'var(--clean-accent-dark, #854D0E)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
                   {insight.passageRef} {isRangeActive && `(${selectedVerseRange!.end - selectedVerseRange!.start + 1} verses)`}
                 </span>
               </div>
@@ -1376,10 +1723,81 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 {insight.conciseOverview}
               </p>
 
+              {/* Key Word Translation & Pronunciation Badge directly in Overview */}
+              {insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0 && (() => {
+                const currentTermIndex = activeKeyWordIndex % insight.originalLanguageInsights.length;
+                const activeTerm = insight.originalLanguageInsights[currentTermIndex] || insight.originalLanguageInsights[0];
+
+                return (
+                  <div
+                    className="p-2.5 rounded-lg border bg-white space-y-1.5 shadow-2xs"
+                    style={{
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                      borderLeftWidth: '3.5px',
+                      borderLeftColor: 'var(--clean-accent-caramel, #B4793D)'
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                        style={{ color: 'var(--clean-accent-dark, #854D0E)' }}
+                      >
+                        <Languages className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+                        Key Word Translation &amp; Pronunciation
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-mono text-stone-400 font-medium">
+                          {activeTerm.strongsRef}
+                        </span>
+                        {insight.originalLanguageInsights.length > 1 && (
+                          <div className="flex items-center gap-0.5 ml-1 bg-stone-100 p-0.5 rounded-sm">
+                            {insight.originalLanguageInsights.map((t, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setActiveKeyWordIndex(idx)}
+                                className={`text-[8.5px] px-1 py-0.2 rounded font-mono font-medium transition-colors ${
+                                  currentTermIndex === idx
+                                    ? 'bg-[var(--clean-accent-caramel,#B4793D)] text-white'
+                                    : 'text-stone-500 hover:text-stone-800'
+                                }`}
+                                title={`View ${t.term}`}
+                              >
+                                {idx + 1}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-bold text-sm text-[var(--clean-accent-dark,#B4793D)] font-serif">
+                        {activeTerm.term}
+                      </span>
+                      <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--clean-highlight-cream,#FAF5ED)] text-[#26221F] border border-[var(--clean-accent-border,#EBE5DC)]">
+                        {activeTerm.originalScript}
+                      </span>
+                      <span className="text-xs font-mono text-[var(--clean-accent-dark,#8C5E2E)] font-medium">
+                        /{activeTerm.transliteration}/
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-[#57524E] leading-relaxed">
+                      {activeTerm.nuance}
+                    </p>
+                  </div>
+                );
+              })()}
+
               {/* Lens Perspective */}
               <div
-                className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-xs space-y-0.5"
-                style={{ borderLeftWidth: '3px', borderLeftColor: activeDenom.accentColor }}
+                className="p-2 rounded-lg bg-white border text-xs space-y-0.5"
+                style={{
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                  borderLeftWidth: '3px',
+                  borderLeftColor: activeDenom.accentColor
+                }}
               >
                 <span className="font-semibold text-[10.5px] flex items-center gap-1.5" style={{ color: activeDenom.accentColor }}>
                   <span className="text-xs">{activeDenom.icon}</span>
@@ -1392,99 +1810,151 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             </div>
 
             {/* Doctrinal Confessional Grounding (RAG Verified Sources) */}
-            {activeDoctrinalSources.length > 0 && (
-              <div className="p-2.5 rounded-xl bg-[#F4F9F5] border border-[#DCF0E2] space-y-1.5 text-xs animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9.5px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                    Official Confessional Standard ({activeDenom.traditionGroup})
-                  </span>
-                  <span className="text-[9px] font-mono text-emerald-900 bg-white px-1.5 py-0.2 rounded border border-emerald-200">
-                    {activeDoctrinalSources[0].citation}
-                  </span>
-                </div>
-                <div className="p-2 rounded-lg bg-white border border-[#DCF0E2] space-y-1">
-                  <div className="font-semibold text-[11px] text-[#26221F]">
-                    {activeDoctrinalSources[0].documentTitle}
+            {activeDoctrinalSources.length > 0 && (() => {
+              const source = activeDoctrinalSources[0];
+              const sourceKey = source.id || `${source.documentTitle}_${source.citation}`;
+              const isExpanded = Boolean(expandedDoctrinalEntries[sourceKey]);
+              const rawCore = source.coreDoctrine || '';
+              const fullText = source.fullExcerpt || rawCore;
+              const hasLongerExcerpt = Boolean(source.fullExcerpt && source.fullExcerpt.trim().length > rawCore.trim().length);
+              const endsWithEllipsis = rawCore.trim().endsWith('...') || rawCore.trim().endsWith('…');
+              const canExpand = hasLongerExcerpt || endsWithEllipsis;
+              const displayText = isExpanded ? fullText : rawCore;
+
+              return (
+                <div
+                  className="p-2.5 rounded-xl border space-y-1.5 text-xs animate-fadeIn shadow-2xs"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderColor: 'var(--clean-accent-border, #DCF0E2)',
+                    borderLeftWidth: '4px',
+                    borderLeftColor: 'var(--clean-accent-caramel, #059669)'
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9.5px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                      Official Confessional Standard ({activeDenom.traditionGroup})
+                    </span>
+                    <span className="text-[9px] font-mono text-emerald-900 bg-white px-1.5 py-0.2 rounded border border-emerald-200">
+                      {source.citation}
+                    </span>
                   </div>
-                  <p className="text-[10.5px] text-[#57524E] leading-relaxed italic">
-                    "{activeDoctrinalSources[0].coreDoctrine}"
-                  </p>
+                  <div
+                    onClick={() => {
+                      if (canExpand) {
+                        setExpandedDoctrinalEntries(prev => ({
+                          ...prev,
+                          [sourceKey]: !prev[sourceKey]
+                        }));
+                      }
+                    }}
+                    className={`p-2 rounded-lg bg-white border border-[var(--clean-accent-border,#DCF0E2)] space-y-1 transition-all select-text ${
+                      canExpand ? 'cursor-pointer hover:bg-emerald-50/40 group' : ''
+                    }`}
+                    title={canExpand ? (isExpanded ? "Click to collapse" : "Click to view full unabridged text") : undefined}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-[11px] text-[#26221F]">
+                        {source.documentTitle}
+                      </div>
+                      {canExpand && (
+                        <span className="text-[9.5px] font-semibold text-emerald-700 group-hover:text-emerald-900 inline-flex items-center gap-0.5">
+                          {isExpanded ? '▲ Collapse' : '▼ Read full text'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10.5px] text-[#57524E] leading-relaxed italic">
+                      "{displayText}"
+                    </p>
+                    {canExpand && !isExpanded && (
+                      <div className="text-[9.5px] font-medium text-emerald-600/90 group-hover:text-emerald-800 flex items-center gap-1">
+                        <span>(Click to expand full text)</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Original Language Nuance */}
             {insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[9.5px] font-bold text-[#78716C] uppercase tracking-wider block px-1">
-                  Original Greek / Hebrew Exegesis
-                </span>
-                <div className="space-y-1">
+              <div
+                className="p-3 rounded-xl border space-y-2 text-xs shadow-xs"
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                  borderLeftWidth: '4px',
+                  borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+                    style={{ color: 'var(--clean-accent-dark, #854D0E)' }}
+                  >
+                    <Languages className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    Original Greek / Hebrew Exegesis
+                  </span>
+                  <span
+                    className="text-[9.5px] font-mono px-1.5 py-0.2 rounded font-semibold border shadow-2xs"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                      color: 'var(--clean-accent-dark, #854D0E)'
+                    }}
+                  >
+                    {insight.originalLanguageInsights.length} Terms
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
                   {insight.originalLanguageInsights.map((term, i) => (
-                    <div key={i} className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-xs">
+                    <div
+                      key={i}
+                      className="p-2.5 rounded-lg border text-xs space-y-1"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
                       <div className="flex items-center justify-between font-mono">
-                        <span className="font-bold text-[#B4793D]">{term.term}</span>
-                        <span className="text-[10px] text-[#78716C]">{term.originalScript} ({term.transliteration})</span>
+                        <span
+                          className="font-bold text-xs"
+                          style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+                        >
+                          {term.term}
+                        </span>
+                        <span
+                          className="text-[10px] font-medium"
+                          style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                        >
+                          {term.originalScript} ({term.transliteration})
+                        </span>
                       </div>
-                      <p className="text-[10.5px] text-[#57524E] mt-0.5">{term.nuance}</p>
+                      <p
+                        className="text-[11px] leading-relaxed"
+                        style={{ color: 'var(--clean-text-secondary, #57524E)' }}
+                      >
+                        {term.nuance}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* George Fox Applied AI Institute 'Be Known' 3-Tier Lens */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-br from-[#003057]/8 via-[#FAF7F2] to-[#D4AF37]/15 border border-[#003057]/20 space-y-2.5 shadow-xs">
-              <div className="flex items-center justify-between gap-2">
-                <AppliedAiLogo variant="lockup-navy" height={22} alt="George Fox University Applied AI Institute" />
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#003057] text-[#FAF7F2] uppercase tracking-wider flex-shrink-0">
-                  Be Known
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] text-[#57524E] leading-tight">
-                  Academic facts • Personal faith • Quiet prayer
-                </p>
-                <button
-                  onClick={() => {
-                    setActiveTab('chat');
-                    handleSendMessage(`Help me understand ${currentVerseRef} through the "Be Known" promise: 1) What it means (simple facts & words), 2) What it means for my life (God knows me), and 3) A simple prayer.`);
-                  }}
-                  className="clean-caramel-btn !bg-[#003057] hover:!bg-[#002240] !text-white !text-[10px] !py-1 !px-2.5 shadow-xs flex items-center gap-1 flex-shrink-0"
-                >
-                  <span>Explore</span>
-                  <ArrowUpRight className="w-3 h-3 text-[#D4AF37]" />
-                </button>
-              </div>
-            </div>
-
-            {/* Suggested AI Prompts in Overview Tab */}
-            <div className="space-y-1">
-              <span className="text-[9.5px] font-bold text-[#78716C] uppercase tracking-wider block px-0.5">
-                Ask Berea AI
-              </span>
-              <div className="space-y-1">
-                {insight.suggestedQuestions.map((q, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setActiveTab('chat');
-                      handleSendMessage(q);
-                    }}
-                    className="w-full text-left p-2 rounded-lg bg-white border border-[#EBE5DC] hover:bg-[#FAF5ED] hover:border-[#D4A373] transition-colors flex items-center justify-between group"
-                  >
-                    <span className="text-[11.5px] text-[#26221F] group-hover:text-[#78471F] leading-snug">{q}</span>
-                    <ChevronRight className="w-3 h-3 text-[#A8A29E] group-hover:text-[#B4793D] flex-shrink-0 ml-1.5 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Practical Application */}
-            <div className="p-2.5 rounded-lg bg-[#F0FDF4] border border-[#DCFCE7] text-xs">
-              <span className="font-semibold text-[#065F46] block mb-0.5 text-[10.5px]">Daily Spiritual Reflection</span>
-              <p className="text-[#047857] leading-relaxed text-[11px]">{insight.practicalApplication}</p>
+            <div
+              className="p-2.5 rounded-lg bg-white border text-xs shadow-2xs"
+              style={{
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                borderLeftWidth: '3px',
+                borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
+              }}
+            >
+              <span className="font-bold block mb-0.5 text-[11px]" style={{ color: 'var(--clean-accent-dark, #854D0E)' }}>Daily Spiritual Reflection</span>
+              <p className="text-[#57524E] leading-relaxed text-[11px]">{insight.practicalApplication}</p>
             </div>
           </div>
         )}
@@ -1493,9 +1963,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {activeTab === 'chat' && (
           <div className="flex flex-col h-full space-y-2 animate-fadeIn">
             {/* Passage Focus Bar in Chat */}
-            <div className="px-2.5 py-1.5 bg-[#FAF5ED] rounded-xl border border-[#EBE5DC] flex items-center justify-between text-xs select-none">
+            <div
+              className="px-2.5 py-1.5 rounded-xl border flex items-center justify-between text-xs select-none"
+              style={{
+                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+            >
               <div className="flex items-center gap-1.5 truncate">
-                <Sparkles className="w-3 h-3 text-[#B4793D] flex-shrink-0" />
+                <Sparkles className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                 <span className="text-[11px] font-semibold text-[#26221F] truncate">
                   Passage: {isRangeActive ? `${currentBook} ${currentChapter}:${selectedVerseRange!.start}–${selectedVerseRange!.end} (${selectedVerseRange!.end - selectedVerseRange!.start + 1} verses)` : currentVerseRef}
                 </span>
@@ -1519,7 +1995,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 >
                   <div className="flex items-center gap-1.5 mb-0.5 px-1">
                     {msg.sender === 'assistant' && (
-                      <div className="w-5 h-5 rounded-md overflow-hidden border border-[#EBE5DC] flex-shrink-0 bg-[#FAF7F2] p-0.5 shadow-xs flex items-center justify-center">
+                      <div
+                        className="w-5 h-5 rounded-md overflow-hidden border flex-shrink-0 bg-[#FAF7F2] p-0.5 shadow-xs flex items-center justify-center"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                      >
                         <img src="/berea-logo.jpg" alt="Berea" className="w-full h-full object-contain" />
                       </div>
                     )}
@@ -1529,18 +2008,33 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     <span className="text-[9px] text-[#A8A29E]">{msg.timestamp}</span>
                   </div>
                   {msg.sender === 'user' ? (
-                    <div className="chat-user-bubble animate-fadeIn">
+                    <div
+                      className="chat-user-bubble animate-fadeIn"
+                      style={{
+                        backgroundColor: 'var(--clean-accent-caramel, #26221F)',
+                        color: '#FFFFFF'
+                      }}
+                    >
                       <p className="text-white text-xs select-text leading-relaxed font-normal">
                         {msg.text}
                       </p>
                     </div>
                   ) : (
-                    <div className="chat-ai-bubble animate-fadeIn space-y-1.5">
+                    <div
+                      className="chat-ai-bubble animate-fadeIn space-y-1.5"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
                       <MarkdownTheologyRenderer content={msg.text} />
 
                       {/* Citation Reference */}
                       {msg.primaryCitation && (
-                        <div className="mt-2 pt-1.5 border-t border-[#EBE5DC] flex flex-wrap items-center justify-between gap-1 text-[10px] select-none">
+                        <div
+                          className="mt-2 pt-1.5 border-t flex flex-wrap items-center justify-between gap-1 text-[10px] select-none"
+                          style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                        >
                           <span className="text-[#78716C] font-medium text-[9.5px]">
                             Source: {msg.primaryCitation}
                           </span>
@@ -1552,25 +2046,38 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               ))}
 
               {isAiThinking && (
-                <div className="p-2.5 bg-[#FAF5ED] border border-[#EBE5DC] rounded-xl text-xs text-[#78471F] space-y-1.5 animate-fadeIn shadow-xs">
+                <div
+                  className="p-2.5 rounded-xl text-xs space-y-1.5 animate-fadeIn shadow-xs border"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-accent-dark, #78471F)'
+                  }}
+                >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      <RefreshCw className="w-3 h-3 animate-spin text-[#B4793D] flex-shrink-0" />
+                      <RefreshCw className="w-3 h-3 animate-spin flex-shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                       <span className="font-medium text-[11px] truncate max-w-[220px]">
                         {localModelProgress ? localModelProgress.text : 'Synthesizing exegesis & confessional standards...'}
                       </span>
                     </div>
                     {localModelProgress && (
-                      <span className="font-mono font-bold text-[10px] text-[#B4793D]">
+                      <span className="font-mono font-bold text-[10px]" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
                         {localModelProgress.progress}%
                       </span>
                     )}
                   </div>
                   {localModelProgress && (
-                    <div className="w-full h-1 bg-white rounded-full overflow-hidden border border-[#EBE5DC]">
+                    <div
+                      className="w-full h-1 bg-white rounded-full overflow-hidden border"
+                      style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                    >
                       <div
-                        className="h-full bg-gradient-to-r from-[#B4793D] to-[#D4A373] transition-all duration-200 rounded-full"
-                        style={{ width: `${localModelProgress.progress}%` }}
+                        className="h-full transition-all duration-200 rounded-full"
+                        style={{
+                          width: `${localModelProgress.progress}%`,
+                          background: 'linear-gradient(to right, var(--clean-accent-caramel, #B4793D), var(--clean-accent-honey, #D4A373))'
+                        }}
                       />
                     </div>
                   )}
@@ -1580,46 +2087,67 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             </div>
 
             {/* Suggested Question Pills Directly in Chat Tab */}
-            <div className="pt-2 border-t border-[#EBE5DC]/80 space-y-1 select-none">
-              <span className="text-[9.5px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1 px-1">
-                <Sparkles className="w-2.5 h-2.5 text-[#B4793D]" /> Suggested Prompts for {currentVerseRef}
+            <div
+              className="pt-2 border-t space-y-1 select-none"
+              style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
+            >
+              <span
+                className="text-[9.5px] font-bold uppercase tracking-wider flex items-center gap-1 px-1"
+                style={{ color: 'var(--clean-accent-dark, #854D0E)' }}
+              >
+                <Sparkles className="w-2.5 h-2.5" style={{ color: 'var(--clean-accent-dark, #854D0E)' }} /> Suggested Prompts for {currentVerseRef}
               </span>
               <div className="space-y-1 max-h-[140px] overflow-y-auto custom-scrollbar">
                 {/* George Fox 'Be Known' Primary Prompt Pill */}
                 <button
                   onClick={() => handleSendMessage(`Help me understand ${currentVerseRef} through the "Be Known" promise: 1) What it means (simple facts & words), 2) What it means for my life (God knows me), and 3) A simple prayer.`)}
                   disabled={isAiThinking}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-[#003057]/10 to-[#FAF5ED] hover:from-[#003057]/20 border border-[#003057]/25 text-[11px] text-[#003057] font-semibold flex items-center justify-between group transition-all disabled:opacity-50 shadow-xs"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold flex items-center justify-between group transition-all disabled:opacity-50 shadow-xs"
+                  style={{
+                    background: 'linear-gradient(to right, var(--clean-highlight-cream, #FAF5ED), #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-accent-dark, #003057)'
+                  }}
                 >
                   <div className="flex items-center gap-2 truncate">
                     <AppliedAiLogo variant="icon-navy" height={13} className="flex-shrink-0" />
                     <span className="truncate">"Be Known": Learn It • Live It • Pray It</span>
                   </div>
-                  <ArrowUpRight className="w-3 h-3 text-[#003057] group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+                  <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform flex-shrink-0" style={{ color: 'var(--clean-accent-caramel, #003057)' }} />
                 </button>
                 {insight.suggestedQuestions.map((q, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(q)}
                     disabled={isAiThinking}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#FAF3E8] border border-[#EBE5DC] hover:border-[#D4A373] text-[11px] text-[#26221F] hover:text-[#78471F] flex items-center justify-between group transition-all disabled:opacity-50"
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg bg-white border text-[11px] text-[#26221F] flex items-center justify-between group transition-all disabled:opacity-50"
+                    style={{
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
                   >
                     <span className="leading-snug pr-2">{q}</span>
-                    <ArrowUpRight className="w-3 h-3 text-[#A8A29E] group-hover:text-[#B4793D] flex-shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    <ArrowUpRight className="w-3 h-3 text-[#A8A29E] group-hover:text-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Input Bar */}
-            <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#EBE5DC]">
+            <div
+              className="flex items-center gap-1.5 pt-1.5 border-t"
+              style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
+            >
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder={`Ask anything about ${currentVerseRef} or theology...`}
-                className="flex-1 bg-[#FAF5ED] border border-[#EBE5DC] focus:border-[#D4A373] focus:bg-white rounded-full px-3 py-1.5 text-xs text-[#26221F] placeholder-[#A8A29E] focus:outline-none transition-colors"
+                className="flex-1 bg-white border rounded-full px-3.5 py-1.5 text-xs text-[#26221F] placeholder-[#A8A29E] focus:outline-none transition-colors shadow-2xs"
+                style={{
+                  border: '1px solid var(--clean-accent-border, #EBE5DC)',
+                  outline: 'none'
+                }}
               />
               <button
                 onClick={() => handleSendMessage()}
@@ -1637,15 +2165,21 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           <div className="space-y-2.5 animate-fadeIn">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-semibold text-[#26221F]">Translations Matrix</h4>
+                <h4
+                  className="text-xs font-semibold"
+                  style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                >
+                  Translations Matrix
+                </h4>
                 <p className="text-[9.5px] text-[#78716C]">{currentVerseRef}</p>
               </div>
             </div>
 
             {/* Translation Pills */}
-            <div className="ios-segmented-capsule flex-wrap">
+            <div className="flex flex-wrap gap-1 p-1 rounded-lg border bg-[var(--clean-surface-subtle,#FAF7F2)] border-[var(--clean-border-soft,#EBE5DC)]">
               {TRANSLATIONS.map((t) => {
                 const isSelected = comparisonTranslations.includes(t.id);
+                const colorTheme = getTranslationColor(t.id);
                 return (
                   <button
                     key={t.id}
@@ -1656,28 +2190,90 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setComparisonTranslations(prev => [...prev, t.id]);
                       }
                     }}
-                    className={`ios-segment-pill !text-[10.5px] !py-0.2 !px-2 ${isSelected ? 'active' : ''}`}
+                    style={
+                      isSelected
+                        ? {
+                            backgroundColor: colorTheme.badgeBg,
+                            borderColor: colorTheme.badgeBg,
+                            color: colorTheme.badgeText,
+                            boxShadow: `0 2px 6px ${colorTheme.primary}40`
+                          }
+                        : {
+                            backgroundColor: '#FFFFFF',
+                            borderColor: 'var(--clean-border-soft, #EBE5DC)',
+                            color: '#57524E'
+                          }
+                    }
+                    className="text-[11px] font-semibold py-1 px-2.5 rounded-md border transition-all cursor-pointer select-none flex items-center gap-1.5"
+                    title={`${t.name} (${t.year})`}
                   >
-                    {t.id}
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: isSelected ? colorTheme.badgeText : colorTheme.primary
+                      }}
+                    />
+                    <span>{t.id}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Translation Cards */}
-            <div className="space-y-1.5">
+            {/* Translation Cards with Unique Distinct Colors */}
+            <div className="space-y-2">
               {comparisonTranslations.map((tId) => {
                 const tObj = TRANSLATIONS.find(x => x.id === tId);
+                const colorTheme = getTranslationColor(tId);
                 const rawCompareText = (selectedVerse?.text && (selectedVerse.text[tId] || selectedVerse.text['KJV'] || Object.values(selectedVerse.text)[0])) || 'Loading scripture...';
                 const verseText = cleanApiText(rawCompareText);
 
                 return (
-                  <div key={tId} className="p-2.5 rounded-lg bg-[#FAF5ED] border border-[#EBE5DC] space-y-0.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-xs text-[#B4793D]">{tObj?.name} ({tId})</span>
-                      <span className="text-[9px] text-[#78716C]">{tObj?.year}</span>
+                  <div
+                    key={tId}
+                    className="p-3 rounded-xl border space-y-1.5 transition-all shadow-xs"
+                    style={{
+                      backgroundColor: colorTheme.bg,
+                      borderColor: colorTheme.border,
+                      borderLeftWidth: '4px',
+                      borderLeftColor: colorTheme.primary
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide shrink-0 shadow-2xs"
+                          style={{
+                            backgroundColor: colorTheme.badgeBg,
+                            color: colorTheme.badgeText
+                          }}
+                        >
+                          {tId}
+                        </span>
+                        <span
+                          className="font-bold text-xs truncate"
+                          style={{ color: colorTheme.text }}
+                          title={tObj?.name}
+                        >
+                          {tObj?.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 text-[10px] font-mono">
+                        <span
+                          className="px-1.5 py-0.5 rounded border text-[9px] font-medium"
+                          style={{
+                            borderColor: colorTheme.border,
+                            color: colorTheme.text,
+                            backgroundColor: 'rgba(255,255,255,0.7)'
+                          }}
+                        >
+                          {tObj?.philosophy.split('/')[0].trim()}
+                        </span>
+                        <span className="text-stone-500 font-medium">{tObj?.year}</span>
+                      </div>
                     </div>
-                    <p className="font-scripture text-[11.5px] text-[#38332E] leading-relaxed pl-1.5 border-l-2 border-[#B4793D]">
+                    <p
+                      className="font-scripture text-xs text-[#26221F] leading-relaxed pl-1"
+                    >
                       {verseText}
                     </p>
                   </div>
@@ -1692,14 +2288,24 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           <div className="space-y-3 animate-fadeIn">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-[#26221F] flex items-center gap-1.5">
+                <h4
+                  className="text-xs font-bold flex items-center gap-1.5"
+                  style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                >
                   <span>{currentBook.toUpperCase()} Chapter {currentChapter} Topography</span>
                 </h4>
                 <p className="text-[10px] text-[#78716C]">
                   {chapterData.region} • {chapterData.events.length} Chapter Event{chapterData.events.length > 1 ? 's' : ''}
                 </p>
               </div>
-              <span className="text-[9.5px] font-semibold text-[#B4793D] bg-[#FAF5ED] px-2 py-0.5 rounded-full border border-[#EBE5DC]">
+              <span
+                className="text-[9.5px] font-semibold px-2 py-0.5 rounded-full border"
+                style={{
+                  color: 'var(--clean-accent-dark, #8C5E2E)',
+                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 Event Topography
               </span>
             </div>
@@ -1714,27 +2320,69 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
             {/* Chapter Event Active Detail Card */}
             <div className="space-y-2">
-              <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] text-xs space-y-1.5">
+              <div
+                className="p-3 rounded-xl border text-xs space-y-1.5 shadow-xs"
+                style={{
+                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                  borderLeftWidth: '4px',
+                  borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
+                }}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[11px] text-[#78471F] flex items-center gap-1">
+                  <span
+                    className="font-bold text-[11px] flex items-center gap-1"
+                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                  >
                     <span>📍 Event {currentEvent.stepNumber}:</span> {currentEvent.title}
                   </span>
-                  <span className="text-[9.5px] font-mono px-1.5 py-0.2 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold">
+                  <span
+                    className="text-[9.5px] font-mono px-1.5 py-0.2 rounded font-semibold border shadow-2xs"
+                    style={{
+                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                      color: 'var(--clean-accent-dark, #8C5E2E)',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
+                  >
                     {currentEvent.passageRef}
                   </span>
                 </div>
 
-                <div className="text-[10px] text-[#78716C] font-medium">
-                  Site: <strong className="text-[#26221F]">{currentEvent.locationName}</strong>
+                <div 
+                  className="text-[10px] font-medium"
+                  style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                >
+                  Site: <strong style={{ color: 'var(--clean-text-primary, #26221F)' }}>{currentEvent.locationName}</strong>
                 </div>
 
-                <p className="text-[#44403C] text-[11px] leading-relaxed">
+                <p 
+                  className="text-[11px] leading-relaxed"
+                  style={{ color: 'var(--clean-text-primary, #44403C)' }}
+                >
                   {currentEvent.description}
                 </p>
 
-                <div className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-[10.5px] text-[#57524E] space-y-0.5 mt-1">
-                  <strong className="text-[#78471F] text-[10px] block uppercase tracking-wider">Theological Significance</strong>
-                  <p className="leading-snug">{currentEvent.theologicalSignificance}</p>
+                <div
+                  className="p-2 rounded-lg border text-[10.5px] space-y-0.5 mt-1 shadow-2xs"
+                  style={{ 
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    borderLeftWidth: '3px',
+                    borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
+                  }}
+                >
+                  <strong
+                    className="text-[10px] block uppercase tracking-wider font-bold"
+                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                  >
+                    Theological Significance
+                  </strong>
+                  <p 
+                    className="leading-snug"
+                    style={{ color: 'var(--clean-text-secondary, #57524E)' }}
+                  >
+                    {currentEvent.theologicalSignificance}
+                  </p>
                 </div>
               </div>
             </div>
@@ -2074,10 +2722,38 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         )}
       </div>
 
-      {/* AI Guide Sub-footer */}
-      <div className="px-3.5 py-2 bg-[#FAF7F2] border-t border-[#EBE5DC] flex items-center justify-between text-[10px] text-[#78716C] select-none flex-shrink-0">
-        <AppliedAiLogo variant="lockup-navy" height={16} alt="George Fox University Applied AI Institute" />
-        <span className="text-[9.5px] text-[#A8A29E] font-medium">Be Known</span>
+      {/* George Fox Applied AI Institute 'Be Known' Footer */}
+      <div
+        className="px-3.5 py-2.5 border-t border-[var(--clean-border,#EBE5DC)] space-y-2 select-none flex-shrink-0 text-[#26221F]"
+        style={{ background: 'linear-gradient(to bottom right, var(--clean-highlight-cream, #FAF7F2), #FFFFFF, var(--clean-highlight-cream, #FAF7F2))' }}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <AppliedAiLogo variant="lockup-navy" height={20} alt="George Fox University Applied AI Institute" />
+          <span
+            className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0 text-white"
+            style={{ backgroundColor: 'var(--clean-accent-dark, #003057)' }}
+          >
+            Be Known
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] text-[#57524E] leading-tight">
+            Academic facts • Personal faith • Quiet prayer
+          </p>
+          <button
+            onClick={() => {
+              setActiveTab('chat');
+              handleSendMessage(`Help me understand ${currentVerseRef} through the "Be Known" promise: 1) What it means (simple facts & words), 2) What it means for my life (God knows me), and 3) A simple prayer.`);
+            }}
+            className="clean-caramel-btn !text-white !text-[11px] !py-1.5 !px-3 shadow-xs flex items-center gap-1.5 flex-shrink-0 font-bold transition-transform hover:scale-105 active:scale-95"
+            style={{
+              backgroundColor: 'var(--clean-accent-caramel, #B4793D)'
+            }}
+          >
+            <span>Explore</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-white" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -294,16 +294,42 @@ function escapeHtml(str: string | number | undefined): string {
   }, [currentBook, currentChapter, activeEventIndex, mapStyle, showJourneys]);
 
   return (
-    <div className={`openfreemap-card relative rounded-2xl overflow-hidden border border-[#EBE5DC] shadow-[0_4px_20px_rgba(180,160,140,0.08)] transition-all duration-300 ${isExpanded ? 'fixed inset-4 z-50 bg-white flex flex-col shadow-2xl' : ''}`}>
+    <div 
+      style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+      className={`openfreemap-card relative rounded-2xl overflow-hidden border shadow-[0_4px_20px_rgba(180,160,140,0.08)] transition-all duration-300 ${isExpanded ? 'fixed inset-4 z-50 bg-white flex flex-col shadow-2xl' : ''}`}
+    >
       {/* Top Map Control Bar */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 z-[1000] flex items-center justify-between gap-2 pointer-events-none">
+      <div 
+        className="absolute z-[1000] flex items-center justify-between gap-2 pointer-events-none"
+        style={{
+          top: '0.625rem',
+          left: '0.625rem',
+          right: '0.625rem'
+        }}
+      >
         {/* Active Chapter Badge */}
-        <div className="ios-glass-btn !py-1 !px-2.5 flex items-center gap-1.5 shadow-sm bg-white/95 backdrop-blur-md border border-[#EBE5DC] pointer-events-auto">
-          <Mountain className="w-3.5 h-3.5 text-[#B4793D]" />
-          <span className="font-bold text-xs text-[#26221F] truncate max-w-[130px] sm:max-w-[180px]">
+        <div 
+          style={{
+            backgroundColor: 'var(--clean-surface, #FFFFFF)',
+            borderColor: 'var(--clean-accent-border, #EBE5DC)'
+          }}
+          className="ios-glass-btn !py-1 !px-2.5 flex items-center gap-1.5 shadow-sm backdrop-blur-md border pointer-events-auto"
+        >
+          <Mountain className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+          <span 
+            className="font-bold text-xs truncate max-w-[130px] sm:max-w-[180px]"
+            style={{ color: 'var(--clean-text-primary, #26221F)' }}
+          >
             {currentBook.toUpperCase()} {currentChapter}
           </span>
-          <span className="text-[10px] text-[#B4793D] font-medium bg-[#FAF5ED] px-1.5 py-0.2 rounded border border-[#EBE5DC]">
+          <span 
+            className="text-[10px] font-medium px-1.5 py-0.2 rounded border"
+            style={{
+              color: 'var(--clean-accent-dark, #B4793D)',
+              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)'
+            }}
+          >
             {chapterEvents.length} Event{chapterEvents.length > 1 ? 's' : ''}
           </span>
         </div>
@@ -311,7 +337,13 @@ function escapeHtml(str: string | number | undefined): string {
         {/* Roadless Topographic Map Styles & Fullscreen Toggle */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
           {/* Map style segmented selector (100% Roadless, 0 Buildings) */}
-          <div className="ios-segmented-capsule bg-white/95 backdrop-blur-md shadow-sm border border-[#EBE5DC]">
+          <div 
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)'
+            }}
+            className="ios-segmented-capsule backdrop-blur-md shadow-sm border"
+          >
             <button
               onClick={() => setMapStyle('relief')}
               className={`ios-segment-pill !text-[10px] !py-0.5 !px-2.5 ${mapStyle === 'relief' ? 'active' : ''}`}
@@ -337,7 +369,12 @@ function escapeHtml(str: string | number | undefined): string {
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="ios-icon-btn bg-white/95 backdrop-blur-md shadow-sm border border-[#EBE5DC]"
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              color: 'var(--clean-text-primary, #26221F)'
+            }}
+            className="ios-icon-btn backdrop-blur-md shadow-sm border"
             title={isExpanded ? 'Minimize Map' : 'Expand Biblical Atlas'}
           >
             {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
@@ -353,12 +390,24 @@ function escapeHtml(str: string | number | undefined): string {
       />
 
       {/* Chapter Event Sequence Timeline Bar (Shows ONLY events in this chapter) */}
-      <div className="bg-white/95 backdrop-blur-md p-2 border-t border-[#EBE5DC] z-20 space-y-1.5">
-        <div className="flex items-center justify-between text-[10px] text-[#78716C] px-1 font-medium">
-          <span className="flex items-center gap-1 font-bold text-[#78471F]">
+      <div 
+        style={{
+          backgroundColor: 'var(--clean-surface, #FFFFFF)',
+          borderTopColor: 'var(--clean-accent-border, #EBE5DC)'
+        }}
+        className="backdrop-blur-md p-2 border-t z-20 space-y-1.5"
+      >
+        <div className="flex items-center justify-between text-[10px] px-1 font-medium">
+          <span 
+            className="flex items-center gap-1 font-bold"
+            style={{ color: 'var(--clean-accent-dark, #78471F)' }}
+          >
             <span>📜</span> Chapter {currentChapter} Storyline:
           </span>
-          <span className="text-[9.5px] text-[#A8A29E]">
+          <span 
+            className="text-[9.5px]"
+            style={{ color: 'var(--clean-text-secondary, #A8A29E)' }}
+          >
             Step {activeEventIndex + 1} of {chapterEvents.length}
           </span>
         </div>
@@ -374,23 +423,35 @@ function escapeHtml(str: string | number | undefined): string {
                   setActiveEventIndex(idx);
                   if (onEventSelect) onEventSelect(ev);
                 }}
-                className={`flex-shrink-0 text-left px-2 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'bg-[#FAF3E8] border-[#B4793D] text-[#78471F] font-semibold shadow-xs'
-                    : 'bg-[#FAF7F2] border-[#EBE5DC] text-[#57524E] hover:bg-[#FAF5ED] hover:border-[#D4A373]'
-                }`}
+                className="flex-shrink-0 text-left px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-2"
+                style={{
+                  backgroundColor: isSelected ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                  border: `1.5px solid ${isSelected ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)'}`,
+                  color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-secondary, #57524E)',
+                  boxShadow: isSelected ? '0 1px 4px rgba(0,0,0,0.06)' : 'none'
+                }}
                 title={`${ev.passageRef}: ${ev.title}`}
               >
-                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  isSelected ? 'bg-[#B4793D] text-white' : 'bg-[#EBE5DC] text-[#78716C]'
-                }`}>
+                <span 
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                  style={{
+                    backgroundColor: isSelected ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                    color: isSelected ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-text-secondary, #78716C)'
+                  }}
+                >
                   {ev.stepNumber}
                 </span>
                 <div className="truncate max-w-[140px]">
-                  <span className="text-[11px] font-bold block text-[#26221F] truncate leading-tight">
+                  <span 
+                    className="text-[11px] font-bold block truncate leading-tight"
+                    style={{ color: isSelected ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)' }}
+                  >
                     {getShortPlaceName(ev)}
                   </span>
-                  <span className="text-[9.5px] text-[#78716C] truncate block leading-none mt-0.5">
+                  <span 
+                    className="text-[9.5px] truncate block leading-none mt-0.5"
+                    style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                  >
                     {ev.title}
                   </span>
                 </div>
