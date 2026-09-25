@@ -22,6 +22,17 @@ export interface StudyGuide {
   supportingPassages?: SupportingPassage[];
 }
 
+export type QuizStyle = 'multiple_choice' | 'true_false' | 'written' | 'mixed';
+
+export interface WrittenGradingResult {
+  score: number;
+  grade: 'Excellent' | 'Good' | 'Needs Review';
+  isCorrect: boolean;
+  feedback: string;
+  biblicalInsights?: string;
+  modelAnswer?: string;
+}
+
 export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'typology';
 
 export type NoteFontFamily = 'serif' | 'sans' | 'mono' | 'script';

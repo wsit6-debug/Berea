@@ -206,45 +206,70 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
   const lastHistory = historyStack.length > 0 ? historyStack[historyStack.length - 1] : null;
 
   return (
-    <div className="flex flex-col h-full bg-[#FAF7F2] p-4 overflow-y-auto">
+    <div
+      className="flex flex-col h-full p-4 overflow-y-auto"
+      style={{ backgroundColor: 'var(--clean-surface, #FFFFFF)' }}
+    >
       {/* Cross-reference Back Navigation Banner */}
       {lastHistory && (
-        <div className="sticky top-0 z-20 mb-3 bg-[#F4EFE6] border border-[#B4793D]/30 shadow-xs rounded-xl p-2 flex items-center justify-between animate-fadeIn">
+        <div
+          className="sticky top-0 z-20 mb-3 border shadow-xs rounded-xl p-2 flex items-center justify-between animate-fadeIn"
+          style={{
+            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+            borderColor: 'var(--clean-accent-border-strong, #B4793D)'
+          }}
+        >
           <button
             onClick={handleGoBack}
-            className="flex items-center gap-2 text-xs font-semibold text-[#8C5D2E] hover:text-[#5C3814] transition-colors cursor-pointer group"
+            className="flex items-center gap-2 text-xs font-semibold transition-colors cursor-pointer group"
+            style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
           >
-            <div className="w-6 h-6 rounded-md bg-[#B4793D]/15 group-hover:bg-[#B4793D]/25 flex items-center justify-center transition-colors">
-              <ArrowLeft className="w-3.5 h-3.5 text-[#8C5D2E]" />
+            <div
+              className="w-6 h-6 rounded-md flex items-center justify-center transition-colors"
+              style={{ backgroundColor: 'var(--clean-surface, #FFFFFF)', border: '1px solid var(--clean-accent-border, #EBE5DC)' }}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }} />
             </div>
             <span>
-              Back to <strong className="font-bold underline decoration-[#B4793D]/50">{lastHistory.bookName} {lastHistory.chapterNum}</strong>
+              Back to <strong className="font-bold underline" style={{ textDecorationColor: 'var(--clean-accent-caramel, #B4793D)' }}>{lastHistory.bookName} {lastHistory.chapterNum}</strong>
             </span>
           </button>
-          <span className="text-[10px] uppercase font-bold text-[#A8A29E] tracking-wider px-1.5">
+          <span
+            className="text-[10px] uppercase font-bold tracking-wider px-1.5"
+            style={{ color: 'var(--clean-text-tertiary, #A8A29E)' }}
+          >
             Cross-Referencing
           </span>
         </div>
       )}
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold text-[#26221F] flex items-center gap-2">
-          <Network className="w-4 h-4 text-[#B4793D]" />
+        <h2
+          className="text-sm font-bold flex items-center gap-2"
+          style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+        >
+          <Network className="w-4 h-4" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
           Typology & Motif Tracker
         </h2>
       </div>
 
       {!motifData && !isLoading && (
         <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-[#EBE5DC] flex items-center justify-center mb-2">
-            <Search className="w-6 h-6 text-[#B4793D]" />
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center mb-2 border"
+            style={{
+              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)'
+            }}
+          >
+            <Search className="w-6 h-6" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
           </div>
-          <p className="text-xs text-[#78716C] max-w-[200px]">
+          <p className="text-xs max-w-[200px]" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
             Discover the deep theological themes and motifs woven throughout the biblical narrative starting from {currentBook} {currentChapter}.
           </p>
           <button 
             onClick={() => handleGenerate(false)}
-            className="clean-caramel-btn text-xs font-semibold px-4 py-2"
+            className="clean-caramel-btn text-xs font-semibold px-4 py-2 cursor-pointer shadow-xs"
           >
             Trace Biblical Motif
           </button>
@@ -257,31 +282,55 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
           <div className="text-center space-y-3">
             <div className="relative inline-flex items-center justify-center">
               {/* Outer pulsing glow */}
-              <div className="absolute w-16 h-16 rounded-full bg-[#B4793D]/15 animate-ping opacity-60" />
-              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FAF5ED] to-white border border-[#EBE5DC] shadow-sm flex items-center justify-center">
-                <Network className="w-6 h-6 text-[#B4793D] animate-pulse" />
-                <Sparkles className="w-3 h-3 text-[#D4A373] absolute top-2 right-2 animate-bounce" />
+              <div
+                className="absolute w-16 h-16 rounded-full animate-ping opacity-60"
+                style={{ backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)' }}
+              />
+              <div
+                className="relative w-14 h-14 rounded-2xl border shadow-sm flex items-center justify-center"
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border-strong, #B4793D)'
+                }}
+              >
+                <Network className="w-6 h-6 animate-pulse" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                <Sparkles className="w-3 h-3 absolute top-2 right-2 animate-bounce" style={{ color: 'var(--clean-accent-honey, #D4A373)' }} />
               </div>
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-xs font-bold text-[#26221F] uppercase tracking-wider">
+              <h3
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+              >
                 Weaving Canonical Tapestry
               </h3>
-              <p className="text-[11px] text-[#78716C] font-medium h-4 transition-all duration-300">
+              <p
+                className="text-[11px] font-medium h-4 transition-all duration-300"
+                style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+              >
                 {progress || loadingPhaseMessage}
               </p>
             </div>
 
             {/* Smooth Progress Bar */}
             <div className="max-w-xs mx-auto px-4">
-              <div className="w-full bg-[#EBE5DC] rounded-full h-1.5 overflow-hidden">
+              <div
+                className="w-full rounded-full h-1.5 overflow-hidden"
+                style={{ backgroundColor: 'var(--clean-accent-border, #EBE5DC)' }}
+              >
                 <div
-                  className="h-1.5 rounded-full bg-gradient-to-r from-[#D4A373] via-[#B4793D] to-[#8C5824] transition-all duration-500 ease-out"
-                  style={{ width: `${Math.max(12, Math.min(progressPercent, 95))}%` }}
+                  className="h-1.5 rounded-full transition-all duration-500 ease-out"
+                  style={{
+                    width: `${Math.max(12, Math.min(progressPercent, 95))}%`,
+                    backgroundColor: 'var(--clean-accent-caramel, #B4793D)'
+                  }}
                 />
               </div>
-              <div className="flex justify-between items-center text-[9.5px] text-[#A8A29E] mt-1 font-mono">
+              <div
+                className="flex justify-between items-center text-[9.5px] mt-1 font-mono"
+                style={{ color: 'var(--clean-text-tertiary, #A8A29E)' }}
+              >
                 <span>{currentBook} {currentChapter}</span>
                 <span>{Math.round(progressPercent)}%</span>
               </div>
@@ -289,29 +338,45 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
           </div>
 
           {/* Shimmering Canonical Era Skeleton Timeline */}
-          <div className="relative border-l-2 border-[#EBE5DC]/80 ml-4 pl-4 space-y-3.5">
+          <div className="space-y-2.5">
             {[
               { era: 'Creation & Patriarchs', label: 'Archetype & Promise' },
               { era: 'Gospels & Passion', label: 'Christological Fulfillment' },
               { era: 'Revelation & Consummation', label: 'Eternal Realization' }
             ].map((skeleton, idx) => (
-              <div key={idx} className="relative animate-pulse" style={{ animationDelay: `${idx * 200}ms` }}>
-                {/* Node indicator */}
-                <div className="absolute -left-[22px] top-2 w-3 h-3 rounded-full bg-[#EBE5DC] border-2 border-[#FAF7F2] flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#B4793D]/60 animate-ping" />
-                </div>
-
-                <div className="bg-white/70 border border-[#EBE5DC] rounded-xl p-3 shadow-xs space-y-2">
+              <div key={idx} className="animate-pulse" style={{ animationDelay: `${idx * 200}ms` }}>
+                <div
+                  className="border rounded-xl p-3 shadow-xs space-y-2"
+                  style={{
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
                   <div className="flex justify-between items-center">
-                    <span className="text-[9.5px] font-bold text-[#B4793D]/70 uppercase tracking-wider">
+                    <span
+                      className="text-[9.5px] font-bold uppercase tracking-wider"
+                      style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
+                    >
                       {skeleton.era}
                     </span>
-                    <span className="h-3 w-16 bg-[#F5EFE6] rounded text-[8.5px] inline-block font-mono" />
+                    <span
+                      className="h-3 w-16 rounded text-[8.5px] inline-block font-mono"
+                      style={{ backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)' }}
+                    />
                   </div>
-                  <div className="h-3 w-3/4 bg-[#EBE5DC] rounded" />
+                  <div
+                    className="h-3 w-3/4 rounded"
+                    style={{ backgroundColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  />
                   <div className="space-y-1">
-                    <div className="h-2 w-full bg-[#F5EFE6] rounded" />
-                    <div className="h-2 w-5/6 bg-[#F5EFE6] rounded" />
+                    <div
+                      className="h-2 w-full rounded"
+                      style={{ backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)' }}
+                    />
+                    <div
+                      className="h-2 w-5/6 rounded"
+                      style={{ backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)' }}
+                    />
                   </div>
                 </div>
               </div>
@@ -319,11 +384,23 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
           </div>
 
           {/* Theological Quote Banner */}
-          <div className="bg-[#FAF5ED] border border-[#EBE5DC] rounded-xl p-3 text-center space-y-1">
-            <p className="text-[10.5px] text-[#57524E] font-serif italic">
+          <div
+            className="border rounded-xl p-3 text-center space-y-1"
+            style={{
+              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+              borderColor: 'var(--clean-accent-border-strong, #B4793D)'
+            }}
+          >
+            <p
+              className="text-[10.5px] font-serif italic"
+              style={{ color: 'var(--clean-text-primary, #26221F)' }}
+            >
               "Novum Testamentum in Vetere latet, Vetus in Novo patet."
             </p>
-            <p className="text-[9px] text-[#A8A29E] uppercase tracking-wider font-semibold">
+            <p
+              className="text-[9px] uppercase tracking-wider font-semibold"
+              style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+            >
               The New is in the Old concealed; the Old is in the New revealed — St. Augustine
             </p>
           </div>
@@ -338,23 +415,44 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
 
       {motifData && !isLoading && (
         <div className="space-y-6 animate-fadeIn">
-          <div className="text-center space-y-2 pb-4 border-b border-[#EBE5DC]">
-            <h3 className="text-xl font-black text-[#26221F] font-serif uppercase tracking-widest">{motifData.motif}</h3>
-            <p className="text-xs text-[#78716C] leading-relaxed max-w-sm mx-auto">{motifData.summary}</p>
+          <div
+            className="text-center space-y-2 pb-4 border-b"
+            style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
+          >
+            <h3
+              className="text-xl font-black font-serif uppercase tracking-widest"
+              style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+            >
+              {motifData.motif}
+            </h3>
+            <p
+              className="text-xs leading-relaxed max-w-sm mx-auto"
+              style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+            >
+              {motifData.summary}
+            </p>
           </div>
 
-          <div className="relative border-l-2 border-[#EBE5DC] ml-3 pl-4 space-y-6">
+          <div className="space-y-3">
             {motifData.nodes.map((node, i) => {
               const parsedList = parseReferences(node.reference, currentBook);
 
               return (
-                <div key={i} className="relative">
-                  {/* Node indicator */}
-                  <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[#B4793D] border-2 border-[#FAF7F2]" />
-                  
-                  <div className="bg-white border border-[#EBE5DC] rounded-xl p-3 shadow-xs">
+                <div key={i}>
+                  <div
+                    className="border rounded-xl p-3 shadow-xs"
+                    style={{
+                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                    }}
+                  >
                     <div className="flex flex-wrap justify-between items-start gap-1 mb-1.5">
-                      <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider">{node.era}</span>
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider"
+                        style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                      >
+                        {node.era}
+                      </span>
                       
                       <div className="flex flex-wrap gap-1.5 items-center">
                         {parsedList.length > 0 ? (
@@ -363,20 +461,40 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
                               key={pIdx}
                               onClick={() => handleNavigateToRef(pRef)}
                               title={`Navigate to ${pRef.display} for cross-referencing`}
-                              className="text-[9.5px] font-mono font-medium text-[#78716C] hover:text-[#8C5D2E] bg-[#FAF7F2] hover:bg-[#F3ECE0] px-2 py-0.5 rounded-md border border-[#EBE5DC] hover:border-[#B4793D]/50 transition-colors cursor-pointer"
+                              className="text-[9.5px] font-mono font-medium px-2 py-0.5 rounded-md border transition-colors cursor-pointer"
+                              style={{
+                                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                color: 'var(--clean-accent-dark, #8C5E2E)'
+                              }}
                             >
                               {pRef.display}
                             </button>
                           ))
                         ) : (
-                          <span className="text-[9.5px] font-mono text-[#78716C] bg-[#FAF7F2] px-2 py-0.5 rounded-md border border-[#EBE5DC]">
+                          <span
+                            className="text-[9.5px] font-mono px-2 py-0.5 rounded-md border"
+                            style={{
+                              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                              color: 'var(--clean-text-secondary, #78716C)'
+                            }}
+                          >
                             {node.reference}
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className="font-semibold text-xs text-[#26221F] mb-1">{node.event}</div>
-                    <p className="text-[11px] text-[#57524E] leading-relaxed italic">
+                    <div
+                      className="font-semibold text-xs mb-1"
+                      style={{ color: 'var(--clean-text-primary, #26221F)' }}
+                    >
+                      {node.event}
+                    </div>
+                    <p
+                      className="text-[11px] leading-relaxed italic"
+                      style={{ color: 'var(--clean-text-secondary, #57524E)' }}
+                    >
                       {node.significance}
                     </p>
                   </div>
@@ -387,7 +505,11 @@ const TypologyPanel: React.FC<TypologyPanelProps> = ({ currentBook, currentChapt
 
           {hasAlternateMotif(`${currentBook} ${currentChapter}`, motifData.motif) && (
             <div className="flex justify-center pt-2">
-               <button onClick={() => handleGenerate(true)} className="text-[10px] text-[#B4793D] hover:underline font-medium uppercase tracking-wider">
+               <button
+                 onClick={() => handleGenerate(true)}
+                 className="text-[10px] hover:underline font-medium uppercase tracking-wider cursor-pointer"
+                 style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
+               >
                  Explore Alternate Motif
                </button>
             </div>

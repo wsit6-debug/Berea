@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
-  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages, Trophy, HelpCircle, Network
+  History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages, Trophy, HelpCircle, Network,
+  Plus, Minus, CheckCircle2
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
-import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
+import { askBereaAssistant, ChatMessage, QuizQuestion, QuizStyle, WrittenGradingResult, gradeWrittenAnswer } from '../services/aiService';
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
@@ -101,31 +102,65 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [hasCachedChapter, setHasCachedChapter] = useState(false);
   const [hasCachedBook, setHasCachedBook] = useState(false);
 
-  // User-configurable quiz length
-  const [chapterQuizLength, setChapterQuizLength] = useState<number>(3);
+  // User-configurable quiz length and style (min 5, max 100)
+  const [quizStyle, setQuizStyle] = useState<QuizStyle>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('berea_quiz_style') as QuizStyle;
+      if (saved === 'multiple_choice' || saved === 'true_false' || saved === 'written' || saved === 'mixed') {
+        return saved;
+      }
+    }
+    return 'multiple_choice';
+  });
+
+  const handleStyleChange = (style: QuizStyle) => {
+    setQuizStyle(style);
+    try {
+      localStorage.setItem('berea_quiz_style', style);
+    } catch {}
+  };
+
+  const [chapterQuizLength, setChapterQuizLength] = useState<number>(5);
   const [bookQuizLength, setBookQuizLength] = useState<number>(10);
+
+  // Written quiz answers & AI grading state
+  const [writtenAnswers, setWrittenAnswers] = useState<Record<number, string>>({});
+  const [writtenGrades, setWrittenGrades] = useState<Record<number, WrittenGradingResult>>({});
+  const [isGradingWritten, setIsGradingWritten] = useState(false);
+  const [gradingProgress, setGradingProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const clampChapterCount = (val: number) => Math.max(5, Math.min(15, Math.floor(val) || 5));
+  const clampBookCount = (val: number) => Math.max(5, Math.min(50, Math.floor(val) || 5));
 
   const [studyGuideMode, setStudyGuideMode] = useState<'discussion' | 'typology'>('discussion');
 
   useEffect(() => {
     const updateCacheStatus = () => {
-      setHasCachedChapter(Boolean(getCachedChapterQuiz(currentBook, currentChapter, chapterQuizLength)));
-      setHasCachedBook(Boolean(getCachedBookQuiz(currentBook, bookQuizLength)));
+      setHasCachedChapter(Boolean(getCachedChapterQuiz(currentBook, currentChapter, chapterQuizLength, quizStyle)));
+      setHasCachedBook(Boolean(getCachedBookQuiz(currentBook, bookQuizLength, quizStyle)));
     };
 
     updateCacheStatus();
 
     window.addEventListener('berea_quiz_cache_updated', updateCacheStatus);
     return () => window.removeEventListener('berea_quiz_cache_updated', updateCacheStatus);
-  }, [currentBook, currentChapter, chapterQuizLength, bookQuizLength]);
+  }, [currentBook, currentChapter, chapterQuizLength, bookQuizLength, quizStyle]);
 
-  const startQuiz = async (type: 'chapter' | 'book', overrideCount?: number) => {
-    const requestedCount = overrideCount || (type === 'chapter' ? chapterQuizLength : bookQuizLength);
+  const startQuiz = async (type: 'chapter' | 'book', overrideCount?: number, overrideStyle?: QuizStyle) => {
+    const requestedCount = type === 'chapter'
+      ? clampChapterCount(overrideCount || chapterQuizLength)
+      : clampBookCount(overrideCount || bookQuizLength);
+    const requestedStyle = overrideStyle || quizStyle;
+
     setInternalQuizType(type);
     onQuizTypeChange?.(type);
     setQuizQuestions([]);
     setQuizIndex(0);
     setQuizSelectedAnswers({});
+    setWrittenAnswers({});
+    setWrittenGrades({});
+    setIsGradingWritten(false);
+    setGradingProgress(null);
     setIsQuizSubmitted(false);
     setQuizError(null);
     setIsQuizLoading(true);
@@ -141,14 +176,24 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
     try {
       const chapterText = (chapterVerses || []).map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ');
-      const questions = await requestForegroundQuiz(
+      const rawQuestions = await requestForegroundQuiz(
         type,
         currentBook,
         currentChapter,
         chapterText,
         handleProgress,
-        requestedCount
+        requestedCount,
+        requestedStyle
       );
+
+      // Safeguard against duplicates
+      const seenSet = new Set<string>();
+      const questions = rawQuestions.filter(q => {
+        const k = (q.question || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!k || seenSet.has(k)) return false;
+        seenSet.add(k);
+        return true;
+      });
 
       if (type === 'book' && questions.length === 0) {
         setQuizError('No chapter quizzes found for this book yet. Please complete chapter quizzes first to build up your comprehensive book quiz!');
@@ -160,6 +205,59 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     } finally {
       setIsQuizLoading(false);
       setGeneratingQuizType(null);
+    }
+  };
+
+  const handleGradeAllWrittenAnswers = async () => {
+    if (quizQuestions.length === 0) return;
+    const writtenIndices = quizQuestions
+      .map((q, idx) => ({ q, idx }))
+      .filter(({ q }) => q.style === 'written');
+
+    const results: Record<number, WrittenGradingResult> = { ...writtenGrades };
+
+    if (writtenIndices.length > 0) {
+      setIsGradingWritten(true);
+      setGradingProgress({ current: 0, total: writtenIndices.length });
+
+      const chapterText = (chapterVerses || []).map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ');
+
+      for (let i = 0; i < writtenIndices.length; i++) {
+        setGradingProgress({ current: i + 1, total: writtenIndices.length });
+        const { q, idx } = writtenIndices[i];
+        const answer = writtenAnswers[idx] || '';
+        try {
+          const grade = await gradeWrittenAnswer(q.question, answer, chapterText, q.sampleAnswer, q.reference);
+          results[idx] = grade;
+        } catch (e) {
+          console.warn('Grading error for question', idx, e);
+          results[idx] = {
+            score: answer.trim().length > 10 ? 75 : 40,
+            grade: answer.trim().length > 10 ? 'Good' : 'Needs Review',
+            isCorrect: answer.trim().length > 10,
+            feedback: 'Answer recorded. Reflect on the scriptural themes discussed in the chapter.',
+            biblicalInsights: q.sampleAnswer || q.explanation,
+            modelAnswer: q.sampleAnswer
+          };
+        }
+      }
+
+      setWrittenGrades(results);
+      setIsGradingWritten(false);
+    }
+
+    setIsQuizSubmitted(true);
+
+    // Composite score across all questions in the quiz
+    const totalScore = quizQuestions.reduce((acc, q, idx) => {
+      if (q.style === 'written') {
+        return acc + (results[idx]?.score ?? 70);
+      }
+      return acc + (quizSelectedAnswers[idx] === q.correctAnswerIndex ? 100 : 0);
+    }, 0);
+    const avgScore = totalScore / (quizQuestions.length || 1);
+    if (avgScore >= 70) {
+      confetti({ particleCount: 50, spread: 65, origin: { y: 0.7 } });
     }
   };
 
@@ -735,20 +833,34 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
             {/* Mode Switch */}
-            <div className="flex bg-[#EFE9DF] rounded-lg p-0.5 mb-2">
+            <div
+              className="flex rounded-lg p-0.5 mb-2 border"
+              style={{
+                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+            >
               <button
                 onClick={() => setStudyGuideMode('discussion')}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  studyGuideMode === 'discussion' ? 'bg-white text-[#26221F] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'
-                }`}
+                className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer"
+                style={{
+                  backgroundColor: studyGuideMode === 'discussion' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                  color: studyGuideMode === 'discussion' ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-secondary, #78716C)',
+                  boxShadow: studyGuideMode === 'discussion' ? '0 1px 3px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.15)' : 'none',
+                  border: studyGuideMode === 'discussion' ? '1px solid var(--clean-accent-border-strong, #B4793D)' : '1px solid transparent'
+                }}
               >
                 Discussion Guide
               </button>
               <button
                 onClick={() => setStudyGuideMode('typology')}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  studyGuideMode === 'typology' ? 'bg-white text-[#26221F] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'
-                }`}
+                className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer"
+                style={{
+                  backgroundColor: studyGuideMode === 'typology' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                  color: studyGuideMode === 'typology' ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-secondary, #78716C)',
+                  boxShadow: studyGuideMode === 'typology' ? '0 1px 3px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.15)' : 'none',
+                  border: studyGuideMode === 'typology' ? '1px solid var(--clean-accent-border-strong, #B4793D)' : '1px solid transparent'
+                }}
               >
                 Typology Tracker
               </button>
@@ -1676,7 +1788,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             )}
 
             {studyGuideMode === 'typology' && (
-              <div className="rounded-xl border border-[#EBE5DC] overflow-hidden bg-[#FAF7F2] flex-1 flex flex-col min-h-[400px]">
+              <div
+                className="rounded-xl border overflow-hidden flex-1 flex flex-col min-h-[400px] shadow-xs"
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 <TypologyPanel
                   currentBook={currentBook}
                   currentChapter={currentChapter}
@@ -2178,7 +2296,9 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             {/* Translation Pills */}
             <div className="flex flex-wrap gap-1 p-1 rounded-lg border bg-[var(--clean-surface-subtle,#FAF7F2)] border-[var(--clean-border-soft,#EBE5DC)]">
               {TRANSLATIONS.map((t) => {
-                const isSelected = comparisonTranslations.includes(t.id);
+                const selectedIndex = comparisonTranslations.indexOf(t.id);
+                const isSelected = selectedIndex !== -1;
+                const orderNum = isSelected ? selectedIndex + 1 : null;
                 const colorTheme = getTranslationColor(t.id);
                 return (
                   <button
@@ -2207,12 +2327,24 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     className="text-[11px] font-semibold py-1 px-2.5 rounded-md border transition-all cursor-pointer select-none flex items-center gap-1.5"
                     title={`${t.name} (${t.year})`}
                   >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{
-                        backgroundColor: isSelected ? colorTheme.badgeText : colorTheme.primary
-                      }}
-                    />
+                    {isSelected ? (
+                      <span
+                        className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                        style={{
+                          backgroundColor: colorTheme.badgeText,
+                          color: colorTheme.badgeBg
+                        }}
+                      >
+                        {orderNum}
+                      </span>
+                    ) : (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{
+                          backgroundColor: colorTheme.primary
+                        }}
+                      />
+                    )}
                     <span>{t.id}</span>
                   </button>
                 );
@@ -2221,7 +2353,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
             {/* Translation Cards with Unique Distinct Colors */}
             <div className="space-y-2">
-              {comparisonTranslations.map((tId) => {
+              {comparisonTranslations.map((tId, idx) => {
                 const tObj = TRANSLATIONS.find(x => x.id === tId);
                 const colorTheme = getTranslationColor(tId);
                 const rawCompareText = (selectedVerse?.text && (selectedVerse.text[tId] || selectedVerse.text['KJV'] || Object.values(selectedVerse.text)[0])) || 'Loading scripture...';
@@ -2241,13 +2373,22 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <span
-                          className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide shrink-0 shadow-2xs"
+                          className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide shrink-0 shadow-2xs flex items-center gap-1"
                           style={{
                             backgroundColor: colorTheme.badgeBg,
                             color: colorTheme.badgeText
                           }}
                         >
-                          {tId}
+                          <span
+                            className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8.5px] font-bold"
+                            style={{
+                              backgroundColor: colorTheme.badgeText,
+                              color: colorTheme.badgeBg
+                            }}
+                          >
+                            {idx + 1}
+                          </span>
+                          <span>{tId}</span>
                         </span>
                         <span
                           className="font-bold text-xs truncate"
@@ -2393,133 +2534,469 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {activeTab === 'quiz' && (
           <div className="flex-1 flex flex-col space-y-3 animate-fadeIn min-h-0">
             {/* Header Card */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-[#FAF5ED] to-white border border-[#EBE5DC] shadow-xs space-y-2">
+            <div
+              className="p-4 rounded-xl border shadow-xs space-y-2.5"
+              style={{
+                background: 'linear-gradient(to bottom right, var(--clean-highlight-cream, #FAF5ED), var(--clean-surface, #FFFFFF))',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                color: 'var(--clean-text-primary, #26221F)'
+              }}
+            >
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#FAF0E2] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
+                <div
+                  className="w-7 h-7 rounded-lg border flex items-center justify-center shadow-2xs"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                    borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                    color: 'var(--clean-accent-caramel, #B4793D)'
+                  }}
+                >
                   <Trophy className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-heading font-bold text-sm text-[#26221F]">Scripture & Theology Quiz</h4>
-                  <p className="text-[10.5px] text-[#78716C]">
-                    Test your comprehension and theology for {currentBook} {currentChapter}
+                  <h4 className="font-heading font-bold text-sm" style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}>
+                    Scripture & Theology Quiz
+                  </h4>
+                  <p className="text-[10.5px]" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                    Test comprehension, theology, and canonical themes for {currentBook} {currentChapter}
                   </p>
+                </div>
+              </div>
+
+              {/* Quiz Style Selector */}
+              <div
+                className="pt-2 border-t space-y-1.5"
+                style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+              >
+                <span
+                  className="text-[11px] font-semibold flex items-center gap-1.5"
+                  style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                >
+                  <Sliders className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                  <span>Quiz Style:</span>
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleStyleChange('multiple_choice')}
+                    className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                      quizStyle === 'multiple_choice' ? '' : 'hover:border-[var(--clean-accent-border-strong,#B4793D)]'
+                    }`}
+                    style={{
+                      backgroundColor: quizStyle === 'multiple_choice' ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                      borderColor: quizStyle === 'multiple_choice' ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                      boxShadow: quizStyle === 'multiple_choice' ? '0 1px 4px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.2)' : 'none'
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <ListFilter
+                        className="w-3.5 h-3.5"
+                        style={{ color: quizStyle === 'multiple_choice' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)' }}
+                      />
+                      <span
+                        className="text-[11px] font-bold"
+                        style={{ color: quizStyle === 'multiple_choice' ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-primary, #26221F)' }}
+                      >
+                        Multiple Choice
+                      </span>
+                    </div>
+                    <p className="text-[9.5px] mt-0.5 leading-tight" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                      4 choices
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleStyleChange('true_false')}
+                    className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                      quizStyle === 'true_false' ? '' : 'hover:border-[var(--clean-accent-border-strong,#B4793D)]'
+                    }`}
+                    style={{
+                      backgroundColor: quizStyle === 'true_false' ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                      borderColor: quizStyle === 'true_false' ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                      boxShadow: quizStyle === 'true_false' ? '0 1px 4px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.2)' : 'none'
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2
+                        className="w-3.5 h-3.5"
+                        style={{ color: quizStyle === 'true_false' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)' }}
+                      />
+                      <span
+                        className="text-[11px] font-bold"
+                        style={{ color: quizStyle === 'true_false' ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-primary, #26221F)' }}
+                      >
+                        True or False
+                      </span>
+                    </div>
+                    <p className="text-[9.5px] mt-0.5 leading-tight" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                      Fact-check claims
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleStyleChange('written')}
+                    className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                      quizStyle === 'written' ? '' : 'hover:border-[var(--clean-accent-border-strong,#B4793D)]'
+                    }`}
+                    style={{
+                      backgroundColor: quizStyle === 'written' ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                      borderColor: quizStyle === 'written' ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                      boxShadow: quizStyle === 'written' ? '0 1px 4px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.2)' : 'none'
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles
+                        className="w-3.5 h-3.5"
+                        style={{ color: quizStyle === 'written' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)' }}
+                      />
+                      <span
+                        className="text-[11px] font-bold"
+                        style={{ color: quizStyle === 'written' ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-primary, #26221F)' }}
+                      >
+                        Written
+                      </span>
+                    </div>
+                    <p className="text-[9.5px] mt-0.5 leading-tight" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                      Short written answer
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleStyleChange('mixed')}
+                    className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                      quizStyle === 'mixed' ? '' : 'hover:border-[var(--clean-accent-border-strong,#B4793D)]'
+                    }`}
+                    style={{
+                      backgroundColor: quizStyle === 'mixed' ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                      borderColor: quizStyle === 'mixed' ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                      boxShadow: quizStyle === 'mixed' ? '0 1px 4px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.2)' : 'none'
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Layers
+                        className="w-3.5 h-3.5"
+                        style={{ color: quizStyle === 'mixed' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)' }}
+                      />
+                      <span
+                        className="text-[11px] font-bold"
+                        style={{ color: quizStyle === 'mixed' ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-primary, #26221F)' }}
+                      >
+                        Mixed
+                      </span>
+                    </div>
+                    <p className="text-[9.5px] mt-0.5 leading-tight" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                      All 3 formats
+                    </p>
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Chapter Quiz Trigger */}
-            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
+            <div
+              className="p-3.5 rounded-xl border space-y-2.5 transition-all shadow-2xs"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
-                    <HelpCircle className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <div
+                    className="font-bold text-xs flex items-center gap-1.5"
+                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                     <span>{currentBook} {currentChapter} Chapter Quiz</span>
                     {hasCachedChapter && (
-                      <span className="px-1.5 py-0.2 text-[9.5px] font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] rounded-full">
+                      <span
+                        className="px-1.5 py-0.5 text-[9.5px] font-bold rounded-full border shadow-2xs"
+                        style={{
+                          backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                          borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                          color: 'var(--clean-accent-dark, #8C5E2E)'
+                        }}
+                      >
                         Ready
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#78716C] mt-0.5">
-                    Grounded multiple-choice questions with theological explanations based on the active passage.
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                    {quizStyle === 'multiple_choice'
+                      ? 'Grounded multiple-choice questions with theological explanations based on the active passage.'
+                      : quizStyle === 'true_false'
+                      ? 'True or False statements testing canonical fact-checking and doctrinal comprehension.'
+                      : quizStyle === 'written'
+                      ? 'Written comprehension questions evaluated and graded directly by AI with pastoral feedback.'
+                      : 'A dynamic blend of multiple choice, true or false, and AI-graded typed written questions.'}
                   </p>
                 </div>
               </div>
 
-              {/* Length selector for Chapter Quiz */}
-              <div className="flex items-center gap-2.5 text-[11px] pt-0.5">
-                <span className="text-[#78716C] font-medium">Number of Questions:</span>
-                <div className="flex items-center gap-1 bg-[#FAF5ED] p-0.5 rounded-lg border border-[#EBE5DC]">
-                  {[3, 5].map((count) => (
+              {/* Length selector for Chapter Quiz (Min 5, Max 15) */}
+              <div className="space-y-1.5 pt-0.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-medium" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                    Number of Questions (5–15):
+                  </span>
+                  {/* Stepper + Direct Input */}
+                  <div className="flex items-center gap-1">
                     <button
-                      key={count}
                       type="button"
-                      onClick={() => setChapterQuizLength(count)}
-                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer ${
-                        chapterQuizLength === count
-                          ? 'bg-[#B4793D] text-white shadow-xs'
-                          : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
+                      onClick={() => setChapterQuizLength(prev => clampChapterCount(prev - 5))}
+                      disabled={chapterQuizLength <= 5}
+                      className="w-5 h-5 flex items-center justify-center rounded border disabled:opacity-30 cursor-pointer transition-colors hover:border-[var(--clean-accent-border-strong,#B4793D)] hover:text-[var(--clean-accent-dark,#8C5E2E)]"
+                      style={{
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        color: 'var(--clean-text-secondary, #78716C)'
+                      }}
+                      title="Decrease by 5"
                     >
-                      {count}
+                      <Minus className="w-3 h-3" />
                     </button>
-                  ))}
+                    <input
+                      type="number"
+                      min={5}
+                      max={15}
+                      value={chapterQuizLength}
+                      onChange={(e) => setChapterQuizLength(clampChapterCount(parseInt(e.target.value) || 5))}
+                      className="w-12 text-center text-xs font-semibold py-0.5 rounded border focus:outline-none transition-colors focus:border-[var(--clean-accent-border-strong,#B4793D)]"
+                      style={{
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        color: 'var(--clean-text-primary, #26221F)'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setChapterQuizLength(prev => clampChapterCount(prev + 5))}
+                      disabled={chapterQuizLength >= 15}
+                      className="w-5 h-5 flex items-center justify-center rounded border disabled:opacity-30 cursor-pointer transition-colors hover:border-[var(--clean-accent-border-strong,#B4793D)] hover:text-[var(--clean-accent-dark,#8C5E2E)]"
+                      style={{
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        color: 'var(--clean-text-secondary, #78716C)'
+                      }}
+                      title="Increase by 5"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preset Chips */}
+                <div
+                  className="flex items-center gap-1 p-0.5 rounded-lg border"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
+                  {[5, 10, 15].map((count) => {
+                    const isSelected = chapterQuizLength === count;
+                    return (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => setChapterQuizLength(count)}
+                        className="flex-1 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer"
+                        style={{
+                          backgroundColor: isSelected ? 'var(--clean-accent-caramel, #B4793D)' : 'transparent',
+                          color: isSelected ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-text-secondary, #78716C)',
+                          boxShadow: isSelected ? '0 1px 3px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.3)' : 'none'
+                        }}
+                      >
+                        {count}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <button
                 onClick={() => startQuiz('chapter')}
                 disabled={generatingQuizType === 'chapter'}
-                className={`w-full py-2 px-3 ${currentQuizType === 'chapter' ? 'bg-[#FAF0E2] text-[#B4793D] border-[#B4793D]' : 'bg-[#FAF5ED] hover:bg-[#F5EFE6] text-[#B4793D] border-[#D4A373]'} border rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70`}
+                className="w-full py-2 px-3 border rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70 hover:opacity-95"
+                style={{
+                  backgroundColor: currentQuizType === 'chapter' ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                  color: 'var(--clean-accent-dark, #8C5E2E)'
+                }}
               >
                 {generatingQuizType === 'chapter' ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-[#B4793D] border-t-transparent rounded-full animate-spin" />
+                    <div
+                      className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin"
+                      style={{
+                        borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                        borderTopColor: 'transparent'
+                      }}
+                    />
                     <span>Generating Chapter Quiz ({quizProgress}%)...</span>
                   </>
                 ) : (
                   <>
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    <span>{currentQuizType === 'chapter' ? `Restart (${chapterQuizLength} Questions)` : `Start Chapter ${currentChapter} Quiz (${chapterQuizLength} Questions)`}</span>
+                    <HelpCircle className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                    <span>
+                      {currentQuizType === 'chapter'
+                        ? `Restart (${chapterQuizLength} Questions • ${quizStyle === 'multiple_choice' ? 'Multiple Choice' : quizStyle === 'true_false' ? 'True/False' : quizStyle === 'written' ? 'Written' : 'Mixed'})`
+                        : `Start Chapter ${currentChapter} Quiz (${chapterQuizLength} Questions • ${quizStyle === 'multiple_choice' ? 'Multiple Choice' : quizStyle === 'true_false' ? 'True/False' : quizStyle === 'written' ? 'Written' : 'Mixed'})`}
+                    </span>
                   </>
                 )}
               </button>
             </div>
 
             {/* Book Review Quiz Trigger */}
-            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
+            <div
+              className="p-3.5 rounded-xl border space-y-2.5 transition-all shadow-2xs"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5 text-[#B4793D]" />
+                  <div
+                    className="font-bold text-xs flex items-center gap-1.5"
+                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                  >
+                    <Trophy className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                     <span>{currentBook} Comprehensive Book Quiz</span>
                     {hasCachedBook && (
-                      <span className="px-1.5 py-0.2 text-[9.5px] font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] rounded-full">
+                      <span
+                        className="px-1.5 py-0.5 text-[9.5px] font-bold rounded-full border shadow-2xs"
+                        style={{
+                          backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                          borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                          color: 'var(--clean-accent-dark, #8C5E2E)'
+                        }}
+                      >
                         Ready
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#78716C] mt-0.5">
-                    Comprehensive questions covering major themes, canonical structure, and accumulated chapters.
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                    {quizStyle === 'multiple_choice'
+                      ? 'Comprehensive multiple-choice questions covering canonical structure, covenants, and themes.'
+                      : quizStyle === 'true_false'
+                      ? 'Comprehensive True/False statements covering overarching book themes and doctrinal theology.'
+                      : quizStyle === 'written'
+                      ? 'Comprehensive written questions testing synthesis and theology across the book, graded by AI.'
+                      : 'A comprehensive book exam combining multiple choice, true or false, and typed written questions.'}
                   </p>
                 </div>
               </div>
 
-              {/* Length selector for Book Quiz */}
-              <div className="flex items-center gap-2.5 text-[11px] pt-0.5">
-                <span className="text-[#78716C] font-medium">Number of Questions:</span>
-                <div className="flex items-center gap-1 bg-[#FAF5ED] p-0.5 rounded-lg border border-[#EBE5DC]">
-                  {[10, 20].map((count) => (
+              {/* Length selector for Book Quiz (Min 5, Max 50) */}
+              <div className="space-y-1.5 pt-0.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-medium" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                    Number of Questions (5–50):
+                  </span>
+                  {/* Stepper + Direct Input */}
+                  <div className="flex items-center gap-1">
                     <button
-                      key={count}
                       type="button"
-                      onClick={() => setBookQuizLength(count)}
-                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer ${
-                        bookQuizLength === count
-                          ? 'bg-[#B4793D] text-white shadow-xs'
-                          : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
+                      onClick={() => setBookQuizLength(prev => clampBookCount(prev - 5))}
+                      disabled={bookQuizLength <= 5}
+                      className="w-5 h-5 flex items-center justify-center rounded border disabled:opacity-30 cursor-pointer transition-colors hover:border-[var(--clean-accent-border-strong,#B4793D)] hover:text-[var(--clean-accent-dark,#8C5E2E)]"
+                      style={{
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        color: 'var(--clean-text-secondary, #78716C)'
+                      }}
+                      title="Decrease by 5"
                     >
-                      {count}
+                      <Minus className="w-3 h-3" />
                     </button>
-                  ))}
+                    <input
+                      type="number"
+                      min={5}
+                      max={50}
+                      value={bookQuizLength}
+                      onChange={(e) => setBookQuizLength(clampBookCount(parseInt(e.target.value) || 5))}
+                      className="w-12 text-center text-xs font-semibold py-0.5 rounded border focus:outline-none transition-colors focus:border-[var(--clean-accent-border-strong,#B4793D)]"
+                      style={{
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        color: 'var(--clean-text-primary, #26221F)'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBookQuizLength(prev => clampBookCount(prev + 5))}
+                      disabled={bookQuizLength >= 50}
+                      className="w-5 h-5 flex items-center justify-center rounded border disabled:opacity-30 cursor-pointer transition-colors hover:border-[var(--clean-accent-border-strong,#B4793D)] hover:text-[var(--clean-accent-dark,#8C5E2E)]"
+                      style={{
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        color: 'var(--clean-text-secondary, #78716C)'
+                      }}
+                      title="Increase by 5"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preset Chips */}
+                <div
+                  className="flex items-center gap-1 p-0.5 rounded-lg border"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
+                  {[5, 10, 20, 30, 50].map((count) => {
+                    const isSelected = bookQuizLength === count;
+                    return (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => setBookQuizLength(count)}
+                        className="flex-1 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer"
+                        style={{
+                          backgroundColor: isSelected ? 'var(--clean-accent-caramel, #B4793D)' : 'transparent',
+                          color: isSelected ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-text-secondary, #78716C)',
+                          boxShadow: isSelected ? '0 1px 3px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.3)' : 'none'
+                        }}
+                      >
+                        {count}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <button
                 onClick={() => startQuiz('book')}
                 disabled={generatingQuizType === 'book'}
-                className={`w-full py-2 px-3 ${currentQuizType === 'book' ? 'bg-[#9A632E] text-white' : 'bg-[#B4793D] hover:bg-[#9A632E] text-white'} rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70`}
+                className="clean-caramel-btn w-full !py-2 !px-3 shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-70"
+                style={{
+                  backgroundColor: currentQuizType === 'book' ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-accent-caramel, #B4793D)',
+                  color: 'var(--clean-accent-contrast-text, #FFFFFF)'
+                }}
               >
                 {generatingQuizType === 'book' ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div
+                      className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin"
+                      style={{
+                        borderColor: 'var(--clean-accent-contrast-text, #FFFFFF)',
+                        borderTopColor: 'transparent'
+                      }}
+                    />
                     <span>Generating Book Quiz ({quizProgress}%)...</span>
                   </>
                 ) : (
                   <>
-                    <Trophy className="w-3.5 h-3.5" />
-                    <span>{currentQuizType === 'book' ? `Restart (${bookQuizLength} Questions)` : `Start ${currentBook} Book Quiz (${bookQuizLength} Questions)`}</span>
+                    <Trophy className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-contrast-text, #FFFFFF)' }} />
+                    <span>
+                      {currentQuizType === 'book'
+                        ? `Restart (${bookQuizLength} Questions • ${quizStyle === 'multiple_choice' ? 'Multiple Choice' : quizStyle === 'true_false' ? 'True/False' : quizStyle === 'written' ? 'Written' : 'Mixed'})`
+                        : `Start ${currentBook} Book Quiz (${bookQuizLength} Questions • ${quizStyle === 'multiple_choice' ? 'Multiple Choice' : quizStyle === 'true_false' ? 'True/False' : quizStyle === 'written' ? 'Written' : 'Mixed'})`}
+                    </span>
                   </>
                 )}
               </button>
@@ -2527,17 +3004,43 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
             {/* Quiz active below generation buttons */}
             {currentQuizType && (
-              <div className="bg-white rounded-xl border border-[#EBE5DC] p-3.5 space-y-3.5 shadow-xs flex flex-col flex-1 animate-fadeIn mt-1">
+              <div
+                className="rounded-xl border p-3.5 space-y-3.5 shadow-xs flex flex-col flex-1 animate-fadeIn mt-1"
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 {/* Embedded Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-[#EBE5DC]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-heading font-bold text-xs text-[#26221F]">
+                <div
+                  className="flex items-center justify-between pb-2 border-b"
+                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-heading font-bold text-xs" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
                       {currentQuizType === 'chapter' ? `${currentBook} ${currentChapter} Quiz` : `${currentBook} Book Quiz`}
+                    </span>
+                    <span
+                      className="px-1.5 py-0.5 text-[9.5px] font-semibold rounded-md border"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                        color: 'var(--clean-accent-dark, #8C5E2E)'
+                      }}
+                    >
+                      {quizStyle === 'multiple_choice' ? 'Multiple Choice' : quizStyle === 'true_false' ? 'True / False' : 'Written • AI Graded'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {quizQuestions.length > 0 && !isQuizSubmitted && (
-                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-[#FAF5ED] text-[#B4793D] border border-[#D4A373]/30 rounded-full">
+                    {quizQuestions.length > 0 && !isQuizSubmitted && !isGradingWritten && (
+                      <span
+                        className="px-2 py-0.5 text-[10px] font-semibold rounded-full border shadow-2xs"
+                        style={{
+                          backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                          borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                          color: 'var(--clean-accent-dark, #8C5E2E)'
+                        }}
+                      >
                         Q {quizIndex + 1}/{quizQuestions.length}
                       </span>
                     )}
@@ -2546,7 +3049,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setInternalQuizType(null);
                         onQuizTypeChange?.(null);
                       }}
-                      className="p-1 rounded-md text-[#78716C] hover:text-[#26221F] hover:bg-[#FAF5ED] transition-colors text-xs font-medium flex items-center gap-1 cursor-pointer"
+                      className="p-1 rounded-md transition-colors text-xs font-medium flex items-center gap-1 cursor-pointer hover:text-[var(--clean-accent-dark,#8C5E2E)]"
+                      style={{ color: 'var(--clean-text-secondary, #78716C)' }}
                       title="Close quiz"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -2556,20 +3060,68 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
                 {isQuizLoading ? (
                   <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                    <div className="w-8 h-8 rounded-full border-2 border-[#FAF0E2] border-t-[#B4793D] animate-spin" />
+                    <div
+                      className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+                      style={{
+                        borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                        borderTopColor: 'transparent'
+                      }}
+                    />
                     <div className="text-center w-full max-w-[200px]">
-                      <p className="text-[#78716C] text-xs font-medium animate-pulse mb-2">
-                        Generating {currentQuizType} quiz...
+                      <p className="text-xs font-medium animate-pulse mb-2" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                        Generating {currentQuizType} quiz ({quizStyle === 'multiple_choice' ? 'Multiple Choice' : quizStyle === 'true_false' ? 'True/False' : 'Written'})...
                       </p>
-                      <div className="w-full bg-[#EBE5DC] rounded-full h-1.5 overflow-hidden">
+                      <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: 'var(--clean-accent-border, #EBE5DC)' }}>
                         <div
-                          className="bg-[#B4793D] h-1.5 rounded-full transition-all duration-300"
-                          style={{ width: `${quizProgress}%` }}
+                          className="h-1.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${quizProgress}%`,
+                            backgroundColor: 'var(--clean-accent-caramel, #B4793D)'
+                          }}
                         />
                       </div>
-                      <p className="text-[10px] text-[#A8A29E] mt-1.5 font-medium">
+                      <p className="text-[10px] mt-1.5 font-medium" style={{ color: 'var(--clean-text-tertiary, #A8A29E)' }}>
                         {quizCheckpoint ? `Question ${quizCheckpoint.current} of ${quizCheckpoint.total} (${quizProgress}%)` : `${quizProgress}%`}
                       </p>
+                    </div>
+                  </div>
+                ) : isGradingWritten ? (
+                  /* AI Written Grading Loader View */
+                  <div className="flex flex-col items-center justify-center py-12 space-y-4 animate-fadeIn">
+                    <div
+                      className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin flex items-center justify-center"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                        borderTopColor: 'transparent',
+                        color: 'var(--clean-accent-caramel, #B4793D)'
+                      }}
+                    >
+                      <Sparkles className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div className="text-center w-full max-w-[240px] space-y-1.5">
+                      <p className="font-heading font-semibold text-xs" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                        AI Scholar is Grading Your Written Responses...
+                      </p>
+                      <p className="text-[11px]" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                        Evaluating theological accuracy, scriptural context, and canonical retention
+                      </p>
+                      {gradingProgress && (
+                        <div className="pt-2">
+                          <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: 'var(--clean-accent-border, #EBE5DC)' }}>
+                            <div
+                              className="h-1.5 rounded-full transition-all duration-300"
+                              style={{
+                                width: `${Math.round((gradingProgress.current / gradingProgress.total) * 100)}%`,
+                                backgroundColor: 'var(--clean-accent-caramel, #B4793D)'
+                              }}
+                            />
+                          </div>
+                          <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--clean-text-tertiary, #A8A29E)' }}>
+                            Grading question {gradingProgress.current} of {gradingProgress.total}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : quizError ? (
@@ -2577,7 +3129,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     <p className="text-xs text-red-600">{quizError}</p>
                     <button
                       onClick={() => startQuiz(currentQuizType)}
-                      className="px-3 py-1.5 bg-[#FAF5ED] text-[#B4793D] rounded-lg text-xs font-semibold hover:bg-[#F5EFE6] transition-colors cursor-pointer"
+                      className="px-3 py-1.5 border rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                        color: 'var(--clean-accent-dark, #8C5E2E)'
+                      }}
                     >
                       Retry
                     </button>
@@ -2585,42 +3142,242 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 ) : quizQuestions.length > 0 ? (
                   isQuizSubmitted ? (
                     <div className="space-y-4 animate-fadeIn">
-                      {/* Score Card */}
-                      <div className="text-center p-4 rounded-xl bg-[#FAF5ED] border border-[#D4A373]/30 space-y-2">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white border-2 border-[#B4793D] text-[#B4793D] font-bold text-lg shadow-xs">
-                          {Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0)}/{quizQuestions.length}
+                      {/* Score Card: Composite/Written vs Standard Choice */}
+                      {quizQuestions.some(q => q.style === 'written') ? (
+                        (() => {
+                          const writtenQs = quizQuestions.filter(q => q.style === 'written');
+                          const choiceQs = quizQuestions.filter(q => q.style !== 'written');
+                          const totalWrittenScore = Object.values(writtenGrades).reduce((acc, g) => acc + g.score, 0);
+                          const totalChoiceScore = choiceQs.reduce((acc, q) => {
+                            const originalIdx = quizQuestions.indexOf(q);
+                            return acc + (quizSelectedAnswers[originalIdx] === q.correctAnswerIndex ? 100 : 0);
+                          }, 0);
+                          const avgScore = Math.round((totalWrittenScore + totalChoiceScore) / (quizQuestions.length || 1));
+                          const overallGrade = avgScore >= 88 ? 'Excellent Comprehension' : avgScore >= 70 ? 'Good Retention' : 'Review Recommended';
+
+                          return (
+                            <div
+                              className="text-center p-4 rounded-xl border space-y-2"
+                              style={{
+                                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                borderColor: 'var(--clean-accent-border-strong, #B4793D)'
+                              }}
+                            >
+                              <div
+                                className="inline-flex items-center justify-center px-4 py-2 rounded-full border-2 font-bold text-lg shadow-xs"
+                                style={{
+                                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                  borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                                  color: 'var(--clean-accent-dark, #8C5E2E)'
+                                }}
+                              >
+                                {avgScore}% Overall Score
+                              </div>
+                              <h4 className="font-heading font-bold text-sm" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                                {overallGrade}
+                              </h4>
+                              <p className="text-xs" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                                {avgScore >= 88
+                                  ? 'Outstanding! Strong theological grasp and articulate scriptural understanding.'
+                                  : avgScore >= 70
+                                  ? 'Well done! Great theological retention and biblical reasoning.'
+                                  : 'Good effort. Review passage commentary to deepen theological insights.'}
+                              </p>
+                              {choiceQs.length > 0 && writtenQs.length > 0 && (
+                                <p className="text-[10.5px] font-medium" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
+                                  Combined: {choiceQs.filter(q => quizSelectedAnswers[quizQuestions.indexOf(q)] === q.correctAnswerIndex).length}/{choiceQs.length} Objective Correct • {writtenQs.length} AI Evaluated
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        /* Score Card for Multiple Choice & True/False */
+                        <div
+                          className="text-center p-4 rounded-xl border space-y-2"
+                          style={{
+                            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                            borderColor: 'var(--clean-accent-border-strong, #B4793D)'
+                          }}
+                        >
+                          <div
+                            className="inline-flex items-center justify-center w-14 h-14 rounded-full border-2 font-bold text-lg shadow-xs"
+                            style={{
+                              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                              borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                              color: 'var(--clean-accent-dark, #8C5E2E)'
+                            }}
+                          >
+                            {Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0)}/{quizQuestions.length}
+                          </div>
+                          <h4 className="font-heading font-bold text-sm" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                            Quiz Complete!
+                          </h4>
+                          <p className="text-xs" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                            {Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0) === quizQuestions.length
+                              ? 'Outstanding! Perfect comprehension.'
+                              : Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0) >= quizQuestions.length / 2
+                              ? 'Well done! Great theological retention.'
+                              : 'Good effort. Review passage to strengthen insights.'}
+                          </p>
                         </div>
-                        <h4 className="font-heading font-bold text-sm text-[#26221F]">Quiz Complete!</h4>
-                        <p className="text-xs text-[#78716C]">
-                          {Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0) === quizQuestions.length
-                            ? 'Outstanding! Perfect comprehension.'
-                            : Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0), 0) >= quizQuestions.length / 2
-                            ? 'Well done! Great theological retention.'
-                            : 'Good effort. Review passage to strengthen insights.'}
-                        </p>
-                      </div>
+                      )}
 
                       {/* Answers Review */}
-                      <div className="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
+                      <div className="space-y-2.5 max-h-[340px] overflow-y-auto custom-scrollbar pr-1">
                         {quizQuestions.map((q, qIdx) => {
+                          if (q.style === 'written') {
+                            const grade = writtenGrades[qIdx] || {
+                              score: 70,
+                              grade: 'Good',
+                              isCorrect: true,
+                              feedback: 'Response recorded.',
+                              biblicalInsights: q.sampleAnswer || q.explanation
+                            };
+                            const isPassing = grade.score >= 70;
+
+                            return (
+                              <div
+                                key={qIdx}
+                                className="p-3 rounded-lg border text-xs space-y-2"
+                                style={{
+                                  backgroundColor: isPassing ? 'rgba(5, 150, 105, 0.05)' : 'rgba(217, 119, 6, 0.06)',
+                                  borderColor: isPassing ? 'rgba(5, 150, 105, 0.25)' : 'rgba(217, 119, 6, 0.25)'
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span
+                                      className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
+                                      style={{
+                                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                        color: 'var(--clean-accent-dark, #8C5E2E)',
+                                        border: '1px solid var(--clean-accent-border, #EBE5DC)'
+                                      }}
+                                    >
+                                      Written
+                                    </span>
+                                    <p className="font-semibold" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                                      {q.question}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className="px-2 py-0.5 rounded text-[10px] font-bold shrink-0"
+                                    style={{
+                                      backgroundColor: isPassing ? 'rgba(5, 150, 105, 0.12)' : 'rgba(217, 119, 6, 0.12)',
+                                      color: isPassing ? '#047857' : '#B45309'
+                                    }}
+                                  >
+                                    {grade.score}% • {grade.grade}
+                                  </span>
+                                </div>
+
+                                <div
+                                  className="p-2 rounded border"
+                                  style={{
+                                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                                  }}
+                                >
+                                  <span
+                                    className="font-bold text-[10px] uppercase block mb-0.5"
+                                    style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                                  >
+                                    Your Response:
+                                  </span>
+                                  <p className="italic text-[11px] leading-relaxed" style={{ color: 'var(--clean-text-primary, #44403C)' }}>
+                                    "{writtenAnswers[qIdx] || 'No written response provided'}"
+                                  </p>
+                                </div>
+
+                                <div className="space-y-1 pt-1 border-t" style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}>
+                                  <div className="flex items-center gap-1 text-[11px] font-bold" style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}>
+                                    <Sparkles className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                                    <span>AI Instructor Feedback:</span>
+                                  </div>
+                                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--clean-text-secondary, #57524E)' }}>
+                                    {grade.feedback}
+                                  </p>
+                                </div>
+
+                                {(grade.modelAnswer || q.sampleAnswer || q.explanation) && (
+                                  <div
+                                    className="p-2 rounded border text-[10.5px] space-y-0.5"
+                                    style={{
+                                      backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                      borderColor: 'var(--clean-accent-border-strong, #B4793D)'
+                                    }}
+                                  >
+                                    <span
+                                      className="font-bold text-[10px] block uppercase tracking-wider"
+                                      style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                                    >
+                                      Scripture Insight & Model Answer:
+                                    </span>
+                                    <p className="leading-relaxed" style={{ color: 'var(--clean-text-secondary, #57524E)' }}>
+                                      {grade.modelAnswer || q.sampleAnswer || q.explanation}
+                                    </p>
+                                    {q.reference && (
+                                      <p className="font-medium pt-0.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
+                                        Citation: {q.reference}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          /* Answers Review for Multiple Choice & True/False */
                           const userAns = quizSelectedAnswers[qIdx];
                           const isCorrect = userAns === q.correctAnswerIndex;
+                          const isTrueFalse = q.style === 'true_false' || q.options?.length === 2;
                           return (
-                            <div key={qIdx} className={`p-3 rounded-lg border text-xs space-y-1.5 ${isCorrect ? 'bg-emerald-50/60 border-emerald-200' : 'bg-red-50/60 border-red-200'}`}>
-                              <p className="font-semibold text-[#26221F]">{q.question}</p>
-                              <p className={isCorrect ? 'text-emerald-700 font-medium' : 'text-red-700 line-through'}>
+                            <div
+                              key={qIdx}
+                              className="p-3 rounded-lg border text-xs space-y-1.5"
+                              style={{
+                                backgroundColor: isCorrect ? 'rgba(5, 150, 105, 0.05)' : 'rgba(220, 38, 38, 0.05)',
+                                borderColor: isCorrect ? 'rgba(5, 150, 105, 0.25)' : 'rgba(220, 38, 38, 0.25)'
+                              }}
+                            >
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
+                                  style={{
+                                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                    color: 'var(--clean-accent-dark, #8C5E2E)',
+                                    border: '1px solid var(--clean-accent-border, #EBE5DC)'
+                                  }}
+                                >
+                                  {isTrueFalse ? 'True/False' : 'Multiple Choice'}
+                                </span>
+                                <p className="font-semibold" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                                  {q.question}
+                                </p>
+                              </div>
+                              <p
+                                className={isCorrect ? 'font-medium' : 'line-through'}
+                                style={{ color: isCorrect ? '#047857' : '#B91C1C' }}
+                              >
                                 Your answer: {userAns !== undefined ? q.options[userAns] : 'None'}
                               </p>
                               {!isCorrect && (
-                                <p className="text-emerald-700 font-medium">
+                                <p className="font-medium" style={{ color: '#047857' }}>
                                   Correct answer: {q.options[q.correctAnswerIndex]}
                                 </p>
                               )}
-                              <p className="text-[#78716C] text-[11px] italic leading-relaxed pt-1 border-t border-black/5">
+                              <p
+                                className="text-[11px] italic leading-relaxed pt-1 border-t"
+                                style={{
+                                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                  color: 'var(--clean-text-secondary, #78716C)'
+                                }}
+                              >
                                 {q.explanation}
                               </p>
                               {q.reference && (
-                                <p className="text-[#B4793D] font-medium text-[10.5px]">
+                                <p className="font-medium text-[10.5px]" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
                                   Scripture: {q.reference}
                                 </p>
                               )}
@@ -2630,19 +3387,23 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center justify-between pt-2 border-t border-[#EBE5DC]">
+                      <div
+                        className="flex items-center justify-between pt-2 border-t"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                      >
                         <button
                           onClick={() => {
                             setInternalQuizType(null);
                             onQuizTypeChange?.(null);
                           }}
-                          className="px-3 py-1.5 text-xs text-[#78716C] hover:text-[#26221F] font-medium transition-colors cursor-pointer"
+                          className="px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer hover:text-[var(--clean-accent-dark,#8C5E2E)]"
+                          style={{ color: 'var(--clean-text-secondary, #78716C)' }}
                         >
                           Back to Quizzes
                         </button>
                         <button
                           onClick={() => startQuiz(currentQuizType)}
-                          className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                          className="clean-caramel-btn text-xs font-semibold px-4 py-1.5 cursor-pointer"
                         >
                           Retake Quiz
                         </button>
@@ -2652,66 +3413,225 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     /* Active Question View */
                     <div className="flex-1 flex flex-col justify-between space-y-3 animate-fadeIn">
                       <div>
-                        <h4 className="font-heading font-semibold text-xs sm:text-sm text-[#26221F] leading-snug mb-3">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span
+                            className="text-[10px] font-bold uppercase tracking-wider"
+                            style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                          >
+                            Question {quizIndex + 1} of {quizQuestions.length}
+                          </span>
+                          {quizQuestions[quizIndex]?.reference && (
+                            <span
+                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-2xs"
+                              style={{
+                                backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                                color: 'var(--clean-accent-dark, #8C5E2E)'
+                              }}
+                            >
+                              {quizQuestions[quizIndex].reference}
+                            </span>
+                          )}
+                        </div>
+
+                        <h4
+                          className="font-heading font-semibold text-xs sm:text-sm leading-snug mb-3"
+                          style={{ color: 'var(--clean-text-primary, #26221F)' }}
+                        >
                           {quizQuestions[quizIndex].question}
                         </h4>
 
-                        <div className="space-y-2">
-                          {quizQuestions[quizIndex].options.map((opt, optIdx) => {
-                            const isSelected = quizSelectedAnswers[quizIndex] === optIdx;
-                            return (
-                              <button
-                                key={optIdx}
-                                onClick={() => {
-                                  setQuizSelectedAnswers(prev => ({
-                                    ...prev,
-                                    [quizIndex]: optIdx,
-                                  }));
-                                }}
-                                className={`w-full text-left p-2.5 rounded-lg border transition-all text-xs flex items-center justify-between gap-2 cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-[#FAF5ED] border-[#B4793D] text-[#78471F] font-medium shadow-xs'
-                                    : 'bg-white border-[#EBE5DC] text-[#26221F] hover:border-[#D4A373] hover:bg-[#FAF9F6]'
-                                }`}
-                              >
-                                <span className="leading-snug">{opt}</span>
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-[#B4793D] bg-[#B4793D]' : 'border-[#DCD5C9]'}`}>
-                                  {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+                        {/* Question Input based on Style */}
+                        {quizQuestions[quizIndex]?.style === 'written' ? (
+                          /* Written Essay / Freeform Answer */
+                          <div className="space-y-2">
+                            <textarea
+                              rows={5}
+                              value={writtenAnswers[quizIndex] || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setWrittenAnswers(prev => ({
+                                  ...prev,
+                                  [quizIndex]: val
+                                }));
+                              }}
+                              placeholder="Write your theological response or explanation based on scripture here..."
+                              className="w-full p-3 rounded-lg border text-xs leading-relaxed outline-none transition-all placeholder:text-[#A8A29E] focus:border-[var(--clean-accent-border-strong,#B4793D)] focus:ring-1 focus:ring-[var(--clean-accent-caramel,#B4793D)]"
+                              style={{
+                                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                color: 'var(--clean-text-primary, #26221F)'
+                              }}
+                            />
+                            <div
+                              className="flex items-center justify-between text-[10.5px]"
+                              style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                            >
+                              <span>
+                                {writtenAnswers[quizIndex]?.trim().split(/\s+/).filter(Boolean).length || 0} words
+                              </span>
+                              <span className="italic" style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}>
+                                The AI evaluates theological depth and biblical reasoning.
+                              </span>
+                            </div>
+                          </div>
+                        ) : quizQuestions[quizIndex]?.style === 'true_false' ? (
+                          /* True or False 2-button cards */
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {['True', 'False'].map((label, optIdx) => {
+                              const isSelected = quizSelectedAnswers[quizIndex] === optIdx;
+                              return (
+                                <button
+                                  key={optIdx}
+                                  onClick={() => {
+                                    setQuizSelectedAnswers(prev => ({
+                                      ...prev,
+                                      [quizIndex]: optIdx,
+                                    }));
+                                  }}
+                                  className={`p-4 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                                    isSelected ? '' : 'hover:border-[var(--clean-accent-border-strong,#B4793D)]'
+                                  }`}
+                                  style={{
+                                    backgroundColor: isSelected ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                                    borderColor: isSelected ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                                    color: isSelected ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-primary, #26221F)',
+                                    fontWeight: isSelected ? 700 : 500,
+                                    boxShadow: isSelected ? '0 2px 6px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.2)' : 'none'
+                                  }}
+                                >
+                                  {label === 'True' ? (
+                                    <CheckCircle2
+                                      className="w-5 h-5"
+                                      style={{ color: isSelected ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)' }}
+                                    />
+                                  ) : (
+                                    <X
+                                      className="w-5 h-5"
+                                      style={{ color: isSelected ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)' }}
+                                    />
+                                  )}
+                                  <span className="text-sm font-heading">{label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          /* Multiple Choice standard 4-option cards */
+                          <div className="space-y-2">
+                            {quizQuestions[quizIndex].options.map((opt, optIdx) => {
+                              const isSelected = quizSelectedAnswers[quizIndex] === optIdx;
+                              return (
+                                <button
+                                  key={optIdx}
+                                  onClick={() => {
+                                    setQuizSelectedAnswers(prev => ({
+                                      ...prev,
+                                      [quizIndex]: optIdx,
+                                    }));
+                                  }}
+                                  className={`w-full text-left p-2.5 rounded-lg border transition-all text-xs flex items-center justify-between gap-2 cursor-pointer ${
+                                    isSelected ? '' : 'hover:border-[var(--clean-accent-border-strong,#B4793D)]'
+                                  }`}
+                                  style={{
+                                    backgroundColor: isSelected ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface, #FFFFFF)',
+                                    borderColor: isSelected ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                                    color: isSelected ? 'var(--clean-accent-dark, #8C5E2E)' : 'var(--clean-text-primary, #26221F)',
+                                    fontWeight: isSelected ? 600 : 400,
+                                    boxShadow: isSelected ? '0 1px 3px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.15)' : 'none'
+                                  }}
+                                >
+                                  <span className="leading-snug">{opt}</span>
+                                  <div
+                                    className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
+                                    style={{
+                                      borderColor: isSelected ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #DCD5C9)',
+                                      backgroundColor: isSelected ? 'var(--clean-accent-caramel, #B4793D)' : 'transparent'
+                                    }}
+                                  >
+                                    {isSelected && (
+                                      <div
+                                        className="w-1.5 h-1.5 rounded-full"
+                                        style={{ backgroundColor: 'var(--clean-accent-contrast-text, #FFFFFF)' }}
+                                      />
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
                       {/* Navigation Row at bottom */}
-                      <div className="pt-3 border-t border-[#EBE5DC] flex items-center justify-between">
+                      <div
+                        className="pt-3 border-t flex items-center justify-between"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                      >
                         <button
                           onClick={() => setQuizIndex(prev => Math.max(0, prev - 1))}
                           disabled={quizIndex === 0}
-                          className="px-3 py-1.5 text-xs text-[#78716C] hover:text-[#26221F] disabled:opacity-30 font-medium transition-colors cursor-pointer"
+                          className="px-3 py-1.5 text-xs disabled:opacity-30 font-medium transition-colors cursor-pointer"
+                          style={{ color: 'var(--clean-text-secondary, #78716C)' }}
                         >
                           Previous
                         </button>
-                        <button
-                          onClick={() => {
-                            if (quizIndex < quizQuestions.length - 1) {
-                              setQuizIndex(prev => prev + 1);
-                            } else {
-                              setIsQuizSubmitted(true);
-                              const totalCorrect = Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => {
-                                return acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0);
-                              }, 0);
-                              if (totalCorrect >= quizQuestions.length / 2) {
-                                confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+
+                        {quizQuestions[quizIndex]?.style === 'written' ? (
+                          quizIndex === quizQuestions.length - 1 ? (
+                            <button
+                              onClick={handleGradeAllWrittenAnswers}
+                              disabled={!writtenAnswers[quizIndex]?.trim() || isGradingWritten}
+                              className="clean-caramel-btn text-xs font-semibold px-4 py-1.5 disabled:opacity-40 cursor-pointer flex items-center gap-1.5"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>{isGradingWritten ? 'Grading Answers...' : 'Submit & Grade with AI'}</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setQuizIndex(prev => prev + 1)}
+                              className="clean-caramel-btn text-xs font-semibold px-4 py-1.5 cursor-pointer"
+                            >
+                              Next
+                            </button>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => {
+                              if (quizIndex < quizQuestions.length - 1) {
+                                setQuizIndex(prev => prev + 1);
+                              } else {
+                                // If there are any written questions in the quiz, trigger AI grading on submit
+                                if (quizQuestions.some(q => q.style === 'written')) {
+                                  handleGradeAllWrittenAnswers();
+                                } else {
+                                  setIsQuizSubmitted(true);
+                                  const totalCorrect = Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => {
+                                    return acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0);
+                                  }, 0);
+                                  if (totalCorrect >= quizQuestions.length / 2) {
+                                    confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+                                  }
+                                }
                               }
-                            }
-                          }}
-                          disabled={quizSelectedAnswers[quizIndex] === undefined}
-                          className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer"
-                        >
-                          {quizIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next'}
-                        </button>
+                            }}
+                            disabled={quizSelectedAnswers[quizIndex] === undefined || isGradingWritten}
+                            className="clean-caramel-btn text-xs font-semibold px-4 py-1.5 disabled:opacity-40 cursor-pointer flex items-center gap-1.5"
+                          >
+                            {quizIndex === quizQuestions.length - 1 ? (
+                              quizQuestions.some(q => q.style === 'written') ? (
+                                <>
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                  <span>{isGradingWritten ? 'Grading Answers...' : 'Submit & Grade with AI'}</span>
+                                </>
+                              ) : (
+                                'Submit Quiz'
+                              )
+                            ) : (
+                              'Next'
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   )
