@@ -2358,9 +2358,11 @@ mark.hl-blue {
 
 .rich-notepad-editor:empty::before {
   content: attr(data-placeholder);
-  color: #78716C !important;
+  color: #A8A29E !important;
   pointer-events: none;
   font-style: italic;
+  display: inline-block;
+  line-height: inherit;
 }
 
 .notepad-outline-box {

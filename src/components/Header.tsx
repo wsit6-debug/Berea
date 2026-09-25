@@ -21,6 +21,7 @@ interface HeaderProps {
   onOpenAbout: () => void;
   onOpenSearch: () => void;
   onOpenBookmarks?: () => void;
+  isBookmarksOpen?: boolean;
   bookmarkCount?: number;
   isAiPanelOpen?: boolean;
   onToggleAiPanel?: () => void;
@@ -39,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAbout,
   onOpenSearch,
   onOpenBookmarks,
+  isBookmarksOpen = false,
   bookmarkCount = 0,
   isAiPanelOpen = true,
   onToggleAiPanel,
@@ -327,22 +329,43 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenBookmarks && (
             <button
               onClick={onOpenBookmarks}
-              style={{
-                backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                borderColor: 'var(--clean-border, #EBE5DC)',
-                color: 'var(--clean-text-primary, #26221F)'
-              }}
-              className="ios-glass-btn !px-2.5 !py-1 transition-all flex items-center gap-1.5 rounded-lg select-none cursor-pointer"
-              title="View Bookmarked Verses (⌘B)"
+              style={
+                isBookmarksOpen
+                  ? {
+                    backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                    color: '#FFFFFF'
+                  }
+                  : {
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-border, #EBE5DC)',
+                    color: 'var(--clean-text-primary, #26221F)'
+                  }
+              }
+              className={`ios-glass-btn !px-2.5 !py-1 transition-all flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
+                isBookmarksOpen ? 'active font-bold shadow-sm' : ''
+              }`}
+              title="Toggle Bookmarked Verses (⌘B)"
             >
-              <Bookmark className={`w-3.5 h-3.5 ${bookmarkCount > 0 ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[var(--clean-accent-caramel,#B4793D)]'}`} />
-              <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)] hidden sm:inline">Bookmarks</span>
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarksOpen ? 'fill-white text-white' : bookmarkCount > 0 ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[var(--clean-accent-caramel,#B4793D)]'}`} />
+              <span className="text-xs font-semibold hidden sm:inline" style={{ color: isBookmarksOpen ? '#FFFFFF' : 'var(--clean-text-primary,#26221F)' }}>Bookmarks</span>
               {bookmarkCount > 0 && (
-                <span className="px-1.5 py-0.2 bg-[var(--clean-highlight-cream,#FAF5ED)] text-[var(--clean-accent-caramel,#B4793D)] border border-[var(--clean-accent-border,#EBE5DC)] rounded-full text-[10px] font-bold">
+                <span
+                  style={{
+                    backgroundColor: isBookmarksOpen ? 'rgba(255, 255, 255, 0.25)' : 'var(--clean-highlight-cream,#FAF5ED)',
+                    color: isBookmarksOpen ? '#FFFFFF' : 'var(--clean-accent-caramel,#B4793D)',
+                    borderColor: isBookmarksOpen ? 'transparent' : 'var(--clean-accent-border,#EBE5DC)'
+                  }}
+                  className="px-1.5 py-0.2 border rounded-full text-[10px] font-bold"
+                >
                   {bookmarkCount}
                 </span>
               )}
-              <kbd className="hidden md:inline-block text-[9.5px] font-mono bg-[var(--clean-surface,#FFFFFF)] px-1.5 py-0.5 rounded text-[var(--clean-text-secondary,#78716C)] border border-[var(--clean-border,#EBE5DC)]">
+              <kbd className={`hidden md:inline-block text-[9.5px] font-mono px-1.5 py-0.5 rounded border ${
+                isBookmarksOpen
+                  ? 'bg-black/25 text-white border-transparent'
+                  : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
+              }`}>
                 ⌘B
               </kbd>
             </button>

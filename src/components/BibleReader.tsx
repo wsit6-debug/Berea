@@ -78,6 +78,7 @@ interface BibleReaderProps {
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
   isLastChapterOfBook?: boolean;
   onOpenBookmarks?: () => void;
+  isBookmarksOpen?: boolean;
   onOpenBookSelector?: () => void;
 }
 
@@ -109,6 +110,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onOpenQuiz,
   isLastChapterOfBook = false,
   onOpenBookmarks,
+  isBookmarksOpen = false,
   onOpenBookSelector
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
@@ -658,13 +660,35 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           {onOpenBookmarks && (
             <button
               onClick={onOpenBookmarks}
-              className="text-xs py-1 px-2.5 rounded-full border border-[#EBE5DC] bg-white hover:border-[#D4A373] text-[#26221F] flex items-center gap-1.5 transition-all shadow-xs"
-              title="View Bookmarked Verses (⌘B)"
+              style={
+                isBookmarksOpen
+                  ? {
+                    backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                    color: '#FFFFFF'
+                  }
+                  : {
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-text-primary, #26221F)'
+                  }
+              }
+              className={`h-7 text-xs px-2.5 rounded-full border flex items-center gap-1.5 transition-all shadow-xs cursor-pointer select-none shrink-0 ${
+                isBookmarksOpen ? 'font-bold shadow-sm' : 'hover:border-[var(--clean-accent-caramel,#B4793D)]'
+              }`}
+              title="Toggle Bookmarked Verses (⌘B)"
             >
-              <Bookmark className={`w-3.5 h-3.5 ${bookmarks.length > 0 ? 'fill-[#B4793D] text-[#B4793D]' : 'text-[#B4793D]'}`} />
-              <span className="hidden sm:inline">Bookmarks</span>
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarksOpen ? 'fill-white text-white' : bookmarks.length > 0 ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[var(--clean-accent-caramel,#B4793D)]'}`} />
+              <span className="hidden sm:inline font-medium" style={{ color: isBookmarksOpen ? '#FFFFFF' : undefined }}>Bookmarks</span>
               {bookmarks.length > 0 && (
-                <span className="px-1.5 py-0.2 bg-[#FAF5ED] text-[#B4793D] rounded-full text-[10px] font-bold">
+                <span
+                  style={{
+                    backgroundColor: isBookmarksOpen ? 'rgba(255, 255, 255, 0.25)' : 'var(--clean-highlight-cream, #FAF5ED)',
+                    color: isBookmarksOpen ? '#FFFFFF' : 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: isBookmarksOpen ? 'transparent' : 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                  className="px-1.5 py-0.2 border rounded-full text-[10px] font-bold"
+                >
                   {bookmarks.length}
                 </span>
               )}

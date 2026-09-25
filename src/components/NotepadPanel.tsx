@@ -1467,7 +1467,7 @@ ${noteText}
           <div className="flex-1 flex flex-col relative min-h-[350px]">
             {isPreviewMode ? (
               <div
-                className="w-full h-full overflow-y-auto custom-scrollbar select-text leading-relaxed p-1"
+                className="w-full h-full overflow-y-auto custom-scrollbar select-text leading-relaxed p-0"
                 style={{
                   fontFamily: currentFontConfig.cssFamily,
                   fontSize: currentSizeConfig.cssSize
@@ -1494,29 +1494,13 @@ ${noteText}
                     saveSelection();
                   }}
                   data-placeholder="Type here..."
-                  className="rich-notepad-editor w-full flex-1 outline-none text-[#26221F] leading-relaxed p-1 bg-transparent select-text relative z-10"
+                  className="rich-notepad-editor w-full flex-1 outline-none text-[#26221F] leading-relaxed p-0 bg-transparent select-text relative z-10"
                   style={{
                     fontFamily: currentFontConfig.cssFamily,
                     fontSize: currentSizeConfig.cssSize,
                     lineHeight: activeFontFamilyId === 'script' ? '1.9' : '1.7'
                   }}
                 />
-                {!activePlainContent && (
-                  <div
-                    onClick={() => {
-                      if (editorRef.current) {
-                        editorRef.current.focus();
-                      }
-                    }}
-                    className="absolute top-1 left-1 pointer-events-none select-none text-stone-400 italic font-normal z-0"
-                    style={{
-                      fontFamily: currentFontConfig.cssFamily,
-                      fontSize: currentSizeConfig.cssSize
-                    }}
-                  >
-                    Type here...
-                  </div>
-                )}
               </>
             )}
           </div>
