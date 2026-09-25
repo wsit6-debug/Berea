@@ -1,4 +1,6 @@
 import React from 'react';
+import lockupNavyUrl from '../assets/brand/GFU_A2I2_Lockup_Navy.png';
+import iconNavyUrl from '../assets/brand/A2I2_Icon_Navy.png';
 
 export type A2I2Variant = 'lockup-navy' | 'icon-navy';
 
@@ -10,8 +12,8 @@ interface AppliedAiLogoProps {
 }
 
 const LOGO_SRC_MAP: Record<A2I2Variant, string> = {
-  'lockup-navy': '/brand/GFU_A2I2_Lockup_Navy.png',
-  'icon-navy': '/brand/A2I2_Icon_Navy.png',
+  'lockup-navy': lockupNavyUrl,
+  'icon-navy': iconNavyUrl,
 };
 
 export const AppliedAiLogo: React.FC<AppliedAiLogoProps> = ({

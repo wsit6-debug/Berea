@@ -21,8 +21,11 @@ import { SearchModal } from './components/SearchModal';
 import { LoginScreen } from './components/LoginScreen';
 import { ColorThemeWheel } from './components/ColorThemeWheel';
 import { FeedbackModal } from './components/FeedbackModal';
+import { BookmarksModal } from './components/BookmarksModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
+import { scheduleBackgroundQuizPreGeneration } from './services/quizService';
+import { useBookmarkedVerses } from './services/bookmarkService';
 import { BereaAiTab, NotepadState } from './types';
 import { loadNotepadState, saveNotepadState, createNewNoteTab } from './services/notepadService';
 
@@ -65,6 +68,9 @@ export function App() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isColorSchemeOpen, setIsColorSchemeOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false);
+  const [quizType, setQuizType] = useState<'chapter' | 'book' | null>(null);
+  const bookmarks = useBookmarkedVerses();
 
   // Dynamic Chapter State fetched from YouVersion Scripture API
   const currentBook = getBook(bookId) || BIBLE_BOOKS[0];
@@ -257,7 +263,14 @@ export function App() {
     loadChapterFromApi(bookId, chapterNum, activeTranslation);
   }, [bookId, chapterNum, activeTranslation, loadChapterFromApi]);
 
-  // Keyboard shortcut for Cmd+K and Cmd+I
+  // Background debounced quiz pre-generation (sequential & auto-aborted when foreground requested)
+  useEffect(() => {
+    if (!currentChapter || currentChapter.verses.length === 0) return;
+    const chapterText = currentChapter.verses.map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ');
+    scheduleBackgroundQuizPreGeneration(currentBook.name, chapterNum, chapterText);
+  }, [bookId, chapterNum, currentChapter, activeTranslation]);
+
+  // Keyboard shortcut for Cmd+K, Cmd+I, and Cmd+B
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -271,6 +284,10 @@ export function App() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         setActiveSidebar(prev => prev === 'notepad' ? null : 'notepad');
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setIsBookmarksModalOpen(prev => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -342,6 +359,8 @@ export function App() {
         onSelectTranslation={setActiveTranslation}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onOpenSearch={() => setIsSearchModalOpen(true)}
+        onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+        bookmarkCount={bookmarks.length}
         isAiPanelOpen={activeSidebar === 'guide'}
         onToggleAiPanel={() => setActiveSidebar(prev => prev === 'guide' ? null : 'guide')}
         onOpenNotepad={() => setActiveSidebar(prev => prev === 'notepad' ? null : 'notepad')}
@@ -358,6 +377,7 @@ export function App() {
           <div className={`${activeSidebar ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
             <BibleReader
               bookName={currentBook.name}
+              bookId={bookId}
               chapter={currentChapter}
               activeTranslation={activeTranslation}
               selectedVerseNumber={selectedVerse.verseNumber}
@@ -395,6 +415,14 @@ export function App() {
                 setActiveSidebar('guide');
                 setAiPanelTab('studyGuide');
               }}
+              isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
+              onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+              onOpenBookSelector={() => setIsBookSelectorOpen(true)}
+              onOpenQuiz={(type) => {
+                setQuizType(type);
+                setAiPanelTab('quiz');
+                setActiveSidebar('guide');
+              }}
             />
           </div>
 
@@ -415,6 +443,14 @@ export function App() {
                 onClose={() => setActiveSidebar(null)}
                 activeTab={aiPanelTab}
                 onTabChange={setAiPanelTab}
+                activeQuizType={quizType}
+                onQuizTypeChange={setQuizType}
+                onOpenQuiz={(type) => {
+                  setQuizType(type);
+                  setAiPanelTab('quiz');
+                  setActiveSidebar('guide');
+                }}
+                onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
               />
             </div>
           )}
@@ -539,6 +575,13 @@ export function App() {
         currentVerseNum={selectedVerse?.verseNumber}
         activeLens={activeLens}
         activeTranslation={activeTranslation}
+      />
+
+      {/* Bookmarked Verses Modal */}
+      <BookmarksModal
+        isOpen={isBookmarksModalOpen}
+        onClose={() => setIsBookmarksModalOpen(false)}
+        onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
       />
     </div>
   );

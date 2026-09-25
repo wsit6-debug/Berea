@@ -22,7 +22,7 @@ export interface StudyGuide {
   supportingPassages?: SupportingPassage[];
 }
 
-export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide';
+export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'typology';
 
 export type NoteFontFamily = 'serif' | 'sans' | 'mono' | 'script';
 export type NoteFontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl';
@@ -45,4 +45,17 @@ export interface NotepadState {
   activeTabId: string;
   globalFontFamily: NoteFontFamily;
   globalFontSize: NoteFontSize;
+}
+
+export interface TypologyNode {
+  era: 'Creation & Patriarchs' | 'Exodus & Kingdom' | 'Prophets' | 'Gospels' | 'Acts & Epistles' | 'Revelation';
+  reference: string;
+  event: string;
+  significance: string;
+}
+
+export interface TypologyMotif {
+  motif: string;
+  nodes: TypologyNode[];
+  summary: string;
 }

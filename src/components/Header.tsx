@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette } from 'lucide-react';
+import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark } from 'lucide-react';
 import {
   TRANSLATIONS,
   TranslationId,
@@ -23,6 +23,8 @@ interface HeaderProps {
   onSelectTranslation: (t: TranslationId) => void;
   onOpenAbout: () => void;
   onOpenSearch: () => void;
+  onOpenBookmarks?: () => void;
+  bookmarkCount?: number;
   isAiPanelOpen?: boolean;
   onToggleAiPanel?: () => void;
   onOpenNotepad?: () => void;
@@ -42,6 +44,8 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTranslation,
   onOpenAbout,
   onOpenSearch,
+  onOpenBookmarks,
+  bookmarkCount = 0,
   isAiPanelOpen = true,
   onToggleAiPanel,
   onOpenNotepad,
@@ -96,7 +100,6 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
             <ChevronDown className="w-3 h-3 text-[var(--clean-text-tertiary,#A8A29E)]" />
           </button>
-
           {/* 1. TOP GLOBAL DENOMINATION SELECTOR */}
           <div className="relative">
             <button
@@ -337,6 +340,31 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Workspace Tools, Settings & Logout */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 flex-nowrap">
+
+          {/* Bookmarks Button */}
+          {onOpenBookmarks && (
+            <button
+              onClick={onOpenBookmarks}
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-border, #EBE5DC)',
+                color: 'var(--clean-text-primary, #26221F)'
+              }}
+              className="ios-glass-btn !px-2.5 !py-1 transition-all flex items-center gap-1.5 rounded-lg select-none cursor-pointer"
+              title="View Bookmarked Verses (⌘B)"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${bookmarkCount > 0 ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[var(--clean-accent-caramel,#B4793D)]'}`} />
+              <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)] hidden sm:inline">Bookmarks</span>
+              {bookmarkCount > 0 && (
+                <span className="px-1.5 py-0.2 bg-[var(--clean-highlight-cream,#FAF5ED)] text-[var(--clean-accent-caramel,#B4793D)] border border-[var(--clean-accent-border,#EBE5DC)] rounded-full text-[10px] font-bold">
+                  {bookmarkCount}
+                </span>
+              )}
+              <kbd className="hidden md:inline-block text-[9.5px] font-mono bg-[var(--clean-surface,#FFFFFF)] px-1.5 py-0.5 rounded text-[var(--clean-text-secondary,#78716C)] border border-[var(--clean-border,#EBE5DC)]">
+                ⌘B
+              </kbd>
+            </button>
+          )}
 
           {/* Notepad Top Tab */}
           {onOpenNotepad && (

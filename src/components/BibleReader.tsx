@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Verse, Chapter, TranslationId, getTranslationColor } from '../data/bibleData';
-import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Highlighter } from 'lucide-react';
+import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, ChevronDown, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Highlighter, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
 import {
@@ -12,6 +12,7 @@ import {
   VoiceOption
 } from '../services/audioNarrationService';
 import { cleanApiText } from '../services/youversionService';
+import { useBookmarkedVerses, toggleBookmark, isVerseBookmarked } from '../services/bookmarkService';
 
 export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue', { bg: string; border: string; label: string }> = {
   yellow: { bg: 'var(--hl-yellow-bg, #FEF08A)', border: 'var(--hl-yellow-border, #EAB308)', label: 'Yellow' },
@@ -25,35 +26,20 @@ export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue'
  */
 export function getVerseDisplayText(
   verse: Verse | undefined | null,
-  activeTranslation: TranslationId = 'ESV'
+  activeTranslation?: string
 ): string {
-  if (!verse) return '';
-  if (typeof verse.text === 'string') {
-    return cleanApiText(verse.text);
+  if (!verse || !verse.text) return '';
+  if (activeTranslation && verse.text[activeTranslation]) {
+    return cleanApiText(verse.text[activeTranslation]);
   }
-  if (verse.text && typeof verse.text === 'object') {
-    // 1. Direct active translation
-    const direct = verse.text[activeTranslation];
-    if (typeof direct === 'string' && direct.trim().length > 0 && !direct.startsWith('[')) {
-      return cleanApiText(direct);
+  const defaultKeys = ['ESV', 'KJV', 'NIV', 'NLT', 'NASB', 'CSB', 'NKJV', 'RSVCE', 'NABRE', 'GENEVA'];
+  for (const k of defaultKeys) {
+    if (verse.text[k]) {
+      return cleanApiText(verse.text[k]);
     }
-    // 2. Fallback translations in logical hierarchy
-    const priorityList: TranslationId[] = ['ESV', 'NABRE', 'KJV', 'NIV', 'NASB', 'CSB', 'NLT', 'BSB', 'NRSV', 'NKJV'];
-    for (const tid of priorityList) {
-      const candidate = verse.text[tid];
-      if (typeof candidate === 'string' && candidate.trim().length > 0 && !candidate.startsWith('[')) {
-        return cleanApiText(candidate);
-      }
-    }
-    // 3. First available non-bracketed translation
-    for (const val of Object.values(verse.text)) {
-      if (typeof val === 'string' && val.trim().length > 0 && !val.startsWith('[')) {
-        return cleanApiText(val);
-      }
-    }
-    // 4. Any value fallback
-    const firstVal = Object.values(verse.text)[0];
-    if (typeof firstVal === 'string') {
+  }
+  for (const firstVal of Object.values(verse.text)) {
+    if (firstVal) {
       return cleanApiText(firstVal);
     }
   }
@@ -62,6 +48,7 @@ export function getVerseDisplayText(
 
 interface BibleReaderProps {
   bookName: string;
+  bookId?: string;
   chapter: Chapter;
   activeTranslation: TranslationId;
   selectedVerseNumber: number;
@@ -88,10 +75,15 @@ interface BibleReaderProps {
   onToggleHighlighterMode?: () => void;
   activeHighlightColor?: 'yellow' | 'green' | 'red' | 'blue';
   onSelectHighlightColor?: (color: 'yellow' | 'green' | 'red' | 'blue') => void;
+  onOpenQuiz?: (type: 'chapter' | 'book') => void;
+  isLastChapterOfBook?: boolean;
+  onOpenBookmarks?: () => void;
+  onOpenBookSelector?: () => void;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
   bookName,
+  bookId = '',
   chapter,
   activeTranslation,
   selectedVerseNumber,
@@ -113,7 +105,11 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   isHighlighterMode: externalHighlighterMode,
   onToggleHighlighterMode: externalToggleHighlighterMode,
   activeHighlightColor: externalHighlightColor,
-  onSelectHighlightColor: externalSetHighlightColor
+  onSelectHighlightColor: externalSetHighlightColor,
+  onOpenQuiz,
+  isLastChapterOfBook = false,
+  onOpenBookmarks,
+  onOpenBookSelector
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [isEditingFontSize, setIsEditingFontSize] = useState<boolean>(false);
@@ -138,14 +134,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [copiedVerseNum, setCopiedVerseNum] = useState<number | null>(null);
-  const [bookmarkedVerses, setBookmarkedVerses] = useState<number[]>(() => {
-    try {
-      const saved = localStorage.getItem('berea_bookmarked_verses');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+
+  const bookmarks = useBookmarkedVerses();
+  const effectiveBookId = bookId || bookName.toLowerCase().replace(/\s+/g, '');
+  const isVerseSaved = (vNum: number) => isVerseBookmarked(effectiveBookId, chapter.chapterNumber, vNum);
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>(() => getAvailableVoices());
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
     try {
@@ -320,14 +312,15 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
   const handleToggleBookmark = (verseNumber: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setBookmarkedVerses(prev => {
-      const next = prev.includes(verseNumber)
-        ? prev.filter(v => v !== verseNumber)
-        : [...prev, verseNumber];
-      try {
-        localStorage.setItem('berea_bookmarked_verses', JSON.stringify(next));
-      } catch { }
-      return next;
+    const v = chapter?.verses?.find(x => x.verseNumber === verseNumber);
+    const verseText = v ? getVerseDisplayText(v, activeTranslation) : '';
+    toggleBookmark({
+      bookId: effectiveBookId,
+      bookName,
+      chapter: chapter.chapterNumber,
+      verseNumber,
+      text: verseText,
+      translation: activeTranslation
     });
   };
 
@@ -459,18 +452,29 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             <button
               onClick={onPrevChapter}
               disabled={isFirstChapter}
-              className="text-[var(--clean-accent-caramel,#B4793D)] hover:text-[var(--clean-accent-dark,#9A632E)] disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold"
+              className="text-[var(--clean-accent-caramel,#B4793D)] hover:text-[var(--clean-accent-dark,#9A632E)] disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold cursor-pointer"
               title="Previous Chapter"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs font-bold text-[#26221F] px-1.5 font-heading whitespace-nowrap">
-              {bookName} {chapter.chapterNumber}
-            </span>
+            {onOpenBookSelector ? (
+              <button
+                onClick={onOpenBookSelector}
+                className="text-xs font-semibold text-[#26221F] hover:text-[var(--clean-accent-caramel,#B4793D)] px-2 py-0.5 rounded-full hover:bg-white/80 transition-all font-heading whitespace-nowrap cursor-pointer flex items-center gap-1 group"
+                title="Choose Book & Chapter"
+              >
+                <span>{bookName} {chapter.chapterNumber}</span>
+                <ChevronDown className="w-3 h-3 text-[#A8A29E] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors" />
+              </button>
+            ) : (
+              <span className="text-xs font-bold text-[#26221F] px-1.5 font-heading whitespace-nowrap">
+                {bookName} {chapter.chapterNumber}
+              </span>
+            )}
             <button
               onClick={onNextChapter}
               disabled={isLastChapter}
-              className="text-[var(--clean-accent-caramel,#B4793D)] hover:text-[var(--clean-accent-dark,#9A632E)] disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold"
+              className="text-[var(--clean-accent-caramel,#B4793D)] hover:text-[var(--clean-accent-dark,#9A632E)] disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold cursor-pointer"
               title="Next Chapter"
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -650,6 +654,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             <span>Red Letters</span>
           </button>
 
+          {/* Bookmarks Toggle / Viewer */}
+          {onOpenBookmarks && (
+            <button
+              onClick={onOpenBookmarks}
+              className="text-xs py-1 px-2.5 rounded-full border border-[#EBE5DC] bg-white hover:border-[#D4A373] text-[#26221F] flex items-center gap-1.5 transition-all shadow-xs"
+              title="View Bookmarked Verses (⌘B)"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${bookmarks.length > 0 ? 'fill-[#B4793D] text-[#B4793D]' : 'text-[#B4793D]'}`} />
+              <span className="hidden sm:inline">Bookmarks</span>
+              {bookmarks.length > 0 && (
+                <span className="px-1.5 py-0.2 bg-[#FAF5ED] text-[#B4793D] rounded-full text-[10px] font-bold">
+                  {bookmarks.length}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Font Size Controls */}
           <div
             className="inline-flex items-center h-7 rounded-full border px-2 gap-0.5 shadow-2xs select-none transition-colors shrink-0"
@@ -777,7 +798,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       : (selectedVerseNumber === verse.verseNumber);
                     const isRangeStart = activeRange?.start === verse.verseNumber;
                     const isRangeEnd = activeRange?.end === verse.verseNumber;
-                    const isBookmarked = bookmarkedVerses.includes(verse.verseNumber);
+                    const isBookmarked = isVerseSaved(verse.verseNumber);
                     const verseText = getVerseDisplayText(verse, activeTranslation);
                     const isWordOfJesus = Boolean(
                       verse.isWordsOfJesus ||
@@ -1018,14 +1039,14 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                         <button
                           onMouseDown={(e) => e.stopPropagation()}
                           onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
-                          className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${bookmarkedVerses.includes(activeVerse.verseNumber)
+                          className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${isVerseSaved(activeVerse.verseNumber)
                             ? '!bg-[var(--clean-highlight-cream,#FAF3E8)] !text-[var(--clean-accent-caramel,#B4793D)] !border-[var(--clean-accent-caramel,#B4793D)] font-medium'
                             : 'bg-white hover:border-[var(--clean-accent-caramel,#B4793D)]'
                             }`}
-                          title={bookmarkedVerses.includes(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
+                          title={isVerseSaved(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
                         >
-                          <Bookmark className={`w-3 h-3 ${bookmarkedVerses.includes(activeVerse.verseNumber) ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#78716C]'}`} />
-                          <span>{bookmarkedVerses.includes(activeVerse.verseNumber) ? 'Bookmarked' : 'Bookmark'}</span>
+                          <Bookmark className={`w-3 h-3 ${isVerseSaved(activeVerse.verseNumber) ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#78716C]'}`} />
+                          <span>{isVerseSaved(activeVerse.verseNumber) ? 'Bookmarked' : 'Bookmark'}</span>
                         </button>
 
                         {onCreateStudyGuide && (
@@ -1075,7 +1096,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     ? (verse.verseNumber >= activeRange.start && verse.verseNumber <= activeRange.end)
                     : (selectedVerseNumber === verse.verseNumber);
                   const isRangeEnd = activeRange?.end === verse.verseNumber;
-                  const isBookmarked = bookmarkedVerses.includes(verse.verseNumber);
+                  const isBookmarked = isVerseSaved(verse.verseNumber);
                   const verseText = getVerseDisplayText(verse, activeTranslation);
                   const isWordOfJesus = Boolean(
                     verse.isWordsOfJesus ||
@@ -1382,6 +1403,19 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
+            
+            {/* Book Completion Quiz Button */}
+            {onOpenQuiz && isLastChapterOfBook && (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3 animate-fadeIn">
+                <button
+                  onClick={() => onOpenQuiz('book')}
+                  className="px-4 py-2 bg-[#B4793D] text-white hover:bg-[#9A632E] rounded-full text-xs font-semibold flex items-center gap-2 transition-all shadow-sm"
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  Finished Book
+                </button>
+              </div>
+            )}
           </div>
         )}
 
