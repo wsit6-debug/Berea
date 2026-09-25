@@ -356,7 +356,8 @@ export function App() {
         onSelectTranslation={setActiveTranslation}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onOpenSearch={() => setIsSearchModalOpen(true)}
-        onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+        onOpenBookmarks={() => setIsBookmarksModalOpen(prev => !prev)}
+        isBookmarksOpen={isBookmarksModalOpen}
         bookmarkCount={bookmarks.length}
         isAiPanelOpen={activeSidebar === 'guide'}
         onToggleAiPanel={() => setActiveSidebar(prev => prev === 'guide' ? null : 'guide')}
@@ -413,7 +414,8 @@ export function App() {
                 setAiPanelTab('studyGuide');
               }}
               isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
-              onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+              onOpenBookmarks={() => setIsBookmarksModalOpen(prev => !prev)}
+              isBookmarksOpen={isBookmarksModalOpen}
               onOpenBookSelector={() => setIsBookSelectorOpen(true)}
               onOpenQuiz={(type) => {
                 setQuizType(type);
