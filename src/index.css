@@ -239,6 +239,7 @@ body {
 }
 
 @keyframes slideLeft {
+  from {
     transform: translateX(100%);
   }
 
