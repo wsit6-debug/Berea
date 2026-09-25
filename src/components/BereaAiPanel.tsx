@@ -12,6 +12,7 @@ import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiServ
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
+import { VerseOfTheDay } from './VerseOfTheDay';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
 import { AppliedAiLogo } from './AppliedAiLogo';
 import TypologyPanel from './TypologyPanel';
@@ -47,6 +48,7 @@ interface BereaAiPanelProps {
   activeQuizType?: 'chapter' | 'book' | null;
   onQuizTypeChange?: (type: 'chapter' | 'book' | null) => void;
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
+  selectedCharacter?: string | null;
   onNavigateToPassage?: (bookId: string, chapterNum: number, verseNum?: number) => void;
 }
 
@@ -61,13 +63,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   onLensChange,
   activeTranslation,
   onTranslationChange,
-  onClose,
   activeTab: externalTab,
   onTabChange,
   activeQuizType,
   onQuizTypeChange,
   onOpenQuiz,
-  onNavigateToPassage
+  selectedCharacter,
+  onNavigateToPassage,
+  onClose
 }) => {
   const [internalTab, setInternalTab] = useState<BereaAiTab>(externalTab || 'overview');
 
@@ -713,6 +716,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             <HelpCircle className="w-3 h-3 shrink-0" />
             <span className="truncate">Quiz</span>
           </button>
+
         </div>
 
         {onClose && (
@@ -728,10 +732,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
       {/* Tab Contents */}
       <div
-        className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-white text-[#26221F]"
+        className="flex-1 overflow-y-auto p-0 flex flex-col custom-scrollbar bg-white text-[#26221F]"
         style={{ backgroundColor: '#FFFFFF', color: '#26221F' }}
       >
-        {/* STUDY GUIDE TAB */}
+        <div className="p-3 space-y-2.5 flex-1">
+          {/* STUDY GUIDE TAB */}
         {activeTab === 'studyGuide' && (
           <div className="space-y-3 animate-fadeIn">
             {/* Mode Switch */}
@@ -1690,6 +1695,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
         {activeTab === 'overview' && (
           <div key={`${currentBook}_${currentChapter}_${isRangeActive ? `${selectedVerseRange!.start}_${selectedVerseRange!.end}` : activeVerseNum}`} className="space-y-2.5 animate-fadeIn">
+            <VerseOfTheDay 
+              activeTranslation={activeTranslation} 
+              activeLens={activeLens}
+              onNavigateToPassage={onNavigateToPassage || (() => {})} 
+            />
             {/* Main Overview Card */}
             <div
               className="p-3 rounded-xl border space-y-2 shadow-xs"
@@ -2720,6 +2730,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             )}
           </div>
         )}
+        
+        </div>
       </div>
 
       {/* George Fox Applied AI Institute 'Be Known' Footer */}

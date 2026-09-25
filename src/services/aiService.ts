@@ -2,6 +2,8 @@ import { getTheologicalInsight } from "../data/theologyData";
 import { DenominationalLens } from '../data/theologyData';
 import { buildRagGroundingContext, DoctrinalEntry } from './ragService';
 import { getUserDenominationPreference, getDenominationLabel, UserDenominationSetting } from './configService';
+import { MLCEngine } from '@mlc-ai/web-llm';
+import { generateLocalAiResponse } from './webLlmService';
 import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
 import { TypologyMotif, TypologyNode } from '../types';
@@ -895,6 +897,65 @@ export async function getAccumulatedBookQuiz(
 
   // Shuffle options and questions lightly
   return finalQuestions.slice(0, numQuestions);
+}
+
+export async function generateCharacterProfile(
+  characterName: string, 
+  book: string, 
+  chapter: number, 
+  textContext: string,
+  onProgress?: (progress: { text: string; progress: number }) => void
+): Promise<string> {
+  const prompt = `You are a biblical scholar. The user wants to learn about "${characterName}".
+Context: They are reading ${book} Chapter ${chapter}.
+
+Task: Write a concise, theological, and historical biography of ${characterName}.
+Include:
+1. Who they are broadly in the biblical narrative.
+2. What their specific role or action is in ${book} Chapter ${chapter}.
+
+Format as 2-3 short, readable paragraphs. Do not use markdown headers, just plain text paragraphs.`;
+
+  try {
+    const response = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress);
+    return response || 'No profile generated.';
+  } catch (err: any) {
+    throw new Error('Failed to generate character profile: ' + err.message);
+  }
+}
+
+export async function generateDailyVerseAndReflection(
+  dateString: string,
+  lens: string,
+  onProgress?: (progress: { text: string; progress: number }) => void
+): Promise<{ text: string; reference: string; reflection: string }> {
+  const prompt = `You are a pastoral theologian from the ${lens} tradition. 
+Task: Curate a Verse of the Day for ${dateString} and write a short, 3-sentence devotional reflection on it strictly from a ${lens} theological perspective.
+Pick a pseudo-random verse based on the seed "${dateString}" so it changes daily.
+Respond ONLY with a valid JSON object in exactly this format, with no markdown wrappers or additional text:
+{
+  "reference": "Book Chapter:Verse",
+  "text": "The bible verse text...",
+  "reflection": "Your 3-sentence devotional reflection..."
+}`;
+
+  try {
+    const response = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress);
+    if (!response) throw new Error('Empty response');
+    
+    // Extract JSON block if it wrapped it in markdown
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : response;
+    const data = JSON.parse(jsonStr);
+    
+    if (!data.reference || !data.text || !data.reflection) {
+      throw new Error('Invalid format returned by AI');
+    }
+    
+    return data;
+  } catch (err: any) {
+    throw new Error('Failed to generate daily verse: ' + err.message);
+  }
 }
 
 export { TYPOLOGY_CHAPTER_HASHMAP, getTypologyFromDatabase, hasAlternateMotif } from '../data/typologyDatabase';

@@ -1,5 +1,7 @@
 import React from 'react';
 import { X, Sparkles, Compass } from 'lucide-react';
+import { AnimatedPresence } from './AnimatedPresence';
+
 import { BereaLogo } from './BereaLogo';
 import { AppliedAiLogo } from './AppliedAiLogo';
 
@@ -9,12 +11,12 @@ interface PitchDeckAboutModalProps {
 }
 
 export const PitchDeckAboutModal: React.FC<PitchDeckAboutModalProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
-  return (
+    return (
+    <AnimatedPresence isVisible={isOpen} duration={250}>
+      {(isClosing) => (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/45 backdrop-blur-md animate-fadeIn"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/45 backdrop-blur-md ${isClosing ? 'animate-fadeOut' : 'animate-fadeIn'}`}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -25,7 +27,7 @@ export const PitchDeckAboutModal: React.FC<PitchDeckAboutModalProps> = ({ isOpen
           backgroundColor: 'var(--clean-surface, #FFFFFF)',
           color: 'var(--clean-text-primary, #26221F)'
         }}
-        className="border rounded-3xl w-full max-w-2xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] isolate"
+        className={`border rounded-3xl w-full max-w-2xl flex flex-col shadow-2xl overflow-hidden max-h-[85vh] isolate ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
       >
         {/* Header */}
         <div 
@@ -244,5 +246,7 @@ export const PitchDeckAboutModal: React.FC<PitchDeckAboutModalProps> = ({ isOpen
         </div>
       </div>
     </div>
+      )}
+    </AnimatedPresence>
   );
 };

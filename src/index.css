@@ -170,8 +170,75 @@ body {
   }
 }
 
+@keyframes springScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-springScaleIn {
+  animation: springScaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes springSlideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-springSlideInRight {
+  animation: springSlideInRight 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.animate-fadeOut {
+  animation: fadeOut 0.25s ease-in forwards;
+}
+
+@keyframes springScaleOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) translateY(15px);
+  }
+}
+.animate-springScaleOut {
+  animation: springScaleOut 0.25s ease-in forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes springSlideOutRight {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+}
+.animate-springSlideOutRight {
+  animation: springSlideOutRight 0.25s ease-in forwards;
+  will-change: transform, opacity;
+}
+
 @keyframes slideLeft {
-  from {
     transform: translateX(100%);
   }
 

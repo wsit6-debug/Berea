@@ -1,4 +1,5 @@
 import React from 'react';
+import { renderWithCharacters } from './characterHighlightService';
 
 /**
  * Normalizes any Bible book name, title, abbreviation, or ID into its canonical category.
@@ -291,19 +292,18 @@ export function renderRedLetterContent(
   text: string,
   isWordsOfJesus: boolean,
   showRedLetter: boolean,
-  isSelected: boolean = false
+  isSelected: boolean = false,
+  onCharClick?: (charId: string) => void,
+  matchedCharacters?: Set<string>,
+  selectedCharacter?: string | null,
+  allowedCharacters?: Set<string> | null
 ): React.ReactNode {
   if (!text) return null;
 
   if (!showRedLetter || !isWordsOfJesus) {
-    return (
-      <span 
-        className={isSelected ? 'text-[#26221F]' : 'text-[#38332E]'}
-        style={{ color: isSelected ? '#26221F' : '#38332E' }}
-      >
-        {text}
-      </span>
-    );
+    const colorStyle = { color: isSelected ? '#26221F' : '#38332E' };
+    const className = isSelected ? 'text-[#26221F]' : 'text-[#38332E]';
+    return renderWithCharacters(text, colorStyle, className, onCharClick, matchedCharacters, selectedCharacter, allowedCharacters);
   }
 
   const segments = parseVerseSegments(text, isWordsOfJesus);
@@ -312,32 +312,28 @@ export function renderRedLetterContent(
     <>
       {segments.map((seg, idx) => {
         if (!seg.isSpeech) {
+          const colorStyle = { color: isSelected ? '#26221F' : '#78716C' };
           return (
-            <span
-              key={idx}
-              className="dialogue-intro-text"
-              style={{ color: isSelected ? '#26221F' : '#78716C' }}
-            >
-              {seg.text}
-            </span>
+            <React.Fragment key={idx}>
+              {renderWithCharacters(seg.text, colorStyle, 'dialogue-intro-text', onCharClick, matchedCharacters, selectedCharacter, allowedCharacters)}
+            </React.Fragment>
           );
         }
 
+        const speechStyle = {
+          color: isSelected ? '#991B1B' : '#B91C1C',
+          fontWeight: isSelected ? 600 : 500,
+          textDecoration: 'underline',
+          textDecorationColor: isSelected ? 'rgba(185, 28, 28, 0.85)' : 'rgba(220, 38, 38, 0.65)',
+          textDecorationThickness: '1.5px',
+          textUnderlineOffset: '3px'
+        };
+        const speechClass = `red-letter-text words-of-christ ${isSelected ? 'red-letter-text-selected' : ''}`;
+
         return (
-          <span
-            key={idx}
-            className={`red-letter-text words-of-christ ${isSelected ? 'red-letter-text-selected' : ''}`}
-            style={{
-              color: isSelected ? '#991B1B' : '#B91C1C',
-              fontWeight: isSelected ? 600 : 500,
-              textDecoration: 'underline',
-              textDecorationColor: isSelected ? 'rgba(185, 28, 28, 0.85)' : 'rgba(220, 38, 38, 0.65)',
-              textDecorationThickness: '1.5px',
-              textUnderlineOffset: '3px'
-            }}
-          >
-            {seg.text}
-          </span>
+          <React.Fragment key={idx}>
+            {renderWithCharacters(seg.text, speechStyle, speechClass, onCharClick, matchedCharacters, selectedCharacter, allowedCharacters)}
+          </React.Fragment>
         );
       })}
     </>

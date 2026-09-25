@@ -3,6 +3,7 @@ import { Verse, Chapter, TranslationId, getTranslationColor } from '../data/bibl
 import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, ChevronDown, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Highlighter, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
+import { detectChapterPersonsWithAi } from '../services/characterHighlightService';
 import {
   speakScripturePassage,
   stopScripturePlayback,
@@ -24,7 +25,7 @@ export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue'
 /**
  * Universal extractor for verse display text across all translation keys & data shapes
  */
-export function getVerseDisplayText(
+function getVerseDisplayText(
   verse: Verse | undefined | null,
   activeTranslation?: string
 ): string {
@@ -77,8 +78,10 @@ interface BibleReaderProps {
   onSelectHighlightColor?: (color: 'yellow' | 'green' | 'red' | 'blue') => void;
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
   isLastChapterOfBook?: boolean;
-  onOpenBookmarks?: () => void;
+  onSelectCharacter?: (charId: string) => void;
+  selectedCharacter?: string | null;
   onOpenBookSelector?: () => void;
+  onOpenBookmarks?: () => void;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -109,6 +112,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onOpenQuiz,
   isLastChapterOfBook = false,
   onOpenBookmarks,
+  onSelectCharacter,
+  selectedCharacter,
   onOpenBookSelector
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
@@ -176,6 +181,22 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
   const activeRange = isDragging ? tempDragRange : (selectedVerseRange || (selectedVerseNumber ? { start: selectedVerseNumber, end: selectedVerseNumber } : null));
   const isMultiSelect = Boolean(activeRange && activeRange.start !== activeRange.end);
+
+  // AI-verified character/person detection for the current chapter
+  const [aiVerifiedCharacters, setAiVerifiedCharacters] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const verseTexts = (chapter?.verses || []).map(v => getVerseDisplayText(v, activeTranslation));
+    detectChapterPersonsWithAi(bookName, chapter.chapterNumber, verseTexts).then(people => {
+      if (!isCancelled) {
+        setAiVerifiedCharacters(people);
+      }
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, [bookName, chapter?.chapterNumber, chapter?.verses, activeTranslation]);
 
   // Subscribe to asynchronously loaded system voices
   useEffect(() => {
@@ -420,6 +441,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   };
 
   const activeVerse = chapter.verses.find(v => v.verseNumber === selectedVerseNumber) || chapter.verses[0];
+  const matchedCharacters = new Set<string>();
 
   return (
     <div
@@ -848,7 +870,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           {verse.verseNumber}
                           {isBookmarked && <span className="text-[var(--clean-accent-caramel,#B4793D)] ml-0.5">★</span>}
                         </sup>{' '}
-                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected)}{' '}
+                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter, matchedCharacters, selectedCharacter, aiVerifiedCharacters)}{' '}
                       </span>
                     );
                   })}
@@ -1160,7 +1182,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                             style={{ fontSize: `${fontSize}px`, lineHeight: '1.75' }}
                             className="font-scripture tracking-normal"
                           >
-                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected)}
+                            {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, onSelectCharacter, matchedCharacters, selectedCharacter, aiVerifiedCharacters)}
                           </p>
 
                           {/* Multi-Verse Action Banner when at the end of the range in Verse Mode */}

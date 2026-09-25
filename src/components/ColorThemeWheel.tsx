@@ -6,6 +6,8 @@ import {
   Paintbrush,
   Sun
 } from 'lucide-react';
+import { AnimatedPresence } from './AnimatedPresence';
+
 import {
   ThemeConfig,
   DEFAULT_THEME,
@@ -366,13 +368,14 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
       {/* (Floating launcher removed - accessed via Header Theme button) */}
 
       {/* DEDICATED BOTTOM COLOR SCHEME STUDIO (Solid, Opaque, High Contrast) */}
-      {isOpen && (
+      <AnimatedPresence isVisible={isOpen} duration={250}>
+        {(isClosing) => (
         <div
           ref={drawerRef}
-          className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-auto animate-fadeIn"
+          className={`fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-auto ${isClosing ? 'animate-fadeOut' : 'animate-fadeIn'}`}
         >
           <div
-            className="w-full max-w-4xl mx-auto rounded-t-2xl border-t border-x shadow-[0_-8px_36px_rgba(0,0,0,0.22)] p-4 sm:p-5 flex flex-col gap-3.5 select-none"
+            className={`w-full max-w-4xl mx-auto rounded-t-2xl border-t border-x shadow-[0_-8px_36px_rgba(0,0,0,0.22)] p-4 sm:p-5 flex flex-col gap-3.5 select-none ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
             style={{
               backgroundColor: isDarkTheme ? '#141316' : '#FFFFFF',
               borderColor: isDarkTheme ? '#38363C' : '#DCD5C9',
@@ -740,7 +743,8 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
             </div>
           </div>
         </div>
-      )}
+        )}
+      </AnimatedPresence>
     </>
   );
 };
