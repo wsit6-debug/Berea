@@ -280,6 +280,210 @@ export const TRANSLATIONS: TranslationInfo[] = [
 
 export type TranslationId = string;
 
+export interface TranslationColorTheme {
+  primary: string;    // vibrant accent hex
+  bg: string;         // soft tinted background
+  border: string;     // border color matching tone
+  badgeBg: string;    // badge solid / deep background
+  badgeText: string;  // badge text contrast
+  text: string;       // deep readable header / label text
+}
+
+export const TRANSLATION_COLORS: Record<string, TranslationColorTheme> = {
+  // Catholic Editions - Rich Purples, Crimson, Deep Golds & Violets
+  NABRE: {
+    primary: '#7C3AED', // Vibrant Violet
+    bg: '#F5F3FF',
+    border: '#DDD6FE',
+    badgeBg: '#7C3AED',
+    badgeText: '#FFFFFF',
+    text: '#5B21B6'
+  },
+  RSVCE: {
+    primary: '#9333EA', // Deep Purple
+    bg: '#FAF5FF',
+    border: '#E9D5FF',
+    badgeBg: '#9333EA',
+    badgeText: '#FFFFFF',
+    text: '#6B21A8'
+  },
+  NRSVCE: {
+    primary: '#C026D3', // Vibrant Fuchsia
+    bg: '#FDF4FF',
+    border: '#F5D0FE',
+    badgeBg: '#C026D3',
+    badgeText: '#FFFFFF',
+    text: '#86198F'
+  },
+  DRB: {
+    primary: '#BE123C', // Cardinal Rose / Crimson
+    bg: '#FFF1F2',
+    border: '#FECDD3',
+    badgeBg: '#BE123C',
+    badgeText: '#FFFFFF',
+    text: '#881337'
+  },
+  NJB: {
+    primary: '#D97706', // Imperial Amber
+    bg: '#FFFBEB',
+    border: '#FDE68A',
+    badgeBg: '#D97706',
+    badgeText: '#FFFFFF',
+    text: '#92400E'
+  },
+
+  // Orthodox Editions - Byzantine Imperial Gold & Cobalt
+  NKJV: {
+    primary: '#B45309', // Byzantine Gold / Bronze
+    bg: '#FEF3C7',
+    border: '#FCD34D',
+    badgeBg: '#B45309',
+    badgeText: '#FFFFFF',
+    text: '#78350F'
+  },
+  RSV: {
+    primary: '#2563EB', // Royal Blue
+    bg: '#EFF6FF',
+    border: '#BFDBFE',
+    badgeBg: '#2563EB',
+    badgeText: '#FFFFFF',
+    text: '#1E40AF'
+  },
+
+  // Reformed & Puritan Standards - Teal, Emerald, Navy & Cyan
+  ESV: {
+    primary: '#0D9488', // Deep Teal
+    bg: '#F0FDFA',
+    border: '#99F6E4',
+    badgeBg: '#0D9488',
+    badgeText: '#FFFFFF',
+    text: '#115E59'
+  },
+  GENEVA: {
+    primary: '#854D0E', // Historic Sepia / Bronze
+    bg: '#FEFCE8',
+    border: '#FEF08A',
+    badgeBg: '#854D0E',
+    badgeText: '#FFFFFF',
+    text: '#713F12'
+  },
+  NASB: {
+    primary: '#0284C7', // Vivid Sky / Ocean Blue
+    bg: '#F0F9FF',
+    border: '#BAE6FD',
+    badgeBg: '#0284C7',
+    badgeText: '#FFFFFF',
+    text: '#0369A1'
+  },
+  BSB: {
+    primary: '#B4793D', // Berea Signature Warm Caramel
+    bg: '#FAF5ED',
+    border: '#E8D7C3',
+    badgeBg: '#B4793D',
+    badgeText: '#FFFFFF',
+    text: '#78471F'
+  },
+  LSB: {
+    primary: '#059669', // Emerald Green
+    bg: '#ECFDF5',
+    border: '#A7F3D0',
+    badgeBg: '#059669',
+    badgeText: '#FFFFFF',
+    text: '#065F46'
+  },
+
+  // Baptist & Evangelical Standards - Coral, Red, Orange
+  CSB: {
+    primary: '#EA580C', // Vibrant Tangerine
+    bg: '#FFF7ED',
+    border: '#FED7AA',
+    badgeBg: '#EA580C',
+    badgeText: '#FFFFFF',
+    text: '#9A3412'
+  },
+  NIV: {
+    primary: '#16A34A', // Vibrant Kelly Green
+    bg: '#F0FDF4',
+    border: '#BBF7D0',
+    badgeBg: '#16A34A',
+    badgeText: '#FFFFFF',
+    text: '#166534'
+  },
+  NLT: {
+    primary: '#E11D48', // Electric Coral Pink
+    bg: '#FFF1F2',
+    border: '#FECDD3',
+    badgeBg: '#E11D48',
+    badgeText: '#FFFFFF',
+    text: '#9F1239'
+  },
+
+  // Anglican & Historic Classics - Crimson Ruby & Indigo
+  KJV: {
+    primary: '#DC2626', // Majestic Scarlet Ruby
+    bg: '#FEF2F2',
+    border: '#FECACA',
+    badgeBg: '#DC2626',
+    badgeText: '#FFFFFF',
+    text: '#991B1B'
+  },
+  NRSV: {
+    primary: '#4F46E5', // Deep Indigo
+    bg: '#EEF2FF',
+    border: '#C7D2FE',
+    badgeBg: '#4F46E5',
+    badgeText: '#FFFFFF',
+    text: '#3730A3'
+  },
+
+  // Methodists / Open Standards - Cyan, Lime, Electric Blue, Steel
+  CEB: {
+    primary: '#0891B2', // Vivid Cyan
+    bg: '#ECFEFF',
+    border: '#A5F3FC',
+    badgeBg: '#0891B2',
+    badgeText: '#FFFFFF',
+    text: '#155E75'
+  },
+  NET: {
+    primary: '#65A30D', // Olive Lime
+    bg: '#F7FEE7',
+    border: '#D9F99D',
+    badgeBg: '#65A30D',
+    badgeText: '#FFFFFF',
+    text: '#3F6212'
+  },
+  WEB: {
+    primary: '#06B6D4', // Pacific Turquoise
+    bg: '#ECFEFF',
+    border: '#CFFAFE',
+    badgeBg: '#06B6D4',
+    badgeText: '#FFFFFF',
+    text: '#0E7490'
+  },
+  ASV: {
+    primary: '#475569', // Historic Slate
+    bg: '#F8FAFC',
+    border: '#E2E8F0',
+    badgeBg: '#475569',
+    badgeText: '#FFFFFF',
+    text: '#1E293B'
+  }
+};
+
+export const DEFAULT_TRANSLATION_COLOR: TranslationColorTheme = {
+  primary: '#B4793D',
+  bg: '#FAF5ED',
+  border: '#E8D7C3',
+  badgeBg: '#B4793D',
+  badgeText: '#FFFFFF',
+  text: '#78471F'
+};
+
+export function getTranslationColor(id: string): TranslationColorTheme {
+  return TRANSLATION_COLORS[id] || DEFAULT_TRANSLATION_COLOR;
+}
+
 export function getApprovedTranslationsForDenomination(lens: DenominationalLens): TranslationInfo[] {
   return TRANSLATIONS.filter(t => t.approvedDenominations.includes(lens));
 }
@@ -350,6 +554,15 @@ export const BIBLE_BOOKS: BibleBook[] = [
   { id: 'haggai', name: 'Haggai', abbreviation: 'Hag', testament: 'OT', category: 'Minor Prophets', chaptersCount: 2, author: 'Haggai', dateWritten: 'c. 520 BC', theme: 'Rebuilding the House of the Lord', keyVerse: 'Haggai 1:8' },
   { id: 'zechariah', name: 'Zechariah', abbreviation: 'Zec', testament: 'OT', category: 'Minor Prophets', chaptersCount: 14, author: 'Zechariah', dateWritten: 'c. 520 BC', theme: 'Visions of the Messianic King and Future Glory', keyVerse: 'Zechariah 9:9' },
   { id: 'malachi', name: 'Malachi', abbreviation: 'Mal', testament: 'OT', category: 'Minor Prophets', chaptersCount: 4, author: 'Malachi', dateWritten: 'c. 430 BC', theme: 'Call to Faithfulness and the Coming Messenger of the Covenant', keyVerse: 'Malachi 4:2' },
+
+  // Deuterocanonical / Apocrypha (Catholic & Orthodox Canon)
+  { id: 'tobit', name: 'Tobit', abbreviation: 'Tob', testament: 'OT', category: 'History', chaptersCount: 14, author: 'Tobit / Tobias', dateWritten: 'c. 200 BC', theme: 'Faithfulness in Exile, Angelic Guidance, and Divine Healing', keyVerse: 'Tobit 12:15' },
+  { id: 'judith', name: 'Judith', abbreviation: 'Jdt', testament: 'OT', category: 'History', chaptersCount: 16, author: 'Unknown', dateWritten: 'c. 150 BC', theme: 'Courageous Faith, Overcoming Oppression, and Victory by a Woman', keyVerse: 'Judith 13:18' },
+  { id: 'wisdom', name: 'Wisdom of Solomon', abbreviation: 'Wis', testament: 'OT', category: 'Wisdom', chaptersCount: 19, author: 'Solomon (traditional) / Hellenistic Sage', dateWritten: 'c. 50 BC', theme: 'The Immortality of the Soul, Divine Wisdom, and the Righteous Sufferer', keyVerse: 'Wisdom 2:12-20' },
+  { id: 'sirach', name: 'Sirach', abbreviation: 'Sir', testament: 'OT', category: 'Wisdom', chaptersCount: 51, author: 'Jesus ben Sira', dateWritten: 'c. 180 BC', theme: 'Living Wisdom Grounded in the Fear of the Lord and Sacred Tradition', keyVerse: 'Sirach 24:8-10' },
+  { id: 'baruch', name: 'Baruch', abbreviation: 'Bar', testament: 'OT', category: 'Major Prophets', chaptersCount: 6, author: 'Baruch son of Neriah', dateWritten: 'c. 150 BC', theme: 'Repentance in Exile, Divine Wisdom on Earth, and Restoration of Jerusalem', keyVerse: 'Baruch 3:37' },
+  { id: '1maccabees', name: '1 Maccabees', abbreviation: '1Ma', testament: 'OT', category: 'History', chaptersCount: 16, author: 'Jewish Historian', dateWritten: 'c. 100 BC', theme: 'Zeal for the Covenant, the Maccabean Revolt, and Temple Purification', keyVerse: '1 Maccabees 4:56-59' },
+  { id: '2maccabees', name: '2 Maccabees', abbreviation: '2Ma', testament: 'OT', category: 'History', chaptersCount: 15, author: 'Jason of Cyrene / Epitomist', dateWritten: 'c. 120 BC', theme: 'The Seven Holy Martyrs, Bodily Resurrection, and Prayers for the Dead', keyVerse: '2 Maccabees 7:9' },
 
   // New Testament (40–66)
   { id: 'matthew', name: 'Matthew', abbreviation: 'Mat', testament: 'NT', category: 'Gospels', chaptersCount: 28, author: 'Matthew', dateWritten: 'c. AD 60–70', theme: 'Jesus as King and Fulfillment of Prophecy', keyVerse: 'Matthew 28:19-20' },
