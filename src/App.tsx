@@ -328,11 +328,26 @@ export function App() {
     }
   };
 
-  const handleSelectPassage = (newBookId: string, newChapterNum: number, targetVerseNum?: number) => {
+  const handleSelectPassage = (
+    newBookId: string,
+    newChapterNum: number,
+    targetVerseNum?: number,
+    targetRange?: { start: number; end: number } | null
+  ) => {
     const vNum = targetVerseNum || 1;
     targetVerseRef.current = vNum;
-    setSelectedVerseRange(null);
-    setSelectedCharacter(null);
+
+    const rangeToSet = targetRange !== undefined ? targetRange : (targetVerseNum ? { start: targetVerseNum, end: targetVerseNum } : null);
+    setSelectedVerseRange(rangeToSet);
+
+    if (newBookId === bookId && newChapterNum === chapterNum) {
+      if (currentChapter && currentChapter.verses.length > 0) {
+        const v = currentChapter.verses.find(x => x.verseNumber === vNum) || currentChapter.verses[0];
+        if (v) setSelectedVerse(v);
+      }
+      return;
+    }
+
     setBookId(newBookId);
     setChapterNum(newChapterNum);
 
@@ -442,6 +457,7 @@ export function App() {
                 selectedVerse={selectedVerse}
                 selectedVerseRange={selectedVerseRange}
                 onVerseRangeChange={setSelectedVerseRange}
+                onNavigateToChapterAndVerse={(c, v, range) => handleSelectPassage(currentBook.id, c, v, range)}
                 chapterVerses={currentChapter?.verses}
                 activeLens={activeLens}
                 onLensChange={handleSelectLens}

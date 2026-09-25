@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
 import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
-import { getChapterGeoData, ChapterGeoEvent } from '../data/geoData';
+import { getChapterGeoData, ChapterGeoEvent, calculateDistanceMiles, getShortPlaceName } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
@@ -37,6 +37,7 @@ interface BereaAiPanelProps {
   selectedVerse: Verse | null;
   selectedVerseRange?: { start: number; end: number } | null;
   onVerseRangeChange?: (range: { start: number; end: number } | null) => void;
+  onNavigateToChapterAndVerse?: (chapterNum: number, verseNum: number, range?: { start: number; end: number } | null) => void;
   chapterVerses?: Verse[];
   activeLens: DenominationalLens;
   onLensChange: (lens: DenominationalLens) => void;
@@ -58,6 +59,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   selectedVerse,
   selectedVerseRange,
   onVerseRangeChange,
+  onNavigateToChapterAndVerse,
   chapterVerses,
   activeLens,
   onLensChange,
@@ -570,7 +572,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     effectiveEndVNum
   );
 
-  const chapterData = getChapterGeoData(currentBook, currentChapter);
+  const chapterData = useMemo(() => getChapterGeoData(currentBook, currentChapter), [currentBook, currentChapter]);
   const [selectedChapterEvent, setSelectedChapterEvent] = useState<ChapterGeoEvent | null>(null);
 
   useEffect(() => {
@@ -578,6 +580,47 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   }, [currentBook, currentChapter]);
 
   const currentEvent = selectedChapterEvent || chapterData.events[0];
+  const currentEventIndex = chapterData.events.findIndex(e => e.id === currentEvent?.id);
+
+  const currentLegInfo = useMemo(() => {
+    if (!currentEvent || currentEventIndex <= 0 || !chapterData.events[currentEventIndex - 1]) return null;
+    const prev = chapterData.events[currentEventIndex - 1];
+
+    if (chapterData.routeSegments && chapterData.routeSegments.length > 0) {
+      const segs = chapterData.routeSegments;
+      let seg = segs[currentEventIndex - 1];
+      if (!seg || !seg.toName.toLowerCase().includes(getShortPlaceName(currentEvent).toLowerCase())) {
+        const found = segs.find(s =>
+          s.toName.toLowerCase().includes(getShortPlaceName(currentEvent).toLowerCase()) ||
+          currentEvent.locationName.toLowerCase().includes(s.toName.toLowerCase())
+        );
+        if (found) seg = found;
+      }
+      if (seg) {
+        const daysLabel = seg.travelDays < 1 ? `${Math.round(seg.travelDays * 24)}h` : `~${seg.travelDays} ${seg.travelDays === 1 ? 'day' : 'days'}`;
+        return {
+          distanceMiles: seg.distanceMiles,
+          daysLabel,
+          roadName: seg.historicalRoadName,
+          fromName: seg.fromName,
+          mode: seg.mode
+        };
+      }
+    }
+
+    const miles = currentEvent.distanceFromPrevious || calculateDistanceMiles(prev.lat, prev.lng, currentEvent.lat, currentEvent.lng);
+    if (miles > 0) {
+      const estDays = Math.max(0.1, Number((miles / 20).toFixed(1)));
+      const daysLabel = estDays < 1 ? `${Math.round(estDays * 24)}h` : `~${estDays} ${estDays === 1 ? 'day' : 'days'}`;
+      return {
+        distanceMiles: miles,
+        daysLabel,
+        fromName: getShortPlaceName(prev),
+        mode: 'land_walking' as const
+      };
+    }
+    return null;
+  }, [currentEvent, currentEventIndex, chapterData]);
 
   // Retrieve official confessional documents for the active lens & passage
   const doctrinalMatches = searchDoctrinalCorpus(`${currentVerseRef} ${currentVerseText || ''}`, {
@@ -820,14 +863,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('small_group')}
-                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
-                  style={{
-                    backgroundColor: selectedAudience === 'small_group' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                    borderColor: selectedAudience === 'small_group' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                    color: selectedAudience === 'small_group' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                    fontWeight: selectedAudience === 'small_group' ? 700 : 600,
-                    boxShadow: selectedAudience === 'small_group' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'small_group'
+                    ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                    : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
                   title="Practical small group discussion, fellowship, and personal application"
                 >
                   <Users className="w-3.5 h-3.5" style={{ color: selectedAudience === 'small_group' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -837,14 +876,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('deep_exegesis')}
-                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
-                  style={{
-                    backgroundColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                    borderColor: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                    color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                    fontWeight: selectedAudience === 'deep_exegesis' ? 700 : 600,
-                    boxShadow: selectedAudience === 'deep_exegesis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'deep_exegesis'
+                    ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                    : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
                   title="Pastoral exegesis, linguistic grammar, confessional dogmatics, and historical setting"
                 >
                   <GraduationCap className="w-3.5 h-3.5" style={{ color: selectedAudience === 'deep_exegesis' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -854,14 +889,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAudienceChange('youth_family')}
-                  className="flex-1 py-1.5 px-2 rounded-md text-[11px] transition-all flex items-center justify-center gap-1.5 border hover:bg-white/50"
-                  style={{
-                    backgroundColor: selectedAudience === 'youth_family' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                    borderColor: selectedAudience === 'youth_family' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                    color: selectedAudience === 'youth_family' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                    fontWeight: selectedAudience === 'youth_family' ? 700 : 600,
-                    boxShadow: selectedAudience === 'youth_family' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                  }}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${selectedAudience === 'youth_family'
+                    ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                    : 'text-[#78716C] hover:text-[#26221F]'
+                    }`}
                   title="Engaging storytelling, real-world scenarios, and family discussion prompts"
                 >
                   <Baby className="w-3.5 h-3.5" style={{ color: selectedAudience === 'youth_family' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -904,14 +935,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('chapter')}
-                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
-                    style={{
-                      backgroundColor: studyGuideScope === 'chapter' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                      borderColor: studyGuideScope === 'chapter' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                      color: studyGuideScope === 'chapter' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                      fontWeight: studyGuideScope === 'chapter' ? 700 : 600,
-                      boxShadow: studyGuideScope === 'chapter' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
+                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'chapter'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
                     title="Default: Complete chapter study guide"
                   >
                     <BookOpen className="w-3 h-3" style={{ color: studyGuideScope === 'chapter' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -921,14 +948,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => setStudyGuideScope('verse')}
-                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
-                    style={{
-                      backgroundColor: studyGuideScope === 'verse' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                      borderColor: studyGuideScope === 'verse' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                      color: studyGuideScope === 'verse' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                      fontWeight: studyGuideScope === 'verse' ? 700 : 600,
-                      boxShadow: studyGuideScope === 'verse' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
+                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'verse'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
                     title="Focus on an individual verse"
                   >
                     <FileText className="w-3 h-3" style={{ color: studyGuideScope === 'verse' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -943,14 +966,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setEndVerseNum(Math.min(manualStartVerseNum + 1, maxChapterVerses));
                       }
                     }}
-                    className="py-1.5 px-1.5 rounded-md text-[10.5px] transition-all flex items-center justify-center gap-1 border hover:bg-white/50"
-                    style={{
-                      backgroundColor: studyGuideScope === 'range' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
-                      borderColor: studyGuideScope === 'range' ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
-                      color: studyGuideScope === 'range' ? 'var(--clean-accent-dark, #26221F)' : 'var(--clean-text-primary, #26221F)',
-                      fontWeight: studyGuideScope === 'range' ? 700 : 600,
-                      boxShadow: studyGuideScope === 'range' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
+                    className={`py-1.5 px-2 rounded-md text-[10.5px] font-medium transition-all flex items-center justify-center gap-1 ${studyGuideScope === 'range'
+                      ? 'bg-white text-[#26221F] shadow-xs font-semibold'
+                      : 'text-[#78716C] hover:text-[#26221F]'
+                      }`}
                     title="Custom verse range"
                   >
                     <Layers className="w-3 h-3" style={{ color: studyGuideScope === 'range' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-dark, #8C5E2E)' }} />
@@ -2296,106 +2315,85 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         {/* Map Tab */}
         {activeTab === 'map' && (
           <div className="space-y-3 animate-fadeIn">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4
-                  className="text-xs font-bold flex items-center gap-1.5"
-                  style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
-                >
-                  <span>{currentBook.toUpperCase()} Chapter {currentChapter} Topography</span>
-                </h4>
-                <p className="text-[10px] text-[#78716C]">
-                  {chapterData.region} • {chapterData.events.length} Chapter Event{chapterData.events.length > 1 ? 's' : ''}
-                </p>
-              </div>
-              <span
-                className="text-[9.5px] font-semibold px-2 py-0.5 rounded-full border"
-                style={{
-                  color: 'var(--clean-accent-dark, #8C5E2E)',
-                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                }}
-              >
-                Event Topography
-              </span>
-            </div>
+
 
             <OpenFreeMapWidget
               currentBook={currentBook}
               currentChapter={currentChapter}
               activeVerseNumber={activeVerseNum}
-              height="230px"
+              height="360px"
               onEventSelect={(ev) => setSelectedChapterEvent(ev)}
             />
 
             {/* Chapter Event Active Detail Card */}
-            <div className="space-y-2">
-              <div
-                className="p-3 rounded-xl border text-xs space-y-1.5 shadow-xs"
-                style={{
-                  backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                  borderLeftWidth: '4px',
-                  borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span
-                    className="font-bold text-[11px] flex items-center gap-1"
-                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
-                  >
-                    <span>📍 Event {currentEvent.stepNumber}:</span> {currentEvent.title}
-                  </span>
-                  <span
-                    className="text-[9.5px] font-mono px-1.5 py-0.2 rounded font-semibold border shadow-2xs"
-                    style={{
-                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                      color: 'var(--clean-accent-dark, #8C5E2E)',
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                    }}
-                  >
-                    {currentEvent.passageRef}
-                  </span>
-                </div>
+            {currentEvent && (
+              <div className="space-y-2">
+                <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[11px] text-[#78471F] flex items-center gap-1">
+                      <span>{currentEvent.isReferencedOnly ? 'Reference' : 'Storyline'} {currentEvent.stepNumber}:</span> {currentEvent.title}
+                    </span>
+                    <button
+                      onClick={() => {
+                        let targetVerse = currentEvent.verseRange ? currentEvent.verseRange[0] : 1;
+                        let targetChapter = currentChapter;
+                        if (currentEvent.passageRef) {
+                          const match = currentEvent.passageRef.match(/(\d+):(\d+)/);
+                          if (match) {
+                            const c = parseInt(match[1], 10);
+                            const v = parseInt(match[2], 10);
+                            if (!isNaN(c)) targetChapter = c;
+                            if (!isNaN(v)) targetVerse = v;
+                          }
+                        }
+                        const targetRange = currentEvent.verseRange
+                          ? { start: currentEvent.verseRange[0], end: currentEvent.verseRange[1] }
+                          : { start: targetVerse, end: targetVerse };
 
-                <div 
-                  className="text-[10px] font-medium"
-                  style={{ color: 'var(--clean-text-secondary, #78716C)' }}
-                >
-                  Site: <strong style={{ color: 'var(--clean-text-primary, #26221F)' }}>{currentEvent.locationName}</strong>
-                </div>
+                        if (onVerseRangeChange) {
+                          onVerseRangeChange(targetRange);
+                        }
+                        if (onNavigateToChapterAndVerse) {
+                          onNavigateToChapterAndVerse(targetChapter, targetVerse, targetRange);
+                        }
+                      }}
+                      className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold hover:bg-[#F2E8D5] transition-colors shadow-sm cursor-pointer active:scale-95"
+                      title={`Highlight ${currentEvent.passageRef} in Scripture`}
+                    >
+                      Mentioned in {currentEvent.passageRef}
+                    </button>
+                  </div>
 
-                <p 
-                  className="text-[11px] leading-relaxed"
-                  style={{ color: 'var(--clean-text-primary, #44403C)' }}
-                >
-                  {currentEvent.description}
-                </p>
+                  <div className="text-[10px] text-[#78716C] font-medium flex items-center justify-between flex-wrap gap-1">
+                    <span>Site: <strong className="text-[#26221F]">{currentEvent.locationName}</strong></span>
+                    {currentLegInfo && (
+                      <span className="text-[9.5px] font-semibold text-[#B4793D] bg-white px-2 py-0.5 rounded border border-[#EBE5DC] flex items-center gap-1 shadow-xs">
+                        <span>{currentLegInfo.distanceMiles} mi from {currentLegInfo.fromName}</span>
+                        <span>•</span>
+                        <span>{currentLegInfo.daysLabel}</span>
+                      </span>
+                    )}
+                  </div>
 
-                <div
-                  className="p-2 rounded-lg border text-[10.5px] space-y-0.5 mt-1 shadow-2xs"
-                  style={{ 
-                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                    borderLeftWidth: '3px',
-                    borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
-                  }}
-                >
-                  <strong
-                    className="text-[10px] block uppercase tracking-wider font-bold"
-                    style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
-                  >
-                    Theological Significance
-                  </strong>
-                  <p 
-                    className="leading-snug"
-                    style={{ color: 'var(--clean-text-secondary, #57524E)' }}
-                  >
-                    {currentEvent.theologicalSignificance}
+                  {currentLegInfo?.roadName && (
+                    <div className="text-[9.5px] text-[#8C521F] font-medium bg-[#FAF3E8] px-2 py-0.5 rounded border border-[#D4A373]/30 flex items-center gap-1">
+                      <span>Historical Route: <strong>{currentLegInfo.roadName}</strong></span>
+                    </div>
+                  )}
+
+                  <p className="text-[#44403C] text-[11px] leading-relaxed">
+                    {currentEvent.description}
                   </p>
+
+                  {currentEvent.theologicalSignificance && currentEvent.theologicalSignificance !== "" && (
+                    <div className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-[10.5px] text-[#57524E] space-y-0.5 mt-1">
+                      <strong className="text-[#78471F] text-[10px] block uppercase tracking-wider">Theological Significance</strong>
+                      <p className="leading-snug">{currentEvent.theologicalSignificance}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
