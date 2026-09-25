@@ -1,5 +1,6 @@
 import React from 'react';
 import RED_LETTER_DATABASE from '../data/redLetterData.json';
+import { renderWithCharacters } from './characterHighlightService';
 
 export interface RedLetterEntry {
   isEntireVerse: boolean;
@@ -268,22 +269,67 @@ export function renderRedLetterContent(
   text: string,
   isWordsOfJesus: boolean,
   showRedLetter: boolean,
-  isSelected: boolean = false,
+  isSelected?: boolean,
   bookId?: string,
   chapterNum?: number | string,
-  verseNum?: number | string
+  verseNum?: number | string,
+  onCharClick?: (charId: string) => void,
+  matchedCharacters?: Set<string>,
+  selectedCharacter?: string | null,
+  allowedCharacters?: Set<string> | null
+): React.ReactNode;
+export function renderRedLetterContent(
+  text: string,
+  isWordsOfJesus: boolean,
+  showRedLetter: boolean,
+  isSelected?: boolean,
+  onCharClick?: (charId: string) => void,
+  matchedCharacters?: Set<string>,
+  selectedCharacter?: string | null,
+  allowedCharacters?: Set<string> | null
+): React.ReactNode;
+export function renderRedLetterContent(
+  text: string,
+  isWordsOfJesus: boolean,
+  showRedLetter: boolean,
+  isSelected: boolean = false,
+  arg5?: any,
+  arg6?: any,
+  arg7?: any,
+  arg8?: any,
+  arg9?: any,
+  arg10?: any,
+  arg11?: any
 ): React.ReactNode {
   if (!text) return null;
 
+  let bookId: string | undefined;
+  let chapterNum: number | string | undefined;
+  let verseNum: number | string | undefined;
+  let onChar: ((charId: string) => void) | undefined;
+  let matched: Set<string> | undefined;
+  let selectedChar: string | null | undefined;
+  let allowed: Set<string> | null | undefined;
+
+  if (typeof arg5 === 'function') {
+    onChar = arg5;
+    matched = arg6 instanceof Set ? arg6 : undefined;
+    selectedChar = typeof arg7 === 'string' ? arg7 : null;
+    allowed = arg8 instanceof Set ? arg8 : null;
+  } else {
+    bookId = typeof arg5 === 'string' ? arg5 : undefined;
+    chapterNum = typeof arg6 === 'string' || typeof arg6 === 'number' ? arg6 : undefined;
+    verseNum = typeof arg7 === 'string' || typeof arg7 === 'number' ? arg7 : undefined;
+    onChar = typeof arg8 === 'function' ? arg8 : undefined;
+    matched = arg9 instanceof Set ? arg9 : undefined;
+    selectedChar = typeof arg10 === 'string' ? arg10 : null;
+    allowed = arg11 instanceof Set ? arg11 : null;
+  }
+
   if (!showRedLetter || !isWordsOfJesus) {
-    return (
-      <span
-        className={isSelected ? 'text-[#26221F]' : 'text-[#38332E]'}
-        style={{ color: isSelected ? '#26221F' : '#38332E' }}
-      >
-        {text}
-      </span>
-    );
+    const colorStyle = { color: isSelected ? '#26221F' : '#38332E' };
+    const className = isSelected ? 'text-[#26221F]' : 'text-[#38332E]';
+    return renderWithCharacters(text, colorStyle, className, onChar, matched, selectedChar, allowed);
   }
 
   const segments = parseVerseSegments(text, isWordsOfJesus, bookId, chapterNum, verseNum);
@@ -295,7 +341,7 @@ export function renderRedLetterContent(
           const colorStyle = { color: isSelected ? '#26221F' : '#78716C' };
           return (
             <React.Fragment key={idx}>
-              {renderWithCharacters(seg.text, colorStyle, 'dialogue-intro-text', onCharClick, matchedCharacters, selectedCharacter, allowedCharacters)}
+              {renderWithCharacters(seg.text, colorStyle, 'dialogue-intro-text', onChar, matched, selectedChar, allowed)}
             </React.Fragment>
           );
         }
@@ -312,7 +358,7 @@ export function renderRedLetterContent(
 
         return (
           <React.Fragment key={idx}>
-            {renderWithCharacters(seg.text, speechStyle, speechClass, onCharClick, matchedCharacters, selectedCharacter, allowedCharacters)}
+            {renderWithCharacters(seg.text, speechStyle, speechClass, onChar, matched, selectedChar, allowed)}
           </React.Fragment>
         );
       })}

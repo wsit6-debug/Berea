@@ -829,7 +829,27 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     const isRangeEnd = activeRange?.end === verse.verseNumber;
                     const isBookmarked = isVerseSaved(verse.verseNumber);
                     const verseText = getVerseDisplayText(verse, activeTranslation);
-                    const isWordOfJesus = checkIsWordsOfJesus(bookName, chapter.chapterNumber, verse.verseNumber, verseText);
+                    const isWordOfJesus = Boolean(
+                      verse.isWordsOfJesus ||
+                      checkIsWordsOfJesus(bookName, chapter.chapterNumber, verse.verseNumber, verseText)
+                    );
+                    const tabHighlight = tabHighlights?.[verse.verseNumber];
+
+                    let highlightClasses = '';
+                    let highlightInlineStyle: React.CSSProperties = {};
+                    if (tabHighlight === 'yellow') {
+                      highlightClasses = 'hl-verse-yellow font-normal shadow-2xs rounded px-1';
+                      highlightInlineStyle = { backgroundColor: 'var(--hl-yellow-bg)', color: 'var(--hl-yellow-text)' };
+                    } else if (tabHighlight === 'green') {
+                      highlightClasses = 'hl-verse-green font-normal shadow-2xs rounded px-1';
+                      highlightInlineStyle = { backgroundColor: 'var(--hl-green-bg)', color: 'var(--hl-green-text)' };
+                    } else if (tabHighlight === 'red') {
+                      highlightClasses = 'hl-verse-red font-normal shadow-2xs rounded px-1';
+                      highlightInlineStyle = { backgroundColor: 'var(--hl-red-bg)', color: 'var(--hl-red-text)' };
+                    } else if (tabHighlight === 'blue') {
+                      highlightClasses = 'hl-verse-blue font-normal shadow-2xs rounded px-1';
+                      highlightInlineStyle = { backgroundColor: 'var(--hl-blue-bg)', color: 'var(--hl-blue-text)' };
+                    }
 
                     return (
                       <span
@@ -844,16 +864,20 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                         }
                         onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
                         onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
-                        className={`cursor-pointer transition-all duration-100 px-1 py-0.5 inline ${isSelected
-                            ? `bg-[#FAF3E8] text-[#26221F] font-normal shadow-2xs ${isRangeStart ? 'rounded-l-md pl-1.5' : ''} ${isRangeEnd ? 'rounded-r-md pr-1.5' : ''} ${isMultiSelect ? 'border-y border-[#B4793D]/30' : 'rounded ring-1 ring-[#B4793D]/30'}`
-                            : 'hover:bg-[#FAF9F5] rounded'
+                        className={`cursor-pointer transition-all duration-100 px-1 py-0.5 inline ${tabHighlight
+                          ? `${highlightClasses} ${isSelected ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)]' : ''}`
+                          : isSelected
+                            ? `font-normal shadow-2xs ${isRangeStart ? 'rounded-l-md pl-1.5' : ''} ${isRangeEnd ? 'rounded-r-md pr-1.5' : ''} ${isMultiSelect ? 'border-y-2 border-[var(--clean-accent-caramel,#B4793D)] ring-1 ring-[var(--clean-accent-caramel,#B4793D)]/40' : 'rounded ring-2 ring-[var(--clean-accent-caramel,#B4793D)]'}`
+                            : isHighlighterMode
+                              ? 'hover:bg-amber-100/70 hover:shadow-2xs rounded'
+                              : 'hover:bg-[var(--clean-highlight-cream,#FAF9F5)] rounded'
                           }`}
                       >
                         <sup className={`text-[10.5px] select-none mr-1 ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'text-[var(--clean-accent-caramel,#B4793D)] font-black' : 'text-[#8C827A] font-bold'}`}>
                           {verse.verseNumber}
                           {isBookmarked && <span className="text-[var(--clean-accent-caramel,#B4793D)] ml-0.5">★</span>}
                         </sup>{' '}
-                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, bookName, chapter.chapterNumber, verse.verseNumber)}{' '}
+                        {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, bookName, chapter.chapterNumber, verse.verseNumber, onSelectCharacter, matchedCharacters, selectedCharacter, aiVerifiedCharacters)}{' '}
                       </span>
                     );
                   })}
@@ -1044,7 +1068,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                         <button
                           onMouseDown={(e) => e.stopPropagation()}
                           onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
-                          className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${bookmarkedVerses.includes(activeVerse.verseNumber)
+                          className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${isVerseSaved(activeVerse.verseNumber)
                               ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
                               : 'bg-white hover:border-[#D4A373]'
                             }`}

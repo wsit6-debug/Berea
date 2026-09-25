@@ -5,7 +5,7 @@ import {
   History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages, Trophy, HelpCircle, Network
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
-import { TRANSLATIONS, TranslationId, Verse } from '../data/bibleData';
+import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent, calculateDistanceMiles, getShortPlaceName } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
