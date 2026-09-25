@@ -350,9 +350,6 @@ export function App() {
     >
       {/* Top Application Header with Global Denomination and Approved Translation Selectors */}
       <Header
-        currentBookName={currentBook.name}
-        currentChapterNum={chapterNum}
-        onOpenBookSelector={() => setIsBookSelectorOpen(true)}
         activeLens={activeLens}
         onSelectLens={handleSelectLens}
         activeTranslation={activeTranslation}

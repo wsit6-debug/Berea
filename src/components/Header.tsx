@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark } from 'lucide-react';
+import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark } from 'lucide-react';
 import {
   TRANSLATIONS,
   TranslationId,
@@ -14,9 +14,6 @@ import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
 import { SettingsWidget } from './SettingsWidget';
 
 interface HeaderProps {
-  currentBookName: string;
-  currentChapterNum: number;
-  onOpenBookSelector: () => void;
   activeLens: DenominationalLens;
   onSelectLens: (lens: DenominationalLens) => void;
   activeTranslation: TranslationId;
@@ -35,9 +32,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentBookName,
-  currentChapterNum,
-  onOpenBookSelector,
   activeLens,
   onSelectLens,
   activeTranslation,
@@ -88,18 +82,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="h-4 w-px bg-[var(--clean-border,#EBE5DC)] hidden sm:block"></div>
 
-          {/* Book & Chapter Selector Button */}
-          <button
-            onClick={onOpenBookSelector}
-            className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
-            title="Choose Book & Chapter"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
-            <span className="font-semibold text-xs text-[var(--clean-text-primary,#26221F)] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors truncate max-w-[100px] sm:max-w-none">
-              {currentBookName} {currentChapterNum}
-            </span>
-            <ChevronDown className="w-3 h-3 text-[var(--clean-text-tertiary,#A8A29E)]" />
-          </button>
           {/* 1. TOP GLOBAL DENOMINATION SELECTOR */}
           <div className="relative">
             <button
