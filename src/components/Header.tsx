@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark } from 'lucide-react';
 import {
   TRANSLATIONS,
@@ -8,10 +8,10 @@ import {
   getTranslationColor
 } from '../data/bibleData';
 import { DENOMINATIONS, DenominationConfig, DenominationalLens } from '../data/theologyData';
-
 import { BereaLogo } from './BereaLogo';
 import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
 import { SettingsWidget } from './SettingsWidget';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface HeaderProps {
   activeLens: DenominationalLens;
@@ -48,13 +48,53 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenFeedback,
   onLogout
 }) => {
+  const { language } = useLanguage();
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
   const [showAllTranslations, setShowAllTranslations] = useState(false);
 
-  const currentDenom: DenominationConfig = DENOMINATIONS.find(d => d.id === activeLens) || DENOMINATIONS[0];
-  const approvedTranslations: TranslationInfo[] = getApprovedTranslationsForDenomination(activeLens);
-  const displayedTranslations: TranslationInfo[] = showAllTranslations ? TRANSLATIONS : approvedTranslations;
+  // Filter denominations to only those that have approved Bibles in the currently selected language
+  const availableDenominations = useMemo(() => {
+    const filtered = DENOMINATIONS.filter(d => {
+      return getApprovedTranslationsForDenomination(d.id).some(
+        t => (t.language || 'en') === language
+      );
+    });
+    return filtered.length > 0 ? filtered : DENOMINATIONS;
+  }, [language]);
+
+  // Auto-switch lens if activeLens is not supported in this language
+  useEffect(() => {
+    if (availableDenominations.length > 0 && !availableDenominations.some(d => d.id === activeLens)) {
+      onSelectLens(availableDenominations[0].id);
+    }
+  }, [availableDenominations, activeLens, onSelectLens]);
+
+  const currentDenom: DenominationConfig = availableDenominations.find(d => d.id === activeLens) || availableDenominations[0] || DENOMINATIONS[0];
+  const popularIds = [
+    'NABRE', 'RSVCE', 'NRSVCE', 'DRB', 'NJB', // Catholic
+    'KJV', 'NIV', 'ESV', 'NLT', 'NASB', 'RSV', 'NRSV', 'NKJV', 'CSB',
+    'RV1960', 'RV2004', 'PDT', 'NTV', 'LBLA', 'NVI',
+    'FRLSG', 'FRPDV17', 'FRDBY', 'BDS',
+    'ARA', 'NVIPT', 'NVT', 'NTLH', 'KJA', 'NAA', 'ARC09',
+    'LUTH1545', 'SCH2000', 'CUV', 'SYNO', 'UKDER', 'TUB', 'PPCH', 'GYZ', 'NAV', 'SVD'
+  ];
+  
+  const sortFn = (a: TranslationInfo, b: TranslationInfo) => {
+    const aPop = popularIds.includes(a.id) ? 1 : 0;
+    const bPop = popularIds.includes(b.id) ? 1 : 0;
+    if (aPop !== bPop) return bPop - aPop;
+    return 0; // maintain original relative order otherwise
+  };
+
+  const languageFilteredTranslations = TRANSLATIONS.filter(t => (t.language || 'en') === language).sort(sortFn);
+  const approvedTranslations: TranslationInfo[] = getApprovedTranslationsForDenomination(activeLens).filter(t => (t.language || 'en') === language).sort(sortFn);
+  
+  // If there are zero approved translations for this language/denomination combo, auto-fallback to showing all available for that language.
+  const isFallbackMode = approvedTranslations.length === 0;
+  const displayedTranslations: TranslationInfo[] = isFallbackMode 
+    ? languageFilteredTranslations 
+    : (showAllTranslations ? approvedTranslations : approvedTranslations.slice(0, 5));
 
   return (
     <header
@@ -117,10 +157,10 @@ export const Header: React.FC<HeaderProps> = ({
                     style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
                     className="text-[9px] font-mono font-bold"
                   >
-                    7 Distinct Lenses
+                    {availableDenominations.length} Available
                   </span>
                 </div>
-                {DENOMINATIONS.map((d) => {
+                {availableDenominations.map((d) => {
                   const isSelected = activeLens === d.id;
                   return (
                     <button
@@ -195,29 +235,35 @@ export const Header: React.FC<HeaderProps> = ({
                 style={{
                   backgroundColor: 'var(--clean-surface, #FFFFFF)',
                   borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                  color: 'var(--clean-text-primary, #26221F)'
+                  color: 'var(--clean-text-primary, #26221F)',
+                  scrollbarWidth: 'thin',
+                  maxHeight: '384px',
+                  overflowY: 'auto',
+                  overscrollBehavior: 'contain'
                 }}
-                className="absolute top-full left-0 mt-1.5 w-80 border rounded-xl shadow-2xl z-50 p-2 space-y-1 animate-fadeIn max-h-[380px] overflow-y-auto custom-scrollbar"
+                className="absolute top-full left-0 mt-1.5 w-80 border rounded-xl shadow-2xl z-50 p-2 animate-fadeIn"
               >
                 <div
                   style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
-                  className="text-[10px] uppercase font-bold text-[var(--clean-text-secondary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-1"
+                  className="text-[10px] uppercase font-bold text-[var(--clean-text-secondary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-2 sticky top-0 bg-[var(--clean-surface,#FFFFFF)] z-10"
                 >
-                  <span className="truncate max-w-[160px]">
-                    {showAllTranslations ? 'All Translations' : `Approved for ${currentDenom.traditionGroup}`}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowAllTranslations(prev => !prev);
-                    }}
-                    style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
-                    className="text-[9.5px] hover:underline flex items-center gap-1 font-semibold"
-                  >
-                    {showAllTranslations ? 'Approved Only' : 'Show All (20+)'}
-                  </button>
+                    <span className="truncate max-w-[160px]">
+                      {isFallbackMode ? 'All Translations (Fallback)' : (showAllTranslations ? `All Approved for ${currentDenom.traditionGroup}` : `Top 5 for ${currentDenom.traditionGroup}`)}
+                    </span>
+                    {!isFallbackMode && approvedTranslations.length > 5 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowAllTranslations(prev => !prev);
+                        }}
+                        style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
+                        className="text-[9.5px] hover:underline flex items-center gap-1 font-semibold"
+                      >
+                        {showAllTranslations ? 'Top 5 Only' : `Show All (${approvedTranslations.length})`}
+                      </button>
+                    )}
                 </div>
-
+                <div className="space-y-1 block">
                 {displayedTranslations.map((t) => {
                   const isSelected = activeTranslation === t.id;
                   const isApproved = t.approvedDenominations.includes(activeLens);
@@ -286,6 +332,7 @@ export const Header: React.FC<HeaderProps> = ({
                     </button>
                   );
                 })}
+                </div>
               </div>
             )}
           </div>
