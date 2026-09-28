@@ -11,6 +11,7 @@ import {
   MessageSquareHeart,
   Settings2
 } from 'lucide-react';
+import { AnimatedPresence } from './AnimatedPresence';
 import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
 import { DenominationalLens, DENOMINATIONS } from '../data/theologyData';
 import { TranslationId } from '../data/bibleData';
@@ -63,7 +64,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+
 
   const currentDenomName = DENOMINATIONS.find(d => d.id === activeLens)?.name || activeLens;
   const passageString = `${currentBookName} ${currentChapterNum}${currentVerseNum ? `:${currentVerseNum}` : ''}`;
@@ -132,13 +133,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   };
 
   return (
+    <AnimatedPresence isVisible={isOpen} duration={250}>
+      {(isClosing) => (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/50 backdrop-blur-md animate-fadeIn select-none"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/50 backdrop-blur-md select-none ${isClosing ? 'animate-fadeOut' : 'animate-fadeIn'}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white border border-[#EBE5DC] rounded-2xl sm:rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-[0_25px_60px_rgba(180,140,100,0.25)] overflow-hidden"
+        className={`bg-white border border-[#EBE5DC] rounded-2xl sm:rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-[0_25px_60px_rgba(180,140,100,0.25)] overflow-hidden ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
       >
         {/* Header */}
         <div className="p-4 sm:p-5 bg-[#FAF7F2] border-b border-[#EBE5DC] flex items-center justify-between flex-shrink-0">
@@ -439,5 +442,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         </div>
       </div>
     </div>
+      )}
+    </AnimatedPresence>
   );
 };

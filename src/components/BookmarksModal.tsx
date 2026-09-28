@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Bookmark, Search, X, Trash2, Copy, Check, ArrowRight, ArrowUpDown, GripHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { BookmarkedVerse, useBookmarkedVerses, removeBookmark, clearAllBookmarks, getCanonicalBookIndex } from '../services/bookmarkService';
+import { AnimatedPresence } from './AnimatedPresence';
 
 interface BookmarksModalProps {
   isOpen: boolean;
@@ -178,19 +179,18 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
   };
 
   // Do not render anything if modal is closed
-  if (!isOpen) return null;
-
   return (
+    <AnimatedPresence isVisible={isOpen} duration={250}>
+      {(isClosing) => (
     <div
       ref={modalRef}
-      className="fixed z-50 rounded-2xl flex flex-col overflow-hidden select-auto transition-[max-height] duration-200"
+      className={`fixed z-50 bg-[#FAF7F2] rounded-2xl flex flex-col overflow-hidden select-auto transition-[max-height] duration-200 ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
         width: 'min(490px, calc(100vw - 32px))',
         maxHeight: isMinimized ? 'auto' : 'min(620px, calc(100vh - 90px))',
-        backgroundColor: 'var(--clean-bg, #FAF7F2)',
-        border: '1px solid var(--clean-accent-border, #DCD5C9)',
+        border: '1px solid #DCD5C9',
         boxShadow: '0 20px 50px rgba(38, 34, 31, 0.26)',
       }}
     >
@@ -201,37 +201,19 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
           if ((e.target as HTMLElement).closest('button, input, select, a')) return;
           setIsMinimized(prev => !prev);
         }}
-        className="p-3.5 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
-        style={{
-          touchAction: 'none',
-          backgroundColor: 'var(--clean-surface-warm, #FAF5ED)',
-          borderColor: 'var(--clean-accent-border, #EBE5DC)'
-        }}
+        className="p-3.5 border-b border-[#EBE5DC] bg-[#FAF5ED] flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
+        style={{ touchAction: 'none' }}
         title="Click and drag to move window • Double-click to collapse/expand"
       >
         <div className="flex items-center gap-2.5 min-w-0 pr-2">
-          <GripHorizontal className="w-4 h-4 shrink-0 transition-colors" style={{ color: 'var(--clean-text-secondary, #A8A29E)' }} />
-          <div
-            className="w-6 h-6 rounded-lg border flex items-center justify-center shrink-0"
-            style={{
-              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-              borderColor: 'var(--clean-accent-border, #D4A373)',
-              color: 'var(--clean-accent-caramel, #B4793D)'
-            }}
-          >
-            <Bookmark className="w-3.5 h-3.5 fill-current" />
+          <GripHorizontal className="w-4 h-4 text-[#A8A29E] shrink-0 hover:text-[#B4793D] transition-colors" />
+          <div className="w-6 h-6 rounded-lg bg-[#FAF7F2] border border-[#D4A373]/30 flex items-center justify-center text-[#B4793D] shrink-0">
+            <Bookmark className="w-3.5 h-3.5 fill-[#B4793D]" />
           </div>
-          <h2 className="font-heading font-bold text-sm truncate" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+          <h2 className="font-heading font-bold text-sm text-[#26221F] truncate">
             Bookmarked Verses
           </h2>
-          <span
-            className="px-2 py-0.5 border rounded-full text-[10px] font-bold shrink-0"
-            style={{
-              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-              color: 'var(--clean-accent-caramel, #B4793D)',
-              borderColor: 'var(--clean-accent-border, #D4A373)'
-            }}
-          >
+          <span className="px-2 py-0.5 bg-white text-[#B4793D] border border-[#D4A373]/30 rounded-full text-[10px] font-bold shrink-0">
             {bookmarks.length}
           </span>
         </div>
@@ -244,8 +226,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
             }}
             onPointerDown={(e) => e.stopPropagation()}
             title={isMinimized ? "Expand window" : "Minimize window"}
-            className="p-1.5 rounded-lg transition-colors cursor-pointer hover:bg-[var(--clean-highlight-cream,#FAF5ED)]"
-            style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+            className="p-1.5 rounded-lg hover:bg-white text-[#78716C] hover:text-[#26221F] transition-colors cursor-pointer"
           >
             {isMinimized ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -256,8 +237,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
             }}
             onPointerDown={(e) => e.stopPropagation()}
             title="Close (Esc)"
-            className="p-1.5 rounded-lg transition-colors cursor-pointer hover:bg-[var(--clean-highlight-cream,#FAF5ED)]"
-            style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+            className="p-1.5 rounded-lg hover:bg-white text-[#78716C] hover:text-[#26221F] transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -267,26 +247,20 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
       {!isMinimized && (
         <>
           {/* Search bar & Filters */}
-          <div
-            className="p-3 border-b space-y-2.5"
-            style={{
-              backgroundColor: 'var(--clean-surface, #FFFFFF)',
-              borderColor: 'var(--clean-accent-border, #EBE5DC)'
-            }}
-          >
-            {/* Flex Search Row */}
+          <div className="p-3 border-b border-[#EBE5DC] bg-white space-y-2.5">
+            {/* Flex Search Row (Icon will never overlap input text) */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 padding: '6px 10px',
-                backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
+                backgroundColor: '#FAF7F2',
                 borderRadius: '10px',
-                border: '1px solid var(--clean-accent-border, #EBE5DC)',
+                border: '1px solid #EBE5DC',
               }}
             >
-              <Search className="w-4 h-4 shrink-0" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+              <Search className="w-4 h-4 text-[#B4793D] shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
@@ -298,7 +272,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                   border: 'none',
                   outline: 'none',
                   fontSize: '12px',
-                  color: 'var(--clean-text-primary, #26221F)',
+                  color: '#26221F',
                 }}
                 autoFocus
               />
@@ -312,7 +286,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                     padding: '2px',
                     display: 'flex',
                     alignItems: 'center',
-                    color: 'var(--clean-text-secondary, #A8A29E)',
+                    color: '#A8A29E',
                   }}
                   title="Clear search"
                 >
@@ -331,13 +305,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                 flexWrap: 'wrap',
               }}
             >
-              <div
-                className="ios-segmented-capsule"
-                style={{
-                  backgroundColor: 'var(--clean-surface-warm, #FAF5ED)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                }}
-              >
+              <div className="ios-segmented-capsule">
                 <button
                   onClick={() => setTestamentFilter('ALL')}
                   className={`ios-segment-pill !text-[11px] ${testamentFilter === 'ALL' ? 'active' : ''}`}
@@ -362,7 +330,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                 <span
                   style={{
                     fontSize: '11px',
-                    color: 'var(--clean-text-secondary, #78716C)',
+                    color: '#78716C',
                     fontWeight: 500,
                     display: 'flex',
                     alignItems: 'center',
@@ -376,9 +344,9 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                   style={{
-                    backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
-                    border: '1px solid var(--clean-accent-border, #EBE5DC)',
-                    color: 'var(--clean-text-primary, #26221F)',
+                    backgroundColor: '#FAF7F2',
+                    border: '1px solid #EBE5DC',
+                    color: '#26221F',
                     fontSize: '11px',
                     fontWeight: 600,
                     borderRadius: '8px',
@@ -397,41 +365,26 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
           </div>
 
           {/* Bookmarks List */}
-          <div
-            className="p-3 overflow-y-auto flex-1 custom-scrollbar space-y-2.5"
-            style={{ backgroundColor: 'var(--clean-bg, #FAF9F6)' }}
-          >
+          <div className="p-3 overflow-y-auto flex-1 custom-scrollbar space-y-2.5 bg-[#FAF9F6]">
             {bookmarks.length === 0 ? (
               <div className="text-center py-10 px-4 space-y-2.5">
-                <div
-                  className="w-10 h-10 rounded-xl border flex items-center justify-center mx-auto shadow-xs"
-                  style={{
-                    backgroundColor: 'var(--clean-surface-warm, #FAF5ED)',
-                    borderColor: 'var(--clean-accent-border, #D4A373)',
-                    color: 'var(--clean-accent-caramel, #B4793D)'
-                  }}
-                >
-                  <Bookmark className="w-5 h-5 fill-current" />
+                <div className="w-10 h-10 rounded-xl bg-[#FAF5ED] border border-[#D4A373]/30 flex items-center justify-center text-[#B4793D] mx-auto shadow-xs">
+                  <Bookmark className="w-5 h-5 text-[#B4793D]" />
                 </div>
-                <h3 className="font-heading font-semibold text-xs sm:text-sm" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                <h3 className="font-heading font-semibold text-xs sm:text-sm text-[#26221F]">
                   No Bookmarked Verses Yet
                 </h3>
-                <p className="text-[11px] max-w-xs mx-auto leading-relaxed" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
-                  Click the <span className="font-semibold" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>Bookmark</span> icon next to any verse while reading to save it here for fast retrieval.
+                <p className="text-[11px] text-[#78716C] max-w-xs mx-auto leading-relaxed">
+                  Click the <span className="font-semibold text-[#B4793D]">Bookmark</span> icon next to any verse while reading to save it here for fast retrieval.
                 </p>
               </div>
             ) : filteredBookmarks.length === 0 ? (
               <div className="text-center py-8 px-4 space-y-2">
-                <p className="text-xs font-semibold" style={{ color: 'var(--clean-text-primary, #26221F)' }}>No bookmarks match "{searchQuery}"</p>
-                <p className="text-[11px]" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>Try a different reference or keyword.</p>
+                <p className="text-xs font-semibold text-[#26221F]">No bookmarks match "{searchQuery}"</p>
+                <p className="text-[11px] text-[#78716C]">Try a different reference or keyword.</p>
                 <button
                   onClick={() => setSearchQuery('')}
-                  style={{
-                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                    color: 'var(--clean-accent-caramel, #B4793D)'
-                  }}
-                  className="mt-1 px-2.5 py-1 border text-[11px] font-semibold rounded-md hover:opacity-85 transition-opacity shadow-xs cursor-pointer"
+                  className="mt-1 px-2.5 py-1 bg-white border border-[#EBE5DC] text-[#B4793D] text-[11px] font-semibold rounded-md hover:border-[#D4A373] transition-colors shadow-xs cursor-pointer"
                 >
                   Clear Search
                 </button>
@@ -441,33 +394,19 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                 <div
                   key={b.id}
                   onClick={() => handleNavigate(b)}
-                  style={{
-                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                  }}
-                  className="group p-3 rounded-xl border hover:shadow-sm transition-all cursor-pointer relative space-y-1.5 hover:border-[var(--clean-accent-caramel,#B4793D)]"
+                  className="group p-3 bg-white rounded-xl border border-[#EBE5DC] hover:border-[#D4A373] hover:shadow-sm transition-all cursor-pointer relative space-y-1.5"
                 >
                   {/* Card Header */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span
-                        className="font-heading font-bold text-xs sm:text-sm transition-colors"
-                        style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
-                      >
+                      <span className="font-heading font-bold text-xs sm:text-sm text-[#B4793D] group-hover:text-[#9A632E] transition-colors">
                         {b.bookName} {b.chapter}:{b.verseNumber}
                       </span>
-                      <span
-                        className="px-1.5 py-0.2 text-[9.5px] font-mono font-bold border rounded"
-                        style={{
-                          backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                          color: 'var(--clean-accent-dark, #78471F)',
-                          borderColor: 'var(--clean-accent-border, #D4A373)'
-                        }}
-                      >
+                      <span className="px-1.5 py-0.2 text-[9.5px] font-mono font-bold bg-[#FAF5ED] text-[#78471F] border border-[#D4A373]/30 rounded">
                         {b.translation}
                       </span>
                       {b.timestamp && (
-                        <span className="text-[10px]" style={{ color: 'var(--clean-text-secondary, #A8A29E)' }}>
+                        <span className="text-[10px] text-[#A8A29E]">
                           • {formatDate(b.timestamp)}
                         </span>
                       )}
@@ -477,8 +416,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                       <button
                         onClick={(e) => handleCopy(b, e)}
                         title="Copy verse"
-                        style={{ color: 'var(--clean-text-secondary, #78716C)' }}
-                        className="p-1 rounded-md hover:bg-[var(--clean-surface-warm,#FAF7F2)] transition-colors cursor-pointer"
+                        className="p-1 rounded-md text-[#78716C] hover:text-[#26221F] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
                       >
                         {copiedId === b.id ? (
                           <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -489,15 +427,11 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                       <button
                         onClick={(e) => handleRemove(b.id, e)}
                         title="Remove bookmark"
-                        style={{ color: 'var(--clean-text-secondary, #78716C)' }}
-                        className="p-1 rounded-md hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        className="p-1 rounded-md text-[#78716C] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                      <div
-                        className="flex items-center gap-0.5 text-[11px] font-semibold pl-1 group-hover:translate-x-0.5 transition-transform"
-                        style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
-                      >
+                      <div className="flex items-center gap-0.5 text-[11px] font-semibold text-[#B4793D] pl-1 group-hover:translate-x-0.5 transition-transform">
                         <span>Read</span>
                         <ArrowRight className="w-3 h-3" />
                       </div>
@@ -505,13 +439,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                   </div>
 
                   {/* Card Verse Content */}
-                  <p
-                    className="font-scripture text-[13px] leading-relaxed border-l-2 pl-2.5 py-0.5 transition-colors line-clamp-3"
-                    style={{
-                      color: 'var(--clean-text-primary, #38332E)',
-                      borderLeftColor: 'var(--clean-accent-border-strong, #B4793D)'
-                    }}
-                  >
+                  <p className="font-scripture text-[13px] leading-relaxed text-[#38332E] border-l-2 border-[#EBE5DC] group-hover:border-[#B4793D] pl-2.5 py-0.5 transition-colors line-clamp-3">
                     "{b.text}"
                   </p>
                 </div>
@@ -520,14 +448,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
           </div>
 
           {/* Footer Bar */}
-          <div
-            className="px-3 py-2 border-t flex items-center justify-between text-[11px] select-none"
-            style={{
-              backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
-              borderColor: 'var(--clean-accent-border, #EBE5DC)',
-              color: 'var(--clean-text-secondary, #78716C)'
-            }}
-          >
+          <div className="px-3 py-2 border-t border-[#EBE5DC] bg-[#FAF7F2] flex items-center justify-between text-[11px] text-[#78716C] select-none">
             <div className="flex items-center gap-2">
               <span className="font-medium">
                 {filteredBookmarks.length} of {bookmarks.length} {bookmarks.length === 1 ? 'verse' : 'verses'}
@@ -561,21 +482,15 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-1 text-[10.5px]" style={{ color: 'var(--clean-text-secondary, #A8A29E)' }}>
-              <kbd
-                className="px-1.5 py-0.5 rounded border text-[9px] font-mono"
-                style={{
-                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                }}
-              >
-                ⌘B
-              </kbd>
+            <div className="flex items-center gap-1 text-[10.5px] text-[#A8A29E]">
+              <kbd className="bg-white px-1.5 py-0.5 rounded border border-[#EBE5DC] text-[9px] font-mono">⌘B</kbd>
               <span>to toggle</span>
             </div>
           </div>
         </>
       )}
     </div>
+      )}
+    </AnimatedPresence>
   );
 };

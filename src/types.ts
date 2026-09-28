@@ -33,7 +33,7 @@ export interface WrittenGradingResult {
   modelAnswer?: string;
 }
 
-export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'typology';
+export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'characters' | 'typology';
 
 export type NoteFontFamily = 'serif' | 'sans' | 'mono' | 'script';
 export type NoteFontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl';

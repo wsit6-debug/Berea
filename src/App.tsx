@@ -18,6 +18,7 @@ import { NotepadPanel } from './components/NotepadPanel';
 import { BookSelectorModal } from './components/BookSelectorModal';
 import { PitchDeckAboutModal } from './components/PitchDeckAboutModal';
 import { SearchModal } from './components/SearchModal';
+import { AnimatedPresence } from './components/AnimatedPresence';
 import { LoginScreen } from './components/LoginScreen';
 import { ColorThemeWheel } from './components/ColorThemeWheel';
 import { FeedbackModal } from './components/FeedbackModal';
@@ -69,6 +70,7 @@ export function App() {
   const [isColorSchemeOpen, setIsColorSchemeOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
   const [quizType, setQuizType] = useState<'chapter' | 'book' | null>(null);
   const bookmarks = useBookmarkedVerses();
 
@@ -297,6 +299,7 @@ export function App() {
   const handleNextChapter = () => {
     targetVerseRef.current = 1;
     setSelectedVerseRange(null);
+    setSelectedCharacter(null);
     if (chapterNum < currentBook.chaptersCount) {
       setChapterNum(prev => prev + 1);
     } else {
@@ -312,6 +315,7 @@ export function App() {
   const handlePrevChapter = () => {
     targetVerseRef.current = 1;
     setSelectedVerseRange(null);
+    setSelectedCharacter(null);
     if (chapterNum > 1) {
       setChapterNum(prev => prev - 1);
     } else {
@@ -324,10 +328,26 @@ export function App() {
     }
   };
 
-  const handleSelectPassage = (newBookId: string, newChapterNum: number, targetVerseNum?: number) => {
+  const handleSelectPassage = (
+    newBookId: string,
+    newChapterNum: number,
+    targetVerseNum?: number,
+    targetRange?: { start: number; end: number } | null
+  ) => {
     const vNum = targetVerseNum || 1;
     targetVerseRef.current = vNum;
-    setSelectedVerseRange(null);
+
+    const rangeToSet = targetRange !== undefined ? targetRange : (targetVerseNum ? { start: targetVerseNum, end: targetVerseNum } : null);
+    setSelectedVerseRange(rangeToSet);
+
+    if (newBookId === bookId && newChapterNum === chapterNum) {
+      if (currentChapter && currentChapter.verses.length > 0) {
+        const v = currentChapter.verses.find(x => x.verseNumber === vNum) || currentChapter.verses[0];
+        if (v) setSelectedVerse(v);
+      }
+      return;
+    }
+
     setBookId(newBookId);
     setChapterNum(newChapterNum);
 
@@ -422,18 +442,24 @@ export function App() {
                 setAiPanelTab('quiz');
                 setActiveSidebar('guide');
               }}
+              onSelectCharacter={(charId) => {
+                setSelectedCharacter(charId);
+              }}
+              selectedCharacter={selectedCharacter}
             />
           </div>
 
           {/* Berea AI Guide Inspector Sidebar */}
-          {activeSidebar === 'guide' && (
-            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+          <AnimatedPresence isVisible={activeSidebar === 'guide'} duration={250}>
+            {(isClosing) => (
+              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
               <BereaAiPanel
                 currentBook={currentBook.name}
                 currentChapter={chapterNum}
                 selectedVerse={selectedVerse}
                 selectedVerseRange={selectedVerseRange}
                 onVerseRangeChange={setSelectedVerseRange}
+                onNavigateToChapterAndVerse={(c, v, range) => handleSelectPassage(currentBook.id, c, v, range)}
                 chapterVerses={currentChapter?.verses}
                 activeLens={activeLens}
                 onLensChange={handleSelectLens}
@@ -449,14 +475,17 @@ export function App() {
                   setAiPanelTab('quiz');
                   setActiveSidebar('guide');
                 }}
+                selectedCharacter={selectedCharacter}
                 onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
               />
             </div>
-          )}
+            )}
+          </AnimatedPresence>
 
           {/* Dedicated Notepad Sidebar (Independent Tab) */}
-          {activeSidebar === 'notepad' && (
-            <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+          <AnimatedPresence isVisible={activeSidebar === 'notepad'} duration={250}>
+            {(isClosing) => (
+              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
               <div
                 className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
                 style={{
@@ -530,7 +559,8 @@ export function App() {
                 </div>
               </div>
             </div>
-          )}
+            )}
+          </AnimatedPresence>
         </div>
       </main>
 
@@ -582,6 +612,7 @@ export function App() {
         onClose={() => setIsBookmarksModalOpen(false)}
         onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
       />
+
     </div>
   );
 }

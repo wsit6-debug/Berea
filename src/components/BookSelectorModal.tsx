@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BIBLE_BOOKS, BibleBook } from '../data/bibleData';
 import { Search, Book, X } from 'lucide-react';
+import { AnimatedPresence } from './AnimatedPresence';
 
 interface BookSelectorModalProps {
   isOpen: boolean;
@@ -23,8 +24,6 @@ export const BookSelectorModal: React.FC<BookSelectorModalProps> = ({
     BIBLE_BOOKS.find(b => b.id === currentBookId) || BIBLE_BOOKS[0]
   );
 
-  if (!isOpen) return null;
-
   const filteredBooks = BIBLE_BOOKS.filter(b => {
     const matchesTestament = activeTestament === 'ALL' || b.testament === activeTestament;
     const matchesSearch = b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -34,14 +33,16 @@ export const BookSelectorModal: React.FC<BookSelectorModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xl animate-fadeIn select-none">
+    <AnimatedPresence isVisible={isOpen} duration={250}>
+      {(isClosing) => (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xl select-none ${isClosing ? 'animate-fadeOut' : 'animate-fadeIn'}`}>
       <div 
         style={{
           backgroundColor: 'var(--clean-surface, #FFFFFF)',
           borderColor: 'var(--clean-accent-border, #EBE5DC)',
           color: 'var(--clean-text-primary, #26221F)'
         }}
-        className="border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+        className={`border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
       >
         {/* Header */}
         <div 
@@ -261,5 +262,7 @@ export const BookSelectorModal: React.FC<BookSelectorModalProps> = ({
         </div>
       </div>
     </div>
+      )}
+    </AnimatedPresence>
   );
 };
