@@ -22,7 +22,7 @@ export interface StudyGuide {
   supportingPassages?: SupportingPassage[];
 }
 
-export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'characters' | 'typology';
+export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'characters' | 'typology' | 'apologetics';
 
 export type NoteFontFamily = 'serif' | 'sans' | 'mono' | 'script';
 export type NoteFontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl';

@@ -1,0 +1,44 @@
+{
+  "Genesis": {
+    "1": [
+      {
+        "id": "gen-1-1",
+        "title": "Age of the Earth & Evolution",
+        "objection": "The creation account contradicts modern scientific consensus regarding the age of the Earth and the evolutionary origin of species.",
+        "defense": "Historically, Christians have held multiple views on Genesis 1. Some hold a Young Earth view based on literal 24-hour days. Others hold an Old Earth or Day-Age view, noting the Hebrew word 'yom' can mean an era. Still others see Genesis 1 as a theological framework (Framework Hypothesis) polemicizing against ancient near eastern polytheism, rather than a material scientific textbook. See ATLA Religion Database for scholarly articles on the Framework Hypothesis.",
+        "category": "Scientific"
+      }
+    ],
+    "2": [
+      {
+        "id": "gen-2-1",
+        "title": "Two Different Creation Accounts?",
+        "objection": "Genesis 2 presents a different timeline of creation than Genesis 1, implying they are two contradictory mythologies stitched together.",
+        "defense": "Genesis 1 provides a cosmic, chronological overview of creation, while Genesis 2 zooms in topically on the creation of humanity and the Garden of Eden. The differences in order are due to literary focus, not chronological contradiction. This is a common Hebrew narrative technique.",
+        "category": "Contradiction"
+      }
+    ]
+  },
+  "Joshua": {
+    "6": [
+      {
+        "id": "joshua-6-1",
+        "title": "The Morality of the Canaanite Conquest",
+        "objection": "God commanding the Israelites to completely destroy Jericho and the Canaanites is tantamount to genocide and contradicts the idea of a loving God.",
+        "defense": "This is one of the most difficult ethical issues in the Old Testament. Apologists point out several factors: 1) It was a unique, unrepeatable judgment against a deeply corrupt culture (engaging in child sacrifice). 2) The hyperbolic language ('destroy them all') was common Ancient Near Eastern war rhetoric (as seen in the Merneptah Stele), meaning a decisive victory, not literal genocide. 3) Rahab and her family were saved by faith, showing God's mercy to any who turned to Him. See Academic Search Ultimate for papers on Ancient Near Eastern warfare rhetoric.",
+        "category": "Moral"
+      }
+    ]
+  },
+  "Matthew": {
+    "28": [
+      {
+        "id": "matt-28-1",
+        "title": "Harmonizing the Resurrection Accounts",
+        "objection": "The Gospels contradict each other on who went to the tomb, how many angels were there, and what they saw.",
+        "defense": "The differences are actually hallmarks of independent eyewitness testimony. For example, Matthew mentions one angel (the one who spoke), while Luke mentions two (the total number). If they had colluded to fabricate a story, their accounts would be perfectly identical. Instead, they represent different perspectives of the same chaotic, historical morning. Consult the Christian Apologetics Alliance Search Engine for articles on resurrection harmonization.",
+        "category": "Contradiction"
+      }
+    ]
+  }
+}

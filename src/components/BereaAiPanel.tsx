@@ -17,6 +17,11 @@ import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from 
 import { AppliedAiLogo } from './AppliedAiLogo';
 import TypologyPanel from './TypologyPanel';
 import { StudyGuide, SupportingPassage, BereaAiTab, StudyGuideAudience } from '../types';
+import apologeticsRaw from '../data/generatedApologetics.json';
+import { ApologeticsMap } from '../data/apologeticsData';
+
+const apologeticsData = apologeticsRaw as unknown as ApologeticsMap;
+
 import {
   getSavedStudyGuides,
   saveStudyGuide,
@@ -250,6 +255,30 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   // Custom Specific Verses State (e.g. 1, 12, 23)
   const [customVerseNumbers, setCustomVerseNumbers] = useState<number[]>([activeVerseNum]);
   const [customVerseInput, setCustomVerseInput] = useState<string>(String(activeVerseNum));
+
+  const handleStartApologeticsChat = (objectionTitle: string, objectionText: string, defenseText: string) => {
+    setActiveTab('chat');
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('berea_trigger_chat', {
+        detail: {
+          prompt: `I am looking at an apologetics objection for ${currentBook} ${currentChapter} titled "${objectionTitle}".\n\nThe objection is: "${objectionText}"\n\nThe classical defense is: "${defenseText}"\n\nI want to practice defending this or dive deeper. Can you help me unpack this?`,
+          autoSend: true
+        }
+      }));
+    }, 100);
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch(category) {
+      case 'Historical': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Scientific': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'Moral': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Philosophical': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'Contradiction': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'Theological': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
   const handleCustomVerseInputChange = (val: string) => {
     setCustomVerseInput(val);
@@ -758,6 +787,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           >
             <HelpCircle className="w-3 h-3 shrink-0" />
             <span className="truncate">Quiz</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('apologetics')}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'apologetics' ? 'active' : ''}`}
+            title="Apologetics & Defense"
+          >
+            <ShieldCheck className="w-3 h-3 shrink-0" />
+            <span className="truncate">Defense</span>
           </button>
 
         </div>
@@ -2394,6 +2432,70 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'apologetics' && (
+          <div className="flex-1 flex flex-col space-y-3 animate-fadeIn min-h-0">
+            {/* Header Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-[#FAF5ED] to-white border border-[#EBE5DC] shadow-xs space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#FAF0E2] border border-[#D4A373]/40 flex items-center justify-center text-[#B4793D]">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-[#26221F]">Apologetics & Defense</h4>
+                  <p className="text-[10.5px] text-[#78716C]">
+                    Intellectual defense and common objections for {currentBook} {currentChapter}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Objections List */}
+            <div className="space-y-4">
+              {apologeticsData[currentBook]?.[currentChapter] ? (
+                apologeticsData[currentBook][currentChapter].map((obj, idx) => (
+                  <div key={idx} className="bg-white rounded-xl border border-[#EBE5DC] overflow-hidden shadow-sm">
+                    <div className="p-4 border-b border-[#EBE5DC] bg-slate-50/50">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="font-bold text-[#26221F] text-sm leading-tight">{obj.title}</h3>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getCategoryColor(obj.category)}`}>
+                          {obj.category}
+                        </span>
+                      </div>
+                      
+                      <div className="bg-red-50/50 border border-red-100 rounded-lg p-3 mt-3">
+                        <p className="text-[10px] font-bold text-red-800/70 uppercase tracking-wider mb-1">The Objection</p>
+                        <p className="text-xs text-red-900 leading-relaxed font-medium">"{obj.objection}"</p>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-white space-y-3">
+                      <p className="text-[10px] font-bold text-emerald-800/70 uppercase tracking-wider">Classical Defense</p>
+                      <p className="text-xs text-[#44403C] leading-relaxed">
+                        {obj.defense}
+                      </p>
+                      
+                      <button 
+                        onClick={() => handleStartApologeticsChat(obj.title, obj.objection, obj.defense)}
+                        className="w-full mt-4 py-2 bg-[#FAF5ED] hover:bg-[#F5EFE6] text-[#B4793D] border border-[#D4A373]/40 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        Practice Defending This
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-6 rounded-xl border border-[#EBE5DC] border-dashed bg-white text-center space-y-2">
+                  <ShieldCheck className="w-6 h-6 text-[#DCD5C9] mx-auto" />
+                  <p className="text-xs font-medium text-[#78716C]">
+                    No major historical, scientific, or moral objections are flagged for {currentBook} {currentChapter} in the current dataset.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
