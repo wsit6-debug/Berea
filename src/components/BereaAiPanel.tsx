@@ -10,6 +10,7 @@ import { getChapterGeoData, ChapterGeoEvent, calculateDistanceMiles, getShortPla
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage, QuizQuestion } from '../services/aiService';
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
+import { BIBLE_BOOKS } from '../data/bibleData';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
 import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 import { VerseOfTheDay } from './VerseOfTheDay';
@@ -102,9 +103,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [quizProgress, setQuizProgress] = useState(0);
   const [quizCheckpoint, setQuizCheckpoint] = useState<{ current: number; total: number } | null>(null);
 
+  const [quizMode, setQuizMode] = useState<'chapter' | 'book'>('chapter');
+  const [quizTargetBook, setQuizTargetBook] = useState<string>(currentBook);
+  const [quizTargetChapter, setQuizTargetChapter] = useState<number>(currentChapter);
+
   // Track pre-generated cached state
   const [hasCachedChapter, setHasCachedChapter] = useState(false);
   const [hasCachedBook, setHasCachedBook] = useState(false);
+  const [quizRevealedAnswers, setQuizRevealedAnswers] = useState<Record<number, boolean>>({});
 
   // User-configurable quiz length
   const [chapterQuizLength, setChapterQuizLength] = useState<number>(3);
@@ -124,6 +130,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     return () => window.removeEventListener('berea_quiz_cache_updated', updateCacheStatus);
   }, [currentBook, currentChapter, chapterQuizLength, bookQuizLength]);
 
+  useEffect(() => {
+    if (!currentQuizType) {
+      setQuizTargetBook(currentBook);
+      setQuizTargetChapter(currentChapter);
+    }
+  }, [currentBook, currentChapter, currentQuizType]);
+
   const startQuiz = async (type: 'chapter' | 'book', overrideCount?: number) => {
     const requestedCount = overrideCount || (type === 'chapter' ? chapterQuizLength : bookQuizLength);
     setInternalQuizType(type);
@@ -131,6 +144,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     setQuizQuestions([]);
     setQuizIndex(0);
     setQuizSelectedAnswers({});
+    setQuizRevealedAnswers({});
     setIsQuizSubmitted(false);
     setQuizError(null);
     setIsQuizLoading(true);
@@ -145,11 +159,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     };
 
     try {
-      const chapterText = (chapterVerses || []).map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ');
+      const isTargetingCurrent = quizTargetBook === currentBook && quizTargetChapter === currentChapter;
+      const chapterText = isTargetingCurrent ? (chapterVerses || []).map(v => v.text[activeTranslation] || Object.values(v.text)[0]).join(' ') : undefined;
+      
       const questions = await requestForegroundQuiz(
         type,
-        currentBook,
-        currentChapter,
+        quizTargetBook,
+        quizTargetChapter,
         chapterText,
         handleProgress,
         requestedCount
@@ -2409,129 +2425,102 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <div>
                   <h4 className="font-heading font-bold text-sm text-[#26221F]">Scripture & Theology Quiz</h4>
                   <p className="text-[10.5px] text-[#78716C]">
-                    Test your comprehension and theology for {currentBook} {currentChapter}
+                    Test your biblical comprehension and theology
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Chapter Quiz Trigger */}
-            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
-                    <HelpCircle className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>{currentBook} {currentChapter} Chapter Quiz</span>
-                    {hasCachedChapter && (
-                      <span className="px-1.5 py-0.2 text-[9.5px] font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] rounded-full">
-                        Ready
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-[#78716C] mt-0.5">
-                    Grounded multiple-choice questions with theological explanations based on the active passage.
-                  </p>
+            {/* Quiz Configuration Panel */}
+            {!currentQuizType && (
+              <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-4">
+                {/* Mode Selector */}
+                <div className="flex p-0.5 bg-[#FAF5ED] border border-[#EBE5DC] rounded-lg">
+                  <button
+                    onClick={() => setQuizMode('chapter')}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${quizMode === 'chapter' ? 'bg-white text-[#B4793D] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'}`}
+                  >
+                    Passage
+                  </button>
+                  <button
+                    onClick={() => setQuizMode('book')}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${quizMode === 'book' ? 'bg-white text-[#B4793D] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'}`}
+                  >
+                    Book
+                  </button>
                 </div>
-              </div>
 
-              {/* Length selector for Chapter Quiz */}
-              <div className="flex items-center gap-2.5 text-[11px] pt-0.5">
-                <span className="text-[#78716C] font-medium">Number of Questions:</span>
-                <div className="flex items-center gap-1 bg-[#FAF5ED] p-0.5 rounded-lg border border-[#EBE5DC]">
-                  {[3, 5].map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => setChapterQuizLength(count)}
-                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer ${
-                        chapterQuizLength === count
-                          ? 'bg-[#B4793D] text-white shadow-xs'
-                          : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-[#78716C] uppercase tracking-wider">Target Book</label>
+                    <select
+                      value={quizTargetBook}
+                      onChange={(e) => {
+                        setQuizTargetBook(e.target.value);
+                        setQuizTargetChapter(1);
+                      }}
+                      className="w-full p-2 text-xs font-medium bg-[#FAF5ED] border border-[#EBE5DC] rounded-lg text-[#26221F] outline-none focus:border-[#D4A373] transition-colors"
                     >
-                      {count}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={() => startQuiz('chapter')}
-                disabled={generatingQuizType === 'chapter'}
-                className={`w-full py-2 px-3 ${currentQuizType === 'chapter' ? 'bg-[#FAF0E2] text-[#B4793D] border-[#B4793D]' : 'bg-[#FAF5ED] hover:bg-[#F5EFE6] text-[#B4793D] border-[#D4A373]'} border rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70`}
-              >
-                {generatingQuizType === 'chapter' ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-[#B4793D] border-t-transparent rounded-full animate-spin" />
-                    <span>Generating Chapter Quiz ({quizProgress}%)...</span>
-                  </>
-                ) : (
-                  <>
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    <span>{currentQuizType === 'chapter' ? `Restart (${chapterQuizLength} Questions)` : `Start Chapter ${currentChapter} Quiz (${chapterQuizLength} Questions)`}</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Book Review Quiz Trigger */}
-            <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-2.5 hover:border-[#D4A373] transition-all">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="font-semibold text-xs text-[#26221F] flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5 text-[#B4793D]" />
-                    <span>{currentBook} Comprehensive Book Quiz</span>
-                    {hasCachedBook && (
-                      <span className="px-1.5 py-0.2 text-[9.5px] font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] rounded-full">
-                        Ready
-                      </span>
-                    )}
+                      {BIBLE_BOOKS.map(b => (
+                        <option key={b.id} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
                   </div>
-                  <p className="text-[11px] text-[#78716C] mt-0.5">
-                    Comprehensive questions covering major themes, canonical structure, and accumulated chapters.
-                  </p>
-                </div>
-              </div>
 
-              {/* Length selector for Book Quiz */}
-              <div className="flex items-center gap-2.5 text-[11px] pt-0.5">
-                <span className="text-[#78716C] font-medium">Number of Questions:</span>
-                <div className="flex items-center gap-1 bg-[#FAF5ED] p-0.5 rounded-lg border border-[#EBE5DC]">
-                  {[10, 20].map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => setBookQuizLength(count)}
-                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold transition-all cursor-pointer ${
-                        bookQuizLength === count
-                          ? 'bg-[#B4793D] text-white shadow-xs'
-                          : 'text-[#78716C] hover:text-[#26221F]'
-                      }`}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  {quizMode === 'chapter' && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[#78716C] uppercase tracking-wider">Target Chapter</label>
+                      <select
+                        value={quizTargetChapter}
+                        onChange={(e) => setQuizTargetChapter(parseInt(e.target.value))}
+                        className="w-full p-2 text-xs font-medium bg-[#FAF5ED] border border-[#EBE5DC] rounded-lg text-[#26221F] outline-none focus:border-[#D4A373] transition-colors"
+                      >
+                        {Array.from({ length: BIBLE_BOOKS.find(b => b.name === quizTargetBook)?.chaptersCount || 1 }).map((_, i) => (
+                          <option key={i + 1} value={i + 1}>Chapter {i + 1}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-              <button
-                onClick={() => startQuiz('book')}
-                disabled={generatingQuizType === 'book'}
-                className={`w-full py-2 px-3 ${currentQuizType === 'book' ? 'bg-[#9A632E] text-white' : 'bg-[#B4793D] hover:bg-[#9A632E] text-white'} rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70`}
-              >
-                {generatingQuizType === 'book' ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Generating Book Quiz ({quizProgress}%)...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trophy className="w-3.5 h-3.5" />
-                    <span>{currentQuizType === 'book' ? `Restart (${bookQuizLength} Questions)` : `Start ${currentBook} Book Quiz (${bookQuizLength} Questions)`}</span>
-                  </>
-                )}
-              </button>
-            </div>
+                  <div className="space-y-1.5 pt-1 border-t border-[#EBE5DC]">
+                    <label className="text-[10px] font-bold text-[#78716C] uppercase tracking-wider">Questions</label>
+                    <div className="flex gap-2">
+                      {(quizMode === 'chapter' ? [3, 5] : [10, 20]).map(count => (
+                        <button
+                          key={count}
+                          onClick={() => quizMode === 'chapter' ? setChapterQuizLength(count) : setBookQuizLength(count)}
+                          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                            (quizMode === 'chapter' ? chapterQuizLength : bookQuizLength) === count
+                              ? 'bg-[#B4793D] border-[#B4793D] text-white shadow-xs'
+                              : 'bg-[#FAF5ED] border-[#EBE5DC] text-[#78716C] hover:text-[#26221F]'
+                          }`}
+                        >
+                          {count}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => startQuiz(quizMode)}
+                  disabled={generatingQuizType !== null}
+                  className="w-full py-2.5 mt-2 bg-[#B4793D] hover:bg-[#9A632E] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70"
+                >
+                  {generatingQuizType ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Generating Quiz ({quizProgress}%)...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trophy className="w-4 h-4" />
+                      <span>Start {quizMode === 'chapter' ? 'Passage' : 'Book'} Quiz</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* Quiz active below generation buttons */}
             {currentQuizType && (
@@ -2540,7 +2529,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <div className="flex items-center justify-between pb-2 border-b border-[#EBE5DC]">
                   <div className="flex items-center gap-1.5">
                     <span className="font-heading font-bold text-xs text-[#26221F]">
-                      {currentQuizType === 'chapter' ? `${currentBook} ${currentChapter} Quiz` : `${currentBook} Book Quiz`}
+                      {currentQuizType === 'chapter' ? `${quizTargetBook} ${quizTargetChapter} Quiz` : `${quizTargetBook} Book Quiz`}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -2671,54 +2660,83 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                               <button
                                 key={optIdx}
                                 onClick={() => {
-                                  setQuizSelectedAnswers(prev => ({
-                                    ...prev,
-                                    [quizIndex]: optIdx,
-                                  }));
+                                  if (!quizRevealedAnswers[quizIndex]) {
+                                    setQuizSelectedAnswers(prev => ({ ...prev, [quizIndex]: optIdx }));
+                                  }
                                 }}
                                 className={`w-full text-left p-2.5 rounded-lg border transition-all text-xs flex items-center justify-between gap-2 cursor-pointer ${
-                                  isSelected
+                                  isSelected && !quizRevealedAnswers[quizIndex]
                                     ? 'bg-[#FAF5ED] border-[#B4793D] text-[#78471F] font-medium shadow-xs'
+                                    : quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex
+                                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-medium'
+                                    : quizRevealedAnswers[quizIndex] && isSelected
+                                    ? 'bg-red-50 border-red-300 text-red-800'
                                     : 'bg-white border-[#EBE5DC] text-[#26221F] hover:border-[#D4A373] hover:bg-[#FAF9F6]'
-                                }`}
+                                } ${quizRevealedAnswers[quizIndex] ? 'cursor-default' : ''}`}
                               >
                                 <span className="leading-snug">{opt}</span>
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-[#B4793D] bg-[#B4793D]' : 'border-[#DCD5C9]'}`}>
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected && !quizRevealedAnswers[quizIndex] ? 'border-[#B4793D] bg-[#B4793D]' : quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex ? 'border-emerald-500 bg-emerald-500' : quizRevealedAnswers[quizIndex] && isSelected ? 'border-red-400 bg-red-400' : 'border-[#DCD5C9]'}`}>
                                   {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                  {quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex && !isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                                 </div>
                               </button>
                             );
                           })}
                         </div>
+
+                        {/* Immediate Feedback Reveal */}
+                        {quizRevealedAnswers[quizIndex] && (
+                          <div className={`mt-3 p-3 rounded-lg border text-xs space-y-1.5 animate-fadeIn ${
+                            quizSelectedAnswers[quizIndex] === quizQuestions[quizIndex].correctAnswerIndex 
+                              ? 'bg-emerald-50/60 border-emerald-200' 
+                              : 'bg-red-50/60 border-red-200'
+                          }`}>
+                            <p className={`font-semibold ${quizSelectedAnswers[quizIndex] === quizQuestions[quizIndex].correctAnswerIndex ? 'text-emerald-700' : 'text-red-700'}`}>
+                              {quizSelectedAnswers[quizIndex] === quizQuestions[quizIndex].correctAnswerIndex ? 'Correct!' : 'Incorrect.'}
+                            </p>
+                            <p className="text-[#78716C] text-[11px] leading-relaxed pt-0.5">
+                              {quizQuestions[quizIndex].explanation}
+                            </p>
+                            {quizQuestions[quizIndex].reference && (
+                              <p className="text-[#B4793D] font-medium text-[10.5px]">
+                                Scripture: {quizQuestions[quizIndex].reference}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Navigation Row at bottom */}
                       <div className="pt-3 border-t border-[#EBE5DC] flex items-center justify-between">
                         <button
                           onClick={() => setQuizIndex(prev => Math.max(0, prev - 1))}
-                          disabled={quizIndex === 0}
-                          className="px-3 py-1.5 text-xs text-[#78716C] hover:text-[#26221F] disabled:opacity-30 font-medium transition-colors cursor-pointer"
+                          disabled={quizIndex === 0 || !quizRevealedAnswers[quizIndex]}
+                          className={`px-3 py-1.5 text-xs text-[#78716C] font-medium transition-colors cursor-pointer ${quizIndex === 0 || !quizRevealedAnswers[quizIndex] ? 'opacity-30' : 'hover:text-[#26221F]'}`}
                         >
                           Previous
                         </button>
                         <button
                           onClick={() => {
-                            if (quizIndex < quizQuestions.length - 1) {
-                              setQuizIndex(prev => prev + 1);
+                            if (!quizRevealedAnswers[quizIndex]) {
+                              setQuizRevealedAnswers(prev => ({ ...prev, [quizIndex]: true }));
                             } else {
-                              setIsQuizSubmitted(true);
-                              const totalCorrect = Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => {
-                                return acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0);
-                              }, 0);
-                              if (totalCorrect >= quizQuestions.length / 2) {
-                                confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+                              if (quizIndex < quizQuestions.length - 1) {
+                                setQuizIndex(prev => prev + 1);
+                              } else {
+                                setIsQuizSubmitted(true);
+                                const totalCorrect = Object.entries(quizSelectedAnswers).reduce((acc, [idx, ans]) => {
+                                  return acc + (quizQuestions[parseInt(idx)]?.correctAnswerIndex === ans ? 1 : 0);
+                                }, 0);
+                                if (totalCorrect >= quizQuestions.length / 2) {
+                                  confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+                                }
                               }
                             }
                           }}
                           disabled={quizSelectedAnswers[quizIndex] === undefined}
                           className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer"
                         >
-                          {quizIndex === quizQuestions.length - 1 ? 'Submit Quiz' : 'Next'}
+                          {!quizRevealedAnswers[quizIndex] ? 'Check Answer' : quizIndex === quizQuestions.length - 1 ? 'Finish Quiz' : 'Next Question'}
                         </button>
                       </div>
                     </div>
