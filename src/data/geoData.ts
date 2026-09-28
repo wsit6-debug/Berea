@@ -1580,10 +1580,10 @@ export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGe
         }
       }
       if (key === 'acts_21') {
-        if (['Cos', 'Rhodes', 'Patara', 'Tyre', 'Ptolemais', 'Caesarea'].includes(cleanLoc)) {
+        if (['Cos', 'Rhodes', 'Patara', 'Tyre', 'Ptolemais', 'Caesarea', 'Jerusalem'].includes(cleanLoc)) {
           modifiedEv.isReferencedOnly = false;
         }
-        if (['Tarsus', 'Cilicia', 'Cyprus', 'Syria', 'Jerusalem', 'Judea'].includes(cleanLoc)) {
+        if (['Tarsus', 'Cilicia', 'Cyprus', 'Syria', 'Judea'].includes(cleanLoc)) {
           modifiedEv.isReferencedOnly = true;
         }
       }
