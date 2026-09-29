@@ -27,6 +27,7 @@ import {
   formatContextSnapshotForDisplay
 } from '../services/studyGuideService';
 import confetti from 'canvas-confetti';
+import { getVerbatimCommentary } from '../services/commentaryDatabaseService';
 
 const DEFAULT_WELCOME_TEXT = "Welcome to Berea. Ask any question about Scripture, theology, church history, or the active passage, or choose a prompt below to get started.";
 
@@ -177,11 +178,13 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [isCommentaryLoading, setIsCommentaryLoading] = useState<boolean>(false);
   const [commentaryProgress, setCommentaryProgress] = useState<string>('');
   const [commentaryError, setCommentaryError] = useState<string>('');
+  const [isCommentaryVerbatim, setIsCommentaryVerbatim] = useState<boolean>(false);
 
   useEffect(() => {
     setSelectedCommentator('');
     setCommentaryText('');
     setCommentaryError('');
+    setIsCommentaryVerbatim(false);
   }, [activeLens, currentVerseRef, isRangeActive, selectedVerseRange]);
 
   const handleGenerateCommentary = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -189,6 +192,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     setSelectedCommentator(commentatorId);
     if (!commentatorId) {
       setCommentaryText('');
+      setIsCommentaryVerbatim(false);
       return;
     }
     
@@ -196,19 +200,42 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     const commentator = activeCommentators.find(c => c.id === commentatorId);
     if (!commentator) return;
     
-    const cacheKey = `berea_persona_v3_${currentBook}_${currentChapter}_${isRangeActive ? `${selectedVerseRange!.start}_${selectedVerseRange!.end}` : activeVerseNum}_${commentatorId}`;
+    const cacheKey = `berea_persona_v4_${currentBook}_${currentChapter}_${isRangeActive ? `${selectedVerseRange!.start}_${selectedVerseRange!.end}` : activeVerseNum}_${commentatorId}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       setCommentaryText(cached);
+      setIsCommentaryVerbatim(localStorage.getItem(`${cacheKey}_is_verbatim`) === 'true');
       return;
     }
 
     setIsCommentaryLoading(true);
     setCommentaryError('');
     setCommentaryText('');
-    setCommentaryProgress('');
+    setIsCommentaryVerbatim(false);
+    setCommentaryProgress('Searching verbatim historical database...');
 
     try {
+      // 1. Query public domain database for authentic historical commentary
+      const verbatim = await getVerbatimCommentary(
+        commentator.id,
+        commentator.name,
+        commentator.description,
+        commentator.century,
+        currentBook,
+        currentChapter,
+        isRangeActive ? selectedVerseRange!.start : activeVerseNum,
+        isRangeActive ? selectedVerseRange!.end : undefined
+      );
+
+      if (verbatim && verbatim.text) {
+        setCommentaryText(verbatim.text);
+        setIsCommentaryVerbatim(true);
+        localStorage.setItem(cacheKey, verbatim.text);
+        localStorage.setItem(`${cacheKey}_is_verbatim`, 'true');
+        return;
+      }
+
+      // 2. Fall back to AI historical synthesis if verse is not covered in primary source
       const denomName = DENOMINATIONS.find(d => d.id === activeLens)?.name || activeLens;
       const result = await generateHistoricalCommentary(
         insight.passageRef,
@@ -218,7 +245,9 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         (progress) => setCommentaryProgress(progress.text)
       );
       setCommentaryText(result);
+      setIsCommentaryVerbatim(false);
       localStorage.setItem(cacheKey, result);
+      localStorage.setItem(`${cacheKey}_is_verbatim`, 'false');
     } catch (err: any) {
       setCommentaryError(err.message || 'Failed to generate commentary.');
     } finally {
@@ -1517,13 +1546,27 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
               {!isCommentaryLoading && commentaryText && (
                 <div className="mt-2 space-y-2">
-                  <div className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs">
-                    <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#57524E]">
+                  <div className="flex items-center justify-between px-1">
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      isCommentaryVerbatim
+                        ? 'bg-[#EBF5EE] text-[#1E6B37] border border-[#CDE5D4]'
+                        : 'bg-[#FAF7F2] text-[#8B5E34] border border-[#E8DEC8]'
+                    }`}>
+                      {isCommentaryVerbatim ? '📜 Authentic Historical Text' : '✨ AI Contextual Exegesis'}
+                    </span>
+                    <span className="text-[9.5px] text-[#A8A29E]">
+                      {DENOMINATION_COMMENTATORS[activeLens]?.find(c => c.id === selectedCommentator)?.century}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs max-h-[380px] overflow-y-auto">
+                    <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#3D3834]">
                       <MarkdownTheologyRenderer content={commentaryText} />
                     </div>
                   </div>
                   <p className="text-[9px] text-[#A8A29E] italic text-center px-2">
-                    Direct historical quotes and citations from verified works.
+                    {isCommentaryVerbatim
+                      ? 'Direct verbatim text from published historical commentary.'
+                      : 'Direct historical quotes and citations from verified works.'}
                   </p>
                 </div>
               )}
