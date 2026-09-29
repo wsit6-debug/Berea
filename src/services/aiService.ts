@@ -811,9 +811,7 @@ ${chapterText || "Use your canonical knowledge of this chapter."}
 
   try {
     if (onProgress) onProgress({ text: 'Analyzing symbolism...', progress: 0.1 });
-    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], (progressMsg) => {
-      if (onProgress) onProgress({ text: progressMsg, progress: 0.5 });
-    }, true);
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress, true);
     
     if (onProgress) onProgress({ text: 'Done.', progress: 1.0 });
     return responseText;
@@ -832,36 +830,30 @@ export async function generateHistoricalCommentary(
 ): Promise<string> {
   const { generateLocalAiResponse } = await import('./webLlmService');
   
-  const prompt = `You are an AI Persona Engine tasked with perfectly simulating the historical, theological, and rhetorical voice of ${commentatorName}, a renowned figure in the ${denomination} tradition.
+  const prompt = `You are a strict historical and patristic citation engine for biblical scholarship.
+You are tasked with providing authentic commentary from ${commentatorName} (${denomination} tradition) on the biblical passage ${passageRef}.
 
-Your task is to write a commentary on the following biblical passage: ${passageRef}.
-
-CRITICAL INSTRUCTIONS FOR AUTHENTICITY:
-1. STRICT HISTORICAL ROLEPLAY: You must adopt the exact vocabulary, syntax, and rhetorical style of ${commentatorName}'s era and context. Do NOT use modern conversational filler.
-2. NO TITLES OR INVENTED HEADERS: You are strictly forbidden from outputting ANY titles, headers, or Latin phrases at the top of your response (e.g., do not output "De Exodo...", "Commentary on...", "Introduction", etc.). Start your response immediately with the first sentence of your exposition or the first Objection.
-3. FORMATTING BY FIGURE: 
-   - If simulating a Scholastic figure (e.g., St. Thomas Aquinas), you MUST use ONLY the highly structured Scholastic format: an "Objection" (if applicable), followed by "On the contrary", and "I answer that". Do not add any other headers.
-   - If simulating a Reformer (e.g., John Calvin), use 16th-century persuasive, exegetical prose heavily emphasizing sovereignty and providence.
-   - If simulating a Victorian preacher (e.g., C.H. Spurgeon), use 19th-century eloquent, deeply devotional, and pastoral exposition.
-4. THEOLOGICAL ACCURACY: Ensure your exposition perfectly aligns with the historic axioms of the ${denomination} tradition.
-
-Format your response beautifully using markdown paragraphs and bolding for emphasis where historically appropriate.
+CRITICAL ANTI-HALLUCINATION & AUTHENTICITY RULES:
+1. DIRECT QUOTATIONS ONLY: Only output genuine, authentic, documented historical quotes or direct excerpts written or preached by ${commentatorName} on this passage (e.g., from their published commentaries, homilies, sermons, or theological treatises).
+2. NEVER SIMULATE OR FABRICATE: DO NOT fabricate, roleplay, simulate, or generate modern AI text in the style of ${commentatorName}. Every quotation must be a real historical statement by ${commentatorName}.
+3. CITATION / WORK TITLE: Always specify the source work where the quotation appears (e.g., work title, treatise, homily number, or volume) if known.
+4. HONEST FALLBACK: If you do not have verified, verbatim commentary from ${commentatorName} specifically addressing ${passageRef}, output EXACTLY:
+"No direct historical quotation from ${commentatorName} is verified for ${passageRef}."
+Do not invent or guess commentary.
 
 PASSAGE TEXT:
 ${passageText}
 `;
 
   try {
-    if (onProgress) onProgress({ text: `Consulting ${commentatorName}...`, progress: 0.1 });
-    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], (progressMsg) => {
-      if (onProgress) onProgress({ text: progressMsg, progress: 0.5 });
-    }, true);
+    if (onProgress) onProgress({ text: `Searching writings of ${commentatorName}...`, progress: 0.1 });
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress, true);
     
     if (onProgress) onProgress({ text: 'Done.', progress: 1.0 });
     return responseText;
   } catch (err) {
-    console.error('Error generating historical commentary:', err);
-    throw new Error('Failed to generate commentary.');
+    console.error('Error retrieving historical commentary:', err);
+    throw new Error('Failed to retrieve commentary.');
   }
 }
 

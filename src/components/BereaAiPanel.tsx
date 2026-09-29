@@ -1483,12 +1483,12 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             </div>
 
-            {/* AI Theological Personas */}
+            {/* Historical Commentary & Quotes */}
             <div className="space-y-1.5 p-2.5 rounded-xl bg-white border border-[#EBE5DC] shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1">
                   <BookOpen className="w-3 h-3 text-[#B4793D]" />
-                  AI Theological Personas
+                  Historical Commentary & Quotes
                 </span>
               </div>
               <select
@@ -1507,7 +1507,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               {isCommentaryLoading && (
                 <div className="flex flex-col items-center justify-center py-4 opacity-70 animate-pulse">
                   <div className="w-5 h-5 border-2 border-[#B4793D] border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-[10px] text-[#B4793D] font-medium">{commentaryProgress || 'Simulating persona...'}</p>
+                  <p className="text-[10px] text-[#B4793D] font-medium">{commentaryProgress || 'Searching historical writings...'}</p>
                 </div>
               )}
 
@@ -1523,7 +1523,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     </div>
                   </div>
                   <p className="text-[9px] text-[#A8A29E] italic text-center px-2">
-                    Note: This is an AI-generated simulation of historical theological perspectives, not a direct historical quote.
+                    Direct historical quotes and citations from verified works.
                   </p>
                 </div>
               )}

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { generateChapterSymbolism } from '../services/aiService';
 import { getUserDenominationPreference, getDenominationLabel } from '../services/configService';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownTheologyRenderer } from './MarkdownTheologyRenderer';
 
 interface ChapterSymbolismPanelProps {
   book: string;
@@ -94,9 +93,7 @@ const ChapterSymbolismPanel: React.FC<ChapterSymbolismPanelProps> = ({ book, cha
         </div>
       ) : (
         <div className="prose prose-invert prose-slate prose-sm max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {symbolismText}
-          </ReactMarkdown>
+          <MarkdownTheologyRenderer content={symbolismText} />
         </div>
       )}
     </div>
