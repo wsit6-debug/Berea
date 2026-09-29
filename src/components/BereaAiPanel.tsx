@@ -6,7 +6,7 @@ import {
   Plus, Minus, CheckCircle2, Feather
 } from 'lucide-react';
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight, DENOMINATION_COMMENTATORS } from '../data/theologyData';
-import { getVerbatimCommentary } from '../services/commentaryDatabaseService';
+import { getVerbatimCommentary, summarizeCommentaryText } from '../services/commentaryDatabaseService';
 import { ChapterSymbolismPanel } from './ChapterSymbolismPanel';
 import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent, calculateDistanceMiles, getShortPlaceName } from '../data/geoData';
@@ -695,10 +695,26 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [commentaryError, setCommentaryError] = useState<string>('');
   const [isCommentaryVerbatim, setIsCommentaryVerbatim] = useState<boolean>(false);
   const [commentaryProgress, setCommentaryProgress] = useState<string>('');
+  const [showFullCommentary, setShowFullCommentary] = useState<boolean>(false);
+
+  const selectedCommentatorObj = useMemo(() => {
+    return (DENOMINATION_COMMENTATORS[activeLens] || []).find(c => c.id === selectedCommentator);
+  }, [activeLens, selectedCommentator]);
+
+  const isCommentaryLong = commentaryText.length > 500;
+  const commentarySummary = useMemo(() => {
+    if (!isCommentaryLong || !commentaryText) return '';
+    return summarizeCommentaryText(commentaryText, selectedCommentatorObj?.name);
+  }, [commentaryText, isCommentaryLong, selectedCommentatorObj]);
+
+  const commentaryWordCount = useMemo(() => {
+    return commentaryText ? commentaryText.trim().split(/\s+/).length : 0;
+  }, [commentaryText]);
 
   const handleGenerateCommentary = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const commentatorId = e.target.value;
     setSelectedCommentator(commentatorId);
+    setShowFullCommentary(false);
     if (!commentatorId) {
       setCommentaryText('');
       setIsCommentaryVerbatim(false);
@@ -2249,15 +2265,100 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     }`}>
                       {isCommentaryVerbatim ? '📜 Authentic Historical Text' : '✨ AI Contextual Exegesis'}
                     </span>
-                    <span className="text-[9.5px] text-[#A8A29E]">
-                      {DENOMINATION_COMMENTATORS[activeLens]?.find(c => c.id === selectedCommentator)?.century}
-                    </span>
-                  </div>
-                  <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs max-h-[380px] overflow-y-auto">
-                    <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#3D3834]">
-                      <MarkdownTheologyRenderer content={commentaryText} />
+                    <div className="flex items-center gap-1.5">
+                      {isCommentaryLong && (
+                        <div className="flex items-center bg-[#F3EFEA] p-0.5 rounded-md border border-[#EBE5DC]">
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(false)}
+                            className={`text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors ${
+                              !showFullCommentary
+                                ? 'bg-white text-[#8C5E2E] shadow-2xs font-semibold'
+                                : 'text-[#78716C] hover:text-[#26221F]'
+                            }`}
+                          >
+                            Summary
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(true)}
+                            className={`text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors ${
+                              showFullCommentary
+                                ? 'bg-white text-[#8C5E2E] shadow-2xs font-semibold'
+                                : 'text-[#78716C] hover:text-[#26221F]'
+                            }`}
+                          >
+                            Full Statement
+                          </button>
+                        </div>
+                      )}
+                      <span className="text-[9.5px] text-[#A8A29E]">
+                        {selectedCommentatorObj?.century}
+                      </span>
                     </div>
                   </div>
+
+                  {isCommentaryLong && !showFullCommentary ? (
+                    <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs space-y-2">
+                      <div className="flex items-center gap-1.5 pb-1.5 border-b border-[#EBE5DC]/70">
+                        <Sparkles className="w-3.5 h-3.5 text-[#B4793D]" />
+                        <span className="text-[10.5px] font-bold text-[#8C5E2E] uppercase tracking-wider">
+                          Executive Summary
+                        </span>
+                        <span className="text-[9.5px] text-[#A8A29E] ml-auto">
+                          {commentaryWordCount} words unabridged
+                        </span>
+                      </div>
+                      <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#3D3834]">
+                        <MarkdownTheologyRenderer content={commentarySummary} />
+                      </div>
+                      <div className="mt-2.5 pt-2 border-t border-[#EBE5DC]/70 flex items-center justify-between">
+                        <span className="text-[10px] text-[#78716C]">
+                          Want the complete commentary?
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowFullCommentary(true)}
+                          className="text-[11px] font-bold text-[#B4793D] hover:text-[#8C5E2E] flex items-center gap-1 hover:underline transition-colors cursor-pointer"
+                        >
+                          <span>Read Full Statement ({commentaryWordCount} words)</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs max-h-[380px] overflow-y-auto">
+                      {isCommentaryLong && (
+                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-[#EBE5DC]/70">
+                          <span className="text-[10px] font-semibold text-[#78716C]">
+                            Full Unabridged Statement ({commentaryWordCount} words)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(false)}
+                            className="text-[10.5px] font-bold text-[#B4793D] hover:underline flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <span>← Show Summary</span>
+                          </button>
+                        </div>
+                      )}
+                      <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#3D3834]">
+                        <MarkdownTheologyRenderer content={commentaryText} />
+                      </div>
+                      {isCommentaryLong && (
+                        <div className="mt-3 pt-2 border-t border-[#EBE5DC]/70 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(false)}
+                            className="text-[10.5px] font-semibold text-[#B4793D] hover:underline flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <span>↑ Back to Summary</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-[9px] text-[#A8A29E] italic text-center px-2">
                     {isCommentaryVerbatim
                       ? 'Direct verbatim text from published historical commentary.'

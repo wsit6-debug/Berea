@@ -171,3 +171,53 @@ export async function getVerbatimCommentary(
     isAuthenticVerbatim: true
   };
 }
+
+/**
+ * Generates an executive summary of lengthy commentary text.
+ * Extracts the central thesis and key doctrinal/narrative takeaways.
+ */
+export function summarizeCommentaryText(text: string, commentatorName?: string): string {
+  if (!text) return '';
+  const clean = text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const sentences = clean.split(/(?<=[.!?])\s+/);
+
+  if (sentences.length <= 3) {
+    return clean;
+  }
+
+  // 1. Lead / Thesis
+  const lead = sentences.slice(0, 2).join(' ');
+
+  // 2. Key takeaways: look for sentences with strong indicators
+  const bullets: string[] = [];
+  const markers = [
+    'observe', 'notice', 'we have', 'here', 'first', 'secondly', 'thirdly',
+    'therefore', 'thus', 'christ', 'faith', 'grace', 'god', 'this teaches',
+    'the apostle', 'the prophet', 'the lord'
+  ];
+
+  for (let i = 2; i < sentences.length; i++) {
+    const s = sentences[i].trim();
+    if (s.length >= 35 && s.length <= 260) {
+      const lower = s.toLowerCase();
+      if (markers.some(m => lower.startsWith(m) || lower.includes(` ${m} `))) {
+        bullets.push(s);
+        if (bullets.length >= 3) break;
+      }
+    }
+  }
+
+  // Fallback if not enough marked sentences found
+  if (bullets.length < 2) {
+    const step = Math.max(1, Math.floor((sentences.length - 2) / 3));
+    for (let i = 2; i < sentences.length && bullets.length < 3; i += step) {
+      const s = sentences[i].trim();
+      if (s.length >= 30) {
+        bullets.push(s.length > 250 ? s.slice(0, 247) + '...' : s);
+      }
+    }
+  }
+
+  const authorPrefix = commentatorName ? `${commentatorName}'s ` : '';
+  return `**${authorPrefix}Core Insight:** ${lead}\n\n**Key Takeaways:**\n${bullets.map(b => `- ${b}`).join('\n')}`;
+}
