@@ -2541,6 +2541,666 @@ export function formatBookDisplayName(raw: string): string {
     .join(' ');
 }
 
+const OT_BOOKS = new Set([
+  'genesis', 'exodus', 'leviticus', 'numbers', 'deuteronomy',
+  'joshua', 'judges', 'ruth', '1samuel', '2samuel', '1kings', '2kings',
+  '1chronicles', '2chronicles', 'ezra', 'nehemiah', 'tobit', 'judith', 'esther',
+  '1maccabees', '2maccabees', 'job', 'psalms', 'psalm', 'proverbs',
+  'ecclesiastes', 'songofsolomon', 'songofsongs', 'wisdom', 'sirach',
+  'isaiah', 'jeremiah', 'lamentations', 'baruch', 'ezekiel', 'daniel',
+  'hosea', 'joel', 'amos', 'obadiah', 'jonah', 'micah', 'nahum',
+  'habakkuk', 'zephaniah', 'haggai', 'zechariah', 'malachi'
+]);
+
+interface LexiconEntry {
+  patterns: RegExp;
+  term: string;
+  originalScript: string;
+  transliteration: string;
+  strongsRef: string;
+  nuance: string;
+}
+
+const HEBREW_LEXICON: LexiconEntry[] = [
+  {
+    patterns: /\b(expanse|firmament|vault|canopy)\b/i,
+    term: 'Expanse (Firmament)',
+    originalScript: 'רָקִיעַ',
+    transliteration: 'Raqia',
+    strongsRef: 'H7549',
+    nuance: 'The celestial vault or expanse separating waters, designated by God as sky.'
+  },
+  {
+    patterns: /\b(heaven|heavens|sky|skies)\b/i,
+    term: 'Heavens / Sky',
+    originalScript: 'שָׁמַיִם',
+    transliteration: 'Shamayim',
+    strongsRef: 'H8064',
+    nuance: 'The overarching celestial canopy and sphere of God’s majestic presence.'
+  },
+  {
+    patterns: /\b(created?|creates?|creating|creator)\b/i,
+    term: 'Created',
+    originalScript: 'בָּרָא',
+    transliteration: 'Bara',
+    strongsRef: 'H1254',
+    nuance: 'Exclusively divine activity of initiating completely novel reality ex nihilo.'
+  },
+  {
+    patterns: /\b(beginning|commence|origin)\b/i,
+    term: 'In the Beginning',
+    originalScript: 'בְּרֵאשִׁית',
+    transliteration: 'Bereshit',
+    strongsRef: 'H7225',
+    nuance: 'The initial absolute commencement of time, space, and cosmic order.'
+  },
+  {
+    patterns: /\b(god|god's|gods)\b/i,
+    term: 'God',
+    originalScript: 'אֱלֹהִים',
+    transliteration: 'Elohim',
+    strongsRef: 'H430',
+    nuance: 'The transcendent Almighty Creator, sovereign ruler over the cosmos.'
+  },
+  {
+    patterns: /\b(lord|yahweh|jehovah)\b/i,
+    term: 'LORD (Yahweh)',
+    originalScript: 'יהוה',
+    transliteration: 'YHWH',
+    strongsRef: 'H3068',
+    nuance: 'The covenant self-revelation: the eternal, self-existent, faithful I AM.'
+  },
+  {
+    patterns: /\b(spirit|breath|wind|hovering)\b/i,
+    term: 'Spirit / Breath',
+    originalScript: 'רוּחַ',
+    transliteration: 'Ruach',
+    strongsRef: 'H7307',
+    nuance: 'The divine breath, wind, or vitalizing presence of God bringing life and order.'
+  },
+  {
+    patterns: /\b(light|shine|shining|illumine)\b/i,
+    term: 'Light',
+    originalScript: 'אוֹר',
+    transliteration: 'Or',
+    strongsRef: 'H216',
+    nuance: 'Primordial illumination and divine order dispelling chaos and formlessness.'
+  },
+  {
+    patterns: /\b(darkness|dark|obscurity|night)\b/i,
+    term: 'Darkness',
+    originalScript: 'חֹשֶׁךְ',
+    transliteration: 'Choshech',
+    strongsRef: 'H2822',
+    nuance: 'Primordial obscurity and formlessness transformed by divine decree.'
+  },
+  {
+    patterns: /\b(water|waters|sea|seas|ocean|deep)\b/i,
+    term: 'Waters',
+    originalScript: 'מַיִם',
+    transliteration: 'Mayim',
+    strongsRef: 'H4325',
+    nuance: 'The cosmic deep and vital source of physical nourishment governed by God.'
+  },
+  {
+    patterns: /\b(earth|land|ground|soil)\b/i,
+    term: 'Earth / Land',
+    originalScript: 'אֶרֶץ',
+    transliteration: 'Eretz',
+    strongsRef: 'H776',
+    nuance: 'The dry land, material world, and habitable sphere given to humanity.'
+  },
+  {
+    patterns: /\b(day|days|morning|evening)\b/i,
+    term: 'Day',
+    originalScript: 'יוֹם',
+    transliteration: 'Yom',
+    strongsRef: 'H3117',
+    nuance: 'An appointed period, epoch, or cyclical division of light and darkness.'
+  },
+  {
+    patterns: /\b(good|pleasing|delight)\b/i,
+    term: 'Good',
+    originalScript: 'טוֹב',
+    transliteration: 'Tov',
+    strongsRef: 'H2896',
+    nuance: 'Intrinsically pleasing, wholesome, harmonious, and fulfilling divine purpose.'
+  },
+  {
+    patterns: /\b(covenant|treaty|promise)\b/i,
+    term: 'Covenant',
+    originalScript: 'בְּרִית',
+    transliteration: 'Berit',
+    strongsRef: 'H1285',
+    nuance: 'A solemn, binding treaty of grace and allegiance established by God.'
+  },
+  {
+    patterns: /\b(mercy|steadfast love|lovingkindness|kindness|unfailing love)\b/i,
+    term: 'Steadfast Love (Hesed)',
+    originalScript: 'חֶסֶד',
+    transliteration: 'Hesed',
+    strongsRef: 'H2617',
+    nuance: 'Unfailing covenant loyalty, steadfast mercy, and eternal benevolence.'
+  },
+  {
+    patterns: /\b(peace|wholeness|welfare|rest)\b/i,
+    term: 'Peace (Shalom)',
+    originalScript: 'שָׁלוֹם',
+    transliteration: 'Shalom',
+    strongsRef: 'H7965',
+    nuance: 'Holistic flourishing, restorative completeness, reconciliation, and quiet rest in God.'
+  },
+  {
+    patterns: /\b(holy|holiness|sanctify|consecrate)\b/i,
+    term: 'Holy',
+    originalScript: 'קָדוֹשׁ',
+    transliteration: 'Qadosh',
+    strongsRef: 'H6918',
+    nuance: 'Utterly set apart, transcendent, uncontaminated divine perfection.'
+  },
+  {
+    patterns: /\b(righteous|righteousness|just|justice)\b/i,
+    term: 'Righteousness',
+    originalScript: 'צֶדֶק',
+    transliteration: 'Tzedek',
+    strongsRef: 'H6664',
+    nuance: 'Moral uprightness, divine equity, and conformity to God’s holy standard.'
+  },
+  {
+    patterns: /\b(faith|faithful|faithfulness|trust)\b/i,
+    term: 'Faithfulness / Trust',
+    originalScript: 'אֱמוּנָה',
+    transliteration: 'Emunah',
+    strongsRef: 'H530',
+    nuance: 'Steadfast fidelity, moral stability, and unswerving reliance upon God.'
+  },
+  {
+    patterns: /\b(shepherd|pastor|feed|flock)\b/i,
+    term: 'Shepherd',
+    originalScript: 'רֹעֶה',
+    transliteration: 'Roeh',
+    strongsRef: 'H7462',
+    nuance: 'Covenant keeper who guides, feeds, shields, and restores His flock.'
+  },
+  {
+    patterns: /\b(word|words|spoke|spoken|command)\b/i,
+    term: 'Word / Decree',
+    originalScript: 'דָּבָר',
+    transliteration: 'Dabar',
+    strongsRef: 'H1697',
+    nuance: 'Living divine speech, prophetic declaration, and dynamic cosmic decree.'
+  },
+  {
+    patterns: /\b(law|statute|commandment|torah)\b/i,
+    term: 'Law (Torah)',
+    originalScript: 'תּוֹרָה',
+    transliteration: 'Torah',
+    strongsRef: 'H8451',
+    nuance: 'Divine instruction, fatherly guidance, and revelation of covenant righteousness.'
+  },
+  {
+    patterns: /\b(bless|blessed|blessing)\b/i,
+    term: 'Bless',
+    originalScript: 'בָּרַךְ',
+    transliteration: 'Barakh',
+    strongsRef: 'H1288',
+    nuance: 'To endue with divine favor, fruitful proliferation, and prosperity.'
+  },
+  {
+    patterns: /\b(man|mankind|human|humanity|adam)\b/i,
+    term: 'Mankind (Adam)',
+    originalScript: 'אָדָם',
+    transliteration: 'Adam',
+    strongsRef: 'H120',
+    nuance: 'Humanity fashioned in the image of God as stewards of creation.'
+  },
+  {
+    patterns: /\b(called|calls?|calling|named?)\b/i,
+    term: 'Called / Named',
+    originalScript: 'קָרָא',
+    transliteration: 'Qara',
+    strongsRef: 'H7121',
+    nuance: 'To summon, designate by name, or proclaim identity by divine decree.'
+  },
+  {
+    patterns: /\b(evening|twilight|dusk)\b/i,
+    term: 'Evening',
+    originalScript: 'עֶרֶב',
+    transliteration: 'Erev',
+    strongsRef: 'H6153',
+    nuance: 'Sunset, dusk, the close of daylight marking the threshold of night.'
+  },
+  {
+    patterns: /\b(morning|dawn|daybreak)\b/i,
+    term: 'Morning',
+    originalScript: 'בֹּקֶר',
+    transliteration: 'Boqer',
+    strongsRef: 'H1242',
+    nuance: 'Dawn, morning light inaugurating purposeful activity.'
+  },
+  {
+    patterns: /\b(second)\b/i,
+    term: 'Second',
+    originalScript: 'שֵׁנִי',
+    transliteration: 'Sheni',
+    strongsRef: 'H8145',
+    nuance: 'The second ordinal sequence in divine cosmic structure.'
+  },
+  {
+    patterns: /\b(third)\b/i,
+    term: 'Third',
+    originalScript: 'שְׁלִישִׁי',
+    transliteration: 'Shelishi',
+    strongsRef: 'H7992',
+    nuance: 'The third sequence in divine creative succession.'
+  },
+  {
+    patterns: /\b(fourth)\b/i,
+    term: 'Fourth',
+    originalScript: 'רְבִיעִי',
+    transliteration: 'Revii',
+    strongsRef: 'H7243',
+    nuance: 'The fourth sequence in divine order.'
+  },
+  {
+    patterns: /\b(fifth)\b/i,
+    term: 'Fifth',
+    originalScript: 'חֲמִישִׁי',
+    transliteration: 'Chamishi',
+    strongsRef: 'H2549',
+    nuance: 'The fifth sequence in divine order.'
+  },
+  {
+    patterns: /\b(sixth)\b/i,
+    term: 'Sixth',
+    originalScript: 'שִׁשִּׁי',
+    transliteration: 'Shishi',
+    strongsRef: 'H8345',
+    nuance: 'The sixth sequence marking the creation of humanity.'
+  },
+  {
+    patterns: /\b(seventh|sabbath)\b/i,
+    term: 'Seventh / Rest',
+    originalScript: 'שְׁבִיעִי',
+    transliteration: 'Shevii',
+    strongsRef: 'H7637',
+    nuance: 'The sacred seventh period of completion and rest.'
+  },
+  {
+    patterns: /\b(said|spoke|saying)\b/i,
+    term: 'Said / Spoke',
+    originalScript: 'אָמַר',
+    transliteration: 'Amar',
+    strongsRef: 'H559',
+    nuance: 'To utter an authoritative creative decree or revelation.'
+  },
+  {
+    patterns: /\b(saw|seen?|behold|look)\b/i,
+    term: 'Saw / Observed',
+    originalScript: 'רָאָה',
+    transliteration: 'Raah',
+    strongsRef: 'H7200',
+    nuance: 'To observe, inspect, and evaluate with divine approval.'
+  },
+  {
+    patterns: /\b(divided?|separat(e|ed|ing))\b/i,
+    term: 'Divided / Separated',
+    originalScript: 'בָּדַל',
+    transliteration: 'Badal',
+    strongsRef: 'H914',
+    nuance: 'To establish an intentional boundary or distinction between realms.'
+  },
+  {
+    patterns: /\b(made|makes?|making|fashioned?)\b/i,
+    term: 'Made',
+    originalScript: 'עָשָׂה',
+    transliteration: 'Asah',
+    strongsRef: 'H6213',
+    nuance: 'To fashion, execute, or bring about into concrete form.'
+  },
+  {
+    patterns: /\b(heart|hearts|inner)\b/i,
+    term: 'Heart',
+    originalScript: 'לֵבָב',
+    transliteration: 'Levav',
+    strongsRef: 'H3824',
+    nuance: 'The inner person, seat of thought, affection, and moral decision.'
+  },
+  {
+    patterns: /\b(soul|life|breath)\b/i,
+    term: 'Soul / Life',
+    originalScript: 'נֶפֶשׁ',
+    transliteration: 'Nephesh',
+    strongsRef: 'H5315',
+    nuance: 'Living sentient being, vital personal existence animated by God.'
+  },
+  {
+    patterns: /\b(voice|voices|sound)\b/i,
+    term: 'Voice',
+    originalScript: 'קוֹל',
+    transliteration: 'Qol',
+    strongsRef: 'H6963',
+    nuance: 'Audible utterance, sound of proclamation, or divine declaration.'
+  },
+  {
+    patterns: /\b(walk(ed|ing|s)?)\b/i,
+    term: 'Walk',
+    originalScript: 'הָלַךְ',
+    transliteration: 'Halakh',
+    strongsRef: 'H1980',
+    nuance: 'To conduct one’s life, journey faithfully in covenant with God.'
+  },
+  {
+    patterns: /\b(know|known|knowledge|knew)\b/i,
+    term: 'Know',
+    originalScript: 'יָדַע',
+    transliteration: 'Yada',
+    strongsRef: 'H3045',
+    nuance: 'Intimate experiential relationship and understanding.'
+  },
+  {
+    patterns: /\b(hear|listened?|hearken|obey)\b/i,
+    term: 'Hear / Listen',
+    originalScript: 'שָׁמַע',
+    transliteration: 'Shama',
+    strongsRef: 'H8085',
+    nuance: 'To hear attentively and respond in faithful obedience (Shema).'
+  }
+];
+
+const GREEK_LEXICON: LexiconEntry[] = [
+  {
+    patterns: /\b(word|words|message|logos)\b/i,
+    term: 'Word (Logos)',
+    originalScript: 'λόγος',
+    transliteration: 'Logos',
+    strongsRef: 'G3056',
+    nuance: 'The divine wisdom, rational order, and eternal Son through whom all things were made.'
+  },
+  {
+    patterns: /\b(grace|favor|gift)\b/i,
+    term: 'Grace (Charis)',
+    originalScript: 'χάρις',
+    transliteration: 'Charis',
+    strongsRef: 'G5485',
+    nuance: 'Unmerited divine favor, saving gift, and supernatural empowerment.'
+  },
+  {
+    patterns: /\b(faith|believe|believed|believing|trust)\b/i,
+    term: 'Faith (Pistis)',
+    originalScript: 'πίστις',
+    transliteration: 'Pistis',
+    strongsRef: 'G4102',
+    nuance: 'Deep personal allegiance, unwavering trust, and full-bodied reliance upon Jesus Christ.'
+  },
+  {
+    patterns: /\b(love|charity|beloved)\b/i,
+    term: 'Love (Agape)',
+    originalScript: 'ἀγάπη',
+    transliteration: 'Agape',
+    strongsRef: 'G26',
+    nuance: 'Self-emptying, sacrificial, unconquerable divine benevolence.'
+  },
+  {
+    patterns: /\b(spirit|holy spirit|ghost|wind|breath)\b/i,
+    term: 'Spirit (Pneuma)',
+    originalScript: 'πνεῦμα',
+    transliteration: 'Pneuma',
+    strongsRef: 'G4151',
+    nuance: 'The Holy Spirit, divine breath, invisible yet sovereign power renewing the soul.'
+  },
+  {
+    patterns: /\b(life|alive|eternal life|live)\b/i,
+    term: 'Life (Zoe)',
+    originalScript: 'ζωή',
+    transliteration: 'Zoe',
+    strongsRef: 'G2222',
+    nuance: 'The uncreated, eternal, indestructible life of God communicated to believers.'
+  },
+  {
+    patterns: /\b(light|shine|enlighten)\b/i,
+    term: 'Light (Phos)',
+    originalScript: 'φῶς',
+    transliteration: 'Phos',
+    strongsRef: 'G5457',
+    nuance: 'Divine radiance, revelation of truth, and purity overcoming all darkness.'
+  },
+  {
+    patterns: /\b(glory|glorify|glorious|honor)\b/i,
+    term: 'Glory (Doxa)',
+    originalScript: 'δόξα',
+    transliteration: 'Doxa',
+    strongsRef: 'G1391',
+    nuance: 'The visible manifestation of God’s majesty, splendor, and infinite weight of honor.'
+  },
+  {
+    patterns: /\b(peace|reconciliation|quietness)\b/i,
+    term: 'Peace (Eirene)',
+    originalScript: 'εἰρήνη',
+    transliteration: 'Eirene',
+    strongsRef: 'G1515',
+    nuance: 'The tranquil harmony of reconciliation with God through the blood of the cross.'
+  },
+  {
+    patterns: /\b(save|saved|salvation|savior)\b/i,
+    term: 'Salvation (Soteria)',
+    originalScript: 'σωτηρία',
+    transliteration: 'Soteria',
+    strongsRef: 'G4991',
+    nuance: 'Comprehensive deliverance from sin, judgment, and death into fullness of life.'
+  },
+  {
+    patterns: /\b(righteous|righteousness|just|justified|justification)\b/i,
+    term: 'Righteousness (Dikaiosyne)',
+    originalScript: 'δικαιοσύνη',
+    transliteration: 'Dikaiosyne',
+    strongsRef: 'G1343',
+    nuance: 'Right relationship with God, covenant vindication, and holy ethical conduct.'
+  },
+  {
+    patterns: /\b(gospel|good news|preach)\b/i,
+    term: 'Gospel (Euangelion)',
+    originalScript: 'εὐαγγέλιον',
+    transliteration: 'Euangelion',
+    strongsRef: 'G2098',
+    nuance: 'The herald’s royal proclamation of the victory and reign of King Jesus.'
+  },
+  {
+    patterns: /\b(hope|expectation)\b/i,
+    term: 'Hope (Elpis)',
+    originalScript: 'ἐλπίς',
+    transliteration: 'Elpis',
+    strongsRef: 'G1680',
+    nuance: 'Confident, joyful expectation anchored in the resurrection and promises of God.'
+  },
+  {
+    patterns: /\b(church|assembly|congregation)\b/i,
+    term: 'Church (Ekklesia)',
+    originalScript: 'ἐκκλησία',
+    transliteration: 'Ekklesia',
+    strongsRef: 'G1577',
+    nuance: 'The called-out covenant assembly of the saints gathered in Christ.'
+  },
+  {
+    patterns: /\b(resurrection|raised|rise)\b/i,
+    term: 'Resurrection (Anastasis)',
+    originalScript: 'ἀνάστασις',
+    transliteration: 'Anastasis',
+    strongsRef: 'G386',
+    nuance: 'Bodily rising from the dead, inaugurating God’s new creation.'
+  },
+  {
+    patterns: /\b(baptism|baptize|baptized)\b/i,
+    term: 'Baptism (Baptisma)',
+    originalScript: 'βάπτισμα',
+    transliteration: 'Baptisma',
+    strongsRef: 'G908',
+    nuance: 'Sacramental immersion and burial with Christ into newness of life.'
+  },
+  {
+    patterns: /\b(truth|true)\b/i,
+    term: 'Truth (Aletheia)',
+    originalScript: 'ἀλήθεια',
+    transliteration: 'Aletheia',
+    strongsRef: 'G225',
+    nuance: 'Unconcealed divine reality revealed definitively in Jesus Christ.'
+  },
+  {
+    patterns: /\b(god|father)\b/i,
+    term: 'God (Theos)',
+    originalScript: 'θεός',
+    transliteration: 'Theos',
+    strongsRef: 'G2316',
+    nuance: 'The one true Triune God, Father of our Lord Jesus Christ.'
+  },
+  {
+    patterns: /\b(lord|master)\b/i,
+    term: 'Lord (Kyrios)',
+    originalScript: 'κύριος',
+    transliteration: 'Kyrios',
+    strongsRef: 'G2962',
+    nuance: 'Sovereign master and ruler over heaven and earth, applied to Jesus as Yahweh in the flesh.'
+  },
+  {
+    patterns: /\b(christ|messiah|jesus)\b/i,
+    term: 'Christ (Christos)',
+    originalScript: 'χριστός',
+    transliteration: 'Christos',
+    strongsRef: 'G5547',
+    nuance: 'The Anointed Messiah who fulfills the promises made to Israel.'
+  },
+  {
+    patterns: /\b(holy|saints|sanctified)\b/i,
+    term: 'Holy (Hagios)',
+    originalScript: 'ἅγιος',
+    transliteration: 'Hagios',
+    strongsRef: 'G40',
+    nuance: 'Set apart from the profane, consecrated exclusively to God’s service.'
+  },
+  {
+    patterns: /\b(sin|sins|sinful|sinned)\b/i,
+    term: 'Sin (Hamartia)',
+    originalScript: 'ἁμαρτία',
+    transliteration: 'Hamartia',
+    strongsRef: 'G266',
+    nuance: 'Missing the mark of divine holiness, rebellion and alienation from God.'
+  },
+  {
+    patterns: /\b(pray|prayed|prayers?|petition)\b/i,
+    term: 'Prayer (Proseuche)',
+    originalScript: 'προσευχή',
+    transliteration: 'Proseuche',
+    strongsRef: 'G4335',
+    nuance: 'Reverent communion, thanksgiving, and supplication offered to God.'
+  },
+  {
+    patterns: /\b(blood|cross|crucif\w*)\b/i,
+    term: 'Blood (Haima)',
+    originalScript: 'αἷμα',
+    transliteration: 'Haima',
+    strongsRef: 'G129',
+    nuance: 'The atoning sacrificial life of Christ poured out on the cross for redemption.'
+  },
+  {
+    patterns: /\b(flesh)\b/i,
+    term: 'Flesh (Sarx)',
+    originalScript: 'σάρξ',
+    transliteration: 'Sarx',
+    strongsRef: 'G4561',
+    nuance: 'Human physical existence, creatureliness, or natural human weakness.'
+  },
+  {
+    patterns: /\b(kingdom|reign)\b/i,
+    term: 'Kingdom (Basileia)',
+    originalScript: 'βασιλεία',
+    transliteration: 'Basileia',
+    strongsRef: 'G932',
+    nuance: 'The royal sovereign reign of God breaking into history through Jesus.'
+  },
+  {
+    patterns: /\b(disciple|disciples|follow\w*)\b/i,
+    term: 'Disciple (Mathetes)',
+    originalScript: 'μαθητής',
+    transliteration: 'Mathetes',
+    strongsRef: 'G3101',
+    nuance: 'Devoted student and pupil apprenticed wholeheartedly to Christ.'
+  },
+  {
+    patterns: /\b(repent|repentance|repented)\b/i,
+    term: 'Repentance (Metanoia)',
+    originalScript: 'μετάνοια',
+    transliteration: 'Metanoia',
+    strongsRef: 'G3341',
+    nuance: 'Radical conversion of heart and mind turning away from sin toward God.'
+  },
+  {
+    patterns: /\b(commandment|commandments|commanded?)\b/i,
+    term: 'Commandment (Entole)',
+    originalScript: 'ἐντολή',
+    transliteration: 'Entole',
+    strongsRef: 'G1785',
+    nuance: 'A binding divine charge, law of love, or moral ordinance.'
+  }
+];
+
+function resolveOriginalLanguageLemmas(
+  normBook: string,
+  chapter: number,
+  verseNum: number,
+  verseText: string,
+  cleanPassageRef: string,
+  verseLemmas?: { word: string; transliteration: string; strongs?: string; definition?: string }[]
+): { term: string; originalScript: string; transliteration: string; strongsRef: string; nuance: string }[] {
+  const lower = (verseText || '').toLowerCase().trim();
+  if (!lower) return [];
+
+  // 1. If explicit curated lemmas were passed in, ONLY keep those whose word is in the line
+  if (verseLemmas && verseLemmas.length > 0) {
+    const verified = verseLemmas.filter(l => {
+      const w = l.word.toLowerCase().replace(/[^a-z]/g, '');
+      const t = (l.transliteration || '').toLowerCase().replace(/[^a-z]/g, '');
+      const d = (l.definition || '').toLowerCase();
+      if (w.length >= 3 && new RegExp(`\\b${w}\\b`, 'i').test(lower)) return true;
+      if (t.length >= 3 && new RegExp(`\\b${t}\\b`, 'i').test(lower)) return true;
+      const defWords = d.split(/[\s,.;:]+/).filter(x => x.length >= 4);
+      return defWords.some(dw => new RegExp(`\\b${dw}\\b`, 'i').test(lower));
+    });
+
+    if (verified.length > 0) {
+      return verified.slice(0, 3).map(l => ({
+        term: l.word,
+        originalScript: l.word,
+        transliteration: l.transliteration || l.word,
+        strongsRef: l.strongs || '',
+        nuance: l.definition || `Key linguistic root in ${cleanPassageRef} illuminating divine meaning.`
+      }));
+    }
+  }
+
+  // 2. Scan verse text against authentic Hebrew/Greek lexicon
+  // STRICT RULE: ONLY include terms whose pattern explicitly matches words actually present in the selected line!
+  const isOT = OT_BOOKS.has(normBook.replace(/\s+/g, ''));
+  const lexicon = isOT ? HEBREW_LEXICON : GREEK_LEXICON;
+
+  const matches: { term: string; originalScript: string; transliteration: string; strongsRef: string; nuance: string }[] = [];
+  for (const item of lexicon) {
+    if (item.patterns.test(lower)) {
+      matches.push({
+        term: item.term,
+        originalScript: item.originalScript,
+        transliteration: item.transliteration,
+        strongsRef: item.strongsRef,
+        nuance: item.nuance
+      });
+      if (matches.length >= 3) break;
+    }
+  }
+
+  // STRICT REQUIREMENT: Only return words that are actually in the selected line.
+  // Never fall back to another verse's words or random general roots.
+  return matches;
+}
+
 /**
  * Intelligent, dynamic theological insight resolver for ANY verse clicked in Scripture.
  * Uses a Canonical & Thematic Theological Loci Classifier to provide deep confessional
@@ -2570,9 +3230,25 @@ export function getTheologicalInsight(
   // 1. Direct exact key match for curated flagship verses
   if (THEOLOGICAL_INSIGHTS[exactKey]) {
     const base = THEOLOGICAL_INSIGHTS[exactKey];
+    // STRICT RULE: If verseText is provided, verify that the curated originalLanguageInsights
+    // actually correspond to words appearing in the selected line.
+    let verifiedLemmas = base.originalLanguageInsights;
+    if (verseText && verseText.trim()) {
+      const lower = verseText.toLowerCase();
+      verifiedLemmas = base.originalLanguageInsights.filter(l => {
+        const cleanTerm = l.term.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+        const parts = cleanTerm.split(/[\s/]+/).filter(p => p.length >= 3);
+        return parts.some(p => new RegExp(`\\b${p}\\b`, 'i').test(lower));
+      });
+      // If none of the curated lemmas appear in this translation's line, resolve from line text
+      if (verifiedLemmas.length === 0) {
+        verifiedLemmas = resolveOriginalLanguageLemmas(normBook, chapter, vNum, verseText, cleanPassageRef, verseLemmas);
+      }
+    }
     return {
       ...base,
-      passageRef: cleanPassageRef
+      passageRef: cleanPassageRef,
+      originalLanguageInsights: verifiedLemmas
     };
   }
 
@@ -2978,17 +3654,14 @@ export function getTheologicalInsight(
   }
 
   // 3. General Fallback with Contextual Canonical Wisdom
-  // STRICT ZERO-HALLUCINATION POLICY: If no verified lemmas exist for this specific verse,
-  // do NOT invent fake Greek/Hebrew terms or arbitrary Strong's numbers. Return empty array.
-  const lemmas = (verseLemmas && verseLemmas.length > 0)
-    ? verseLemmas.slice(0, 3).map(l => ({
-      term: l.word,
-      originalScript: l.word,
-      transliteration: l.transliteration || l.word,
-      strongsRef: l.strongs || '',
-      nuance: l.definition || `Key linguistic root in ${cleanPassageRef} illuminating divine meaning.`
-    }))
-    : [];
+  const lemmas = resolveOriginalLanguageLemmas(
+    normBook,
+    chapter,
+    vNum,
+    verseText || '',
+    cleanPassageRef,
+    verseLemmas
+  );
 
   // Dynamic Theme Extraction directly from the actual text of the verse
   const extractedThemes: string[] = [];

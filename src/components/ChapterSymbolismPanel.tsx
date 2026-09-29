@@ -99,5 +99,5 @@ const ChapterSymbolismPanel: React.FC<ChapterSymbolismPanelProps> = ({ book, cha
     </div>
   );
 };
-
+export { ChapterSymbolismPanel };
 export default ChapterSymbolismPanel;

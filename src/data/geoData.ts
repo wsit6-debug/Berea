@@ -1,3 +1,14 @@
+import {
+  RouteSegment,
+  getHistoricalRouteSegments,
+  getRouteJourneyStats,
+  HISTORICAL_ROAD_SEGMENTS
+} from './historicalRoutes';
+import { getChapterSetting, ChapterHistoricalSetting } from './biblicalSettings';
+
+export type { RouteSegment, ChapterHistoricalSetting };
+export { getHistoricalRouteSegments, getRouteJourneyStats, HISTORICAL_ROAD_SEGMENTS, getChapterSetting };
+
 export interface GeoLocation {
   id: string;
   name: string;
@@ -19,7 +30,7 @@ export interface ChapterGeoEvent {
   stepNumber: number;
   title: string;
   passageRef: string;
-  verseRange: [number, number];
+  verseRange: number[];
   locationName: string;
   shortPlaceName?: string;
   modernLocation: string;
@@ -28,13 +39,25 @@ export interface ChapterGeoEvent {
   description: string;
   theologicalSignificance: string;
   icon?: string;
+  isEducatedGuess?: boolean;
+  isReferencedOnly?: boolean;
+  isDeparturePoint?: boolean;
+  departureFromChapter?: string;
+  distanceFromPrevious?: number;
+}
+
+export function cleanDisambiguatedPlaceName(rawName?: string): string {
+  if (!rawName) return '';
+  const trimmed = rawName.trim();
+  if (trimmed === 'Antioch 2') return 'Antioch (Pisidia)';
+  if (trimmed === 'Antioch 1') return 'Antioch (Syria)';
+  // Strip any trailing gazetteer index number, e.g. "Bethlehem 1" -> "Bethlehem", "City of Palms 2" -> "City of Palms"
+  return trimmed.replace(/\s+\d+$/, '');
 }
 
 export function getShortPlaceName(ev: { shortPlaceName?: string; locationName: string; title?: string }): string {
-  if (ev.shortPlaceName) return ev.shortPlaceName;
-  if (!ev.locationName) return "Biblical Site";
-
-  let name = ev.locationName
+  const raw = ev.shortPlaceName || ev.locationName || ev.title || 'Biblical Site';
+  let name = cleanDisambiguatedPlaceName(raw)
     .replace(/\s*\([^)]*\)/g, "")
     .split(",")[0]
     .split("—")[0]
@@ -45,7 +68,22 @@ export function getShortPlaceName(ev: { shortPlaceName?: string; locationName: s
   name = name.replace(/^Ancient\s+/i, "");
   name = name.replace(/\s+&.*$/i, "");
 
-  return name || ev.locationName.split(" ")[0] || "Biblical Site";
+  const cleaned = cleanDisambiguatedPlaceName(name);
+  return cleaned || cleanDisambiguatedPlaceName(ev.locationName) || "Biblical Site";
+}
+
+export function calculateDistanceMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3958.8; // Radius of the Earth in miles
+  const rlat1 = lat1 * (Math.PI / 180);
+  const rlat2 = lat2 * (Math.PI / 180);
+  const difflat = rlat2 - rlat1;
+  const difflon = (lon2 - lon1) * (Math.PI / 180);
+
+  const a = 2 * Math.asin(Math.sqrt(Math.sin(difflat / 2) * Math.sin(difflat / 2) + Math.cos(rlat1) * Math.cos(rlat2) * Math.sin(difflon / 2) * Math.sin(difflon / 2)));
+  const d = R * a;
+  if (d === 0) return 0;
+  if (d < 1) return Number(d.toFixed(2));
+  return Math.round(d);
 }
 
 export interface ChapterGeoData {
@@ -58,6 +96,7 @@ export interface ChapterGeoData {
   defaultZoom: number;
   events: ChapterGeoEvent[];
   routeCoordinates?: number[][];
+  routeSegments?: RouteSegment[];
 }
 
 export interface BiblicalRegion {
@@ -1055,878 +1094,1054 @@ export const BIBLICAL_JOURNEYS: Record<string, { name: string; description: stri
     ]
   }
 };
+import GEO_DATABASE from './geoDatabase.json';
 
-export const CHAPTER_MICRO_EVENTS: Record<string, ChapterGeoData> = {
-  "genesis_1": {
-    "bookId": "genesis",
-    "chapterNumber": 1,
-    "chapterTitle": "Creation of the Heavens & the Earth",
-    "region": "Mesopotamia / Ancient Near East",
-    "centerLat": 31,
-    "centerLng": 47,
-    "defaultZoom": 6,
-    "events": [
-      {
-        "id": "gen1_event1",
-        "stepNumber": 1,
-        "title": "God Creates the Heavens and the Earth",
-        "passageRef": "Genesis 1:1–25",
-        "verseRange": [
-          1,
-          25
-        ],
-        "locationName": "Primeval Creation Panorama (Ancient Near East)",
-        "shortPlaceName": "Cosmic Creation",
-        "modernLocation": "Cradle of Civilization, Ancient Near East",
-        "lat": 31,
-        "lng": 47,
-        "description": "In the beginning, God created the heavens and the earth out of nothing (ex nihilo) by His divine Word across six days.",
-        "theologicalSignificance": "The sovereign Creator God over all material and spiritual realities."
-      },
-      {
-        "id": "gen1_event2",
-        "stepNumber": 2,
-        "title": "Creation of Mankind in the Image of God",
-        "passageRef": "Genesis 1:26–31",
-        "verseRange": [
-          26,
-          31
-        ],
-        "locationName": "Eden Alluvial Basin",
-        "shortPlaceName": "Garden of Eden",
-        "modernLocation": "Tigris & Euphrates confluence, Iraq",
-        "lat": 31.005,
-        "lng": 47.01,
-        "description": "God creates man in His own image (Imago Dei), male and female, giving dominion to cultivate and care for the earth.",
-        "theologicalSignificance": "Imago Dei and human dignity crowned as the climax of creation."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        31,
-        47
-      ],
-      [
-        31.005,
-        47.01
-      ]
-    ]
+export const CHAPTER_MICRO_EVENTS: Record<string, ChapterGeoData> = GEO_DATABASE as Record<string, ChapterGeoData>;
+
+
+export interface ChapterDepartureLink {
+  fromChapterLabel: string;
+  locationName: string;
+  shortPlaceName?: string;
+  modernLocation: string;
+  lat: number;
+  lng: number;
+  passageRef: string;
+  title?: string;
+  description: string;
+  theologicalSignificance?: string;
+}
+
+export const CHAPTER_DEPARTURE_LINKS: Record<string, ChapterDepartureLink> = {
+  // Acts of the Apostles
+  "acts_8": {
+    fromChapterLabel: "Acts 7",
+    locationName: "Jerusalem",
+    shortPlaceName: "Jerusalem",
+    modernLocation: "Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "Acts 8:1",
+    title: "Jerusalem (Departure)",
+    description: "Following Stephen's martyrdom in Acts 7, severe persecution arose against the church in Jerusalem, scattering believers abroad and sending Philip north to preach Christ in Samaria.",
+    theologicalSignificance: "The sovereign dispersal of the gospel seed beyond Judea into Samaria in fulfillment of Acts 1:8."
   },
-  "genesis_2": {
-    "bookId": "genesis",
-    "chapterNumber": 2,
-    "chapterTitle": "The Garden of Eden & The Sabbath Rest",
-    "region": "Mesopotamia (Tigris & Euphrates)",
-    "centerLat": 31,
-    "centerLng": 47,
-    "defaultZoom": 7,
-    "events": [
-      {
-        "id": "gen2_event1",
-        "stepNumber": 1,
-        "title": "Seventh Day: God Rests & Sanctifies the Sabbath",
-        "passageRef": "Genesis 2:1–3",
-        "verseRange": [
-          1,
-          3
-        ],
-        "locationName": "Cradle of Eden",
-        "shortPlaceName": "Eden Basin",
-        "modernLocation": "Southern Mesopotamia",
-        "lat": 31,
-        "lng": 47,
-        "description": "God finishes His work and rests on the seventh day, blessing it and making it holy.",
-        "theologicalSignificance": "Creation ordinance of the Sabbath rest."
-      },
-      {
-        "id": "gen2_event2",
-        "stepNumber": 2,
-        "title": "Man Formed & Placed in the Garden of Eden",
-        "passageRef": "Genesis 2:4–17",
-        "verseRange": [
-          4,
-          17
-        ],
-        "locationName": "The Garden of Eden (Four Rivers: Pishon, Gihon, Tigris, Euphrates)",
-        "shortPlaceName": "Garden of Eden",
-        "modernLocation": "Southern Iraq (Al-Qurnah / Euphrates)",
-        "lat": 31.015,
-        "lng": 47.43,
-        "description": "The Lord God forms man from the dust of the ground, breathes life into his nostrils, and plants a garden eastward in Eden with the Tree of Life and Tree of Knowledge.",
-        "theologicalSignificance": "Covenant of Works and life in communion with God."
-      },
-      {
-        "id": "gen2_event3",
-        "stepNumber": 3,
-        "title": "Institution of Marriage: Adam and Eve",
-        "passageRef": "Genesis 2:18–25",
-        "verseRange": [
-          18,
-          25
-        ],
-        "locationName": "Eden Sanctuary",
-        "shortPlaceName": "Garden of Eden",
-        "modernLocation": "Eden valley",
-        "lat": 31.018,
-        "lng": 47.435,
-        "description": "God fashions woman from Adam's rib. Adam rejoices: 'This at last is bone of my bones and flesh of my flesh.' A man leaves his father and mother and holds fast to his wife.",
-        "theologicalSignificance": "Creation ordinance of covenant marriage reflecting Christ and the Church."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        31,
-        47
-      ],
-      [
-        31.015,
-        47.43
-      ],
-      [
-        31.018,
-        47.435
-      ]
-    ]
+  "acts_10": {
+    fromChapterLabel: "Acts 9",
+    locationName: "Joppa",
+    shortPlaceName: "Joppa",
+    modernLocation: "Jaffa, Tel Aviv, Israel",
+    lat: 32.0536,
+    lng: 34.7558,
+    passageRef: "Acts 10:23",
+    title: "Joppa (Departure)",
+    description: "Seaport town where Peter was lodging with Simon the tanner at the close of Acts 9 (Acts 9:43), departing northward along the coast to Caesarea to visit the Roman centurion Cornelius.",
+    theologicalSignificance: "The Holy Spirit orchestrating the historic breakthrough of the gospel to the Gentile world."
   },
-  "genesis_8": {
-    "bookId": "genesis",
-    "chapterNumber": 8,
-    "chapterTitle": "Noah's Ark on Mount Ararat & The Receding Waters",
-    "region": "Mount Ararat / Eastern Anatolia",
-    "centerLat": 39.7025,
-    "centerLng": 44.299,
-    "defaultZoom": 8,
-    "events": [
-      {
-        "id": "gen8_event1",
-        "stepNumber": 1,
-        "title": "The Ark Rests upon the Mountains of Ararat",
-        "passageRef": "Genesis 8:1–14",
-        "verseRange": [
-          1,
-          14
-        ],
-        "locationName": "Mountains of Ararat Summit Ridge",
-        "shortPlaceName": "Mount Ararat",
-        "modernLocation": "Mount Ararat (Agri Dagi), Eastern Turkey",
-        "lat": 39.7025,
-        "lng": 44.299,
-        "description": "God remembers Noah. The wind dries the waters, and the ark rests upon the mountains of Ararat. The raven and dove are sent forth.",
-        "theologicalSignificance": "God's covenant remembrance and preservation of the righteous remnant."
-      },
-      {
-        "id": "gen8_event2",
-        "stepNumber": 2,
-        "title": "Noah Leaves the Ark & Builds an Altar of Worship",
-        "passageRef": "Genesis 8:15–22",
-        "verseRange": [
-          15,
-          22
-        ],
-        "locationName": "Ararat Foothills (Dogubayazit Plain)",
-        "shortPlaceName": "Ararat Foothills",
-        "modernLocation": "Dogubayazit, Agri Province, Turkey",
-        "lat": 39.55,
-        "lng": 44.08,
-        "description": "Noah, his family, and all the animals disembark. Noah builds an altar and offers burnt offerings; the Lord promises never again to curse the ground for man's sake.",
-        "theologicalSignificance": "Atoning sacrifice initiating the post-flood world."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        39.7025,
-        44.299
-      ],
-      [
-        39.55,
-        44.08
-      ]
-    ]
+  "acts_14": {
+    fromChapterLabel: "Acts 13",
+    locationName: "Antioch (Pisidia)",
+    shortPlaceName: "Antioch (Pisidia)",
+    modernLocation: "Yalvac, Isparta, Turkey",
+    lat: 38.3050,
+    lng: 31.1890,
+    passageRef: "Acts 14:1",
+    title: "Antioch in Pisidia (Departure)",
+    description: "Paul and Barnabas were expelled from Pisidian Antioch at the close of Acts 13 (Acts 13:51), shaking the dust from their feet and journeying southeast along the Via Sebaste toward Iconium.",
+    theologicalSignificance: "Apostolic perseverance under persecution, opening the door of faith across southern Galatia."
   },
-  "genesis_11": {
-    "bookId": "genesis",
-    "chapterNumber": 11,
-    "chapterTitle": "The Tower of Babel & Abram's Line in Ur and Haran",
-    "region": "Mesopotamia (Shinar & Ur to Haran)",
-    "centerLat": 33.5,
-    "centerLng": 43,
-    "defaultZoom": 6,
-    "events": [
-      {
-        "id": "gen11_event1",
-        "stepNumber": 1,
-        "title": "The Tower of Babel in the Plain of Shinar",
-        "passageRef": "Genesis 11:1–9",
-        "verseRange": [
-          1,
-          9
-        ],
-        "locationName": "Plain of Shinar (Babylon / Babel)",
-        "shortPlaceName": "Tower of Babel",
-        "modernLocation": "Hillah / Babylon, Iraq",
-        "lat": 32.5422,
-        "lng": 44.4211,
-        "description": "Mankind rebels against God's command to fill the earth, building a tower to reach heaven. The Lord confuses their languages and disperses them.",
-        "theologicalSignificance": "Human hubris judged; origin of nations and tongues."
-      },
-      {
-        "id": "gen11_event2",
-        "stepNumber": 2,
-        "title": "Terah Departs Ur of the Chaldees with Abram",
-        "passageRef": "Genesis 11:27–31",
-        "verseRange": [
-          27,
-          31
-        ],
-        "locationName": "Ur of the Chaldees (Tell el-Muqayyar)",
-        "shortPlaceName": "Ur of the Chaldees",
-        "modernLocation": "Near Nasiriyah, Dhi Qar Governorate, Iraq",
-        "lat": 30.9625,
-        "lng": 46.103,
-        "description": "Terah takes his son Abram, his grandson Lot, and Sarai his daughter-in-law, setting out from Ur of the Chaldees to journey toward the land of Canaan.",
-        "theologicalSignificance": "The initial step of the Patriarchal migration."
-      },
-      {
-        "id": "gen11_event3",
-        "stepNumber": 3,
-        "title": "Settlement and Terah's Death in Haran",
-        "passageRef": "Genesis 11:31–32",
-        "verseRange": [
-          31,
-          32
-        ],
-        "locationName": "Haran in Paddan-Aram (Upper Mesopotamia)",
-        "shortPlaceName": "Haran",
-        "modernLocation": "Harran, Sanliurfa Province, Turkey",
-        "lat": 36.8647,
-        "lng": 39.0272,
-        "description": "They come to Haran in northern Mesopotamia and settle there. Terah dies in Haran at age 205.",
-        "theologicalSignificance": "Staging ground for God's effectual call to Abram."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        32.5422,
-        44.4211
-      ],
-      [
-        30.9625,
-        46.103
-      ],
-      [
-        36.8647,
-        39.0272
-      ]
-    ]
+  "acts_16": {
+    fromChapterLabel: "Acts 15",
+    locationName: "Antioch (Syria)",
+    shortPlaceName: "Antioch (Syria)",
+    modernLocation: "Antakya, Hatay, Turkey",
+    lat: 36.2021,
+    lng: 36.1606,
+    passageRef: "Acts 16:1",
+    title: "Antioch in Syria (Departure)",
+    description: "The sending mother church in Syrian Antioch where Paul and Silas set out on the Second Missionary Journey (Acts 15:40-41), traversing through Syria and Cilicia to reach Derbe.",
+    theologicalSignificance: "The launch of the second missionary campaign delivering the Jerusalem Council decrees to the churches."
   },
+  "acts_17": {
+    fromChapterLabel: "Acts 16",
+    locationName: "Philippi",
+    shortPlaceName: "Philippi",
+    modernLocation: "Krinides, Kavala, Greece",
+    lat: 41.0135,
+    lng: 24.2866,
+    passageRef: "Acts 17:1",
+    title: "Philippi (Departure)",
+    description: "Point of departure along the Via Egnatia where Paul and Silas departed after their miraculous release from prison and encouragement of the brethren in Lydia's home (Acts 16:40).",
+    theologicalSignificance: "The gospel advancing westward along the premier Roman military artery into the heart of Macedonia."
+  },
+  "acts_18": {
+    fromChapterLabel: "Acts 17",
+    locationName: "Athens",
+    shortPlaceName: "Athens",
+    modernLocation: "Athens, Greece",
+    lat: 37.9715,
+    lng: 23.7257,
+    passageRef: "Acts 18:1",
+    title: "Athens (Departure)",
+    description: "Paul departed from Athens following his proclamation of the Unknown God on the Areopagus (Acts 17:22-34), journeying across the Isthmus of Corinth to found the church in Corinth.",
+    theologicalSignificance: "Transitioning from philosophical inquiry in Athens to establishing an enduring apostolic community in Corinth."
+  },
+  "acts_20": {
+    fromChapterLabel: "Acts 19",
+    locationName: "Ephesus",
+    shortPlaceName: "Ephesus",
+    modernLocation: "Selcuk, Izmir, Turkey",
+    lat: 37.9497,
+    lng: 27.3639,
+    passageRef: "Acts 20:1",
+    title: "Ephesus (Departure)",
+    description: "Following the great uproar in the theater of Ephesus at the close of Acts 19, Paul called the disciples, embraced them, and departed northward toward Troas and Macedonia.",
+    theologicalSignificance: "Triumphant perseverance of the apostolic mission following public spiritual confrontation in Asia."
+  },
+  "acts_21": {
+    fromChapterLabel: "Acts 20",
+    locationName: "Miletus",
+    shortPlaceName: "Miletus",
+    modernLocation: "Balat, Didim, Turkey",
+    lat: 37.5305,
+    lng: 27.2783,
+    passageRef: "Acts 21:1",
+    title: "Miletus (Departure)",
+    description: "Ancient Ionian seaport where Paul knelt in prayer and bade an affectionate farewell to the Ephesian elders on the beach (Acts 20:36-38), boarding ship to launch straight for Cos.",
+    theologicalSignificance: "Steadfast resolve to complete the ministry received from the Lord Jesus, traveling toward Jerusalem."
+  },
+  "acts_27": {
+    fromChapterLabel: "Acts 26",
+    locationName: "Caesarea",
+    shortPlaceName: "Caesarea",
+    modernLocation: "Caesarea Maritima, Israel",
+    lat: 32.5011,
+    lng: 34.8916,
+    passageRef: "Acts 27:1",
+    title: "Caesarea (Departure)",
+    description: "Roman provincial capital and deep-water harbor where Paul was imprisoned under Felix and Festus (Acts 23-26), from whose docks he was embarked under Julius the centurion for Rome.",
+    theologicalSignificance: "The sovereign outworking of divine providence carrying the apostle to testify before Caesar in Rome."
+  },
+
+  // Exodus & Wilderness Journeys
+  "exodus_13": {
+    fromChapterLabel: "Exodus 12",
+    locationName: "Rameses",
+    shortPlaceName: "Rameses",
+    modernLocation: "Qantir / Tell el-Dab'a, Egypt",
+    lat: 30.7870,
+    lng: 31.8210,
+    passageRef: "Exodus 13:20",
+    title: "Rameses (Departure)",
+    description: "The starting hub of the Exodus in the land of Goshen from which Israel marched out by their armies at the close of Passover night.",
+    theologicalSignificance: "The great redemption from Egyptian bondage under the blood of the Passover Lamb."
+  },
+  "exodus_14": {
+    fromChapterLabel: "Exodus 13",
+    locationName: "Etham",
+    shortPlaceName: "Etham",
+    modernLocation: "Ismailia / Lake Timsah, Egypt",
+    lat: 30.3000,
+    lng: 32.3000,
+    passageRef: "Exodus 14:1",
+    title: "Etham (Departure)",
+    description: "Encampment on the edge of the wilderness at the close of Exodus 13 (Exod 13:20), from which the Lord commanded Israel to turn back and camp before Pi-hahiroth by the sea.",
+    theologicalSignificance: "God leading His people into humanly impassable terrain to demonstrate His supreme triumph over Pharaoh."
+  },
+  "exodus_16": {
+    fromChapterLabel: "Exodus 15",
+    locationName: "Elim",
+    shortPlaceName: "Elim",
+    modernLocation: "Wadi Gharandel, Sinai Peninsula",
+    lat: 29.3000,
+    lng: 33.0000,
+    passageRef: "Exodus 16:1",
+    title: "Elim (Departure)",
+    description: "Oasis of twelve springs and seventy palm trees where Israel camped in Exodus 15:27, journeying southward into the Wilderness of Sin.",
+    theologicalSignificance: "Moving from refreshing rest into the desert proving ground of daily dependency upon divine bread."
+  },
+  "exodus_17": {
+    fromChapterLabel: "Exodus 16",
+    locationName: "Wilderness of Sin",
+    shortPlaceName: "Wilderness of Sin",
+    modernLocation: "El-Markha Plain, Sinai Peninsula",
+    lat: 28.9000,
+    lng: 33.3000,
+    passageRef: "Exodus 17:1",
+    title: "Wilderness of Sin (Departure)",
+    description: "The desert plain of the manna and quail in Exodus 16, from which the congregation journeyed by stages according to the commandment of Yahweh toward Rephidim.",
+    theologicalSignificance: "The guided stages of pilgrimage under the pillar of cloud and fire."
+  },
+  "exodus_19": {
+    fromChapterLabel: "Exodus 17",
+    locationName: "Rephidim",
+    shortPlaceName: "Rephidim",
+    modernLocation: "Wadi Feiran, Sinai Peninsula",
+    lat: 28.6500,
+    lng: 33.8000,
+    passageRef: "Exodus 19:1",
+    title: "Rephidim (Departure)",
+    description: "Valley of the water from the rock and victory over Amalek in Exodus 17, from which Israel set out to pitch camp before the Mount of God.",
+    theologicalSignificance: "Arrival at Sinai for the solemn giving of the Law and the establishment of the Mosaic Covenant."
+  },
+
+  // Numbers & Joshua
+  "numbers_12": {
+    fromChapterLabel: "Numbers 11",
+    locationName: "Hazeroth",
+    shortPlaceName: "Hazeroth",
+    modernLocation: "Ain Hudra, Sinai Peninsula",
+    lat: 28.7500,
+    lng: 34.4000,
+    passageRef: "Numbers 12:16",
+    title: "Hazeroth (Departure)",
+    description: "Encampment where Miriam was healed of leprosy at the close of Numbers 11-12, from which Israel journeyed toward the Wilderness of Paran.",
+    theologicalSignificance: "The ongoing sanctification and march of Israel toward the threshold of the Promised Land."
+  },
+  "numbers_21": {
+    fromChapterLabel: "Numbers 20",
+    locationName: "Mount Hor",
+    shortPlaceName: "Mount Hor",
+    modernLocation: "Jabal Harun near Petra, Jordan",
+    lat: 30.3167,
+    lng: 35.4000,
+    passageRef: "Numbers 21:4",
+    title: "Mount Hor (Departure)",
+    description: "Mountain site of Aaron's death at the close of Numbers 20, from which Israel journeyed along the Way of the Red Sea to bypass the border of Edom.",
+    theologicalSignificance: "Transition in priestly leadership and miraculous healing through the Bronze Serpent."
+  },
+  "joshua_3": {
+    fromChapterLabel: "Joshua 2",
+    locationName: "Shittim",
+    shortPlaceName: "Shittim",
+    modernLocation: "Tell el-Hammam, Jordan",
+    lat: 31.8300,
+    lng: 35.6300,
+    passageRef: "Joshua 3:1",
+    title: "Shittim (Departure)",
+    description: "Acacia plain in Moab where Joshua sent forth the two spies in Joshua 2, rising early in the morning to lead the nation to the edge of the flooded Jordan River.",
+    theologicalSignificance: "The morning of faith stepping into the flooded waters of Jordan to inherit the land."
+  },
+  "joshua_6": {
+    fromChapterLabel: "Joshua 5",
+    locationName: "Gilgal",
+    shortPlaceName: "Gilgal",
+    modernLocation: "Jericho Plain, West Bank",
+    lat: 31.8600,
+    lng: 35.4800,
+    passageRef: "Joshua 6:1",
+    title: "Gilgal (Departure)",
+    description: "Covenant camp where Israel renewed circumcision and observed Passover in Joshua 5, marching out in obedience to encircle the fortress of Jericho.",
+    theologicalSignificance: "Spiritual renewal and worship preceding the supernatural victory of faith."
+  },
+
+  // Patriarchal Journeys
   "genesis_12": {
-    "bookId": "genesis",
-    "chapterNumber": 12,
-    "chapterTitle": "Call of Abram, Journey to Shechem, Bethel & Egypt",
-    "region": "Mesopotamia, Canaan & Egypt",
-    "centerLat": 34,
-    "centerLng": 36.5,
-    "defaultZoom": 6,
-    "events": [
-      {
-        "id": "gen12_event1",
-        "stepNumber": 1,
-        "title": "The Great Call & Abrahamic Covenant in Haran",
-        "passageRef": "Genesis 12:1–4",
-        "verseRange": [
-          1,
-          4
-        ],
-        "locationName": "Haran (Upper Mesopotamia)",
-        "shortPlaceName": "Haran",
-        "modernLocation": "Harran, Turkey",
-        "lat": 36.8647,
-        "lng": 39.0272,
-        "description": "The Lord commands 75-year-old Abram: 'Go from your country... I will make of you a great nation, and in you all the families of the earth shall be blessed.'",
-        "theologicalSignificance": "The Abrahamic Covenant: unconditional promise of land, seed, and universal blessing."
-      },
-      {
-        "id": "gen12_event2",
-        "stepNumber": 2,
-        "title": "First Altar in Canaan at the Oak of Moreh (Shechem)",
-        "passageRef": "Genesis 12:5–7",
-        "verseRange": [
-          5,
-          7
-        ],
-        "locationName": "Shechem (Oak of Moreh)",
-        "shortPlaceName": "Shechem",
-        "modernLocation": "Tell Balata, Nablus, West Bank",
-        "lat": 32.2133,
-        "lng": 35.2819,
-        "description": "Abram arrives at Shechem. The Lord appears to him: 'To your offspring I will give this land.' Abram builds his first altar to Yahweh in the Promised Land.",
-        "theologicalSignificance": "Claiming the Promised Land through sacrificial worship."
-      },
-      {
-        "id": "gen12_event3",
-        "stepNumber": 3,
-        "title": "Pitching Tent and Building Altar between Bethel and Ai",
-        "passageRef": "Genesis 12:8–9",
-        "verseRange": [
-          8,
-          9
-        ],
-        "locationName": "Mountain between Bethel and Ai",
-        "shortPlaceName": "Bethel & Ai",
-        "modernLocation": "Beitin, West Bank",
-        "lat": 31.93,
-        "lng": 35.22,
-        "description": "Abram moves east of Bethel with Bethel on the west and Ai on the east, building an altar and calling upon the name of the Lord.",
-        "theologicalSignificance": "Steadfast public worship amidst pagan Canaanite culture."
-      },
-      {
-        "id": "gen12_event4",
-        "stepNumber": 4,
-        "title": "Famine in the Negev & Descent into Egypt",
-        "passageRef": "Genesis 12:10–20",
-        "verseRange": [
-          10,
-          20
-        ],
-        "locationName": "Nile Delta / Memphis, Egypt",
-        "shortPlaceName": "Egypt (Nile Delta)",
-        "modernLocation": "Mit Rahina / Cairo area, Egypt",
-        "lat": 29.8497,
-        "lng": 31.2547,
-        "description": "Severe famine strikes Canaan. Abram goes down to Egypt. Pharaoh takes Sarai into his house, but God plagues Pharaoh, who sends Abram away with great wealth.",
-        "theologicalSignificance": "Providential preservation of the covenant promise despite human failure."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        36.8647,
-        39.0272
-      ],
-      [
-        32.2133,
-        35.2819
-      ],
-      [
-        31.93,
-        35.22
-      ],
-      [
-        29.8497,
-        31.2547
-      ]
-    ]
+    fromChapterLabel: "Genesis 11",
+    locationName: "Haran",
+    shortPlaceName: "Haran",
+    modernLocation: "Harran, Sanliurfa, Turkey",
+    lat: 36.8647,
+    lng: 39.0272,
+    passageRef: "Genesis 12:4",
+    title: "Haran (Departure)",
+    description: "Upper Mesopotamian trading crossroad where Terah died in Genesis 11:32, from which 75-year-old Abram departed in faith to the land God would show him.",
+    theologicalSignificance: "The inaugural obedience of faith that established the Abrahamic Covenant."
   },
-  "genesis_18": {
-    "bookId": "genesis",
-    "chapterNumber": 18,
-    "chapterTitle": "Three Heavenly Visitors at Mamre & Intercession for Sodom",
-    "region": "Hebron & Dead Sea Region",
-    "centerLat": 31.4,
-    "centerLng": 35.2,
-    "defaultZoom": 10,
-    "events": [
-      {
-        "id": "gen18_event1",
-        "stepNumber": 1,
-        "title": "The Lord and Two Angels Visit Abraham at the Oaks of Mamre",
-        "passageRef": "Genesis 18:1–15",
-        "verseRange": [
-          1,
-          15
-        ],
-        "locationName": "Oaks of Mamre, Hebron",
-        "shortPlaceName": "Hebron (Mamre)",
-        "modernLocation": "Ramat al-Khalil / Hebron, West Bank",
-        "lat": 31.545,
-        "lng": 35.105,
-        "description": "As Abraham sits by his tent in the heat of the day, three men appear. Abraham prepares a feast. The Lord promises: 'Sarah your wife shall have a son by this time next year.' Sarah laughs, but the Lord replies: 'Is anything too hard for the Lord?'",
-        "theologicalSignificance": "Christophany / divine visitation and the promise of Isaac's miraculous birth."
-      },
-      {
-        "id": "gen18_event2",
-        "stepNumber": 2,
-        "title": "Abraham Intercedes Overlooking the Plain of Sodom",
-        "passageRef": "Genesis 18:16–33",
-        "verseRange": [
-          16,
-          33
-        ],
-        "locationName": "Hebron Eastern Ridge overlooking the Dead Sea",
-        "shortPlaceName": "Hebron Ridge",
-        "modernLocation": "Bani Na'im / Judean Desert Overlook",
-        "lat": 31.515,
-        "lng": 35.16,
-        "description": "The men look down toward Sodom. Abraham draws near in bold intercession: 'Will you sweep away the righteous with the wicked? Far be it from the Judge of all the earth to not do right!' God agrees to spare the city if even ten righteous are found.",
-        "theologicalSignificance": "The supreme pattern of covenant intercession based on God's righteousness and justice."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        31.545,
-        35.105
-      ],
-      [
-        31.515,
-        35.16
-      ]
-    ]
-  },
-  "genesis_22": {
-    "bookId": "genesis",
-    "chapterNumber": 22,
-    "chapterTitle": "The Binding of Isaac (Akedah) on Mount Moriah",
-    "region": "Negev & Mount Moriah",
-    "centerLat": 31.5,
-    "centerLng": 35,
-    "defaultZoom": 9,
-    "events": [
-      {
-        "id": "gen22_event1",
-        "stepNumber": 1,
-        "title": "God Tests Abraham: Departure from Beersheba",
-        "passageRef": "Genesis 22:1–5",
-        "verseRange": [
-          1,
-          5
-        ],
-        "locationName": "Beersheba (Tamarisk Tree & Wells)",
-        "shortPlaceName": "Beersheba",
-        "modernLocation": "Tel Sheva, Israel",
-        "lat": 31.245,
-        "lng": 34.79,
-        "description": "God commands Abraham: 'Take your son, your only son Isaac, whom you love, and go to the land of Moriah, and offer him there as a burnt offering.' Abraham rises early and journeys three days.",
-        "theologicalSignificance": "Faith that obeys without hesitation, believing God could raise the dead."
-      },
-      {
-        "id": "gen22_event2",
-        "stepNumber": 2,
-        "title": "Ascent of Mount Moriah & The Ram in the Thicket",
-        "passageRef": "Genesis 22:6–14",
-        "verseRange": [
-          6,
-          14
-        ],
-        "locationName": "Mount Moriah Ridge (The Mountain of the Lord)",
-        "shortPlaceName": "Mount Moriah",
-        "modernLocation": "Mount Moriah / Temple Mount ridge",
-        "lat": 31.778,
-        "lng": 35.2354,
-        "description": "Isaac carries the wood; Abraham carries the fire and knife. Isaac asks: 'Where is the lamb for a burnt offering?' Abraham replies: 'God will provide for Himself the lamb.' Angel stops Abraham's hand; a ram caught in a thicket is sacrificed. Named Yahweh-Yireh ('The LORD will provide').",
-        "theologicalSignificance": "Ultimate Old Testament typology of God the Father offering His only beloved Son as substitutionary sacrifice."
-      },
-      {
-        "id": "gen22_event3",
-        "stepNumber": 3,
-        "title": "Oath of Universal Blessing & Return to Beersheba",
-        "passageRef": "Genesis 22:15–24",
-        "verseRange": [
-          15,
-          24
-        ],
-        "locationName": "Beersheba Oasis",
-        "shortPlaceName": "Beersheba",
-        "modernLocation": "Beersheba, Negev, Israel",
-        "lat": 31.245,
-        "lng": 34.79,
-        "description": "The Angel of the Lord swears by Himself to multiply Abraham's seed like stars and sand. Abraham returns with his young men and settles at Beersheba.",
-        "theologicalSignificance": "The confirmed covenant oath sealed on Mount Moriah."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        31.245,
-        34.79
-      ],
-      [
-        31.778,
-        35.2354
-      ],
-      [
-        31.245,
-        34.79
-      ]
-    ]
+  "genesis_13": {
+    fromChapterLabel: "Genesis 12",
+    locationName: "Egypt",
+    shortPlaceName: "Egypt (Nile Delta)",
+    modernLocation: "Nile Delta, Egypt",
+    lat: 30.7870,
+    lng: 31.8210,
+    passageRef: "Genesis 13:1",
+    title: "Egypt (Departure)",
+    description: "Abram went up out of Egypt following the famine at the close of Genesis 12, returning through the Negev to his former altar between Bethel and Ai.",
+    theologicalSignificance: "Repentant return from earthly refuge to the altar of renewed worship."
   },
   "genesis_28": {
-    "bookId": "genesis",
-    "chapterNumber": 28,
-    "chapterTitle": "Jacob's Dream at Bethel (The Ladder to Heaven)",
-    "region": "Beersheba to Bethel & Haran",
-    "centerLat": 31.6,
-    "centerLng": 35,
-    "defaultZoom": 9,
-    "events": [
-      {
-        "id": "gen28_event1",
-        "stepNumber": 1,
-        "title": "Isaac Blesses Jacob & Sends Him from Beersheba",
-        "passageRef": "Genesis 28:1–9",
-        "verseRange": [
-          1,
-          9
-        ],
-        "locationName": "Beersheba Tents",
-        "shortPlaceName": "Beersheba",
-        "modernLocation": "Beersheba, Negev",
-        "lat": 31.245,
-        "lng": 34.79,
-        "description": "Isaac blesses Jacob with the blessing of Abraham, charging him not to take a Canaanite wife but to go to Paddan-Aram to the house of Bethuel.",
-        "theologicalSignificance": "Transference of the covenant blessing to Jacob."
-      },
-      {
-        "id": "gen28_event2",
-        "stepNumber": 2,
-        "title": "Jacob's Ladder Dream at Luz (Bethel: House of God)",
-        "passageRef": "Genesis 28:10–22",
-        "verseRange": [
-          10,
-          22
-        ],
-        "locationName": "Bethel (Ancient Luz Ridge)",
-        "shortPlaceName": "Bethel",
-        "modernLocation": "Beitin, West Bank",
-        "lat": 31.93,
-        "lng": 35.22,
-        "description": "Sleeping with a stone for a pillow, Jacob dreams of a ladder set up on earth reaching to heaven with the angels of God ascending and descending. The Lord stands above it confirming the covenant. Jacob awakes: 'How awesome is this place! This is none other than the house of God (Bethel), and this is the gate of heaven.' Sets up the stone as a pillar.",
-        "theologicalSignificance": "Christ the true Ladder connecting heaven and earth (John 1:51)."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        31.245,
-        34.79
-      ],
-      [
-        31.93,
-        35.22
-      ]
-    ]
+    fromChapterLabel: "Genesis 27",
+    locationName: "Beersheba",
+    shortPlaceName: "Beersheba",
+    modernLocation: "Tel Be'er Sheva, Israel",
+    lat: 31.2447,
+    lng: 34.8410,
+    passageRef: "Genesis 28:10",
+    title: "Beersheba (Departure)",
+    description: "Southern patriarchal well city where Jacob received Isaac's blessing in Genesis 27, fleeing from Esau toward Haran and stopping at Bethel for the ladder vision.",
+    theologicalSignificance: "God's unconditional covenant grace meeting the fugitive patriarch in the desert."
   },
-  "genesis_37": {
-    "bookId": "genesis",
-    "chapterNumber": 37,
-    "chapterTitle": "Joseph's Dreams & Betrayal in Dothan",
-    "region": "Hebron, Shechem & Dothan",
-    "centerLat": 31.95,
-    "centerLng": 35.15,
-    "defaultZoom": 8,
-    "events": [
-      {
-        "id": "gen37_event1",
-        "stepNumber": 1,
-        "title": "Joseph's Dreams & Coat of Many Colors in Hebron",
-        "passageRef": "Genesis 37:1–11",
-        "verseRange": [
-          1,
-          11
-        ],
-        "locationName": "Valley of Hebron",
-        "shortPlaceName": "Hebron Valley",
-        "modernLocation": "Hebron, West Bank",
-        "lat": 31.529,
-        "lng": 35.093,
-        "description": "Jacob loves 17-year-old Joseph and gives him an ornate tunic. Joseph dreams of sheaves and the sun, moon, and eleven stars bowing before him, provoking his brothers' envy.",
-        "theologicalSignificance": "Divine revelation of sovereign elevation through humble suffering."
-      },
-      {
-        "id": "gen37_event2",
-        "stepNumber": 2,
-        "title": "Joseph Searches for Brothers in Shechem",
-        "passageRef": "Genesis 37:12–17",
-        "verseRange": [
-          12,
-          17
-        ],
-        "locationName": "Fields of Shechem (Balata)",
-        "shortPlaceName": "Shechem",
-        "modernLocation": "Shechem / Nablus, West Bank",
-        "lat": 32.2133,
-        "lng": 35.2819,
-        "description": "Israel sends Joseph from the valley of Hebron to check on the welfare of his brothers. A man tells Joseph: 'They have gone to Dothan.'",
-        "theologicalSignificance": "Faithful obedience leading Joseph into harm's way."
-      },
-      {
-        "id": "gen37_event3",
-        "stepNumber": 3,
-        "title": "Thrown into Cistern & Sold to Traders in Dothan",
-        "passageRef": "Genesis 37:18–36",
-        "verseRange": [
-          18,
-          36
-        ],
-        "locationName": "Dothan Valley (Trade Route to Egypt)",
-        "shortPlaceName": "Dothan",
-        "modernLocation": "Tell Dothan, West Bank",
-        "lat": 32.4167,
-        "lng": 35.24,
-        "description": "Brothers strip Joseph's coat and cast him into an empty cistern. At Judah's suggestion, they sell him for twenty shekels of silver to Midianite-Ishmaelite merchants going down to Egypt.",
-        "theologicalSignificance": "Typology of Christ betrayed and sold by His brothers, yet used to save many alive."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        31.529,
-        35.093
-      ],
-      [
-        32.2133,
-        35.2819
-      ],
-      [
-        32.4167,
-        35.24
-      ]
-    ]
+
+  // Gospels
+  "luke_4": {
+    fromChapterLabel: "Luke 3",
+    locationName: "Jordan River (Bethany Beyond Jordan)",
+    shortPlaceName: "Jordan River",
+    modernLocation: "Al-Maghtas, Jordan",
+    lat: 31.8386,
+    lng: 35.5492,
+    passageRef: "Luke 4:1",
+    title: "Jordan River (Departure)",
+    description: "Site of Jesus's baptism by John at the close of Luke 3, returning full of the Holy Spirit to endure the desert temptation and preach in Nazareth.",
+    theologicalSignificance: "The Spirit-anointed start of the Messianic ministry following baptism and temptation."
   },
-  "genesis_50": {
-    "bookId": "genesis",
-    "chapterNumber": 50,
-    "chapterTitle": "Burial of Jacob in Hebron & Joseph's Forgiveness",
-    "region": "Egypt & Hebron",
-    "centerLat": 31,
-    "centerLng": 33.5,
-    "defaultZoom": 7,
-    "events": [
-      {
-        "id": "gen50_event1",
-        "stepNumber": 1,
-        "title": "Jacob Embalmed & Mourned in Goshen",
-        "passageRef": "Genesis 50:1–6",
-        "verseRange": [
-          1,
-          6
-        ],
-        "locationName": "Land of Goshen (Nile Delta)",
-        "shortPlaceName": "Goshen (Egypt)",
-        "modernLocation": "Sharqia Governorate, Egypt",
-        "lat": 30.787,
-        "lng": 31.821,
-        "description": "Joseph falls on his father's face, weeping. Physicians embalm Jacob for 40 days; Egypt mourns him for 70 days. Pharaoh grants permission for burial in Canaan.",
-        "theologicalSignificance": "Royal honor bestowed upon the Patriarch of Israel."
-      },
-      {
-        "id": "gen50_event2",
-        "stepNumber": 2,
-        "title": "Funeral Procession to the Cave of Machpelah in Hebron",
-        "passageRef": "Genesis 50:7–14",
-        "verseRange": [
-          7,
-          14
-        ],
-        "locationName": "Cave of Machpelah, Hebron",
-        "shortPlaceName": "Hebron (Machpelah)",
-        "modernLocation": "Hebron, West Bank",
-        "lat": 31.529,
-        "lng": 35.093,
-        "description": "A huge procession of Egyptian chariots and Israelite family journeys to Hebron, burying Jacob in the Cave of Machpelah alongside Abraham, Sarah, Isaac, Rebekah, and Leah.",
-        "theologicalSignificance": "Faith in the resurrection and the eternal inheritance of the Promised Land."
-      },
-      {
-        "id": "gen50_event3",
-        "stepNumber": 3,
-        "title": "Joseph Forgives Brothers: 'God Meant It for Good'",
-        "passageRef": "Genesis 50:15–26",
-        "verseRange": [
-          15,
-          26
-        ],
-        "locationName": "Land of Goshen, Egypt",
-        "shortPlaceName": "Goshen (Egypt)",
-        "modernLocation": "Egypt",
-        "lat": 30.787,
-        "lng": 31.821,
-        "description": "Brothers fear revenge. Joseph weeps and reassures them: 'Do not fear, for am I in the place of God? As for you, you meant evil against me, but God meant it for good, to bring it about that many people should be kept alive.' Joseph dies in faith at 110.",
-        "theologicalSignificance": "The supreme declaration of divine sovereignty overruling human malice for salvation."
-      }
-    ],
-    "routeCoordinates": [
-      [
-        30.787,
-        31.821
-      ],
-      [
-        31.529,
-        35.093
-      ],
-      [
-        30.787,
-        31.821
-      ]
-    ]
+  "luke_7": {
+    fromChapterLabel: "Luke 6",
+    locationName: "Capernaum",
+    shortPlaceName: "Capernaum",
+    modernLocation: "Kfar Nahum, Sea of Galilee, Israel",
+    lat: 32.8808,
+    lng: 35.5753,
+    passageRef: "Luke 7:1",
+    title: "Capernaum (Departure)",
+    description: "Galilean headquarters where Jesus taught the Sermon on the Plain in Luke 6 and healed the centurion's servant, departing southwest to raise the widow's son at Nain.",
+    theologicalSignificance: "The compassionate authority of Christ reversing death across Galilee."
+  },
+  "luke_24": {
+    fromChapterLabel: "Luke 23",
+    locationName: "Jerusalem",
+    shortPlaceName: "Jerusalem",
+    modernLocation: "Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "Luke 24:13",
+    title: "Jerusalem (Departure)",
+    description: "City of the crucifixion and empty tomb in Luke 23-24, where two disciples departed that same day for Emmaus, joined by the risen Lord.",
+    theologicalSignificance: "The living Christ explaining all the Scriptures concerning Himself on the road to Emmaus."
+  },
+  "john_2": {
+    fromChapterLabel: "John 1",
+    locationName: "Bethany Beyond Jordan",
+    shortPlaceName: "Bethany Beyond Jordan",
+    modernLocation: "Al-Maghtas, Jordan",
+    lat: 31.8386,
+    lng: 35.5492,
+    passageRef: "John 2:1",
+    title: "Bethany Beyond Jordan (Departure)",
+    description: "Where John the Baptist proclaimed 'Behold the Lamb of God' in John 1:28, departing into Galilee for the wedding at Cana on the third day.",
+    theologicalSignificance: "Transition from the herald's testimony to the manifestation of Christ's glory in Cana."
+  },
+  "john_4": {
+    fromChapterLabel: "John 3",
+    locationName: "Jerusalem / Judean Countryside",
+    shortPlaceName: "Judea",
+    modernLocation: "Judean Hills / Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "John 4:3",
+    title: "Judea (Departure)",
+    description: "Jesus departed from Judea where His disciples were baptizing in John 3:22, must needs pass through Samaria to Sychar on His journey to Galilee.",
+    theologicalSignificance: "The gospel breaking cultural and racial barriers to offer the Water of Life."
+  },
+  "john_6": {
+    fromChapterLabel: "John 5",
+    locationName: "Jerusalem",
+    shortPlaceName: "Jerusalem",
+    modernLocation: "Jerusalem, Israel",
+    lat: 31.7767,
+    lng: 35.2345,
+    passageRef: "John 6:1",
+    title: "Jerusalem (Departure)",
+    description: "Following the healing at Bethesda in John 5, Jesus departed from Jerusalem to the other side of the Sea of Galilee (Sea of Tiberias).",
+    theologicalSignificance: "Moving from confrontation with Jerusalem leaders to feeding the multitudes on the Galilean mountain."
+  },
+  "john_11": {
+    fromChapterLabel: "John 10",
+    locationName: "Bethany Beyond Jordan",
+    shortPlaceName: "Bethany Beyond Jordan",
+    modernLocation: "Al-Maghtas, Jordan",
+    lat: 31.8386,
+    lng: 35.5492,
+    passageRef: "John 11:7",
+    title: "Bethany Beyond Jordan (Departure)",
+    description: "The retreat place beyond the Jordan where John at first baptized (John 10:40), where Jesus heard of Lazarus's illness and returned toward Bethany near Jerusalem.",
+    theologicalSignificance: "Advancing into mortal hostility to demonstrate that Christ is the Resurrection and the Life."
   }
 };
 
+export const NON_JOURNEY_BOOKS = new Set([
+  // Wisdom & Poetic Literature
+  'job', 'psalms', 'proverbs', 'ecclesiastes', 'songofsolomon', 'lamentations',
+  // Prophetic Oracles & Visions (Jonah is a historical narrative journey)
+  'isaiah', 'jeremiah', 'ezekiel', 'daniel', 'hosea', 'joel', 'amos', 'obadiah',
+  'micah', 'nahum', 'habakkuk', 'zephaniah', 'haggai', 'zechariah', 'malachi',
+  // Epistles & Doctrinal Letters
+  'romans', '1corinthians', '2corinthians', 'galatians', 'ephesians',
+  'philippians', 'colossians', '1thessalonians', '2thessalonians',
+  '1timothy', '2timothy', 'titus', 'philemon', 'hebrews', 'james',
+  '1peter', '2peter', '1john', '2john', '3john', 'jude'
+]);
+
+export const LIST_AND_BOUNDARY_CHAPTERS = new Set([
+  'genesis_10', // Table of Nations
+  '1kings_4',   // Solomon's twelve administrative districts
+  'joshua_11',  // Conquered northern kings list
+  'joshua_12',  // Kings conquered by Moses and Joshua
+  'joshua_13',  // Land yet unconquered & Transjordan division
+  'joshua_14',  // Inheritance distribution at Gilgal
+  'joshua_15',  // Judah tribal boundary and town lists
+  'joshua_16',  // Ephraim boundary
+  'joshua_17',  // Manasseh allotment
+  'joshua_18',  // Survey of remaining land & Benjamin boundary
+  'joshua_19',  // Simeon, Zebulun, Issachar, Asher, Naphtali, Dan allotments
+  'joshua_21',  // Levitical cities list
+  'numbers_1',  // First census
+  'numbers_2',  // Camp arrangement
+  'numbers_3',  // Levite census
+  'numbers_26', // Second census
+  'numbers_34', // Borders of Canaan
+  '1chronicles_1', '1chronicles_2', '1chronicles_3', '1chronicles_4',
+  '1chronicles_5', '1chronicles_6', '1chronicles_7', '1chronicles_8',
+  '1chronicles_9', '1chronicles_24', '1chronicles_25', '1chronicles_26', '1chronicles_27',
+  'ezra_2', 'nehemiah_3', 'nehemiah_7', 'nehemiah_11', 'nehemiah_12'
+]);
+
 export function getChapterGeoData(bookId: string, chapterNum: number): ChapterGeoData {
   const key = `${bookId.toLowerCase()}_${chapterNum}`;
+  const historicalSegments = getHistoricalRouteSegments(bookId, chapterNum);
+
   if (CHAPTER_MICRO_EVENTS[key]) {
-    return CHAPTER_MICRO_EVENTS[key];
+    const data = CHAPTER_MICRO_EVENTS[key];
+    const events = data.events.map(ev => {
+      const cleanLoc = cleanDisambiguatedPlaceName(ev.locationName);
+      const cleanShort = cleanDisambiguatedPlaceName(ev.shortPlaceName || ev.locationName);
+      let cleanTitle = ev.title;
+      if (cleanTitle === ev.locationName || /\s+\d+$/.test(cleanTitle)) {
+        cleanTitle = cleanDisambiguatedPlaceName(cleanTitle);
+      }
+
+      let modifiedEv: ChapterGeoEvent = {
+        ...ev,
+        locationName: cleanLoc,
+        shortPlaceName: cleanShort,
+        title: cleanTitle
+      };
+
+      // In Acts 17, Amphipolis, Apollonia, Thessalonica, Berea, Athens are physical stops
+      if (key === 'acts_17' && ['Amphipolis', 'Apollonia', 'Thessalonica'].includes(cleanLoc)) {
+        modifiedEv.isReferencedOnly = false;
+      }
+      // In Acts 10, Caesarea is the physical destination where Peter arrives at Cornelius's house
+      if (key === 'acts_10' && cleanLoc === 'Caesarea') {
+        modifiedEv.isReferencedOnly = false;
+      }
+      // In Acts 8, Samaria, Gaza, Azotus, Caesarea are Philip's physical journey stops
+      if (key === 'acts_8' && (cleanLoc.includes('Samaria') || cleanLoc.includes('Gaza') || cleanLoc.includes('Azotus') || cleanLoc.includes('Caesarea'))) {
+        modifiedEv.isReferencedOnly = false;
+      }
+      // In Acts 16, Jerusalem (council ref), Thyatira (origin), Asia/Bithynia (forbidden/prevented), Phrygia/Galatia/Mysia (regions) are referenced
+      if (key === 'acts_16') {
+        if (['Jerusalem', 'Thyatira', 'Asia', 'Bithynia', 'Greece', 'Macedonia', 'Phrygia', 'Galatia', 'Mysia'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      // In Acts 2 (Pentecost nations) and Acts 7 (Stephen's historical speech), non-Jerusalem places are referenced
+      if ((key === 'acts_2' || key === 'acts_7') && cleanLoc !== 'Jerusalem') {
+        modifiedEv.isReferencedOnly = true;
+      }
+      // In Acts 27, broad territories, seas, and passing references are referenced; actual ports are physical
+      if (key === 'acts_27') {
+        if (['Cyprus', 'Cilicia', 'Pamphylia', 'Lycia', 'Crete', 'Adriatic Sea', 'Salmone', 'Phoenix', 'Lasea', 'Syrtis', 'Asia', 'Italy', 'Alexandria', 'Thessalonica', 'Adramyttium'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      // In Acts 13 (First Missionary Journey), Perga and Pisidian Antioch are physical; sermon/origin places are referenced
+      if (key === 'acts_13') {
+        if (['Perga', 'Antioch (Pisidia)', 'Iconium'].includes(cleanLoc) || ev.title.includes('Perga') || ev.title.includes('Antioch in Pisidia') || ev.title.includes('Antioch 2')) {
+          modifiedEv.isReferencedOnly = false;
+        }
+        if (['Cyrene', 'Egypt', 'Canaan', 'Galilee', 'Jerusalem', 'Cyprus'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      // In Acts 14, Lystra and Derbe are key physical stops; v19 Jews from Antioch stoning Paul is referenced
+      if (key === 'acts_14') {
+        if (['Lystra', 'Derbe'].includes(cleanLoc) || ev.title.includes('Lystra') || ev.title.includes('Derbe')) {
+          modifiedEv.isReferencedOnly = false;
+        }
+        if (ev.passageRef === 'Acts 14:19') {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      // In Acts 18, companion origins and regions are referenced
+      if (key === 'acts_18') {
+        if (['Rome', 'Italy', 'Pontus', 'Alexandria', 'Egypt', 'Macedonia', 'Achaia'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      // In Acts 20 & 21, coastal island voyage stops are physical; bypassed/speech places are referenced
+      if (key === 'acts_20') {
+        if (['Assos', 'Mitylene', 'Chios', 'Samos', 'Miletus'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = false;
+        }
+        if (['Berea', 'Derbe', 'Thessalonica', 'Ephesus', 'Jerusalem'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'acts_21') {
+        if (['Cos', 'Rhodes', 'Patara', 'Tyre', 'Ptolemais', 'Caesarea', 'Jerusalem'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = false;
+        }
+        if (['Tarsus', 'Cilicia', 'Cyprus', 'Syria', 'Judea'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'exodus_13') {
+        if (['Egypt', 'Red Sea'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'exodus_14') {
+        if (cleanLoc === 'Egypt') {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'exodus_16') {
+        if (['Egypt', 'Canaan', 'Mount Sinai'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'exodus_17') {
+        if (['Egypt', 'Nile', 'Amalek'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'exodus_19') {
+        if (['Egypt', 'Wilderness of Sinai'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === '1samuel_17') {
+        if (['Gath', 'Bethlehem'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === '2kings_5') {
+        if (['Abana', 'Pharpar', 'Damascus', 'Aram'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'joshua_2') {
+        if (cleanLoc === 'Egypt') {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'judges_11') {
+        if (['Red Sea', 'Kadesh-barnea', 'Edom', 'Moab'].includes(cleanLoc) && ev.passageRef && ['Judg 11:15', 'Judg 11:16', 'Judg 11:17'].includes(ev.passageRef)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'luke_2') {
+        if (['Galilee', 'Judea'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'luke_24') {
+        if (['Galilee', 'Nazareth'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'john_4') {
+        if (['Mount Gerizim', 'Jerusalem', 'Capernaum'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      if (key === 'matthew_16') {
+        if (['Jerusalem'].includes(cleanLoc)) {
+          modifiedEv.isReferencedOnly = true;
+        }
+      }
+      return modifiedEv;
+    });
+
+    // Narrative chronological adjustments for itineraries
+    if (key === 'acts_28') {
+      const romeIdx = events.findIndex(e => e.locationName.includes('Rome'));
+      const forumIdx = events.findIndex(e => e.locationName.includes('Forum') || e.locationName.includes('Appius'));
+      if (romeIdx !== -1 && forumIdx !== -1 && romeIdx < forumIdx) {
+        const romeEv = events.splice(romeIdx, 1)[0];
+        events.push(romeEv);
+      }
+    }
+    if (key === 'acts_20') {
+      const troasIdx = events.findIndex(e => e.locationName.includes('Troas'));
+      const philippiIdx = events.findIndex(e => e.locationName.includes('Philippi'));
+      if (troasIdx !== -1 && philippiIdx !== -1 && troasIdx < philippiIdx) {
+        const philippiEv = events.splice(philippiIdx, 1)[0];
+        events.splice(troasIdx, 0, philippiEv);
+      }
+    }
+    if (key === 'acts_23') {
+      const caesareaIdx = events.findIndex(e => e.locationName.includes('Caesarea'));
+      const antipatrisIdx = events.findIndex(e => e.locationName.includes('Aphek') || e.locationName.includes('Antipatris'));
+      if (caesareaIdx !== -1 && antipatrisIdx !== -1 && caesareaIdx < antipatrisIdx) {
+        const caesareaEv = events.splice(caesareaIdx, 1)[0];
+        events.push(caesareaEv);
+      }
+    }
+    if (key === 'acts_18') {
+      const caesareaIdx = events.findIndex(e => e.locationName.includes('Caesarea'));
+      const jerusalemIdx = events.findIndex(e => e.locationName.includes('Jerusalem'));
+      if (caesareaIdx !== -1 && jerusalemIdx !== -1 && jerusalemIdx < caesareaIdx) {
+        const jerusalemEv = events.splice(jerusalemIdx, 1)[0];
+        const newCaesareaIdx = events.findIndex(e => e.locationName.includes('Caesarea'));
+        events.splice(newCaesareaIdx + 1, 0, jerusalemEv);
+      }
+    }
+
+    // Chapter Narrative Continuity: Inject or flag departure location from previous chapter
+    const departureLink = CHAPTER_DEPARTURE_LINKS[key];
+    if (departureLink) {
+      const depName = departureLink.locationName.toLowerCase();
+      const existingIdx = events.findIndex(e => {
+        const cleanName = cleanDisambiguatedPlaceName(e.locationName).toLowerCase();
+        const shortName = cleanDisambiguatedPlaceName(e.shortPlaceName || '').toLowerCase();
+        return cleanName === depName || shortName === depName || cleanName.includes(depName) || depName.includes(cleanName);
+      });
+
+      // Special cases where the departure point is also a return destination later in the chapter
+      const isReturnDestination = (key === 'acts_14' || key === 'acts_20');
+
+      if (existingIdx !== -1 && !isReturnDestination) {
+        const matchEv = events[existingIdx];
+        matchEv.isDeparturePoint = true;
+        matchEv.departureFromChapter = departureLink.fromChapterLabel;
+        if (!matchEv.title.includes('(Departure)')) {
+          matchEv.title = `${matchEv.title} (Departure)`;
+        }
+        if (existingIdx > 0) {
+          events.splice(existingIdx, 1);
+          events.unshift(matchEv);
+        }
+      } else if (existingIdx === 0 && isReturnDestination) {
+        events[0].isDeparturePoint = true;
+        events[0].departureFromChapter = departureLink.fromChapterLabel;
+        if (!events[0].title.includes('(Departure)')) {
+          events[0].title = `${events[0].title} (Departure)`;
+        }
+      } else {
+        // Prepend departure event at the front of the chapter itinerary
+        const depEvent: ChapterGeoEvent = {
+          id: `${key}_departure`,
+          stepNumber: 1,
+          title: departureLink.title || `${departureLink.shortPlaceName || departureLink.locationName} (Departure)`,
+          passageRef: departureLink.passageRef,
+          verseRange: [1, 1],
+          locationName: departureLink.locationName,
+          shortPlaceName: departureLink.shortPlaceName || departureLink.locationName,
+          modernLocation: departureLink.modernLocation,
+          lat: departureLink.lat,
+          lng: departureLink.lng,
+          description: departureLink.description,
+          theologicalSignificance: departureLink.theologicalSignificance || '',
+          isEducatedGuess: false,
+          isReferencedOnly: false,
+          isDeparturePoint: true,
+          departureFromChapter: departureLink.fromChapterLabel
+        };
+        events.unshift(depEvent);
+      }
+    }
+
+    let storyStep = 0;
+    let refStep = 0;
+    const renumberedEvents = events.map(ev => {
+      if (ev.isReferencedOnly) {
+        refStep++;
+        return { ...ev, stepNumber: refStep };
+      } else {
+        storyStep++;
+        return { ...ev, stepNumber: storyStep };
+      }
+    });
+
+    const physicalEvents = renumberedEvents.filter(e => !e.isReferencedOnly);
+    let finalEvents = [...renumberedEvents];
+    let finalCenterLat = data.centerLat;
+    let finalCenterLng = data.centerLng;
+    let finalZoom = data.defaultZoom;
+
+    // If no explicit physical storyline places were mentioned in the chapter,
+    // anchor the chapter with the scholarly historical setting where it occurred or was composed!
+    if (physicalEvents.length === 0) {
+      const setting = getChapterSetting(bookId, chapterNum);
+      const cleanBookName = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
+      const settingEvent: ChapterGeoEvent = {
+        id: `${key}_setting`,
+        stepNumber: 1,
+        title: setting.settingTitle,
+        passageRef: `${cleanBookName} ${chapterNum}`,
+        verseRange: [1, 1],
+        locationName: setting.locationName,
+        shortPlaceName: setting.shortPlaceName,
+        modernLocation: setting.modernLocation,
+        lat: setting.lat,
+        lng: setting.lng,
+        description: setting.description,
+        theologicalSignificance: setting.theologicalSignificance,
+        isEducatedGuess: true,
+        isReferencedOnly: false
+      };
+      finalEvents.unshift(settingEvent);
+      physicalEvents.push(settingEvent);
+      finalCenterLat = setting.lat;
+      finalCenterLng = setting.lng;
+      finalZoom = setting.zoom || 11;
+    }
+
+    const targetEvents = physicalEvents;
+
+    // Assemble final route segments: historical segments + master dictionary matching + straight line fallback
+    const finalSegments: RouteSegment[] = [...historicalSegments];
+    const allCoords: [number, number][] = [];
+
+    // Collect coordinates from explicit historical segments
+    historicalSegments.forEach(s => s.coordinates.forEach(c => allCoords.push(c)));
+
+    const isNonJourney = NON_JOURNEY_BOOKS.has(bookId.toLowerCase()) || (bookId.toLowerCase() === 'revelation' && chapterNum > 3);
+    const isListOrBoundary = LIST_AND_BOUNDARY_CHAPTERS.has(key);
+
+    // If explicit curated historical segments exist, those are the authoritative routes for the chapter.
+    // Never generate straight-line fallbacks or duplicate dynamic overlays on top of curated routes!
+    if (historicalSegments.length === 0 && !isNonJourney && !isListOrBoundary && targetEvents.length > 1) {
+      for (let i = 0; i < targetEvents.length - 1; i++) {
+        const fromEv = targetEvents[i];
+        const toEv = targetEvents[i + 1];
+
+        const fromName = (fromEv.shortPlaceName || fromEv.locationName).toLowerCase();
+        const toName = (toEv.shortPlaceName || toEv.locationName).toLowerCase();
+
+        // 1. Check if any segment in master HISTORICAL_ROAD_SEGMENTS connects this pair
+        let matchedHistorical: RouteSegment | null = null;
+        let isReversed = false;
+
+        for (const seg of Object.values(HISTORICAL_ROAD_SEGMENTS)) {
+          const sFrom = seg.fromName.toLowerCase();
+          const sTo = seg.toName.toLowerCase();
+          const cStart = seg.coordinates[0];
+          const cEnd = seg.coordinates[seg.coordinates.length - 1];
+
+          const dStart = calculateDistanceMiles(cStart[0], cStart[1], fromEv.lat, fromEv.lng);
+          const dEnd = calculateDistanceMiles(cEnd[0], cEnd[1], toEv.lat, toEv.lng);
+          if (dStart < 15 && dEnd < 15) {
+            matchedHistorical = seg;
+            isReversed = false;
+            break;
+          }
+
+          const dStartRev = calculateDistanceMiles(cEnd[0], cEnd[1], fromEv.lat, fromEv.lng);
+          const dEndRev = calculateDistanceMiles(cStart[0], cStart[1], toEv.lat, toEv.lng);
+          if (dStartRev < 15 && dEndRev < 15) {
+            matchedHistorical = seg;
+            isReversed = true;
+            break;
+          }
+
+          if ((sFrom.includes(fromName) || fromName.includes(sFrom)) && (sTo.includes(toName) || toName.includes(sTo))) {
+            matchedHistorical = seg;
+            isReversed = false;
+            break;
+          }
+          if ((sFrom.includes(toName) || toName.includes(sFrom)) && (sTo.includes(fromName) || fromName.includes(sTo))) {
+            matchedHistorical = seg;
+            isReversed = true;
+            break;
+          }
+        }
+
+        if (matchedHistorical) {
+          const coords = isReversed ? [...matchedHistorical.coordinates].reverse() : matchedHistorical.coordinates;
+          finalSegments.push({
+            ...matchedHistorical,
+            id: `${matchedHistorical.id}_dyn_${fromEv.id}_${toEv.id}`,
+            fromName: fromEv.shortPlaceName || fromEv.locationName,
+            toName: toEv.shortPlaceName || toEv.locationName,
+            coordinates: coords
+          });
+          coords.forEach(c => allCoords.push(c));
+          continue;
+        }
+
+        // 2. Direct Path Fallback: Only for plausible local daily journeys (dist <= 35 miles)
+        const isDistinct = Math.abs(fromEv.lat - toEv.lat) > 0.0001 || Math.abs(fromEv.lng - toEv.lng) > 0.0001;
+        if (isDistinct) {
+          const dist = calculateDistanceMiles(fromEv.lat, fromEv.lng, toEv.lat, toEv.lng);
+          if (dist <= 35 && dist > 0.01) {
+            const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
+            finalSegments.push({
+              id: `fallback_${fromEv.id}_${toEv.id}`,
+              fromName: fromEv.shortPlaceName || fromEv.locationName,
+              toName: toEv.shortPlaceName || toEv.locationName,
+              historicalRoadName: "Local Transit Track",
+              mode: "land_walking",
+              distanceMiles: dist,
+              travelDays: estDays,
+              isScholarlyEstimate: true,
+              notes: `Local walking connection between ${fromEv.shortPlaceName || fromEv.locationName} and ${toEv.shortPlaceName || toEv.locationName} (~${dist} mi, ~${estDays}d travel).`,
+              coordinates: [
+                [fromEv.lat, fromEv.lng],
+                [toEv.lat, toEv.lng]
+              ]
+            });
+            allCoords.push([fromEv.lat, fromEv.lng], [toEv.lat, toEv.lng]);
+          }
+        } else if (fromName !== toName) {
+          // Adjacent landmark or sanctuary within same immediate locality
+          finalSegments.push({
+            id: `fallback_local_${fromEv.id}_${toEv.id}`,
+            fromName: fromEv.shortPlaceName || fromEv.locationName,
+            toName: toEv.shortPlaceName || toEv.locationName,
+            historicalRoadName: "Local Vicinity Path",
+            mode: "land_walking",
+            distanceMiles: 0.5,
+            travelDays: 0.1,
+            isScholarlyEstimate: true,
+            notes: `Adjacent biblical sites/landmarks situated in the same immediate locality.`,
+            coordinates: [
+              [fromEv.lat, fromEv.lng],
+              [toEv.lat + 0.003, toEv.lng + 0.003]
+            ]
+          });
+          allCoords.push([fromEv.lat, fromEv.lng], [toEv.lat + 0.003, toEv.lng + 0.003]);
+        }
+      }
+    }
+
+    const hasSegments = finalSegments.length > 0;
+
+    return {
+      ...data,
+      centerLat: finalCenterLat,
+      centerLng: finalCenterLng,
+      defaultZoom: finalZoom,
+      events: finalEvents,
+      routeSegments: hasSegments ? finalSegments : undefined,
+      routeCoordinates: hasSegments
+        ? (allCoords.length > 0 ? allCoords : undefined)
+        : (isNonJourney || isListOrBoundary ? undefined : (data.routeCoordinates && data.routeCoordinates.length > 1 ? data.routeCoordinates : undefined))
+    };
   }
 
-  const fallbackLoc = getLocationForPassage(bookId, chapterNum);
+  const setting = getChapterSetting(bookId, chapterNum);
   const cleanBook = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
-  
+
   return {
     bookId: bookId.toLowerCase(),
     chapterNumber: chapterNum,
     chapterTitle: `${cleanBook} Chapter ${chapterNum}`,
-    region: fallbackLoc.modernCountry,
-    centerLat: fallbackLoc.lat,
-    centerLng: fallbackLoc.lng,
-    defaultZoom: fallbackLoc.zoom,
+    region: setting.modernLocation,
+    centerLat: setting.lat,
+    centerLng: setting.lng,
+    defaultZoom: setting.zoom || 11,
     events: [
       {
-        id: `${key}_ev1`,
+        id: `${key}_setting`,
         stepNumber: 1,
-        title: `${fallbackLoc.name} (${cleanBook} ${chapterNum})`,
-        passageRef: `${cleanBook} ${chapterNum}:1–15`,
-        verseRange: [1, 15],
-        locationName: fallbackLoc.name,
-        shortPlaceName: getShortPlaceName({ locationName: fallbackLoc.name }),
-        modernLocation: fallbackLoc.modernCountry,
-        lat: fallbackLoc.lat,
-        lng: fallbackLoc.lng,
-        description: `Historical events recorded in ${cleanBook} chapter ${chapterNum}, situated in ${fallbackLoc.name}.`,
-        theologicalSignificance: fallbackLoc.biblicalEvents[0] || "Historical biblical event fulfilling God's redemptive purpose."
+        title: setting.settingTitle,
+        passageRef: `${cleanBook} ${chapterNum}`,
+        verseRange: [1, 1],
+        locationName: setting.locationName,
+        shortPlaceName: setting.shortPlaceName,
+        modernLocation: setting.modernLocation,
+        lat: setting.lat,
+        lng: setting.lng,
+        description: setting.description,
+        theologicalSignificance: setting.theologicalSignificance,
+        isEducatedGuess: true,
+        isReferencedOnly: false
       }
     ],
-    routeCoordinates: [
-      [fallbackLoc.lat, fallbackLoc.lng]
-    ]
+    routeSegments: historicalSegments && historicalSegments.length > 0 ? historicalSegments : undefined
   };
 }
 
+const BOOK_CACHE: Record<string, ChapterGeoData> = {};
+
+export function getBookGeoData(bookId: string): ChapterGeoData | null {
+  if (BOOK_CACHE[bookId]) return BOOK_CACHE[bookId];
+
+  const allEvents: ChapterGeoEvent[] = [];
+  const uniquePhysical = new Set<string>();
+  const uniqueRef = new Set<string>();
+  const allSegments: RouteSegment[] = [];
+  const seenSegmentIds = new Set<string>();
+
+  const targetPrefix = `${bookId.toLowerCase()}_`;
+
+  const matchingKeys = Object.keys(CHAPTER_MICRO_EVENTS).filter(k => k.startsWith(targetPrefix));
+  matchingKeys.sort((a, b) => {
+    const numA = parseInt(a.split('_')[1] || '0', 10);
+    const numB = parseInt(b.split('_')[1] || '0', 10);
+    return numA - numB;
+  });
+
+  matchingKeys.forEach(key => {
+    const parts = key.split('_');
+    const chNum = parseInt(parts[1] || '0', 10);
+    const chapterData = getChapterGeoData(bookId, chNum);
+    const segs = chapterData.routeSegments || [];
+    segs.forEach(s => {
+      if (!seenSegmentIds.has(s.id)) {
+        seenSegmentIds.add(s.id);
+        allSegments.push(s);
+      }
+    });
+
+    chapterData.events.forEach(ev => {
+      const cleanLoc = cleanDisambiguatedPlaceName(ev.locationName);
+      const cleanShort = cleanDisambiguatedPlaceName(ev.shortPlaceName || ev.locationName);
+      let cleanTitle = ev.title;
+      if (cleanTitle === ev.locationName || /\s+\d+$/.test(cleanTitle)) {
+        cleanTitle = cleanDisambiguatedPlaceName(cleanTitle);
+      }
+
+      const cleanedEv = {
+        ...ev,
+        locationName: cleanLoc,
+        shortPlaceName: cleanShort,
+        title: cleanTitle
+      };
+
+      if (cleanedEv.isReferencedOnly) {
+        if (!uniqueRef.has(cleanedEv.locationName)) {
+          uniqueRef.add(cleanedEv.locationName);
+          allEvents.push({
+            ...cleanedEv,
+            stepNumber: uniqueRef.size,
+            id: `book_${bookId}_ref_${uniqueRef.size}`,
+            passageRef: cleanedEv.passageRef
+          });
+        }
+      } else {
+        if (!uniquePhysical.has(cleanedEv.locationName)) {
+          uniquePhysical.add(cleanedEv.locationName);
+          allEvents.push({
+            ...cleanedEv,
+            stepNumber: uniquePhysical.size,
+            id: `book_${bookId}_phys_${uniquePhysical.size}`,
+            passageRef: cleanedEv.passageRef
+          });
+        }
+      }
+    });
+  });
+
+  if (allEvents.length === 0) return null;
+
+  const cleanBook = bookId.charAt(0).toUpperCase() + bookId.slice(1).toLowerCase();
+
+  // If no chapter-level segments were accumulated but the book has multiple places, connect them sequentially
+  if (allSegments.length === 0 && allEvents.length > 1) {
+    for (let i = 0; i < allEvents.length - 1; i++) {
+      const fromEv = allEvents[i];
+      const toEv = allEvents[i + 1];
+      const fromName = (fromEv.shortPlaceName || fromEv.locationName).toLowerCase();
+      const toName = (toEv.shortPlaceName || toEv.locationName).toLowerCase();
+
+      let matchedHistorical: RouteSegment | null = null;
+      let isReversed = false;
+
+      for (const seg of Object.values(HISTORICAL_ROAD_SEGMENTS)) {
+        const sFrom = seg.fromName.toLowerCase();
+        const sTo = seg.toName.toLowerCase();
+        const cStart = seg.coordinates[0];
+        const cEnd = seg.coordinates[seg.coordinates.length - 1];
+
+        const dStart = calculateDistanceMiles(cStart[0], cStart[1], fromEv.lat, fromEv.lng);
+        const dEnd = calculateDistanceMiles(cEnd[0], cEnd[1], toEv.lat, toEv.lng);
+        if (dStart < 15 && dEnd < 15) {
+          matchedHistorical = seg;
+          isReversed = false;
+          break;
+        }
+
+        const dStartRev = calculateDistanceMiles(cEnd[0], cEnd[1], fromEv.lat, fromEv.lng);
+        const dEndRev = calculateDistanceMiles(cStart[0], cStart[1], toEv.lat, toEv.lng);
+        if (dStartRev < 15 && dEndRev < 15) {
+          matchedHistorical = seg;
+          isReversed = true;
+          break;
+        }
+
+        if ((sFrom.includes(fromName) || fromName.includes(sFrom)) && (sTo.includes(toName) || toName.includes(sTo))) {
+          matchedHistorical = seg;
+          isReversed = false;
+          break;
+        }
+        if ((sFrom.includes(toName) || toName.includes(sFrom)) && (sTo.includes(fromName) || fromName.includes(sTo))) {
+          matchedHistorical = seg;
+          isReversed = true;
+          break;
+        }
+      }
+
+      if (matchedHistorical) {
+        const coords = isReversed ? [...matchedHistorical.coordinates].reverse() : matchedHistorical.coordinates;
+        allSegments.push({
+          ...matchedHistorical,
+          id: `${matchedHistorical.id}_book_${bookId}_${i}`,
+          fromName: fromEv.shortPlaceName || fromEv.locationName,
+          toName: toEv.shortPlaceName || toEv.locationName,
+          coordinates: coords
+        });
+      } else {
+        const rawDist = calculateDistanceMiles(fromEv.lat, fromEv.lng, toEv.lat, toEv.lng);
+        const dist = rawDist > 0 ? rawDist : 0.1;
+        const estDays = Math.max(0.1, Number((dist / 20).toFixed(1)));
+        allSegments.push({
+          id: `book_${bookId}_seg_${i}`,
+          fromName: fromEv.shortPlaceName || fromEv.locationName,
+          toName: toEv.shortPlaceName || toEv.locationName,
+          historicalRoadName: "Direct Path (No Recorded Road)",
+          mode: "land_walking",
+          distanceMiles: dist,
+          travelDays: estDays,
+          isScholarlyEstimate: true,
+          notes: `Transit across ${cleanBook}: ${fromEv.shortPlaceName || fromEv.locationName} to ${toEv.shortPlaceName || toEv.locationName} (~${dist} mi, ~${estDays}d).`,
+          coordinates: [
+            [fromEv.lat, fromEv.lng],
+            [toEv.lat, toEv.lng]
+          ]
+        });
+      }
+    }
+  }
+
+  const allBookCoords: [number, number][] = [];
+  allSegments.forEach(s => s.coordinates.forEach(c => allBookCoords.push(c)));
+
+  const result = {
+    bookId: bookId.toLowerCase(),
+    chapterNumber: 0,
+    chapterTitle: `All Places in ${cleanBook}`,
+    region: "Biblical World",
+    centerLat: allEvents[0].lat,
+    centerLng: allEvents[0].lng,
+    defaultZoom: 6,
+    events: allEvents,
+    routeCoordinates: allBookCoords,
+    routeSegments: allSegments
+  };
+
+  BOOK_CACHE[bookId] = result;
+  return result;
+}
+
 export function getLocationForPassage(bookId: string, chapterNum: number): GeoLocation {
-  const bookKey = bookId.toLowerCase();
-
-  // --------------------------------------------------------------------------
-  // GENESIS (Patriarchal & Primeval Geography - Pre-Davidic Jerusalem)
-  // --------------------------------------------------------------------------
-  if (bookKey === "genesis") {
-    // Primeval History: Eden, Ararat, Babel & Ur
-    if (chapterNum <= 7) return BIBLICAL_LOCATIONS.eden_mesopotamia;
-    if (chapterNum >= 8 && chapterNum <= 10) return BIBLICAL_LOCATIONS.mount_ararat;
-    if (chapterNum === 11) return BIBLICAL_LOCATIONS.ur_chaldees;
-
-    // Abraham's Call & Journeys
-    if (chapterNum === 12) return BIBLICAL_LOCATIONS.shechem;
-    if (chapterNum === 13) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum === 14) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum >= 15 && chapterNum <= 19) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum === 20 || chapterNum === 21) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 22) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 23) return BIBLICAL_LOCATIONS.hebron;
-    if (chapterNum === 24) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 25 || chapterNum === 26) return BIBLICAL_LOCATIONS.beersheba;
-
-    // Jacob & Esau
-    if (chapterNum === 27) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum === 28) return BIBLICAL_LOCATIONS.bethel;
-    if (chapterNum >= 29 && chapterNum <= 31) return BIBLICAL_LOCATIONS.haran;
-    if (chapterNum === 32) return BIBLICAL_LOCATIONS.peniel_jabbok;
-    if (chapterNum === 33 || chapterNum === 34) return BIBLICAL_LOCATIONS.shechem;
-    if (chapterNum === 35) return BIBLICAL_LOCATIONS.bethel;
-    if (chapterNum === 36) return BIBLICAL_LOCATIONS.hebron;
-
-    // Joseph & Israel in Egypt
-    if (chapterNum === 37) return BIBLICAL_LOCATIONS.dothan;
-    if (chapterNum >= 38 && chapterNum <= 45) return BIBLICAL_LOCATIONS.goshen_egypt;
-    if (chapterNum === 46) return BIBLICAL_LOCATIONS.beersheba;
-    if (chapterNum >= 47 && chapterNum <= 50) return BIBLICAL_LOCATIONS.goshen_egypt;
-
-    return BIBLICAL_LOCATIONS.hebron;
-  }
-
-  // --------------------------------------------------------------------------
-  // EXODUS & PENTATEUCH
-  // --------------------------------------------------------------------------
-  if (bookKey === "exodus") {
-    if (chapterNum <= 13) return BIBLICAL_LOCATIONS.goshen_egypt;
-    if (chapterNum >= 14 && chapterNum <= 18) return BIBLICAL_LOCATIONS.mount_sinai;
-    return BIBLICAL_LOCATIONS.mount_sinai;
-  }
-  if (bookKey === "leviticus" || bookKey === "numbers" || bookKey === "deuteronomy") {
-    return BIBLICAL_LOCATIONS.mount_sinai;
-  }
-
-  // --------------------------------------------------------------------------
-  // HISTORICAL BOOKS & PROPHETS
-  // --------------------------------------------------------------------------
-  if (bookKey === "joshua") return BIBLICAL_LOCATIONS.jericho;
-  if (bookKey === "judges" || bookKey === "ruth") return BIBLICAL_LOCATIONS.bethlehem;
-  if (bookKey.includes("kings") && (chapterNum === 18 || chapterNum === 19)) {
-    return BIBLICAL_LOCATIONS.mount_carmel;
-  }
-  if (bookKey === "esther") return BIBLICAL_LOCATIONS.susa_persia;
-  if (bookKey === "daniel") return BIBLICAL_LOCATIONS.babylon_ancient;
-  if (bookKey === "ezekiel") return BIBLICAL_LOCATIONS.babylon_ancient;
-
-  // --------------------------------------------------------------------------
-  // GOSPEL OF JOHN
-  // --------------------------------------------------------------------------
-  if (bookKey === "john") {
-    if (chapterNum === 1) return BIBLICAL_LOCATIONS.jordan_river;
-    if (chapterNum === 2) return BIBLICAL_LOCATIONS.nazareth;
-    if (chapterNum === 3) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 4) return BIBLICAL_LOCATIONS.jordan_river;
-    if (chapterNum === 5) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 6) return BIBLICAL_LOCATIONS.galilee;
-    if (chapterNum >= 7 && chapterNum <= 10) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 11) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum >= 12 && chapterNum <= 20) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 21) return BIBLICAL_LOCATIONS.galilee;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-
-  // --------------------------------------------------------------------------
-  // ACTS OF THE APOSTLES
-  // --------------------------------------------------------------------------
-  if (bookKey === "acts") {
-    if (chapterNum <= 7) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 8 || chapterNum === 9) return BIBLICAL_LOCATIONS.damascus;
-    if (chapterNum === 10) return BIBLICAL_LOCATIONS.caesarea;
-    if (chapterNum >= 11 && chapterNum <= 14) return BIBLICAL_LOCATIONS.antioch;
-    if (chapterNum === 15) return BIBLICAL_LOCATIONS.jerusalem;
-    if (chapterNum === 16) return BIBLICAL_LOCATIONS.philippi;
-    if (chapterNum === 17) return BIBLICAL_LOCATIONS.berea;
-    if (chapterNum === 18) return BIBLICAL_LOCATIONS.corinth;
-    if (chapterNum === 19 || chapterNum === 20) return BIBLICAL_LOCATIONS.ephesus;
-    if (chapterNum >= 21 && chapterNum <= 26) return BIBLICAL_LOCATIONS.caesarea;
-    if (chapterNum >= 27) return BIBLICAL_LOCATIONS.rome;
-    return BIBLICAL_LOCATIONS.berea;
-  }
-
-  // --------------------------------------------------------------------------
-  // SYNOPTIC GOSPELS
-  // --------------------------------------------------------------------------
-  if (bookKey === "matthew") {
-    if (chapterNum <= 2) return BIBLICAL_LOCATIONS.bethlehem;
-    if (chapterNum >= 3 && chapterNum <= 18) return BIBLICAL_LOCATIONS.galilee;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-  if (bookKey === "mark") {
-    if (chapterNum <= 10) return BIBLICAL_LOCATIONS.galilee;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-  if (bookKey === "luke") {
-    if (chapterNum <= 2) return BIBLICAL_LOCATIONS.nazareth;
-    if (chapterNum === 19) return BIBLICAL_LOCATIONS.jericho;
-    return BIBLICAL_LOCATIONS.jerusalem;
-  }
-
-  // --------------------------------------------------------------------------
-  // EPISTLES & REVELATION
-  // --------------------------------------------------------------------------
-  if (bookKey === "romans") return BIBLICAL_LOCATIONS.rome;
-  if (bookKey.includes("corinthians")) return BIBLICAL_LOCATIONS.corinth;
-  if (bookKey === "galatians") return BIBLICAL_LOCATIONS.antioch;
-  if (bookKey === "ephesians") return BIBLICAL_LOCATIONS.ephesus;
-  if (bookKey === "philippians") return BIBLICAL_LOCATIONS.philippi;
-  if (bookKey === "colossians") return BIBLICAL_LOCATIONS.ephesus;
-  if (bookKey.includes("thessalonians")) return BIBLICAL_LOCATIONS.thessalonica;
-  if (bookKey.includes("timothy") || bookKey === "titus") return BIBLICAL_LOCATIONS.ephesus;
-  if (bookKey === "hebrews") return BIBLICAL_LOCATIONS.jerusalem;
-  if (bookKey.includes("peter")) return BIBLICAL_LOCATIONS.rome;
-  if (bookKey === "revelation") return BIBLICAL_LOCATIONS.patmos;
-
-  return BIBLICAL_LOCATIONS.jerusalem;
+  const setting = getChapterSetting(bookId, chapterNum);
+  return {
+    id: `${bookId.toLowerCase()}_${chapterNum}_loc`,
+    name: setting.locationName,
+    ancientName: setting.shortPlaceName,
+    modernCountry: setting.modernLocation,
+    lat: setting.lat,
+    lng: setting.lng,
+    zoom: setting.zoom || 11,
+    era: setting.era,
+    biblicalEvents: [setting.settingTitle, setting.theologicalSignificance],
+    description: setting.description,
+    scriptureReferences: [`${bookId} ${chapterNum}`],
+    archaeologicalNotes: setting.description
+  };
 }

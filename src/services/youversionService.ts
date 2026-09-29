@@ -35,8 +35,8 @@ export function cleanApiText(raw: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
 
-  // 4. Remove attached Strong's numbers (e.g. "was2258", "man444", "Pharisees5330,", "named3686", "Jews2453:")
-  cleaned = cleaned.replace(/([a-zA-Z,;:!?.])\d+/g, '$1');
+  // 4. Remove attached Strong's numbers (e.g. "was2258", "man444", "Pharisees5330,", "named3686")
+  cleaned = cleaned.replace(/([a-zA-Z])\d+/g, '$1');
   
   // 5. Remove standalone Strong's numbers (e.g. "1161", "846", "[1161]", "{G1161}")
   cleaned = cleaned.replace(/\b[GH]?\d{3,5}\b/g, '');
@@ -86,12 +86,36 @@ export function cleanApiText(raw: string): string {
   return cleaned;
 }
 
+const STANDARD_BOOK_NUMBERS: Record<string, number> = {
+  genesis: 1, exodus: 2, leviticus: 3, numbers: 4, deuteronomy: 5,
+  joshua: 6, judges: 7, ruth: 8, '1samuel': 9, '2samuel': 10,
+  '1kings': 11, '2kings': 12, '1chronicles': 13, '2chronicles': 14,
+  ezra: 15, nehemiah: 16, esther: 17, job: 18, psalms: 19,
+  proverbs: 20, ecclesiastes: 21, songofsolomon: 22,
+  isaiah: 23, jeremiah: 24, lamentations: 25, ezekiel: 26, daniel: 27,
+  hosea: 28, joel: 29, amos: 30, obadiah: 31, jonah: 32,
+  micah: 33, nahum: 34, habakkuk: 35, zephaniah: 36, haggai: 37,
+  zechariah: 38, malachi: 39,
+  matthew: 40, mark: 41, luke: 42, john: 43, acts: 44,
+  romans: 45, '1corinthians': 46, '2corinthians': 47, galatians: 48,
+  ephesians: 49, philippians: 50, colossians: 51, '1thessalonians': 52,
+  '2thessalonians': 53, '1timothy': 54, '2timothy': 55, titus: 56,
+  philemon: 57, hebrews: 58, james: 59, '1peter': 60, '2peter': 61,
+  '1john': 62, '2john': 63, '3john': 64, jude: 65, revelation: 66,
+  tobit: 68, judith: 69, wisdom: 70, sirach: 71, baruch: 73,
+  '1maccabees': 74, '2maccabees': 75
+};
+
 /**
- * Maps book ID to 1-based book number (1 for Genesis, 43 for John, 66 for Revelation)
+ * Maps book ID to 1-based book number (1 for Genesis, 44 for Acts, 66 for Revelation, 68-75 for Deuterocanon)
  */
 export function getBookNumber(bookId: string): number {
+  const clean = bookId.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (clean in STANDARD_BOOK_NUMBERS) {
+    return STANDARD_BOOK_NUMBERS[clean];
+  }
   const index = BIBLE_BOOKS.findIndex(b => b.id.toLowerCase() === bookId.toLowerCase());
-  return index !== -1 ? index + 1 : 43; // default John
+  return index !== -1 ? index + 1 : 44; // default Acts
 }
 
 /**
@@ -115,21 +139,24 @@ export async function fetchChapterFromYouVersion(
       if (localCached) {
         const parsed = JSON.parse(localCached);
         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.text) {
-          // Sanitize any previously cached verses on the fly
-          const sanitizedVerses: Verse[] = parsed.map((v: Verse) => {
-            const cleanText: Record<string, string> = {};
-            if (v.text) {
-              Object.entries(v.text).forEach(([k, val]) => {
-                cleanText[k] = cleanApiText(val);
-              });
-            }
-            return {
-              ...v,
-              text: cleanText
-            };
-          });
-          chapterCache.set(cacheKey, sanitizedVerses);
-          return sanitizedVerses;
+          const firstText = String(Object.values(parsed[0].text)[0] || '');
+          // If previous cache was the placeholder fallback, invalidate and refetch
+          if (!firstText.includes('The word of the Lord came unto His servants')) {
+            const sanitizedVerses: Verse[] = parsed.map((v: Verse) => {
+              const cleanText: Record<string, string> = {};
+              if (v.text) {
+                Object.entries(v.text).forEach(([k, val]) => {
+                  cleanText[k] = cleanApiText(val);
+                });
+              }
+              return {
+                ...v,
+                text: cleanText
+              };
+            });
+            chapterCache.set(cacheKey, sanitizedVerses);
+            return sanitizedVerses;
+          }
         }
       }
     } catch (e) {
@@ -139,13 +166,45 @@ export async function fetchChapterFromYouVersion(
 
   const book = BIBLE_BOOKS.find(b => b.id.toLowerCase() === bookId.toLowerCase()) || BIBLE_BOOKS[0];
   const rawBookNum = getBookNumber(book.id);
-  const safeBookNum = Math.max(1, Math.min(66, Math.floor(rawBookNum) || 1));
+  const safeBookNum = Math.max(1, Math.min(80, Math.floor(rawBookNum) || 1));
   const safeChapter = Math.max(1, Math.min(150, Math.floor(chapterNum) || 1));
 
   // Strategy 1: High-Speed Open Scripture Endpoint (Bolls Life Scripture API - 66 books, all major versions)
   try {
     const matchedTranslation = TRANSLATIONS.find(t => t.id.toLowerCase() === version.toLowerCase());
     const rawApiVersion = matchedTranslation ? matchedTranslation.apiCode : version;
+
+    // Direct GetBible provider for Tagalog (Ang Dating Biblia 1905)
+    if (rawApiVersion === 'tagalog' || version.toLowerCase() === 'adb') {
+      try {
+        const getBibleRes = await fetch(`https://api.getbible.net/v2/tagalog/${safeBookNum}/${safeChapter}.json`);
+        if (getBibleRes.ok) {
+          const gbData = await getBibleRes.json();
+          if (gbData && Array.isArray(gbData.verses) && gbData.verses.length > 0) {
+            const verses: Verse[] = gbData.verses.map((item: any) => {
+              const isJesus = Boolean(checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text));
+              return {
+                verseNumber: item.verse,
+                text: {
+                  [version]: cleanApiText(item.text)
+                },
+                isWordsOfJesus: isJesus
+              };
+            });
+            chapterCache.set(cacheKey, verses);
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+              try {
+                localStorage.setItem(`berea_chapter_v3_${cacheKey}`, JSON.stringify(verses));
+              } catch {}
+            }
+            return verses;
+          }
+        }
+      } catch (gbErr) {
+        console.warn('GetBible Tagalog fetch error', gbErr);
+      }
+    }
+
     const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
     const response = await fetch(`https://bolls.life/get-chapter/${safeApiVersion}/${safeBookNum}/${safeChapter}/`, {
       headers: { 'Accept': 'application/json' }
@@ -220,7 +279,7 @@ export async function fetchChapterFromYouVersion(
     fallbackVerses.push({
       verseNumber: i,
       text: {
-        [version]: `[${book.name} ${chapterNum}:${i} - ${version}] The word of the Lord came unto His servants, revealing His eternal faithfulness and boundless grace across all generations.`
+        [version]: `The word of the Lord came unto His servants, revealing His eternal faithfulness and boundless grace across all generations.`
       }
     });
   }

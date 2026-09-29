@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Bookmark, Search, X, Trash2, Copy, Check, ArrowRight, ArrowUpDown, GripHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { BookmarkedVerse, useBookmarkedVerses, removeBookmark, clearAllBookmarks, getCanonicalBookIndex } from '../services/bookmarkService';
+import { AnimatedPresence } from './AnimatedPresence';
 
 interface BookmarksModalProps {
   isOpen: boolean;
@@ -178,12 +179,12 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
   };
 
   // Do not render anything if modal is closed
-  if (!isOpen) return null;
-
   return (
+    <AnimatedPresence isVisible={isOpen} duration={250}>
+      {(isClosing) => (
     <div
       ref={modalRef}
-      className="fixed z-50 bg-[#FAF7F2] rounded-2xl flex flex-col overflow-hidden select-auto transition-[max-height] duration-200"
+      className={`fixed z-50 bg-[#FAF7F2] rounded-2xl flex flex-col overflow-hidden select-auto transition-[max-height] duration-200 ${isClosing ? 'animate-springScaleOut' : 'animate-springScaleIn'}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -196,9 +197,13 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
       {/* Movable Drag Header */}
       <div
         onPointerDown={handleDragStart}
+        onDoubleClick={(e) => {
+          if ((e.target as HTMLElement).closest('button, input, select, a')) return;
+          setIsMinimized(prev => !prev);
+        }}
         className="p-3.5 border-b border-[#EBE5DC] bg-[#FAF5ED] flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
         style={{ touchAction: 'none' }}
-        title="Click and drag to move window"
+        title="Click and drag to move window • Double-click to collapse/expand"
       >
         <div className="flex items-center gap-2.5 min-w-0 pr-2">
           <GripHorizontal className="w-4 h-4 text-[#A8A29E] shrink-0 hover:text-[#B4793D] transition-colors" />
@@ -485,5 +490,7 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
         </>
       )}
     </div>
+      )}
+    </AnimatedPresence>
   );
 };

@@ -12,6 +12,16 @@ interface MarkdownRendererProps {
 export const MarkdownTheologyRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
   if (!content) return null;
 
+  // If content is rich HTML markup, render directly
+  if (/<(p|div|blockquote|ul|ol|h[1-6]|mark|span|b|strong)\b[^>]*>/i.test(content)) {
+    return (
+      <div
+        className={`theology-rich-preview space-y-1.5 leading-relaxed text-[#26221F] ${className}`}
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+
   // Split lines while preserving markdown structure
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
@@ -38,12 +48,41 @@ export const MarkdownTheologyRenderer: React.FC<MarkdownRendererProps> = ({ cont
     }
   };
 
-  // Helper to parse bold, italic, and quotes in inline text
+  // Helper to parse bold, italic, highlights, and code in inline text
   const parseInlineFormatting = (text: string): React.ReactNode => {
-    // Split by markdown bold (**text**)
-    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
+    // Split by highlight tags (<mark class="..."> or ==text==), bold (**text**), italic (*text*), and code (`code`)
+    const parts = text.split(/(<mark\s+class=["'][^"']*["']>.*?<\/mark>|<mark>.*?<\/mark>|==.*?==|\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
 
     return parts.map((part, index) => {
+      // Highlight: <mark class="hl-yellow|hl-green|hl-red|hl-blue">...</mark> or default <mark>
+      if (part.startsWith('<mark') && part.endsWith('</mark>')) {
+        const colorMatch = part.match(/class=["']hl-(yellow|green|red|blue)["']/i);
+        const color = colorMatch ? colorMatch[1].toLowerCase() : 'yellow';
+        const innerText = part.replace(/^<mark[^>]*>/, '').replace(/<\/mark>$/, '');
+
+        const colorClasses: Record<string, string> = {
+          yellow: 'bg-amber-200/85 text-amber-950 px-1 py-0.5 rounded',
+          green: 'bg-emerald-200/85 text-emerald-950 px-1 py-0.5 rounded',
+          red: 'bg-rose-200/85 text-rose-950 px-1 py-0.5 rounded',
+          blue: 'bg-sky-200/85 text-sky-950 px-1 py-0.5 rounded'
+        };
+
+        return (
+          <mark key={index} className={colorClasses[color] || colorClasses.yellow}>
+            {parseInlineFormatting(innerText)}
+          </mark>
+        );
+      }
+
+      // Markdown highlight syntax: ==text== (defaults to yellow)
+      if (part.startsWith('==') && part.endsWith('==') && part.length > 4) {
+        return (
+          <mark key={index} className="bg-amber-200/85 text-amber-950 px-1 py-0.5 rounded">
+            {part.slice(2, -2)}
+          </mark>
+        );
+      }
+
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
           <strong key={index} className="font-semibold text-[#26221F]">
