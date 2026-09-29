@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Verse, Chapter, TranslationId, getTranslationColor } from '../data/bibleData';
+import { Verse, Chapter, TranslationId, getTranslationColor, TRANSLATIONS } from '../data/bibleData';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, ChevronDown, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Highlighter, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
@@ -143,10 +144,16 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const bookmarks = useBookmarkedVerses();
   const effectiveBookId = bookId || bookName.toLowerCase().replace(/\s+/g, '');
   const isVerseSaved = (vNum: number) => isVerseBookmarked(effectiveBookId, chapter.chapterNumber, vNum);
-  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>(() => getAvailableVoices());
+
+  const { language: appLanguage } = useLanguage();
+  const currentTranslationObj = TRANSLATIONS.find(t => t.id === activeTranslation);
+  const effectiveLang = (currentTranslationObj?.language || appLanguage || 'en').toLowerCase();
+
+  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>(() => getAvailableVoices(effectiveLang));
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
     try {
-      return localStorage.getItem('berea_preferred_voice') || '';
+      return localStorage.getItem(`berea_preferred_voice_${effectiveLang}`) ||
+             localStorage.getItem('berea_preferred_voice') || '';
     } catch {
       return '';
     }
@@ -199,13 +206,22 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     };
   }, [bookName, chapter?.chapterNumber, chapter?.verses, activeTranslation]);
 
+  // Synchronize available voices and stored voice preference with active translation language
+  useEffect(() => {
+    setAvailableVoices(getAvailableVoices(effectiveLang));
+    try {
+      const savedLangVoice = localStorage.getItem(`berea_preferred_voice_${effectiveLang}`) || '';
+      setSelectedVoiceId(savedLangVoice);
+    } catch { }
+  }, [effectiveLang]);
+
   // Subscribe to asynchronously loaded system voices
   useEffect(() => {
     const unsub = subscribeVoicesLoaded(() => {
-      setAvailableVoices(getAvailableVoices());
+      setAvailableVoices(getAvailableVoices(effectiveLang));
     });
     return unsub;
-  }, []);
+  }, [effectiveLang]);
 
   const isPlayingRef = useRef<boolean>(isPlayingAudio);
   isPlayingRef.current = isPlayingAudio;
@@ -280,9 +296,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
       },
       (p) => {
         setTtsProgress(p);
-      }
+      },
+      effectiveLang
     );
-  }, [bookName, chapter.chapterNumber, chapter.verses, activeTranslation, playbackSpeed, onSelectVerse]);
+  }, [bookName, chapter.chapterNumber, chapter.verses, activeTranslation, effectiveLang, playbackSpeed, onSelectVerse]);
 
   // Audio Playback Toggle Button Handler
   const handleToggleAudio = () => {
@@ -1248,8 +1265,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     const newVoice = e.target.value;
                     setSelectedVoiceId(newVoice);
                     try {
-                      if (newVoice) localStorage.setItem('berea_preferred_voice', newVoice);
-                      else localStorage.removeItem('berea_preferred_voice');
+                      if (newVoice) {
+                        localStorage.setItem(`berea_preferred_voice_${effectiveLang}`, newVoice);
+                        localStorage.setItem('berea_preferred_voice', newVoice);
+                      } else {
+                        localStorage.removeItem(`berea_preferred_voice_${effectiveLang}`);
+                        localStorage.removeItem('berea_preferred_voice');
+                      }
                     } catch { }
                     if (isPlayingAudio) {
                       playVerseAudio(selectedVerseNumber, playbackSpeed, newVoice);
@@ -1258,9 +1280,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   className="bg-[#38332E] text-xs text-[#EBE5DC] border border-[#48423B] rounded-full px-2.5 py-1 focus:outline-none focus:border-[var(--clean-accent-caramel,#B4793D)] font-medium cursor-pointer max-w-[210px] truncate"
                   title="Select Studio Narrator Voice"
                 >
-                  <option value="">⚡ Auto (Dignified British / Clear US)</option>
-                  {availableVoices.filter(v => v.id !== '').map(v => (
-                    <option key={v.id} value={v.id}>
+                  {availableVoices.map(v => (
+                    <option key={v.id || 'auto-voice'} value={v.id}>
                       {v.displayName}
                     </option>
                   ))}
