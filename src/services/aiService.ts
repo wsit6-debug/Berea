@@ -1411,3 +1411,69 @@ export async function generateTypologyTracker(
   }
   return result;
 }
+
+export async function generateChapterSymbolism(
+  book: string,
+  chapter: number,
+  lens: string,
+  chapterText?: string,
+  onProgress?: (progress: { text: string; progress: number }) => void
+): Promise<string> {
+  const { generateLocalAiResponse } = await import('./webLlmService');
+  
+  const prompt = `You are a biblical scholar specialized in typology, symbolism, and theology.
+Analyze the biblical chapter ${book} ${chapter}. 
+Identify 3-4 key symbols, motifs, or typological elements in the chapter and explain their significance according to the ${lens} theological tradition.
+Format your response as a bulleted list of the specific symbols found in the chapter with a short explanation for each (e.g. - **The Lamb**: explanation).
+
+PASSAGE TEXT (if available):
+${chapterText || "Use your canonical knowledge of this chapter."}
+`;
+
+  try {
+    if (onProgress) onProgress({ text: 'Analyzing symbolism...', progress: 0.1 });
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress, true);
+    
+    if (onProgress) onProgress({ text: 'Done.', progress: 1.0 });
+    return responseText;
+  } catch (err) {
+    console.error('Error generating symbolism summary:', err);
+    throw new Error('Failed to generate symbolism summary.');
+  }
+}
+
+export async function generateHistoricalCommentary(
+  passageRef: string,
+  passageText: string,
+  commentatorName: string,
+  denomination: string,
+  onProgress?: (progress: { text: string; progress: number }) => void
+): Promise<string> {
+  const { generateLocalAiResponse } = await import('./webLlmService');
+  
+  const prompt = `You are a strict historical and patristic citation engine for biblical scholarship.
+You are tasked with providing authentic commentary from ${commentatorName} (${denomination} tradition) on the biblical passage ${passageRef}.
+
+CRITICAL ANTI-HALLUCINATION & AUTHENTICITY RULES:
+1. DIRECT QUOTATIONS ONLY: Only output genuine, authentic, documented historical quotes or direct excerpts written or preached by ${commentatorName} on this passage (e.g., from their published commentaries, homilies, sermons, or theological treatises).
+2. NEVER SIMULATE OR FABRICATE: DO NOT fabricate, roleplay, simulate, or generate modern AI text in the style of ${commentatorName}. Every quotation must be a real historical statement by ${commentatorName}.
+3. CITATION / WORK TITLE: Always specify the source work where the quotation appears (e.g., work title, treatise, homily number, or volume) if known.
+4. HONEST FALLBACK: If you do not have verified, verbatim commentary from ${commentatorName} specifically addressing ${passageRef}, output EXACTLY:
+"No direct historical quotation from ${commentatorName} is verified for ${passageRef}."
+Do not invent or guess commentary.
+
+PASSAGE TEXT:
+${passageText}
+`;
+
+  try {
+    if (onProgress) onProgress({ text: `Searching writings of ${commentatorName}...`, progress: 0.1 });
+    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress, true);
+    
+    if (onProgress) onProgress({ text: 'Done.', progress: 1.0 });
+    return responseText;
+  } catch (err) {
+    console.error('Error retrieving historical commentary:', err);
+    throw new Error('Failed to retrieve commentary.');
+  }
+}

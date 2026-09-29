@@ -49,6 +49,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   }, [lockoutUntil]);
 
   const computeHash = async (str: string, salt: string = ''): Promise<string> => {
+    if (!window.crypto || !window.crypto.subtle) {
+      throw new Error("Crypto API unavailable. You must use localhost or HTTPS.");
+    }
     const encoder = new TextEncoder();
     const data = encoder.encode(salt + str);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -127,9 +130,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         setTimeout(() => setIsShaking(false), 500);
         setIsSubmitting(false);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('An error occurred while verifying the password.');
+      if (err.message === "Crypto API unavailable. You must use localhost or HTTPS.") {
+        setError("Security Error: Please access the app via http://localhost:5173 instead of the network IP.");
+      } else {
+        setError('An error occurred while verifying the password.');
+      }
       setIsSubmitting(false);
     }
   };

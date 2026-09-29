@@ -3,13 +3,15 @@ import {
   Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
   History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages, Trophy, HelpCircle, Network,
-  Plus, Minus, CheckCircle2
+  Plus, Minus, CheckCircle2, Feather
 } from 'lucide-react';
-import { DENOMINATIONS, DenominationalLens, getTheologicalInsight } from '../data/theologyData';
+import { DENOMINATIONS, DenominationalLens, getTheologicalInsight, DENOMINATION_COMMENTATORS } from '../data/theologyData';
+import { getVerbatimCommentary, summarizeCommentaryText } from '../services/commentaryDatabaseService';
+import { ChapterSymbolismPanel } from './ChapterSymbolismPanel';
 import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent, calculateDistanceMiles, getShortPlaceName } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
-import { askBereaAssistant, ChatMessage, QuizQuestion, QuizStyle, WrittenGradingResult, gradeWrittenAnswer } from '../services/aiService';
+import { askBereaAssistant, ChatMessage, QuizQuestion, QuizStyle, WrittenGradingResult, gradeWrittenAnswer, generateHistoricalCommentary } from '../services/aiService';
 import { requestForegroundQuiz, getCachedChapterQuiz, getCachedBookQuiz } from '../services/quizService';
 import { BIBLE_BOOKS } from '../data/bibleData';
 import { searchDoctrinalCorpus, preloadUnabridgedCorpus } from '../services/ragService';
@@ -686,6 +688,98 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     effectiveEndVNum
   );
 
+  // Historical Commentary State
+  const [selectedCommentator, setSelectedCommentator] = useState<string>('');
+  const [commentaryText, setCommentaryText] = useState<string>('');
+  const [isCommentaryLoading, setIsCommentaryLoading] = useState<boolean>(false);
+  const [commentaryError, setCommentaryError] = useState<string>('');
+  const [isCommentaryVerbatim, setIsCommentaryVerbatim] = useState<boolean>(false);
+  const [commentaryProgress, setCommentaryProgress] = useState<string>('');
+  const [showFullCommentary, setShowFullCommentary] = useState<boolean>(false);
+
+  const selectedCommentatorObj = useMemo(() => {
+    return (DENOMINATION_COMMENTATORS[activeLens] || []).find(c => c.id === selectedCommentator);
+  }, [activeLens, selectedCommentator]);
+
+  const isCommentaryLong = commentaryText.length > 500;
+  const commentarySummary = useMemo(() => {
+    if (!isCommentaryLong || !commentaryText) return '';
+    return summarizeCommentaryText(commentaryText, selectedCommentatorObj?.name);
+  }, [commentaryText, isCommentaryLong, selectedCommentatorObj]);
+
+  const commentaryWordCount = useMemo(() => {
+    return commentaryText ? commentaryText.trim().split(/\s+/).length : 0;
+  }, [commentaryText]);
+
+  const handleGenerateCommentary = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const commentatorId = e.target.value;
+    setSelectedCommentator(commentatorId);
+    setShowFullCommentary(false);
+    if (!commentatorId) {
+      setCommentaryText('');
+      setIsCommentaryVerbatim(false);
+      return;
+    }
+    
+    const activeCommentators = DENOMINATION_COMMENTATORS[activeLens] || [];
+    const commentator = activeCommentators.find(c => c.id === commentatorId);
+    if (!commentator) return;
+    
+    const cacheKey = `berea_persona_v4_${currentBook}_${currentChapter}_${isRangeActive ? `${selectedVerseRange!.start}_${selectedVerseRange!.end}` : activeVerseNum}_${commentatorId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      setCommentaryText(cached);
+      setIsCommentaryVerbatim(localStorage.getItem(`${cacheKey}_is_verbatim`) === 'true');
+      return;
+    }
+
+    setIsCommentaryLoading(true);
+    setCommentaryError('');
+    setCommentaryText('');
+    setIsCommentaryVerbatim(false);
+    setCommentaryProgress('Searching verbatim historical database...');
+
+    try {
+      // 1. Query public domain database for authentic historical commentary
+      const verbatim = await getVerbatimCommentary(
+        commentator.id,
+        commentator.name,
+        commentator.description,
+        commentator.century,
+        currentBook,
+        currentChapter,
+        isRangeActive ? selectedVerseRange!.start : activeVerseNum,
+        isRangeActive ? selectedVerseRange!.end : undefined
+      );
+
+      if (verbatim && verbatim.text) {
+        setCommentaryText(verbatim.text);
+        setIsCommentaryVerbatim(true);
+        localStorage.setItem(cacheKey, verbatim.text);
+        localStorage.setItem(`${cacheKey}_is_verbatim`, 'true');
+        return;
+      }
+
+      // 2. Fall back to AI historical synthesis if verse is not covered in primary source
+      const denomName = DENOMINATIONS.find(d => d.id === activeLens)?.name || activeLens;
+      const result = await generateHistoricalCommentary(
+        insight.passageRef,
+        effectiveVText || wholeChapterText,
+        commentator.name,
+        denomName,
+        (progress) => setCommentaryProgress(progress.text)
+      );
+      setCommentaryText(result);
+      setIsCommentaryVerbatim(false);
+      localStorage.setItem(cacheKey, result);
+      localStorage.setItem(`${cacheKey}_is_verbatim`, 'false');
+    } catch (err: any) {
+      setCommentaryError(err.message || 'Failed to generate commentary.');
+    } finally {
+      setIsCommentaryLoading(false);
+    }
+  };
+
   const chapterData = useMemo(() => getChapterGeoData(currentBook, currentChapter), [currentBook, currentChapter]);
   const [selectedChapterEvent, setSelectedChapterEvent] = useState<ChapterGeoEvent | null>(null);
 
@@ -872,6 +966,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           >
             <HelpCircle className="w-3 h-3 shrink-0" />
             <span className="truncate">Quiz</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('symbolism')}
+            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'symbolism' ? 'active' : ''}`}
+            title="Symbolism & Typology"
+          >
+            <Feather className="w-3 h-3 shrink-0 text-[#B4793D]" />
+            <span className="truncate">Symbolism</span>
           </button>
 
         </div>
@@ -2118,6 +2221,151 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             >
               <span className="font-bold block mb-0.5 text-[11px]" style={{ color: 'var(--clean-accent-dark, #854D0E)' }}>Daily Spiritual Reflection</span>
               <p className="text-[#57524E] leading-relaxed text-[11px]">{insight.practicalApplication}</p>
+            </div>
+
+            {/* Historical Commentary & Quotes */}
+            <div className="space-y-1.5 p-2.5 rounded-xl bg-white border border-[#EBE5DC] shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1">
+                  <BookOpen className="w-3 h-3 text-[#B4793D]" />
+                  Historical Commentary & Quotes
+                </span>
+              </div>
+              <select
+                value={selectedCommentator}
+                onChange={handleGenerateCommentary}
+                className="w-full p-2 text-xs border border-[#EBE5DC] rounded-lg bg-[#FAF9F6] text-[#26221F] outline-none focus:border-[#B4793D]"
+              >
+                <option value="">Select a Commentator...</option>
+                {(DENOMINATION_COMMENTATORS[activeLens] || []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.description})
+                  </option>
+                ))}
+              </select>
+
+              {isCommentaryLoading && (
+                <div className="flex flex-col items-center justify-center py-4 opacity-70 animate-pulse">
+                  <div className="w-5 h-5 border-2 border-[#B4793D] border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-[10px] text-[#B4793D] font-medium">{commentaryProgress || 'Searching historical writings...'}</p>
+                </div>
+              )}
+
+              {commentaryError && (
+                <p className="text-[10px] text-red-500 text-center py-2">{commentaryError}</p>
+              )}
+
+              {!isCommentaryLoading && commentaryText && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      isCommentaryVerbatim
+                        ? 'bg-[#EBF5EE] text-[#1E6B37] border border-[#CDE5D4]'
+                        : 'bg-[#FAF7F2] text-[#8B5E34] border border-[#E8DEC8]'
+                    }`}>
+                      {isCommentaryVerbatim ? '📜 Authentic Historical Text' : '✨ AI Contextual Exegesis'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {isCommentaryLong && (
+                        <div className="flex items-center bg-[#F3EFEA] p-0.5 rounded-md border border-[#EBE5DC]">
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(false)}
+                            className={`text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors ${
+                              !showFullCommentary
+                                ? 'bg-white text-[#8C5E2E] shadow-2xs font-semibold'
+                                : 'text-[#78716C] hover:text-[#26221F]'
+                            }`}
+                          >
+                            Summary
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(true)}
+                            className={`text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors ${
+                              showFullCommentary
+                                ? 'bg-white text-[#8C5E2E] shadow-2xs font-semibold'
+                                : 'text-[#78716C] hover:text-[#26221F]'
+                            }`}
+                          >
+                            Full Statement
+                          </button>
+                        </div>
+                      )}
+                      <span className="text-[9.5px] text-[#A8A29E]">
+                        {selectedCommentatorObj?.century}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isCommentaryLong && !showFullCommentary ? (
+                    <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs space-y-2">
+                      <div className="flex items-center gap-1.5 pb-1.5 border-b border-[#EBE5DC]/70">
+                        <Sparkles className="w-3.5 h-3.5 text-[#B4793D]" />
+                        <span className="text-[10.5px] font-bold text-[#8C5E2E] uppercase tracking-wider">
+                          Executive Summary
+                        </span>
+                        <span className="text-[9.5px] text-[#A8A29E] ml-auto">
+                          {commentaryWordCount} words unabridged
+                        </span>
+                      </div>
+                      <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#3D3834]">
+                        <MarkdownTheologyRenderer content={commentarySummary} />
+                      </div>
+                      <div className="mt-2.5 pt-2 border-t border-[#EBE5DC]/70 flex items-center justify-between">
+                        <span className="text-[10px] text-[#78716C]">
+                          Want the complete commentary?
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowFullCommentary(true)}
+                          className="text-[11px] font-bold text-[#B4793D] hover:text-[#8C5E2E] flex items-center gap-1 hover:underline transition-colors cursor-pointer"
+                        >
+                          <span>Read Full Statement ({commentaryWordCount} words)</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs max-h-[380px] overflow-y-auto">
+                      {isCommentaryLong && (
+                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-[#EBE5DC]/70">
+                          <span className="text-[10px] font-semibold text-[#78716C]">
+                            Full Unabridged Statement ({commentaryWordCount} words)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(false)}
+                            className="text-[10.5px] font-bold text-[#B4793D] hover:underline flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <span>← Show Summary</span>
+                          </button>
+                        </div>
+                      )}
+                      <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#3D3834]">
+                        <MarkdownTheologyRenderer content={commentaryText} />
+                      </div>
+                      {isCommentaryLong && (
+                        <div className="mt-3 pt-2 border-t border-[#EBE5DC]/70 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setShowFullCommentary(false)}
+                            className="text-[10.5px] font-semibold text-[#B4793D] hover:underline flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <span>↑ Back to Summary</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="text-[9px] text-[#A8A29E] italic text-center px-2">
+                    {isCommentaryVerbatim
+                      ? 'Direct verbatim text from published historical commentary.'
+                      : 'Direct historical quotes and citations from verified works.'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -3479,6 +3727,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
           </div>
         )}
         
+        {/* SYMBOLISM TAB */}
+        {activeTab === 'symbolism' && (
+          <ChapterSymbolismPanel
+            book={currentBook}
+            chapter={currentChapter}
+            chapterText={wholeChapterText}
+          />
+        )}
         </div>
       </div>
 
