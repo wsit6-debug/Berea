@@ -34,6 +34,7 @@ export interface BibleBook {
 }
 
 import { DenominationalLens } from './theologyData';
+import { SupportedLanguage } from '../i18n/types';
 
 export interface TranslationInfo {
   id: string;
@@ -45,6 +46,7 @@ export interface TranslationInfo {
   approvedDenominations: DenominationalLens[];
   description: string;
   isCanonDeuterocanon?: boolean;
+  language?: SupportedLanguage;
 }
 
 export const TRANSLATIONS: TranslationInfo[] = [
@@ -56,7 +58,7 @@ export const TRANSLATIONS: TranslationInfo[] = [
     year: '2011',
     philosophy: 'Formal / Critical',
     badge: 'USCCB Official Liturgical',
-    approvedDenominations: ['catholic'],
+    approvedDenominations: ['catholic','anglican'],
     description: 'The official liturgical and lectionary translation of the Catholic Church in the United States, containing the full Catholic canon with Deuterocanonical books.',
     isCanonDeuterocanon: true
   },
@@ -276,6 +278,1516 @@ export const TRANSLATIONS: TranslationInfo[] = [
     approvedDenominations: ['lutheran', 'reformed', 'baptist_evangelical'],
     description: 'The landmark 1901 American revision prized for strict word-for-word fidelity.'
   }
+
+// --- AUTO GENERATED BOLLS LIFE TRANSLATIONS ---
+  ,
+  {
+    id: 'UBIO',
+    apiCode: 'UBIO',
+    name: 'Біблія, Іван Іванович Огієнко 1962',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'UKRK',
+    apiCode: 'UKRK',
+    name: 'Біблія. Пантелеймон Александрович Куліш, Іван Семенович Нечуй-Левицький, Іван Павлович Пулюй, 1903',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'HOM',
+    apiCode: 'HOM',
+    name: 'Святе Письмо, Переклад Івана Хоменка, 1963',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'UTT',
+    apiCode: 'UTT',
+    name: 'Українська Біблія LXX УБТ Рафаїла Турконяка (2011) 77 книг',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['orthodox'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'UMT',
+    apiCode: 'UMT',
+    name: 'Свята Біблія: Сучасною мовою',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'PHIL',
+    apiCode: 'PHIL',
+    name: 'Бiблiя. Переклад Патріарха ФІЛАРЕТА (Денисенка), 2004',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'CUV23',
+    apiCode: 'CUV23',
+    name: 'БІБЛІЯ Сучасний переклад © УБТ (2020-2023)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'PPCH',
+    apiCode: 'PPCH',
+    name: 'НОВИЙ ЗАВІТ. Новий переклад Юрія Попченка з давньогрецької на сучасну українську літературну мову',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'GYZ',
+    apiCode: 'GYZ',
+    name: 'Канонічний переклад Біблії сучасною українською мовою. Переклав Олександр Гижа. © 2019',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'UKDER',
+    apiCode: 'UKDER',
+    name: 'Велике Відкриття. Діана Деркач, 1992',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'TUB',
+    apiCode: 'TUB',
+    name: 'Біблія. Новий переклад УБТ Рафаїла Турконяка (1997-2007) 76 книг',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'CSL',
+    apiCode: 'CSL',
+    name: 'Библия Церковнославянская, 1900',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Ukrainian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Ukrainian Українська / Церковнослав\'янська.',
+    language: 'uk' as any
+  }  ,
+  {
+    id: 'NAV',
+    apiCode: 'NAV',
+    name: 'كتاب الحياة',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Arabic Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Arabic العربية.',
+    language: 'ar' as any
+  }  ,
+  {
+    id: 'SVD',
+    apiCode: 'SVD',
+    name: 'Smith and Van Dyke',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Arabic Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Arabic العربية.',
+    language: 'ar' as any
+  }  ,
+  {
+    id: 'AFR53',
+    apiCode: 'AFR53',
+    name: 'Afrikaans 1933/1953',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Afrikaans Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Afrikaans.',
+    language: 'af' as any
+  }  ,
+  {
+    id: 'CUV',
+    apiCode: 'CUV',
+    name: 'Chinese Union (Traditional) 和合本',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Chinese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Chinese 中文.',
+    language: 'zh' as any
+  }  ,
+  {
+    id: 'CUNP',
+    apiCode: 'CUNP',
+    name: '新標點和合本串珠 - Chinese Union New Punctuation Cross References, 1988',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Chinese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Chinese 中文.',
+    language: 'zh' as any
+  }  ,
+  {
+    id: 'CUNPS',
+    apiCode: 'CUNPS',
+    name: '新标点和合本 - Chinese Union New Punctuation (Simplified), 1988',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Chinese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Chinese 中文.',
+    language: 'zh' as any
+  }  ,
+  {
+    id: 'PCB',
+    apiCode: 'PCB',
+    name: '京委本聖經 - Peking Committee Bible, 1899',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Chinese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Chinese 中文.',
+    language: 'zh' as any
+  }  ,
+  {
+    id: 'PCBS',
+    apiCode: 'PCBS',
+    name: '京委本圣经 - Peking Committee Bible, 1899',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Chinese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Chinese 中文.',
+    language: 'zh' as any
+  }  ,
+  {
+    id: 'ChiSB',
+    apiCode: 'ChiSB',
+    name: '中文思高聖經 ChiSB',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Chinese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Chinese 中文.',
+    language: 'zh' as any
+  }  ,
+  {
+    id: 'CSP09',
+    apiCode: 'CSP09',
+    name: 'Ceský studijní preklad',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Czech Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Czech Ceský.',
+    language: 'cs' as any
+  }  ,
+  {
+    id: 'NLD',
+    apiCode: 'NLD',
+    name: 'De Heilige Schrift, Petrus Canisiusvertaling, 1939',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Dutch Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Dutch Nederlands.',
+    language: 'nl' as any
+  }  ,
+  {
+    id: 'DSV',
+    apiCode: 'DSV',
+    name: 'Statenvertaling met Strong\'s, 1619',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Dutch Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Dutch Nederlands.',
+    language: 'nl' as any
+  }  ,
+  {
+    id: 'SVRJ',
+    apiCode: 'SVRJ',
+    name: 'Statenvertaling Jongbloed-editie (1995)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Dutch Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Dutch Nederlands.',
+    language: 'nl' as any
+  }  ,
+  {
+    id: 'HSV17',
+    apiCode: 'HSV17',
+    name: 'Herziene Statenvertaling, 2017',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Dutch Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Dutch Nederlands.',
+    language: 'nl' as any
+  }  ,
+  {
+    id: 'YLT',
+    apiCode: 'YLT',
+    name: 'Young\'s Literal Translation (1898)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'CJB',
+    apiCode: 'CJB',
+    name: 'The Complete Jewish Bible (1998)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'TS2009',
+    apiCode: 'TS2009',
+    name: 'The Scriptures 2009',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'LXXE',
+    apiCode: 'LXXE',
+    name: 'English version of the Septuagint Bible, 1851',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['orthodox'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'TLV',
+    apiCode: 'TLV',
+    name: 'Tree of Life Version',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'GNV',
+    apiCode: 'GNV',
+    name: 'Geneva Bible (1599)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'NIV2011',
+    apiCode: 'NIV2011',
+    name: 'New International Version, 2011',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'NJB1985',
+    apiCode: 'NJB1985',
+    name: 'New Jerusalem Bible, 1985',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['catholic','anglican'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'SPE',
+    apiCode: 'SPE',
+    name: 'Samaritan Pentateuch in English, 2013',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'LBP',
+    apiCode: 'LBP',
+    name: 'Aramaic Of The Peshitta: Lamsa, 1933',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'AMP',
+    apiCode: 'AMP',
+    name: 'Amplified Bible, 2015',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'MSG',
+    apiCode: 'MSG',
+    name: 'The Message, 2002',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'LSV',
+    apiCode: 'LSV',
+    name: 'Literal Standard Version',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'MEV',
+    apiCode: 'MEV',
+    name: 'Modern English Version',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'RSV2CE',
+    apiCode: 'RSV2CE',
+    name: 'Revised Standard Version Catholic Edition',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['catholic','anglican'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'CSB17',
+    apiCode: 'CSB17',
+    name: 'Christian Standard Bible, 2017',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'CEVD',
+    apiCode: 'CEVD',
+    name: 'Contemporary English Version, 2006 (with Apocrypha)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['catholic','anglican'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'AUV',
+    apiCode: 'AUV',
+    name: 'An Understandable Version, 1995',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'GNTD',
+    apiCode: 'GNTD',
+    name: 'Good News Translation (US Version), 2001',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'ERV',
+    apiCode: 'ERV',
+    name: 'Easy-to-Read Version, 2006',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'GNT',
+    apiCode: 'GNT',
+    name: 'Good News Bible, 1976',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['catholic','reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'ISV',
+    apiCode: 'ISV',
+    name: 'International Standard Version, 2011',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'NLV',
+    apiCode: 'NLV',
+    name: 'New Life Version, 1969',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'WPNT',
+    apiCode: 'WPNT',
+    name: 'Wilbur Pickering’s New Testament',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'NIVUK',
+    apiCode: 'NIVUK',
+    name: 'New International Version® (Anglicised), NIV®, 2011',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'TNIV',
+    apiCode: 'TNIV',
+    name: 'Today\'s New International Version, 2005',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'NIRV',
+    apiCode: 'NIRV',
+    name: 'New International Reader\'s Version',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'English Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for English.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'POV',
+    apiCode: 'POV',
+    name: 'Persian Old Version',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Farsi Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Farsi فارسی.',
+    language: 'fa' as any
+  }  ,
+  {
+    id: 'FACB',
+    apiCode: 'FACB',
+    name: 'کتاب مقدس، ترجمه تفسیری Farsi Contemporary Bible',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Farsi Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Farsi فارسی.',
+    language: 'fa' as any
+  }  ,
+  {
+    id: 'FIK38',
+    apiCode: 'FIK38',
+    name: 'Biblia. Kirkkoraamattu, 1938',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Finnish Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Finnish Suomi.',
+    language: 'fi' as any
+  }  ,
+  {
+    id: 'NBS',
+    apiCode: 'NBS',
+    name: 'Nouvelle Bible Segond, 2002',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'French Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for French Français.',
+    language: 'fr' as any
+  }  ,
+  {
+    id: 'FRDBY',
+    apiCode: 'FRDBY',
+    name: 'la Bible de Darby, 1890',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'French Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for French Français.',
+    language: 'fr' as any
+  }  ,
+  {
+    id: 'FRLSG',
+    apiCode: 'FRLSG',
+    name: 'Bible Segond 1910',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'French Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for French Français.',
+    language: 'fr' as any
+  }  ,
+  {
+    id: 'FRPDV17',
+    apiCode: 'FRPDV17',
+    name: 'Parole de Vie 2017',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'French Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for French Français.',
+    language: 'fr' as any
+  }  ,
+  {
+    id: 'BDS',
+    apiCode: 'BDS',
+    name: 'La Bible du Semeur, 2015',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'French Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for French Français.',
+    language: 'fr' as any
+  }  ,
+  {
+    id: 'MB',
+    apiCode: 'MB',
+    name: 'Menge-Bibel',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'German Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for German Deutsch.',
+    language: 'de' as any
+  }  ,
+  {
+    id: 'ELB',
+    apiCode: 'ELB',
+    name: 'Elberfelder Bibel, 1871',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'German Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for German Deutsch.',
+    language: 'de' as any
+  }  ,
+  {
+    id: 'SCH',
+    apiCode: 'SCH',
+    name: 'Schlachter (1951)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'German Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for German Deutsch.',
+    language: 'de' as any
+  }  ,
+  {
+    id: 'S00',
+    apiCode: 'S00',
+    name: 'Schlachter 2000',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'German Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for German Deutsch.',
+    language: 'de' as any
+  }  ,
+  {
+    id: 'LUT',
+    apiCode: 'LUT',
+    name: 'Luther (1912)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'German Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for German Deutsch.',
+    language: 'de' as any
+  }  ,
+  {
+    id: 'HFA',
+    apiCode: 'HFA',
+    name: 'Hoffnung für Alle, 2015',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'German Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for German Deutsch.',
+    language: 'de' as any
+  }  ,
+  {
+    id: 'NeU',
+    apiCode: 'NeU',
+    name: 'Neue evangelistische Übersetzung, Karl-Heinz Vanheiden',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'German Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for German Deutsch.',
+    language: 'de' as any
+  }  ,
+  {
+    id: 'TISCH',
+    apiCode: 'TISCH',
+    name: 'Tischendorf\'s Greek New Testament, 8th edition, 1869–72 (With Strong\'s numbers)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Greek Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Greek Ελληνικά.',
+    language: 'el' as any
+  }  ,
+  {
+    id: 'NTGT',
+    apiCode: 'NTGT',
+    name: 'Greek NT: Tischendorf 8th Ed.',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Greek Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Greek Ελληνικά.',
+    language: 'el' as any
+  }  ,
+  {
+    id: 'LXX',
+    apiCode: 'LXX',
+    name: 'Septuagint',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Greek Bible',
+    approvedDenominations: ['orthodox'],
+    description: 'Bolls.life imported translation for Greek Ελληνικά.',
+    language: 'el' as any
+  }  ,
+  {
+    id: 'TR',
+    apiCode: 'TR',
+    name: 'Elzevir Textus Receptus (1624)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Greek Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Greek Ελληνικά.',
+    language: 'el' as any
+  }  ,
+  {
+    id: 'NA28',
+    apiCode: 'NA28',
+    name: 'Novum Testamentum Graece, 28th Revised Edition. 2012',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Greek Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Greek Ελληνικά.',
+    language: 'el' as any
+  }  ,
+  {
+    id: 'SBLGNT',
+    apiCode: 'SBLGNT',
+    name: 'The Greek New Testament: SBL Edition. Michael Holmes, 2010',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Greek Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Greek Ελληνικά.',
+    language: 'el' as any
+  }  ,
+  {
+    id: 'WLCa',
+    apiCode: 'WLCa',
+    name: 'Westminster Leningrad Codex (with vowels, accents and Strong\'s numbers)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hebrew Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hebrew עברית.',
+    language: 'he' as any
+  }  ,
+  {
+    id: 'WLC',
+    apiCode: 'WLC',
+    name: 'Westminster Leningrad Codex (with Vowels)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hebrew Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hebrew עברית.',
+    language: 'he' as any
+  }  ,
+  {
+    id: 'WLCC',
+    apiCode: 'WLCC',
+    name: 'Westminster Leningrad Codex (Consonants)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hebrew Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hebrew עברית.',
+    language: 'he' as any
+  }  ,
+  {
+    id: 'HAC',
+    apiCode: 'HAC',
+    name: 'כֶּתֶר אֲרָם צוֹבָא - Tanah Aleppo Codex',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hebrew Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hebrew עברית.',
+    language: 'he' as any
+  }  ,
+  {
+    id: 'DHNT',
+    apiCode: 'DHNT',
+    name: 'Delitzsch\'s Hebrew New Testament 1877, 1998 (with vowels)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hebrew Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hebrew עברית.',
+    language: 'he' as any
+  }  ,
+  {
+    id: 'RUF',
+    apiCode: 'RUF',
+    name: 'Magyar Bibliatársulat újfordítású Bibliája, 2014 (protestáns)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hungarian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hungarian Magyar.',
+    language: 'hu' as any
+  }  ,
+  {
+    id: 'KB',
+    apiCode: 'KB',
+    name: 'Karoli Bible 1908',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hungarian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hungarian Magyar.',
+    language: 'hu' as any
+  }  ,
+  {
+    id: 'HIOV',
+    apiCode: 'HIOV',
+    name: 'Hindi O.V. - Re-edited (BSI)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Hindi Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Hindi हिन्दी.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'KNCL',
+    apiCode: 'KNCL',
+    name: 'ಕನ್ನಡ ಸತ್ಯವೇದವು C.L. (BSI)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Kannada Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Kannada ಕನ್ನಡ.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'ERVKN',
+    apiCode: 'ERVKN',
+    name: 'ಕ್ರೈಸ್ತರ ಧರ್ಮಗ್ರಂಥ, Kannada Bible: Easy-to-Read Version, 2007',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Kannada Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Kannada ಕನ್ನಡ.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'MOV',
+    apiCode: 'MOV',
+    name: 'സത്യവേദപുസ്തകം O.V.',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Malayalam Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Malayalam മലയാളം.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'NNRV',
+    apiCode: 'NNRV',
+    name: 'Nepali New Revised Version, 2012',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Nepali Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Nepali नेपाली.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'NEPS',
+    apiCode: 'NEPS',
+    name: 'सरल नेपाली पवित्र बाइबल',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Nepali Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Nepali नेपाली.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'TB',
+    apiCode: 'TB',
+    name: 'Terjemahan Baru',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Indonesian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Indonesian.',
+    language: 'id' as any
+  }  ,
+  {
+    id: 'JPNICT',
+    apiCode: 'JPNICT',
+    name: '新共同訳聖書, Japanese New Interconfessional Translation Bible - Shinkyodo-yaku, 1987',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Japanese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Japanese 日本語.',
+    language: 'ja' as any
+  }  ,
+  {
+    id: 'JPKJV',
+    apiCode: 'JPKJV',
+    name: '口語訳聖書(ルビあり), Colloquial Japanese - Kougo-yaku, 1954/1955',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Japanese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Japanese 日本語.',
+    language: 'ja' as any
+  }  ,
+  {
+    id: 'KRV',
+    apiCode: 'KRV',
+    name: '개역한글',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Korean Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Korean 한국어.',
+    language: 'ko' as any
+  }  ,
+  {
+    id: 'RNKSV',
+    apiCode: 'RNKSV',
+    name: '새번역',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Korean Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Korean 한국어.',
+    language: 'ko' as any
+  }  ,
+  {
+    id: 'VULG',
+    apiCode: 'VULG',
+    name: 'Biblia Sacra juxta Vulgatam Clementinam',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Latin Bible',
+    approvedDenominations: ['catholic','anglican'],
+    description: 'Bolls.life imported translation for Latin / Italian.',
+    language: 'la' as any
+  }  ,
+  {
+    id: 'ADB',
+    apiCode: 'tagalog',
+    name: 'Ang Dating Biblia (1905)',
+    year: '1905',
+    philosophy: 'Formal Equivalence',
+    badge: 'Philippine Bible Society',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Ang Dating Biblia (1905), Philippine Bible Society. Historic Protestant translation in Tagalog.',
+    language: 'tl' as any
+  }  ,
+  {
+    id: 'NR06',
+    apiCode: 'NR06',
+    name: 'Nuova Riveduta, 2006',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Latin Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Latin / Italian.',
+    language: 'it' as any
+  }  ,
+  {
+    id: 'DNB',
+    apiCode: 'DNB',
+    name: 'Det Norsk Bibelselskap (1930)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Norwegian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Norwegian Norsk.',
+    language: 'no' as any
+  }  ,
+  {
+    id: 'NTJud',
+    apiCode: 'NTJud',
+    name: 'Novo Testamento Judaico',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'TB10',
+    apiCode: 'TB10',
+    name: 'Tradução Brasileira, 2010',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'ARA',
+    apiCode: 'ARA',
+    name: 'Almeida Revista e Atualizada, 1993',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'OL',
+    apiCode: 'OL',
+    name: 'O Livro',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'NVIPT',
+    apiCode: 'NVIPT',
+    name: 'Nova Versão Internacional',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'NVT',
+    apiCode: 'NVT',
+    name: 'Bíblia Sagrada, Nova Versão Transformadora, 2016',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'NTLH',
+    apiCode: 'NTLH',
+    name: 'Nova Tradução na Linguagem de Hoje, 2000',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'KJA',
+    apiCode: 'KJA',
+    name: 'Bíblia King James Atualizada, 2001',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'VFL',
+    apiCode: 'VFL',
+    name: 'Bíblia Sagrada: Versão Fácil de Ler',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'NAA',
+    apiCode: 'NAA',
+    name: 'Nova Almeida Atualizada 2017',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'CNBB',
+    apiCode: 'CNBB',
+    name: 'Bíblia CNBB (Nova Capa), 2002',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'NBV07',
+    apiCode: 'NBV07',
+    name: 'Nova Bíblia Viva, 2007',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'ALM21',
+    apiCode: 'ALM21',
+    name: 'Bíblia Almeida Século 21',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'ARC09',
+    apiCode: 'ARC09',
+    name: 'Almeida Revista e Corrigida, 2009',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'ACF11',
+    apiCode: 'ACF11',
+    name: 'Almeida Corrigida Fiel, 2011',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'MENS',
+    apiCode: 'MENS',
+    name: 'Bíblia A Mensagem',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Portuguese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Portuguese.',
+    language: 'pt' as any
+  }  ,
+  {
+    id: 'BG',
+    apiCode: 'BG',
+    name: 'Biblia gdańska, 1881',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Polska Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Polska Polish.',
+    language: 'pl' as any
+  }  ,
+  {
+    id: 'UBG18',
+    apiCode: 'UBG18',
+    name: 'UWSPÓŁCZEŚNIONA BIBLIA GDAŃSKA, 2018',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Polska Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Polska Polish.',
+    language: 'pl' as any
+  }  ,
+  {
+    id: 'BW',
+    apiCode: 'BW',
+    name: 'Biblia warszawska, 1975',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Polska Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Polska Polish.',
+    language: 'pl' as any
+  }  ,
+  {
+    id: 'VDCL',
+    apiCode: 'VDCL',
+    name: 'Traducere Literală Cornilescu 1931',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Romanian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Romanian Română.',
+    language: 'ro' as any
+  }  ,
+  {
+    id: 'NTR',
+    apiCode: 'NTR',
+    name: 'Noua Traducere Românească, 2016',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Romanian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Romanian Română.',
+    language: 'ro' as any
+  }  ,
+  {
+    id: 'JNT',
+    apiCode: 'JNT',
+    name: 'Еврейский Новый Завет в переводе и комментариях Давида Стерна',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'russian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for russian русский.',
+    language: 'ru' as any
+  }  ,
+  {
+    id: 'NRT',
+    apiCode: 'NRT',
+    name: 'Новый русский Перевод (НРП)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'russian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for russian русский.',
+    language: 'ru' as any
+  }  ,
+  {
+    id: 'SYNOD',
+    apiCode: 'SYNOD',
+    name: 'русский Синодальный Перевод',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'russian Bible',
+    approvedDenominations: ['orthodox','reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for russian русский.',
+    language: 'ru' as any
+  }  ,
+  {
+    id: 'TNHR',
+    apiCode: 'TNHR',
+    name: 'ТаНаХ на русском языке в переводе Давида Йосифона, 1975',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'russian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for russian русский.',
+    language: 'ru' as any
+  }  ,
+  {
+    id: 'RBS2',
+    apiCode: 'RBS2',
+    name: 'Современный русский перевод, 2015',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'russian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for russian русский.',
+    language: 'ru' as any
+  }  ,
+  {
+    id: 'BTI',
+    apiCode: 'BTI',
+    name: 'Библия под ред. М.П. Кулакова и М.М. Кулакова, 2015',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'russian Bible',
+    approvedDenominations: ['catholic','anglican'],
+    description: 'Bolls.life imported translation for russian русский.',
+    language: 'ru' as any
+  }  ,
+  {
+    id: 'DESN',
+    apiCode: 'DESN',
+    name: 'Библейские переводы Андрея Десницкого',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'russian Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for russian русский.',
+    language: 'ru' as any
+  }  ,
+  {
+    id: 'BTX3',
+    apiCode: 'BTX3',
+    name: 'La Biblia Textual 3ra Edicion',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Spanish Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Spanish Español.',
+    language: 'es' as any
+  }  ,
+  {
+    id: 'RV1960',
+    apiCode: 'RV1960',
+    name: 'Reina-Valera 1960',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Spanish Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Spanish Español.',
+    language: 'es' as any
+  }  ,
+  {
+    id: 'RV2004',
+    apiCode: 'RV2004',
+    name: 'Reina Valera Gómez 2004',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Spanish Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Spanish Español.',
+    language: 'es' as any
+  }  ,
+  {
+    id: 'PDT',
+    apiCode: 'PDT',
+    name: 'Palabra de Dios para Todos',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Spanish Bible',
+    approvedDenominations: ['catholic','anglican'],
+    description: 'Bolls.life imported translation for Spanish Español.',
+    language: 'es' as any
+  }  ,
+  {
+    id: 'NVI',
+    apiCode: 'NVI',
+    name: 'Nueva Versión Internacional, 2015',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Spanish Bible',
+    approvedDenominations: ['catholic','reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Spanish Español.',
+    language: 'es' as any
+  }  ,
+  {
+    id: 'NTV',
+    apiCode: 'NTV',
+    name: 'Nueva Traducción Viviente, 2009',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Spanish Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Spanish Español.',
+    language: 'es' as any
+  }  ,
+  {
+    id: 'LBLA',
+    apiCode: 'LBLA',
+    name: 'La Biblia de las Américas, 1997',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Spanish Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Spanish Español.',
+    language: 'es' as any
+  }  ,
+  {
+    id: 'SUV',
+    apiCode: 'SUV',
+    name: 'Swahili Union Version, 1997',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Swahili Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Swahili Kiswahili.',
+    language: 'en' as any
+  }  ,
+  {
+    id: 'SFB2015',
+    apiCode: 'SFB2015',
+    name: 'Svenska Folkbibeln 2015',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Swedish Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Swedish Svenska.',
+    language: 'sv' as any
+  }  ,
+  {
+    id: 'TBSI',
+    apiCode: 'TBSI',
+    name: 'Tamil Older Version Bible',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Tamil Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Tamil தமிழ்.',
+    language: 'ta' as any
+  }  ,
+  {
+    id: 'TAMBL98',
+    apiCode: 'TAMBL98',
+    name: 'பரிசுத்த பைபிள்',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Tamil Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Tamil தமிழ்.',
+    language: 'ta' as any
+  }  ,
+  {
+    id: 'TAMOVR',
+    apiCode: 'TAMOVR',
+    name: 'பரிசுத்த வேதாகமம் O.V.',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Tamil Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Tamil தமிழ்.',
+    language: 'ta' as any
+  }  ,
+  {
+    id: 'VI1934',
+    apiCode: 'VI1934',
+    name: 'Kinh Thánh (1934)',
+    year: 'Unknown',
+    philosophy: 'Unknown',
+    badge: 'Vietnamese Bible',
+    approvedDenominations: ['reformed','lutheran','wesleyan','anglican','baptist_evangelical'],
+    description: 'Bolls.life imported translation for Vietnamese Tiếng Việt.',
+    language: 'vi' as any
+  }
 ];
 
 export type TranslationId = string;
@@ -488,7 +2000,26 @@ export function getApprovedTranslationsForDenomination(lens: DenominationalLens)
   return TRANSLATIONS.filter(t => t.approvedDenominations.includes(lens));
 }
 
-export function getDefaultTranslationForDenomination(lens: DenominationalLens): TranslationId {
+export function getDefaultTranslationForDenomination(lens: DenominationalLens, lang: string = 'en'): TranslationId {
+  const approvedInLang = getApprovedTranslationsForDenomination(lens).filter(t => (t.language || 'en') === lang);
+  if (approvedInLang.length > 0) {
+    const popularIds = [
+      'NABRE', 'RSVCE', 'NRSVCE', 'DRB', 'NJB', // Catholic
+      'KJV', 'NIV', 'ESV', 'NLT', 'NASB', 'RSV', 'NRSV', 'NKJV', 'CSB',
+      'RV1960', 'DHHE', 'TORRES_AMAT',
+      'FRLSG', 'FRPDV17', 'FRDBY', 'BDS',
+      'LUTH1545', 'SCH2000',
+      'ARA', 'NVIPT', 'NVT',
+      'CUV', 'SYNO', 'SYNOD', 'UKDER', 'TUB', 'PPCH', 'ADB', 'VULG'
+    ];
+    const sorted = [...approvedInLang].sort((a, b) => {
+      const aPop = popularIds.includes(a.id) ? 1 : 0;
+      const bPop = popularIds.includes(b.id) ? 1 : 0;
+      return bPop - aPop;
+    });
+    return sorted[0].id as TranslationId;
+  }
+
   switch (lens) {
     case 'catholic':
       return 'NABRE';
