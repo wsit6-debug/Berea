@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Sun, Bot } from 'lucide-react';
+import { Sparkles, ArrowRight, Sun, Bot, ChevronDown, ChevronUp } from 'lucide-react';
 import { TranslationId } from '../data/bibleData';
 import { parsePassageReference, fetchChapterFromYouVersion, cleanApiText } from '../services/youversionService';
 import { generateDailyVerseAndReflection } from '../services/aiService';
@@ -21,6 +21,23 @@ export const VerseOfTheDay: React.FC<VerseOfTheDayProps> = ({ activeTranslation,
   const [verseText, setVerseText] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [progressText, setProgressText] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('berea_votd_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapsed = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('berea_votd_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const hour = new Date().getHours();
   const timeOfDay = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
@@ -150,6 +167,38 @@ export const VerseOfTheDay: React.FC<VerseOfTheDayProps> = ({ activeTranslation,
 
   if (!votd) return null;
 
+  if (isCollapsed) {
+    return (
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#FAF7F2] to-[#F5EFE6] border border-[#EBE5DC] rounded-xl shadow-2xs mb-3 transition-all hover:border-[#D4A373]">
+        <div className="px-3 py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-5 h-5 rounded-md bg-white border border-[#EBE5DC] flex items-center justify-center shadow-2xs shrink-0">
+              <Sun className="w-3 h-3 text-[#B4793D]" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#78716C] shrink-0">Verse of the {timeOfDay}:</span>
+            <span className="text-[11px] font-semibold text-[#B4793D] truncate">{votd.reference}</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleClick}
+              className="text-[10px] font-semibold text-[#B4793D] hover:text-[#8C5E32] transition-colors"
+            >
+              Read
+            </button>
+            <button
+              onClick={toggleCollapsed}
+              className="flex items-center gap-0.5 text-[10px] font-medium text-stone-500 hover:text-stone-800 transition-colors"
+              title="Expand Devotional"
+            >
+              <span>Expand</span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-[#FAF7F2] to-[#F5EFE6] border border-[#EBE5DC] rounded-2xl shadow-sm mb-4 group transition-all hover:shadow-md hover:border-[#D4A373]">
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-[#D4A373]/20 to-transparent rounded-full blur-xl pointer-events-none"></div>
@@ -163,12 +212,21 @@ export const VerseOfTheDay: React.FC<VerseOfTheDayProps> = ({ activeTranslation,
             <span className="text-[11px] font-bold uppercase tracking-widest text-[#78716C]">Verse of the {timeOfDay}</span>
           </div>
           
-          <button 
-            onClick={handleClick}
-            className="flex items-center gap-1.5 text-[10px] font-semibold text-[#B4793D] hover:text-[#8C5E32] transition-colors"
-          >
-            Read Verse <ArrowRight className="w-3 h-3" />
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button 
+              onClick={handleClick}
+              className="flex items-center gap-1.5 text-[10px] font-semibold text-[#B4793D] hover:text-[#8C5E32] transition-colors"
+            >
+              Read Verse <ArrowRight className="w-3 h-3" />
+            </button>
+            <button
+              onClick={toggleCollapsed}
+              className="flex items-center gap-0.5 text-[10px] font-medium text-stone-400 hover:text-stone-700 transition-colors p-0.5 rounded hover:bg-stone-200/50"
+              title="Minimize Devotional"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         <blockquote className="mt-2 mb-3">
