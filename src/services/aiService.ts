@@ -8,6 +8,7 @@ import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
 import { TypologyMotif, TypologyNode } from '../types';
 import { getTypologyFromDatabase } from '../data/typologyDatabase';
+import { searchApologetics, formatApologeticsForPrompt, apologeticToCitationEntry, ApologeticMatch } from './apologeticsService';
 
 export interface QuizQuestion {
   question: string;
@@ -127,6 +128,17 @@ export async function askBereaAssistant(
 
   const ragContextText = ragContext.systemPromptBlock.trim() || 'No specific confessional documents retrieved.';
 
+  // 1b. Retrieve Matching Christian Apologetics & Classical Defenses
+  const apologeticMatches = searchApologetics(prompt, book, chapter);
+  const primaryApologetic = apologeticMatches.length > 0 && apologeticMatches[0].score >= 6 ? apologeticMatches[0] : null;
+  const apologeticsPromptBlock = primaryApologetic ? formatApologeticsForPrompt(apologeticMatches) : '';
+
+  if (primaryApologetic) {
+    ragContext.retrievedEntries.unshift(
+      apologeticToCitationEntry(primaryApologetic, (activeSetting as any) || 'reformed')
+    );
+  }
+
   let systemPrompt: string;
   let userPromptText: string;
 
@@ -155,6 +167,22 @@ ${prompt}
 
 SCRIPTURE CONTEXT (${book} ${chapter}):
 ${verseText ? `Verse Text: "${verseText}"\n` : ''}${ragContextText}`;
+  } else if (primaryApologetic) {
+    systemPrompt = `You are a distinguished, orthodox ${USER_DENOMINATION} theologian and classical Christian apologist.
+Your task is to synthesize the provided CONTEXT to answer the user's inquiry regarding biblical difficulties, skeptical objections, and apologetics.
+
+CRITICAL RULES:
+1. APOLOGETICS & DEFENSE INTEGRATION: A curated classical Christian defense addressing this specific challenge has been provided in the CONTEXT. You MUST formulate your response directly along the lines of this defense ("${primaryApologetic.defense}"). Emphasize these specific arguments, historical/linguistic distinctions, and theological resolutions.
+2. THEOLOGICAL PURITY & SCRIPTURAL COHERENCE: Interpret the scriptures strictly through the ${USER_DENOMINATION} lens and the biblical defense provided. Defend the coherence, truthfulness, and divine inspiration of Scripture.
+3. CLEAR EXEGESIS: Clearly explain the literary genre, Hebrew/Greek terms, or historical backdrop mentioned in the defense to dismantle the objection.
+4. FORMAT: Write a natural, articulate, and well-structured response. Never refer to "chunks" or internal labels. Cite the relevant biblical passage (${primaryApologetic.book} ${primaryApologetic.chapter}) and classical apologetics principles. Always include a [Source: Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})] citation.`;
+
+    userPromptText = `CONTEXT:
+${apologeticsPromptBlock}
+
+${ragContextText}
+
+QUESTION: ${prompt}`;
   } else {
     systemPrompt = `You are a strict and orthodox ${USER_DENOMINATION} theologian. 
 Your ONLY job is to synthesize the provided CONTEXT to answer the user.
@@ -218,6 +246,14 @@ CRITICAL RULES:
           isLiveAi: false
         };
       }
+      if (primaryApologetic) {
+        return {
+          text: `### 🛡️ Classical Christian Defense: ${primaryApologetic.title} (${primaryApologetic.book} ${primaryApologetic.chapter})\n**Category:** ${primaryApologetic.category}\n\n#### The Skeptical Challenge\n> "${primaryApologetic.objection}"\n\n#### The Classical Defense\n${primaryApologetic.defense}\n\n#### Contextual & Theological Harmonization\n- **Literary & Canonical Setting:** In ${primaryApologetic.book} ${primaryApologetic.chapter}, the passage is understood according to its authentic historical genre rather than modern secular assumptions.\n- **Resolution:** The apparent difficulty is harmonized through proper understanding of the biblical language, cultural setting, and classical theological consensus.\n- **Faith & Reason:** Classical Christian apologetics demonstrates that Scripture withstands critical scrutiny when evaluated with scholarly historical rigor.\n\n*[Source: Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})]*`,
+          ragEntries: ragContext.retrievedEntries,
+          primaryCitation: `${primaryApologetic.book} ${primaryApologetic.chapter}`,
+          isLiveAi: false
+        };
+      }
       throw new Error(response ? `HTTP ${response.status}` : 'AI service unavailable');
     }
 
@@ -231,7 +267,7 @@ CRITICAL RULES:
     return {
       text: cleanedContent || generateIntelligentNoteSummary(noteTitle || 'Study Note', noteContent || prompt, book, chapter, USER_DENOMINATION),
       ragEntries: ragContext.retrievedEntries,
-      primaryCitation: ragContext.primaryCitation,
+      primaryCitation: primaryApologetic ? `Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})` : ragContext.primaryCitation,
       isLiveAi: true
     };
   } catch (err: any) {
@@ -240,6 +276,15 @@ CRITICAL RULES:
         text: generateIntelligentNoteSummary(noteTitle || 'Study Note', noteContent || prompt, book, chapter, USER_DENOMINATION),
         ragEntries: ragContext.retrievedEntries,
         primaryCitation: `${book} ${chapter}`,
+        isLiveAi: false
+      };
+    }
+
+    if (primaryApologetic) {
+      return {
+        text: `### 🛡️ Classical Christian Defense: ${primaryApologetic.title} (${primaryApologetic.book} ${primaryApologetic.chapter})\n**Category:** ${primaryApologetic.category}\n\n#### The Skeptical Challenge\n> "${primaryApologetic.objection}"\n\n#### The Classical Defense\n${primaryApologetic.defense}\n\n#### Contextual & Theological Harmonization\n- **Literary & Canonical Setting:** In ${primaryApologetic.book} ${primaryApologetic.chapter}, the passage is understood according to its authentic historical genre rather than modern secular assumptions.\n- **Resolution:** The apparent difficulty is harmonized through proper understanding of the biblical language, cultural setting, and classical theological consensus.\n- **Faith & Reason:** Classical Christian apologetics demonstrates that Scripture withstands critical scrutiny when evaluated with scholarly historical rigor.\n\n*[Source: Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})]*`,
+        ragEntries: ragContext.retrievedEntries,
+        primaryCitation: `${primaryApologetic.book} ${primaryApologetic.chapter}`,
         isLiveAi: false
       };
     }

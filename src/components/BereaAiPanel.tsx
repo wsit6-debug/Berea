@@ -256,18 +256,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [customVerseNumbers, setCustomVerseNumbers] = useState<number[]>([activeVerseNum]);
   const [customVerseInput, setCustomVerseInput] = useState<string>(String(activeVerseNum));
 
-  const handleStartApologeticsChat = (objectionTitle: string, objectionText: string, defenseText: string) => {
-    setActiveTab('chat');
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('berea_trigger_chat', {
-        detail: {
-          prompt: `I am looking at an apologetics objection for ${currentBook} ${currentChapter} titled "${objectionTitle}".\n\nThe objection is: "${objectionText}"\n\nThe classical defense is: "${defenseText}"\n\nI want to practice defending this or dive deeper. Can you help me unpack this?`,
-          autoSend: true
-        }
-      }));
-    }, 100);
-  };
-
   const getCategoryColor = (category: string) => {
     switch(category) {
       case 'Historical': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -710,6 +698,28 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       setLocalModelProgress(null);
     }
   };
+
+  const handleStartApologeticsChat = (objectionTitle: string, objectionText: string, defenseText: string) => {
+    setActiveTab('chat');
+    const prompt = `I am looking at an apologetics objection for ${currentBook} ${currentChapter} titled "${objectionTitle}".\n\nThe objection is: "${objectionText}"\n\nThe classical defense is: "${defenseText}"\n\nCan you unpack this defense and explain how to answer this objection?`;
+    handleSendMessage(prompt);
+  };
+
+  useEffect(() => {
+    const handleTriggerChat = (e: any) => {
+      const detail = e.detail;
+      if (detail?.prompt) {
+        setActiveTab('chat');
+        if (detail.autoSend) {
+          handleSendMessage(detail.prompt);
+        } else {
+          setChatInput(detail.prompt);
+        }
+      }
+    };
+    window.addEventListener('berea_trigger_chat', handleTriggerChat);
+    return () => window.removeEventListener('berea_trigger_chat', handleTriggerChat);
+  }, []);
 
   const handleClearChat = () => {
     setChatMessages([
