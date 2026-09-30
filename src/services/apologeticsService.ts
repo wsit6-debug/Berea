@@ -143,7 +143,7 @@ The user's query relates to one or more biblical challenges, apparent contradict
 ${matches.map(m => `
 ---
 [Topic: ${m.title} (${m.category}) - ${m.book} ${m.chapter}]:
-- Skeptical Objection / Challenge:
+- Question / Objection Examined:
 "${m.objection}"
 
 - Verified Classical Christian Defense:
