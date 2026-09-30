@@ -159,14 +159,54 @@ export function apologeticToCitationEntry(match: ApologeticMatch, tradition: Den
   return {
     id: `apologetics-${match.id}`,
     tradition,
-    documentTitle: `Christian Apologetics & Defense (${match.book} ${match.chapter})`,
-    sectionOrArticle: match.title,
+    documentTitle: `Christian Apologetics: ${match.title}`,
+    sectionOrArticle: `${match.category} Defense`,
     citation: `${match.book} ${match.chapter}`,
-    yearOrEra: 'Classical Apologetics',
+    yearOrEra: 'Classical Christian Apologetics',
     topic: `${match.title} (${match.category})`,
     coreDoctrine: match.defense,
-    fullExcerpt: `Objection: "${match.objection}"\n\nClassical Defense: "${match.defense}"`,
+    fullExcerpt: `Skeptical Objection / Challenge: "${match.objection}"\n\nClassical Christian Defense:\n"${match.defense}"`,
     relatedScriptures: [`${match.book} ${match.chapter}`],
     keywords: [match.category, 'Apologetics', match.title, match.book]
   };
+}
+
+/**
+ * Returns all apologetic objections and classical defenses converted into DoctrinalEntry items
+ * for universal availability within the RAG corpus.
+ */
+export function getAllApologeticsDoctrinalEntries(): DoctrinalEntry[] {
+  const entries: DoctrinalEntry[] = [];
+  for (const [book, chapters] of Object.entries(APOLOGETICS_DATA)) {
+    for (const [chStr, objections] of Object.entries(chapters)) {
+      const chNum = parseInt(chStr, 10);
+      for (const obj of objections) {
+        entries.push({
+          id: `apologetics-${obj.id}`,
+          tradition: 'universal' as any,
+          documentTitle: `Christian Apologetics: ${obj.title}`,
+          sectionOrArticle: `${obj.category} Defense`,
+          citation: `${book} ${chNum}`,
+          yearOrEra: 'Classical Christian Apologetics',
+          topic: `${obj.title} (${obj.category})`,
+          coreDoctrine: obj.defense,
+          fullExcerpt: `Skeptical Objection / Challenge: "${obj.objection}"\n\nClassical Christian Defense:\n"${obj.defense}"`,
+          relatedScriptures: [`${book} ${chNum}`],
+          keywords: [
+            obj.category.toLowerCase(),
+            'apologetics',
+            'defense',
+            'objection',
+            'christianity',
+            'skepticism',
+            'argument',
+            book.toLowerCase(),
+            ...obj.title.toLowerCase().split(/\s+/),
+            ...obj.objection.toLowerCase().split(/\s+/).filter(w => w.length > 4)
+          ]
+        });
+      }
+    }
+  }
+  return entries;
 }

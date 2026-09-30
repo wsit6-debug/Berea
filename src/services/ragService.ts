@@ -2,6 +2,7 @@ import { DOCTRINAL_CORPUS, DoctrinalEntry, getConfessionsForLens } from '../data
 import { DenominationalLens } from '../data/theologyData';
 import { findMatchingScriptures, ScripturePassage } from '../data/scriptureCorpus';
 import { getUserDenominationPreference, UserDenominationSetting } from './configService';
+import { getAllApologeticsDoctrinalEntries } from './apologeticsService';
 
 export type { DoctrinalEntry };
 
@@ -160,7 +161,7 @@ export function searchDoctrinalCorpus(
     }
   }
 
-  const corpusToSearch = rawCorpus;
+  const corpusToSearch = [...rawCorpus, ...getAllApologeticsDoctrinalEntries()];
 
   const scoredResults: RagSearchResult[] = corpusToSearch.map(entry => {
     let score = 0;

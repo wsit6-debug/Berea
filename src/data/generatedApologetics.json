@@ -34,7 +34,7 @@
         "id": "ex-9-1",
         "title": "Hardening Pharaoh's Heart",
         "objection": "God hardened Pharaoh's heart, removing his free will, and then punished him for it. This makes God unjust.",
-        "defense": "The text states that Pharaoh repeatedly hardened his own heart first. God's hardening is often seen as a judicial act—giving Pharaoh over to his own stubborn desires. As C.S. Lewis noted, 'the gates of hell are locked from the inside.'",
+        "defense": "The text states that Pharaoh repeatedly hardened his own heart first. God's hardening is often seen as a judicial act\u2014giving Pharaoh over to his own stubborn desires. As C.S. Lewis noted, 'the gates of hell are locked from the inside.'",
         "category": "Philosophical"
       }
     ],
@@ -185,6 +185,15 @@
         "defense": "Scholars propose several solutions: 1) The Greek word 'prote' can mean 'before', translating to 'this census took place *before* Quirinius was governor'. 2) Quirinius may have had an earlier administrative role in Syria alongside Saturninus. Luke's proven accuracy as a historian in Acts gives him the benefit of the doubt here.",
         "category": "Historical"
       }
+    ],
+    "1": [
+      {
+        "id": "luk-1-1",
+        "title": "Reliability of the New Testament Manuscripts",
+        "objection": "The Bible has been translated and re-translated like a game of telephone for thousands of years, so we cannot know what the original authors actually wrote.",
+        "defense": "Textual criticism demonstrates the New Testament is the best-attested document of antiquity by an overwhelming margin. We possess over 5,800 Greek manuscripts and over 20,000 early translations (Latin, Syriac, Coptic). The earliest fragments (like P52) date to within decades of the originals, compared to centuries for classical works like Plato or Caesar. Modern translations do not translate from previous translations, but directly from the earliest Greek and Hebrew manuscripts. Over 99% of variants are minor spelling differences or word orders, and not a single core Christian doctrine rests on a disputed reading.",
+        "category": "Historical"
+      }
     ]
   },
   "John": {
@@ -216,6 +225,24 @@
         "defense": "This is a historic debate between Calvinists and Arminians. Calvinists argue that because humanity is totally depraved, God's sovereign election is the only way anyone is saved, and God has the right to show mercy to whom He wills. Arminians argue that predestination is based on God's foreknowledge of who will freely choose Him. Both agree that humans are responsible and God is completely just.",
         "category": "Theological"
       }
+    ],
+    "1": [
+      {
+        "id": "rom-1-1",
+        "title": "The Origin of the Universe & Fine-Tuning",
+        "objection": "The universe does not need a Creator God; modern physics shows the universe could have emerged from quantum fluctuations without divine intervention.",
+        "defense": "The Kalam Cosmological Argument affirms: (1) Whatever begins to exist has a cause; (2) The universe began to exist (supported by cosmic expansion, the Big Bang, and the Second Law of Thermodynamics); therefore (3) The universe has a cause beyond time, space, and matter. Furthermore, the universal physical constants (gravitational force, cosmological constant, electromagnetic ratio) are fine-tuned to an incomprehensible degree of precision\u2014if altered by one part in 10^120, life could not exist anywhere. Design is the most mathematically and philosophically rational inference.",
+        "category": "Philosophical"
+      }
+    ],
+    "2": [
+      {
+        "id": "rom-2-1",
+        "title": "Objective Morality & The Moral Argument",
+        "objection": "Morality is merely a subjective evolutionary byproduct for survival; there is no objective moral law, and religion is not necessary for morality.",
+        "defense": "While people can behave morally without believing in God, objective moral values and duties cannot logically exist without a transcendent standard. If atheistic naturalism is true, human moral opinions are merely social conventions or chemical reactions in the brain\u2014neither objectively right nor wrong. Yet virtually all human beings universally recognize that torturing innocents or genocide is objectively evil. Objective moral obligations point directly to an objective, transcendent Moral Lawgiver.",
+        "category": "Philosophical"
+      }
     ]
   },
   "1 Corinthians": {
@@ -227,6 +254,15 @@
         "defense": "Paul's command here must be balanced with 1 Corinthians 11, where he explicitly assumes women are praying and prophesying publicly. Many scholars believe 1 Corinthians 14 refers specifically to women disrupting the service by asking questions across the aisle, or inappropriately evaluating prophecies. It was a specific cultural correction, not a universal ban on female speech.",
         "category": "Moral"
       }
+    ],
+    "15": [
+      {
+        "id": "1cor-15-1",
+        "title": "The Resurrection: Myth or History?",
+        "objection": "Dead men do not rise. The resurrection of Jesus is a legendary myth invented by grieving disciples who hallucinated or fabricated the empty tomb.",
+        "defense": "The historical resurrection is supported by the \"minimal facts\" admitted by virtually all critical and secular New Testament scholars: (1) Jesus died by Roman crucifixion; (2) shortly afterward, multiple individuals and groups experienced appearances of the risen Jesus; (3) skeptics like James (brother of Jesus) and Paul (a violent persecutor) were suddenly converted; and (4) the tomb was found empty in Jerusalem, where preaching began. Hallucinations do not occur to groups across different times, nor do they explain an empty tomb. The disciples suffered persecution and martyrdom for what they saw, demonstrating sincerity and eyewitness reality.",
+        "category": "Historical"
+      }
     ]
   },
   "Ephesians": {
@@ -237,6 +273,17 @@
         "objection": "The command for wives to submit to their husbands is a patriarchal endorsement of male dominance.",
         "defense": "The command is grounded in verse 21, 'Submit to one another out of reverence for Christ.' Paul then completely revolutionizes ancient patriarchy by commanding husbands to love their wives self-sacrificially, just as Christ died for the church. It is a picture of mutual, loving sacrifice rather than dominance.",
         "category": "Moral"
+      }
+    ]
+  },
+  "Acts": {
+    "17": [
+      {
+        "id": "act-17-1",
+        "title": "Did Jesus Truly Exist? (Historicity of Jesus)",
+        "objection": "Jesus of Nazareth is a mythological figure modeled after pagan dying-and-rising mystery cults, with no corroborating secular historical evidence.",
+        "defense": "Virtually all ancient historians, both Christian and secular (including Bart Ehrman and E.P. Sanders), reject Christ-mythicism as unscholarly. Jesus is explicitly referenced by non-Christian first- and second-century historians, including the Jewish historian Flavius Josephus (Antiquities of the Jews), the Roman historian Cornelius Tacitus (Annals), Pliny the Younger (Letters), and Suetonius. Tacitus confirms Jesus was executed under Pontius Pilate during the reign of Tiberius, and Josephus corroborates His leadership and crucifixion.",
+        "category": "Historical"
       }
     ]
   }
