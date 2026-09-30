@@ -1888,12 +1888,12 @@ export const TRANSLATION_COLORS: Record<string, TranslationColorTheme> = {
     text: '#0369A1'
   },
   BSB: {
-    primary: '#B4793D', // Berea Signature Warm Caramel
-    bg: '#FAF5ED',
-    border: '#E8D7C3',
-    badgeBg: '#B4793D',
-    badgeText: '#FFFFFF',
-    text: '#78471F'
+    primary: 'var(--clean-accent-caramel, #B4793D)', // Berea Signature Accent
+    bg: 'var(--clean-highlight-cream, #FAF5ED)',
+    border: 'var(--clean-accent-border, #E8D7C3)',
+    badgeBg: 'var(--clean-accent-caramel, #B4793D)',
+    badgeText: 'var(--clean-accent-contrast-text, #FFFFFF)',
+    text: 'var(--clean-accent-dark, #78471F)'
   },
   LSB: {
     primary: '#059669', // Emerald Green
@@ -1984,16 +1984,32 @@ export const TRANSLATION_COLORS: Record<string, TranslationColorTheme> = {
 };
 
 export const DEFAULT_TRANSLATION_COLOR: TranslationColorTheme = {
-  primary: '#B4793D',
-  bg: '#FAF5ED',
-  border: '#E8D7C3',
-  badgeBg: '#B4793D',
-  badgeText: '#FFFFFF',
-  text: '#78471F'
+  primary: 'var(--clean-accent-caramel, #B4793D)',
+  bg: 'var(--clean-highlight-cream, #FAF5ED)',
+  border: 'var(--clean-accent-border, #E8D7C3)',
+  badgeBg: 'var(--clean-accent-caramel, #B4793D)',
+  badgeText: 'var(--clean-accent-contrast-text, #FFFFFF)',
+  text: 'var(--clean-accent-dark, #78471F)'
 };
 
 export function getTranslationColor(id: string): TranslationColorTheme {
-  return TRANSLATION_COLORS[id] || DEFAULT_TRANSLATION_COLOR;
+  if (TRANSLATION_COLORS[id]) {
+    return TRANSLATION_COLORS[id];
+  }
+  // Deterministic distinct palette generation based on translation ID string hash
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash % 360);
+  return {
+    primary: `hsl(${hue}, 70%, 42%)`,
+    bg: `hsl(${hue}, 60%, 96%)`,
+    border: `hsl(${hue}, 50%, 82%)`,
+    badgeBg: `hsl(${hue}, 68%, 42%)`,
+    badgeText: '#FFFFFF',
+    text: `hsl(${hue}, 78%, 24%)`
+  };
 }
 
 export function getApprovedTranslationsForDenomination(lens: DenominationalLens): TranslationInfo[] {

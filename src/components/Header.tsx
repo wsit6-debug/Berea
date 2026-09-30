@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark } from 'lucide-react';
 import {
   TRANSLATIONS,
@@ -54,6 +54,42 @@ export const Header: React.FC<HeaderProps> = ({
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
   const [showAllTranslations, setShowAllTranslations] = useState(false);
+
+  const denomDropdownRef = useRef<HTMLDivElement>(null);
+  const translationDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Auto-close Confessional Tradition and Translation dropdowns when clicking outside
+  useEffect(() => {
+    if (!showDenomDropdown && !showTranslationDropdown) return;
+
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (showDenomDropdown && denomDropdownRef.current && !denomDropdownRef.current.contains(target)) {
+        setShowDenomDropdown(false);
+      }
+      if (showTranslationDropdown && translationDropdownRef.current && !translationDropdownRef.current.contains(target)) {
+        setShowTranslationDropdown(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowDenomDropdown(false);
+        setShowTranslationDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showDenomDropdown, showTranslationDropdown]);
 
   // Filter denominations to only those that have approved Bibles in the currently selected language
   const availableDenominations = useMemo(() => {
@@ -125,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="h-4 w-px bg-[var(--clean-border,#EBE5DC)] hidden sm:block"></div>
 
           {/* 1. TOP GLOBAL DENOMINATION SELECTOR */}
-          <div className="relative">
+          <div className="relative" ref={denomDropdownRef}>
             <button
               onClick={() => {
                 setShowDenomDropdown(prev => !prev);
@@ -210,7 +246,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* 2. TOP APPROVED TRANSLATION SELECTOR */}
-          <div className="relative">
+          <div className="relative" ref={translationDropdownRef}>
             <button
               onClick={() => {
                 setShowTranslationDropdown(prev => !prev);
@@ -247,9 +283,12 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <div
                   style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
-                  className="text-[10px] uppercase font-bold text-[var(--clean-text-secondary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-2 sticky top-0 bg-[var(--clean-surface,#FFFFFF)] z-10"
+                  className="text-[10px] uppercase font-bold px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-2 sticky top-0 bg-[var(--clean-surface,#FFFFFF)] z-10"
                 >
-                    <span className="truncate max-w-[160px]">
+                    <span
+                      style={{ color: 'var(--clean-text-secondary, #78716C)' }}
+                      className="truncate max-w-[160px]"
+                    >
                       {isFallbackMode ? 'All Translations (Fallback)' : (showAllTranslations ? `All Approved for ${currentDenom.traditionGroup}` : `Top 5 for ${currentDenom.traditionGroup}`)}
                     </span>
                     {!isFallbackMode && approvedTranslations.length > 5 && (
@@ -278,13 +317,16 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       style={{
                         backgroundColor: isSelected
-                          ? 'var(--clean-accent-caramel, #B4793D)'
+                          ? 'var(--clean-highlight-cream, #FAF3E8)'
+                          : 'transparent',
+                        borderColor: isSelected
+                          ? 'var(--clean-accent-border-strong, #B4793D)'
                           : 'transparent',
                         color: isSelected
-                          ? 'var(--clean-accent-contrast-text, #FFFFFF)'
+                          ? 'var(--clean-accent-dark, #78471F)'
                           : 'var(--clean-text-primary, #26221F)'
                       }}
-                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors hover:bg-[var(--clean-surface-warm,#FAF5ED)]"
+                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]"
                     >
                       <div className="flex-1 pr-2">
                         <div className="flex items-center gap-1.5 mb-0.5">
@@ -292,23 +334,26 @@ export const Header: React.FC<HeaderProps> = ({
                             className="w-1.5 h-1.5 rounded-full shrink-0"
                             style={{ backgroundColor: getTranslationColor(t.id).primary }}
                           />
-                          <span className="font-bold text-xs">
+                          <span
+                            className="font-bold text-xs"
+                            style={{ color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-primary, #26221F)' }}
+                          >
                             {t.id}
                           </span>
                           <span
                             style={{
                               backgroundColor: isSelected
-                                ? 'rgba(255, 255, 255, 0.25)'
+                                ? 'rgba(180, 121, 61, 0.15)'
                                 : isApproved
                                   ? 'var(--clean-highlight-cream, #FAF3E8)'
                                   : 'var(--clean-surface-warm, #FAF5ED)',
                               borderColor: isSelected
-                                ? 'transparent'
+                                ? 'var(--clean-accent-border-strong, #B4793D)'
                                 : isApproved
                                   ? 'var(--clean-accent-border, #B4793D)'
                                   : 'var(--clean-accent-border, #EBE5DC)',
                               color: isSelected
-                                ? 'inherit'
+                                ? 'var(--clean-accent-dark, #78471F)'
                                 : isApproved
                                   ? 'var(--clean-accent-dark, #B4793D)'
                                   : 'var(--clean-text-secondary, #78716C)'
@@ -319,7 +364,9 @@ export const Header: React.FC<HeaderProps> = ({
                           </span>
                         </div>
                         <div
-                          style={{ color: isSelected ? 'inherit' : 'var(--clean-text-secondary, #57524E)', opacity: isSelected ? 0.9 : 1 }}
+                          style={{
+                            color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-secondary, #57524E)'
+                          }}
                           className="text-[11px] font-normal leading-snug line-clamp-1"
                         >
                           {t.name}
@@ -328,7 +375,7 @@ export const Header: React.FC<HeaderProps> = ({
                       {isSelected && (
                         <Check
                           className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"
-                          style={{ color: 'var(--clean-accent-contrast-text, #FFFFFF)' }}
+                          style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
                         />
                       )}
                     </button>
@@ -375,6 +422,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Bookmarks Button */}
           {onOpenBookmarks && (
             <button
+              data-bookmarks-toggle="true"
               onClick={onOpenBookmarks}
               style={
                 isBookmarksOpen

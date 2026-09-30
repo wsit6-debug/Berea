@@ -973,7 +973,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'symbolism' ? 'active' : ''}`}
             title="Symbolism & Typology"
           >
-            <Feather className="w-3 h-3 shrink-0 text-[#B4793D]" />
+            <Feather className="w-3 h-3 shrink-0" />
             <span className="truncate">Symbolism</span>
           </button>
 
@@ -2224,17 +2224,33 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             </div>
 
             {/* Historical Commentary & Quotes */}
-            <div className="space-y-1.5 p-2.5 rounded-xl bg-white border border-[#EBE5DC] shadow-xs">
+            <div
+              className="space-y-1.5 p-2.5 rounded-xl border shadow-xs"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-[#B4793D] uppercase tracking-wider flex items-center gap-1">
-                  <BookOpen className="w-3 h-3 text-[#B4793D]" />
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                  style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
+                >
+                  <BookOpen className="w-3 h-3" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
                   Historical Commentary & Quotes
                 </span>
               </div>
               <select
                 value={selectedCommentator}
                 onChange={handleGenerateCommentary}
-                className="w-full p-2 text-xs border border-[#EBE5DC] rounded-lg bg-[#FAF9F6] text-[#26221F] outline-none focus:border-[#B4793D]"
+                className="w-full p-2 text-xs rounded-lg outline-none transition-colors"
+                style={{
+                  backgroundColor: 'var(--clean-highlight-cream, #FAF9F6)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                  color: 'var(--clean-text-primary, #26221F)',
+                  borderWidth: '1px',
+                  borderStyle: 'solid'
+                }}
               >
                 <option value="">Select a Commentator...</option>
                 {(DENOMINATION_COMMENTATORS[activeLens] || []).map((c) => (
@@ -2246,8 +2262,16 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
               {isCommentaryLoading && (
                 <div className="flex flex-col items-center justify-center py-4 opacity-70 animate-pulse">
-                  <div className="w-5 h-5 border-2 border-[#B4793D] border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-[10px] text-[#B4793D] font-medium">{commentaryProgress || 'Searching historical writings...'}</p>
+                  <div
+                    className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin mb-2"
+                    style={{
+                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                      borderTopColor: 'transparent'
+                    }}
+                  />
+                  <p className="text-[10px] font-medium" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
+                    {commentaryProgress || 'Searching historical writings...'}
+                  </p>
                 </div>
               )}
 
@@ -2258,35 +2282,64 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               {!isCommentaryLoading && commentaryText && (
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center justify-between px-1">
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      isCommentaryVerbatim
-                        ? 'bg-[#EBF5EE] text-[#1E6B37] border border-[#CDE5D4]'
-                        : 'bg-[#FAF7F2] text-[#8B5E34] border border-[#E8DEC8]'
-                    }`}>
+                    <span
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+                      style={
+                        isCommentaryVerbatim
+                          ? { backgroundColor: '#EBF5EE', color: '#1E6B37', borderColor: '#CDE5D4' }
+                          : {
+                              backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                              color: 'var(--clean-accent-dark, #8B5E34)',
+                              borderColor: 'var(--clean-accent-border, #E8DEC8)'
+                            }
+                      }
+                    >
                       {isCommentaryVerbatim ? '📜 Authentic Historical Text' : '✨ AI Contextual Exegesis'}
                     </span>
                     <div className="flex items-center gap-1.5">
                       {isCommentaryLong && (
-                        <div className="flex items-center bg-[#F3EFEA] p-0.5 rounded-md border border-[#EBE5DC]">
+                        <div
+                          className="flex items-center p-0.5 rounded-md border"
+                          style={{
+                            backgroundColor: 'var(--clean-surface-subtle, #F3EFEA)',
+                            borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                          }}
+                        >
                           <button
                             type="button"
                             onClick={() => setShowFullCommentary(false)}
-                            className={`text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors ${
+                            className="text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors cursor-pointer"
+                            style={
                               !showFullCommentary
-                                ? 'bg-white text-[#8C5E2E] shadow-2xs font-semibold'
-                                : 'text-[#78716C] hover:text-[#26221F]'
-                            }`}
+                                ? {
+                                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                    color: 'var(--clean-accent-dark, #8C5E2E)',
+                                    fontWeight: 600,
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                  }
+                                : {
+                                    color: 'var(--clean-text-secondary, #78716C)'
+                                  }
+                            }
                           >
                             Summary
                           </button>
                           <button
                             type="button"
                             onClick={() => setShowFullCommentary(true)}
-                            className={`text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors ${
+                            className="text-[9.5px] px-2 py-0.5 rounded font-medium transition-colors cursor-pointer"
+                            style={
                               showFullCommentary
-                                ? 'bg-white text-[#8C5E2E] shadow-2xs font-semibold'
-                                : 'text-[#78716C] hover:text-[#26221F]'
-                            }`}
+                                ? {
+                                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                    color: 'var(--clean-accent-dark, #8C5E2E)',
+                                    fontWeight: 600,
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                  }
+                                : {
+                                    color: 'var(--clean-text-secondary, #78716C)'
+                                  }
+                            }
                           >
                             Full Statement
                           </button>
@@ -2299,10 +2352,22 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   </div>
 
                   {isCommentaryLong && !showFullCommentary ? (
-                    <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs space-y-2">
-                      <div className="flex items-center gap-1.5 pb-1.5 border-b border-[#EBE5DC]/70">
-                        <Sparkles className="w-3.5 h-3.5 text-[#B4793D]" />
-                        <span className="text-[10.5px] font-bold text-[#8C5E2E] uppercase tracking-wider">
+                    <div
+                      className="p-3 rounded-lg border text-xs space-y-2"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
+                      <div
+                        className="flex items-center gap-1.5 pb-1.5 border-b"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                      >
+                        <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                        <span
+                          className="text-[10.5px] font-bold uppercase tracking-wider"
+                          style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}
+                        >
                           Executive Summary
                         </span>
                         <span className="text-[9.5px] text-[#A8A29E] ml-auto">
@@ -2312,14 +2377,18 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       <div className="prose prose-sm prose-slate max-w-none text-[11px] leading-relaxed text-[#3D3834]">
                         <MarkdownTheologyRenderer content={commentarySummary} />
                       </div>
-                      <div className="mt-2.5 pt-2 border-t border-[#EBE5DC]/70 flex items-center justify-between">
+                      <div
+                        className="mt-2.5 pt-2 border-t flex items-center justify-between"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                      >
                         <span className="text-[10px] text-[#78716C]">
                           Want the complete commentary?
                         </span>
                         <button
                           type="button"
                           onClick={() => setShowFullCommentary(true)}
-                          className="text-[11px] font-bold text-[#B4793D] hover:text-[#8C5E2E] flex items-center gap-1 hover:underline transition-colors cursor-pointer"
+                          className="text-[11px] font-bold flex items-center gap-1 hover:underline transition-colors cursor-pointer"
+                          style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
                         >
                           <span>Read Full Statement ({commentaryWordCount} words)</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -2327,16 +2396,26 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="p-3 rounded-lg bg-[#FAF7F2] border border-[#EBE5DC] text-xs max-h-[380px] overflow-y-auto">
+                    <div
+                      className="p-3 rounded-lg border text-xs max-h-[380px] overflow-y-auto"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
                       {isCommentaryLong && (
-                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-[#EBE5DC]/70">
+                        <div
+                          className="flex items-center justify-between pb-1.5 mb-2 border-b"
+                          style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                        >
                           <span className="text-[10px] font-semibold text-[#78716C]">
                             Full Unabridged Statement ({commentaryWordCount} words)
                           </span>
                           <button
                             type="button"
                             onClick={() => setShowFullCommentary(false)}
-                            className="text-[10.5px] font-bold text-[#B4793D] hover:underline flex items-center gap-0.5 cursor-pointer"
+                            className="text-[10.5px] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                            style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
                           >
                             <span>← Show Summary</span>
                           </button>
@@ -2346,11 +2425,15 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         <MarkdownTheologyRenderer content={commentaryText} />
                       </div>
                       {isCommentaryLong && (
-                        <div className="mt-3 pt-2 border-t border-[#EBE5DC]/70 flex justify-end">
+                        <div
+                          className="mt-3 pt-2 border-t flex justify-end"
+                          style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                        >
                           <button
                             type="button"
                             onClick={() => setShowFullCommentary(false)}
-                            className="text-[10.5px] font-semibold text-[#B4793D] hover:underline flex items-center gap-0.5 cursor-pointer"
+                            className="text-[10.5px] font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
+                            style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
                           >
                             <span>↑ Back to Summary</span>
                           </button>
@@ -2407,8 +2490,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   <div className="flex items-center gap-1.5 mb-0.5 px-1">
                     {msg.sender === 'assistant' && (
                       <div
-                        className="w-5 h-5 rounded-md overflow-hidden border flex-shrink-0 bg-[#FAF7F2] p-0.5 shadow-xs flex items-center justify-center"
-                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                        className="w-5 h-5 rounded-md overflow-hidden border flex-shrink-0 p-0.5 shadow-xs flex items-center justify-center"
+                        style={{
+                          borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                          backgroundColor: 'var(--clean-surface, #FFFFFF)'
+                        }}
                       >
                         <img src="/berea-logo.jpg" alt="Berea" className="w-full h-full object-contain" />
                       </div>
@@ -2733,9 +2819,18 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             {/* Chapter Event Active Detail Card */}
             {currentEvent && (
               <div className="space-y-2">
-                <div className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EBE5DC] text-xs space-y-1.5">
+                <div
+                  className="p-3 rounded-xl border text-xs space-y-1.5"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-[11px] text-[#78471F] flex items-center gap-1">
+                    <span
+                      className="font-bold text-[11px] flex items-center gap-1"
+                      style={{ color: 'var(--clean-accent-dark, #78471F)' }}
+                    >
                       <span>{currentEvent.isReferencedOnly ? 'Reference' : 'Storyline'} {currentEvent.stepNumber}:</span> {currentEvent.title}
                     </span>
                     <button
@@ -2762,17 +2857,31 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                           onNavigateToChapterAndVerse(targetChapter, targetVerse, targetRange);
                         }
                       }}
-                      className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-white text-[#B4793D] border border-[#EBE5DC] font-semibold hover:bg-[#F2E8D5] transition-colors shadow-sm cursor-pointer active:scale-95"
+                      className="text-[9.5px] font-mono px-1.5 py-0.5 rounded font-semibold transition-colors shadow-sm cursor-pointer active:scale-95"
+                      style={{
+                        backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                        color: 'var(--clean-accent-caramel, #B4793D)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid'
+                      }}
                       title={`Highlight ${currentEvent.passageRef} in Scripture`}
                     >
                       Mentioned in {currentEvent.passageRef}
                     </button>
                   </div>
 
-                  <div className="text-[10px] text-[#78716C] font-medium flex items-center justify-between flex-wrap gap-1">
-                    <span>Site: <strong className="text-[#26221F]">{currentEvent.locationName}</strong></span>
+                  <div className="text-[10px] font-medium flex items-center justify-between flex-wrap gap-1" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
+                    <span>Site: <strong style={{ color: 'var(--clean-text-primary, #26221F)' }}>{currentEvent.locationName}</strong></span>
                     {currentLegInfo && (
-                      <span className="text-[9.5px] font-semibold text-[#B4793D] bg-white px-2 py-0.5 rounded border border-[#EBE5DC] flex items-center gap-1 shadow-xs">
+                      <span
+                        className="text-[9.5px] font-semibold px-2 py-0.5 rounded border flex items-center gap-1 shadow-xs"
+                        style={{
+                          backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                          borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                          color: 'var(--clean-accent-caramel, #B4793D)'
+                        }}
+                      >
                         <span>{currentLegInfo.distanceMiles} mi from {currentLegInfo.fromName}</span>
                         <span>•</span>
                         <span>{currentLegInfo.daysLabel}</span>
@@ -2781,18 +2890,37 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   </div>
 
                   {currentLegInfo?.roadName && (
-                    <div className="text-[9.5px] text-[#8C521F] font-medium bg-[#FAF3E8] px-2 py-0.5 rounded border border-[#D4A373]/30 flex items-center gap-1">
+                    <div
+                      className="text-[9.5px] font-medium px-2 py-0.5 rounded border flex items-center gap-1"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                        borderColor: 'var(--clean-accent-border, #D4A373)',
+                        color: 'var(--clean-accent-dark, #8C521F)'
+                      }}
+                    >
                       <span>Historical Route: <strong>{currentLegInfo.roadName}</strong></span>
                     </div>
                   )}
 
-                  <p className="text-[#44403C] text-[11px] leading-relaxed">
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--clean-text-primary, #44403C)' }}>
                     {currentEvent.description}
                   </p>
 
                   {currentEvent.theologicalSignificance && currentEvent.theologicalSignificance !== "" && (
-                    <div className="p-2 rounded-lg bg-white border border-[#EBE5DC] text-[10.5px] text-[#57524E] space-y-0.5 mt-1">
-                      <strong className="text-[#78471F] text-[10px] block uppercase tracking-wider">Theological Significance</strong>
+                    <div
+                      className="p-2 rounded-lg border text-[10.5px] space-y-0.5 mt-1"
+                      style={{
+                        backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        color: 'var(--clean-text-secondary, #57524E)'
+                      }}
+                    >
+                      <strong
+                        className="text-[10px] block uppercase tracking-wider"
+                        style={{ color: 'var(--clean-accent-dark, #78471F)' }}
+                      >
+                        Theological Significance
+                      </strong>
                       <p className="leading-snug">{currentEvent.theologicalSignificance}</p>
                     </div>
                   )}
@@ -2967,18 +3095,40 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
 
             {/* Quiz Configuration Panel */}
             {!currentQuizType && (
-              <div className="p-3.5 rounded-xl border border-[#EBE5DC] bg-white space-y-4">
+              <div
+                className="p-3.5 rounded-xl border space-y-4"
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
                 {/* Mode Selector */}
-                <div className="flex p-0.5 bg-[#FAF5ED] border border-[#EBE5DC] rounded-lg">
+                <div
+                  className="flex p-0.5 rounded-lg border"
+                  style={{
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                >
                   <button
                     onClick={() => setQuizMode('chapter')}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${quizMode === 'chapter' ? 'bg-white text-[#B4793D] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'}`}
+                    className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: quizMode === 'chapter' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      color: quizMode === 'chapter' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)',
+                      boxShadow: quizMode === 'chapter' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                    }}
                   >
                     Passage
                   </button>
                   <button
                     onClick={() => setQuizMode('book')}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${quizMode === 'book' ? 'bg-white text-[#B4793D] shadow-xs' : 'text-[#78716C] hover:text-[#26221F]'}`}
+                    className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: quizMode === 'book' ? 'var(--clean-surface, #FFFFFF)' : 'transparent',
+                      color: quizMode === 'book' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-text-secondary, #78716C)',
+                      boxShadow: quizMode === 'book' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                    }}
                   >
                     Book
                   </button>
@@ -2993,7 +3143,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         setQuizTargetBook(e.target.value);
                         setQuizTargetChapter(1);
                       }}
-                      className="w-full p-2 text-xs font-medium bg-[#FAF5ED] border border-[#EBE5DC] rounded-lg text-[#26221F] outline-none focus:border-[#D4A373] transition-colors"
+                      className="w-full p-2 text-xs font-medium rounded-lg outline-none transition-colors"
+                      style={{
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                        color: 'var(--clean-text-primary, #26221F)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid'
+                      }}
                     >
                       {BIBLE_BOOKS.map(b => (
                         <option key={b.id} value={b.name}>{b.name}</option>
@@ -3007,7 +3164,14 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       <select
                         value={quizTargetChapter}
                         onChange={(e) => setQuizTargetChapter(parseInt(e.target.value))}
-                        className="w-full p-2 text-xs font-medium bg-[#FAF5ED] border border-[#EBE5DC] rounded-lg text-[#26221F] outline-none focus:border-[#D4A373] transition-colors"
+                        className="w-full p-2 text-xs font-medium rounded-lg outline-none transition-colors"
+                        style={{
+                          backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                          borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                          color: 'var(--clean-text-primary, #26221F)',
+                          borderWidth: '1px',
+                          borderStyle: 'solid'
+                        }}
                       >
                         {Array.from({ length: BIBLE_BOOKS.find(b => b.name === quizTargetBook)?.chaptersCount || 1 }).map((_, i) => (
                           <option key={i + 1} value={i + 1}>Chapter {i + 1}</option>
@@ -3017,30 +3181,37 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   )}
 
                   {/* Question Count Selector */}
-                  <div className="space-y-1.5 pt-1 border-t border-[#EBE5DC]">
+                  <div
+                    className="space-y-1.5 pt-1 border-t"
+                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                  >
                     <div className="flex items-center justify-between">
                       <label className="text-[10px] font-bold text-[#78716C] uppercase tracking-wider">
                         Questions ({quizMode === 'chapter' ? '5–15' : '5–50'})
                       </label>
-                      <span className="text-xs font-bold text-[#B4793D]">
+                      <span className="text-xs font-bold" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
                         {quizMode === 'chapter' ? chapterQuizLength : bookQuizLength}
                       </span>
                     </div>
                     <div className="flex gap-1.5">
-                      {(quizMode === 'chapter' ? [5, 10, 15] : [5, 10, 20, 50]).map(count => (
-                        <button
-                          key={count}
-                          type="button"
-                          onClick={() => quizMode === 'chapter' ? setChapterQuizLength(count) : setBookQuizLength(count)}
-                          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-                            (quizMode === 'chapter' ? chapterQuizLength : bookQuizLength) === count
-                              ? 'bg-[#B4793D] border-[#B4793D] text-white shadow-xs'
-                              : 'bg-[#FAF5ED] border-[#EBE5DC] text-[#78716C] hover:text-[#26221F]'
-                          }`}
-                        >
-                          {count}
-                        </button>
-                      ))}
+                      {(quizMode === 'chapter' ? [5, 10, 15] : [5, 10, 20, 50]).map(count => {
+                        const isCountActive = (quizMode === 'chapter' ? chapterQuizLength : bookQuizLength) === count;
+                        return (
+                          <button
+                            key={count}
+                            type="button"
+                            onClick={() => quizMode === 'chapter' ? setChapterQuizLength(count) : setBookQuizLength(count)}
+                            className="flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer"
+                            style={{
+                              backgroundColor: isCountActive ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-highlight-cream, #FAF5ED)',
+                              borderColor: isCountActive ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                              color: isCountActive ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-text-secondary, #78716C)'
+                            }}
+                          >
+                            {count}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -3048,7 +3219,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 <button
                   onClick={() => startQuiz(quizMode)}
                   disabled={generatingQuizType !== null}
-                  className="w-full py-2.5 mt-2 bg-[#B4793D] hover:bg-[#9A632E] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70"
+                  className="w-full py-2.5 mt-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs active:scale-[0.99] cursor-pointer disabled:opacity-70"
+                  style={{
+                    backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                    color: 'var(--clean-accent-contrast-text, #FFFFFF)'
+                  }}
                 >
                   {generatingQuizType ? (
                     <>
@@ -3512,13 +3687,18 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                                 }));
                               }}
                               placeholder="Write your theological response or explanation based on scripture here..."
-                              className="w-full p-3 rounded-lg border text-xs leading-relaxed outline-none transition-all placeholder:text-[#A8A29E] bg-white border-[#EBE5DC] text-[#26221F] focus:border-[#B4793D] focus:ring-1 focus:ring-[#B4793D]"
+                              className="w-full p-3 rounded-lg border text-xs leading-relaxed outline-none transition-all placeholder:text-[#A8A29E]"
+                              style={{
+                                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                color: 'var(--clean-text-primary, #26221F)'
+                              }}
                             />
-                            <div className="flex items-center justify-between text-[10.5px] text-[#78716C]">
+                            <div className="flex items-center justify-between text-[10.5px]" style={{ color: 'var(--clean-text-secondary, #78716C)' }}>
                               <span>
                                 {writtenAnswers[quizIndex]?.trim().split(/\s+/).filter(Boolean).length || 0} words
                               </span>
-                              <span className="italic text-[#8C5E2E]">
+                              <span className="italic" style={{ color: 'var(--clean-accent-dark, #8C5E2E)' }}>
                                 The AI evaluates theological depth and biblical reasoning.
                               </span>
                             </div>
@@ -3529,47 +3709,66 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                             <div className="grid grid-cols-2 gap-2.5">
                               {['True', 'False'].map((label, optIdx) => {
                                 const isSelected = quizSelectedAnswers[quizIndex] === optIdx;
+                                const isRevealed = quizRevealedAnswers[quizIndex];
+                                const isCorrect = isRevealed && optIdx === quizQuestions[quizIndex].correctAnswerIndex;
+                                const isWrong = isRevealed && isSelected && optIdx !== quizQuestions[quizIndex].correctAnswerIndex;
+
                                 return (
                                   <button
                                     key={optIdx}
                                     onClick={() => {
-                                      if (!quizRevealedAnswers[quizIndex]) {
+                                      if (!isRevealed) {
                                         setQuizSelectedAnswers(prev => ({ ...prev, [quizIndex]: optIdx }));
                                       }
                                     }}
-                                    className={`p-4 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                                      isSelected && !quizRevealedAnswers[quizIndex]
-                                        ? 'bg-[#FAF5ED] border-[#B4793D] text-[#78471F] font-bold shadow-xs'
-                                        : quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex
-                                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                                        : quizRevealedAnswers[quizIndex] && isSelected
-                                        ? 'bg-red-50 border-red-300 text-red-800 font-bold'
-                                        : 'bg-white border-[#EBE5DC] text-[#26221F] hover:border-[#D4A373] hover:bg-[#FAF9F6]'
-                                    } ${quizRevealedAnswers[quizIndex] ? 'cursor-default' : ''}`}
+                                    className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                                      isRevealed ? 'cursor-default' : 'cursor-pointer hover:opacity-95'
+                                    }`}
+                                    style={
+                                      isCorrect
+                                        ? { backgroundColor: '#ECFDF5', borderColor: '#34D399', color: '#065F46', fontWeight: 'bold' }
+                                        : isWrong
+                                        ? { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5', color: '#991B1B', fontWeight: 'bold' }
+                                        : isSelected
+                                        ? {
+                                            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                            borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                                            color: 'var(--clean-accent-dark, #78471F)',
+                                            fontWeight: 'bold',
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                                          }
+                                        : {
+                                            backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                            borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                            color: 'var(--clean-text-primary, #26221F)'
+                                          }
+                                    }
                                   >
                                     {label === 'True' ? (
                                       <CheckCircle2
-                                        className={`w-5 h-5 ${
-                                          quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex
-                                            ? 'text-emerald-600'
-                                            : quizRevealedAnswers[quizIndex] && isSelected
-                                            ? 'text-red-500'
+                                        className="w-5 h-5"
+                                        style={{
+                                          color: isCorrect
+                                            ? '#059669'
+                                            : isWrong
+                                            ? '#DC2626'
                                             : isSelected
-                                            ? 'text-[#B4793D]'
-                                            : 'text-[#78716C]'
-                                        }`}
+                                            ? 'var(--clean-accent-caramel, #B4793D)'
+                                            : 'var(--clean-text-secondary, #78716C)'
+                                        }}
                                       />
                                     ) : (
                                       <X
-                                        className={`w-5 h-5 ${
-                                          quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex
-                                            ? 'text-emerald-600'
-                                            : quizRevealedAnswers[quizIndex] && isSelected
-                                            ? 'text-red-500'
+                                        className="w-5 h-5"
+                                        style={{
+                                          color: isCorrect
+                                            ? '#059669'
+                                            : isWrong
+                                            ? '#DC2626'
                                             : isSelected
-                                            ? 'text-[#B4793D]'
-                                            : 'text-[#78716C]'
-                                        }`}
+                                            ? 'var(--clean-accent-caramel, #B4793D)'
+                                            : 'var(--clean-text-secondary, #78716C)'
+                                        }}
                                       />
                                     )}
                                     <span className="text-sm font-heading">{label}</span>
@@ -3592,7 +3791,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                                   {quizQuestions[quizIndex].explanation}
                                 </p>
                                 {quizQuestions[quizIndex].reference && (
-                                  <p className="text-[#B4793D] font-medium text-[10.5px]">
+                                  <p className="font-medium text-[10.5px]" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
                                     Scripture: {quizQuestions[quizIndex].reference}
                                   </p>
                                 )}
@@ -3604,28 +3803,62 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                             <div className="space-y-2">
                               {quizQuestions[quizIndex].options.map((opt, optIdx) => {
                                 const isSelected = quizSelectedAnswers[quizIndex] === optIdx;
+                                const isRevealed = quizRevealedAnswers[quizIndex];
+                                const isCorrect = isRevealed && optIdx === quizQuestions[quizIndex].correctAnswerIndex;
+                                const isWrong = isRevealed && isSelected && optIdx !== quizQuestions[quizIndex].correctAnswerIndex;
+
                                 return (
                                   <button
                                     key={optIdx}
                                     onClick={() => {
-                                      if (!quizRevealedAnswers[quizIndex]) {
+                                      if (!isRevealed) {
                                         setQuizSelectedAnswers(prev => ({ ...prev, [quizIndex]: optIdx }));
                                       }
                                     }}
-                                    className={`w-full text-left p-2.5 rounded-lg border transition-all text-xs flex items-center justify-between gap-2 cursor-pointer ${
-                                      isSelected && !quizRevealedAnswers[quizIndex]
-                                        ? 'bg-[#FAF5ED] border-[#B4793D] text-[#78471F] font-medium shadow-xs'
-                                        : quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex
-                                        ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-medium'
-                                        : quizRevealedAnswers[quizIndex] && isSelected
-                                        ? 'bg-red-50 border-red-300 text-red-800'
-                                        : 'bg-white border-[#EBE5DC] text-[#26221F] hover:border-[#D4A373] hover:bg-[#FAF9F6]'
-                                    } ${quizRevealedAnswers[quizIndex] ? 'cursor-default' : ''}`}
+                                    className={`w-full text-left p-2.5 rounded-lg border transition-all text-xs flex items-center justify-between gap-2 ${
+                                      isRevealed ? 'cursor-default' : 'cursor-pointer hover:opacity-95'
+                                    }`}
+                                    style={
+                                      isCorrect
+                                        ? { backgroundColor: '#ECFDF5', borderColor: '#34D399', color: '#065F46', fontWeight: 500 }
+                                        : isWrong
+                                        ? { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5', color: '#991B1B' }
+                                        : isSelected
+                                        ? {
+                                            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                                            borderColor: 'var(--clean-accent-border-strong, #B4793D)',
+                                            color: 'var(--clean-accent-dark, #78471F)',
+                                            fontWeight: 500,
+                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                          }
+                                        : {
+                                            backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                            borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                            color: 'var(--clean-text-primary, #26221F)'
+                                          }
+                                    }
                                   >
                                     <span className="leading-snug">{opt}</span>
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected && !quizRevealedAnswers[quizIndex] ? 'border-[#B4793D] bg-[#B4793D]' : quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex ? 'border-emerald-500 bg-emerald-500' : quizRevealedAnswers[quizIndex] && isSelected ? 'border-red-400 bg-red-400' : 'border-[#DCD5C9]'}`}>
-                                      {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                                      {quizRevealedAnswers[quizIndex] && optIdx === quizQuestions[quizIndex].correctAnswerIndex && !isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                    <div
+                                      className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
+                                      style={{
+                                        borderColor: isCorrect
+                                          ? '#10B981'
+                                          : isWrong
+                                          ? '#F87171'
+                                          : isSelected
+                                          ? 'var(--clean-accent-caramel, #B4793D)'
+                                          : 'var(--clean-accent-border, #DCD5C9)',
+                                        backgroundColor: isCorrect
+                                          ? '#10B981'
+                                          : isWrong
+                                          ? '#F87171'
+                                          : isSelected
+                                          ? 'var(--clean-accent-caramel, #B4793D)'
+                                          : 'transparent'
+                                      }}
+                                    >
+                                      {(isSelected || isCorrect) && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                                     </div>
                                   </button>
                                 );
@@ -3646,7 +3879,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                                   {quizQuestions[quizIndex].explanation}
                                 </p>
                                 {quizQuestions[quizIndex].reference && (
-                                  <p className="text-[#B4793D] font-medium text-[10.5px]">
+                                  <p className="font-medium text-[10.5px]" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}>
                                     Scripture: {quizQuestions[quizIndex].reference}
                                   </p>
                                 )}
@@ -3657,7 +3890,10 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       </div>
 
                       {/* Navigation Row at bottom */}
-                      <div className="pt-3 border-t border-[#EBE5DC] flex items-center justify-between">
+                      <div
+                        className="pt-3 border-t flex items-center justify-between"
+                        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                      >
                         <button
                           onClick={() => setQuizIndex(prev => Math.max(0, prev - 1))}
                           disabled={quizIndex === 0 || (!quizRevealedAnswers[quizIndex] && quizQuestions[quizIndex]?.style !== 'written')}
@@ -3671,7 +3907,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                             <button
                               onClick={handleGradeAllWrittenAnswers}
                               disabled={!writtenAnswers[quizIndex]?.trim() || isGradingWritten}
-                              className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer flex items-center gap-1.5"
+                              className="px-4 py-1.5 text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer flex items-center gap-1.5"
+                              style={{
+                                backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                                color: 'var(--clean-accent-contrast-text, #FFFFFF)'
+                              }}
                             >
                               <Sparkles className="w-3.5 h-3.5" />
                               <span>{isGradingWritten ? 'Grading Answers...' : 'Submit & Grade with AI'}</span>
@@ -3680,7 +3920,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                             <button
                               onClick={() => setQuizIndex(prev => prev + 1)}
                               disabled={!writtenAnswers[quizIndex]?.trim()}
-                              className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer"
+                              className="px-4 py-1.5 text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer"
+                              style={{
+                                backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                                color: 'var(--clean-accent-contrast-text, #FFFFFF)'
+                              }}
                             >
                               Next Question
                             </button>
@@ -3709,7 +3953,11 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                               }
                             }}
                             disabled={quizSelectedAnswers[quizIndex] === undefined || isGradingWritten}
-                            className="px-4 py-1.5 bg-[#B4793D] hover:bg-[#9A632E] text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer"
+                            className="px-4 py-1.5 text-xs font-semibold rounded-lg shadow-xs disabled:opacity-40 transition-colors cursor-pointer"
+                            style={{
+                              backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                              color: 'var(--clean-accent-contrast-text, #FFFFFF)'
+                            }}
                           >
                             {!quizRevealedAnswers[quizIndex] 
                               ? 'Check Answer' 

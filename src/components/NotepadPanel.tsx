@@ -445,10 +445,11 @@ export const NotepadPanel: React.FC<NotepadPanelProps> = ({
   // Synchronize editor innerHTML when active tab changes or is cleared
   useEffect(() => {
     if (!editorRef.current || !activeTab) return;
+    const plain = htmlToPlainText(activeTab.content || '').trim();
     if (activeTabIdRef.current !== activeTab.id) {
       activeTabIdRef.current = activeTab.id;
-      editorRef.current.innerHTML = formatContentForEditor(activeTab.content || '');
-    } else if (!activeTab.content && editorRef.current.innerHTML !== '' && editorRef.current.innerHTML !== '<br>') {
+      editorRef.current.innerHTML = plain ? formatContentForEditor(activeTab.content || '') : '';
+    } else if (!plain && editorRef.current.innerHTML !== '') {
       editorRef.current.innerHTML = '';
     }
   }, [activeTab?.id, activeTab?.content]);
@@ -1072,7 +1073,12 @@ ${noteText}
           <button
             onClick={handleSummarizeNotes}
             disabled={isAiThinking}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white border border-stone-200 hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] text-stone-700 hover:text-[var(--clean-accent-dark,#B4793D)] shadow-2xs transition-all disabled:opacity-50"
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              color: 'var(--clean-text-primary, #26221F)'
+            }}
+            className="ios-glass-btn !py-1 !px-2.5 text-xs font-semibold border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] shadow-xs transition-all disabled:opacity-50 cursor-pointer"
             title="Summarize your notes with Berea AI"
           >
             <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
@@ -1082,11 +1088,20 @@ ${noteText}
           {/* AI Assist Toggle Button */}
           <button
             onClick={() => setIsAiBoxExpanded(prev => !prev)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all border shadow-2xs ${
+            style={
               isAiBoxExpanded
-                ? 'bg-[var(--clean-highlight-cream,#FAF3E8)] border-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-dark,#B4793D)] ring-1 ring-[var(--clean-accent-caramel,#B4793D)]'
-                : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
-            }`}
+                ? {
+                    backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                    borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                    color: 'var(--clean-accent-dark, #78471F)'
+                  }
+                : {
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-text-primary, #26221F)'
+                  }
+            }
+            className="ios-glass-btn !py-1 !px-2.5 text-xs font-semibold border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] shadow-xs transition-all cursor-pointer"
             title="Toggle AI Companion assistant drawer"
           >
             <Sparkles className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
@@ -1097,10 +1112,15 @@ ${noteText}
           <div className="relative" ref={fontMenuRef}>
             <button
               onClick={() => setShowFontMenu(prev => !prev)}
-              className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                color: 'var(--clean-text-primary, #26221F)'
+              }}
+              className="p-1.5 rounded-lg border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] transition-colors shadow-xs cursor-pointer flex items-center justify-center"
               title="Font family & size"
             >
-              <Type className="w-3.5 h-3.5" />
+              <Type className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
             </button>
 
             {showFontMenu && (
@@ -1160,28 +1180,43 @@ ${noteText}
           <button
             type="button"
             onClick={() => setIsPreviewMode(prev => !prev)}
-            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              color: 'var(--clean-text-primary, #26221F)'
+            }}
+            className="p-1.5 rounded-lg border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] transition-colors shadow-xs cursor-pointer flex items-center justify-center"
             title={isPreviewMode ? 'Switch to Edit mode' : 'Switch to Markdown Preview'}
           >
-            {isPreviewMode ? <Edit2 className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" /> : <Eye className="w-3.5 h-3.5" />}
+            {isPreviewMode ? <Edit2 className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" /> : <Eye className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />}
           </button>
 
           {/* Copy Note */}
           <button
             onClick={handleCopyNote}
-            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              color: 'var(--clean-text-primary, #26221F)'
+            }}
+            className="p-1.5 rounded-lg border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] transition-colors shadow-xs cursor-pointer flex items-center justify-center"
             title="Copy entire note"
           >
-            {copiedNotification ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {copiedNotification ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />}
           </button>
 
           {/* Download Note */}
           <button
             onClick={() => activeTab && downloadNoteAsFile(activeTab)}
-            className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-600 border border-stone-200 hover:border-stone-300 transition-colors shadow-2xs"
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              color: 'var(--clean-text-primary, #26221F)'
+            }}
+            className="p-1.5 rounded-lg border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] transition-colors shadow-xs cursor-pointer flex items-center justify-center"
             title="Download note as file (.txt)"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
           </button>
         </div>
       </div>
@@ -1322,32 +1357,42 @@ ${noteText}
           <div className="w-[1px] h-3.5 bg-stone-300 mx-0.5 shrink-0" />
 
           {/* Sleek Highlighter */}
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-stone-200 bg-white shadow-2xs shrink-0">
+          <div
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)'
+            }}
+            className="ios-glass-btn !py-0.5 !px-2 text-xs border flex items-center gap-1.5 shadow-xs shrink-0"
+          >
             <button
               type="button"
               onMouseDown={e => e.preventDefault()}
               onClick={handleToggleHighlighterButton}
-              className="p-0.5 rounded text-stone-700 hover:text-black"
+              className="p-0.5 rounded text-stone-700 hover:text-black cursor-pointer"
               title="Highlight selection"
             >
-              <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+              <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
             </button>
             <div className="w-[1px] h-3 bg-stone-200 shrink-0" />
-            {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
-              const cfg = HIGHLIGHT_CONFIG[color];
-              const isCurrent = activeHighlightColor === color;
-              return (
-                <button
-                  key={color}
-                  type="button"
-                  onMouseDown={e => e.preventDefault()}
-                  onClick={() => handleApplyHighlight(color)}
-                  className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-all ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100'}`}
-                  style={{ backgroundColor: cfg.bg, border: `1px solid ${cfg.border}` }}
-                  title={`Highlight in ${cfg.label}`}
-                />
-              );
-            })}
+            <div className="flex items-center gap-1">
+              {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
+                const cfg = HIGHLIGHT_CONFIG[color];
+                const isCurrent = activeHighlightColor === color;
+                return (
+                  <button
+                    key={color}
+                    type="button"
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => handleApplyHighlight(color)}
+                    className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                      isCurrent ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)] ring-offset-1 scale-110' : 'opacity-85 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: cfg.bg, border: `1.5px solid ${cfg.border}` }}
+                    title={`Highlight in ${cfg.label}`}
+                  />
+                );
+              })}
+            </div>
           </div>
 
           <div className="w-[1px] h-3.5 bg-stone-300 mx-0.5 shrink-0" />
@@ -1356,7 +1401,12 @@ ${noteText}
           {selectedVerse && (
             <button
               onClick={handleInsertScripture}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white hover:bg-[var(--clean-highlight-cream,#FAF3E8)] border border-stone-200 hover:border-[var(--clean-accent-caramel,#B4793D)] text-[11px] font-medium text-[#26221F] shadow-2xs transition-colors shrink-0"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                color: 'var(--clean-text-primary, #26221F)'
+              }}
+              className="ios-glass-btn !py-0.5 !px-2 text-xs border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] shadow-xs transition-colors shrink-0 cursor-pointer font-heading"
               title={`Quote ${currentBook} ${currentChapter}:${selectedVerse.verseNumber} into note`}
             >
               <Quote className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
@@ -1369,10 +1419,15 @@ ${noteText}
             type="button"
             onMouseDown={e => e.preventDefault()}
             onClick={handleInsertOutline}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white hover:bg-[var(--clean-highlight-cream,#FAF3E8)] border border-stone-200 hover:border-[var(--clean-accent-caramel,#B4793D)] text-[11px] font-semibold text-[var(--clean-accent-dark,#B4793D)] shadow-2xs transition-colors shrink-0"
+            style={{
+              backgroundColor: 'var(--clean-surface, #FFFFFF)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              color: 'var(--clean-text-primary, #26221F)'
+            }}
+            className="ios-glass-btn !py-0.5 !px-2 text-xs border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] shadow-xs transition-colors shrink-0 cursor-pointer font-heading"
             title="Insert study outline template"
           >
-            <LayoutTemplate className="w-3 h-3" />
+            <LayoutTemplate className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
             <span>+ Outline</span>
           </button>
         </div>
@@ -1464,7 +1519,24 @@ ${noteText}
           </div>
 
           {/* Rich Text Editor or Markdown Preview */}
-          <div className="flex-1 flex flex-col relative min-h-[350px]">
+          <div
+            className="flex-1 flex flex-col relative min-h-[400px] cursor-text"
+            onClick={(e) => {
+              if (isPreviewMode) return;
+              if (editorRef.current && e.target === e.currentTarget) {
+                editorRef.current.focus();
+                // Move cursor to end of content
+                const selection = window.getSelection();
+                if (selection) {
+                  const range = document.createRange();
+                  range.selectNodeContents(editorRef.current);
+                  range.collapse(false);
+                  selection.removeAllRanges();
+                  selection.addRange(range);
+                }
+              }
+            }}
+          >
             {isPreviewMode ? (
               <div
                 className="w-full h-full overflow-y-auto custom-scrollbar select-text leading-relaxed p-0"
@@ -1480,7 +1552,6 @@ ${noteText}
                 )}
               </div>
             ) : (
-              <>
                 <div
                   ref={editorRef}
                   contentEditable
@@ -1494,14 +1565,18 @@ ${noteText}
                     saveSelection();
                   }}
                   data-placeholder="Type here..."
-                  className="rich-notepad-editor w-full flex-1 outline-none text-[#26221F] leading-relaxed p-0 bg-transparent select-text relative z-10"
+                  className={`rich-notepad-editor w-full flex-1 min-h-[350px] outline-none text-[#26221F] leading-relaxed p-0 m-0 bg-transparent select-text relative cursor-text ${
+                    !activePlainContent ? 'is-empty' : ''
+                  }`}
                   style={{
                     fontFamily: currentFontConfig.cssFamily,
                     fontSize: currentSizeConfig.cssSize,
-                    lineHeight: activeFontFamilyId === 'script' ? '1.9' : '1.7'
+                    lineHeight: activeFontFamilyId === 'script' ? '1.9' : '1.7',
+                    minHeight: '350px',
+                    padding: 0,
+                    margin: 0
                   }}
                 />
-              </>
             )}
           </div>
         </div>
