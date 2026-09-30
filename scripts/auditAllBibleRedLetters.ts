@@ -1,4 +1,4 @@
-import { BIBLE_BOOKS } from '../src/data/bibleData';
+import { BIBLE_BOOKS, getBook } from '../src/data/bibleData';
 import { checkIsWordsOfJesus, OLD_TESTAMENT_BOOKS, RED_LETTER_VALID_BOOKS, RED_LETTER_DATA } from '../src/services/redLetterService';
 import kjv from '../data/kjv.json';
 
@@ -19,7 +19,11 @@ const bookRedCount: Record<string, number> = {};
 
 for (let bIndex = 0; bIndex < kjv.length; bIndex++) {
   const book = kjv[bIndex];
-  const bookMeta = BIBLE_BOOKS[bIndex];
+  const bookMeta = getBook(book.name);
+  if (!bookMeta) {
+    errors.push(`[ERROR] Could not find book metadata for "${book.name}"`);
+    continue;
+  }
   const isOt = bookMeta.testament === 'OT';
   const cleanId = bookMeta.id.toLowerCase();
   bookRedCount[cleanId] = 0;

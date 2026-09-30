@@ -22,7 +22,18 @@ export interface StudyGuide {
   supportingPassages?: SupportingPassage[];
 }
 
-export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'characters' | 'typology';
+export type QuizStyle = 'multiple_choice' | 'true_false' | 'written' | 'mixed';
+
+export interface WrittenGradingResult {
+  score: number;
+  grade: 'Excellent' | 'Good' | 'Needs Review';
+  isCorrect: boolean;
+  feedback: string;
+  biblicalInsights?: string;
+  modelAnswer?: string;
+}
+
+export type BereaAiTab = 'overview' | 'chat' | 'compare' | 'map' | 'studyGuide' | 'quiz' | 'characters' | 'typology' | 'symbolism';
 
 export type NoteFontFamily = 'serif' | 'sans' | 'mono' | 'script';
 export type NoteFontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl';

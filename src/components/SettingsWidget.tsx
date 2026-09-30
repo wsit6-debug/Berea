@@ -25,7 +25,9 @@ import {
 } from '../services/themeService';
 import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
 
-export type SettingsTab = 'theme' | 'feedback';
+import { useLanguage } from '../i18n/LanguageContext';
+
+export type SettingsTab = 'language' | 'theme' | 'feedback';
 
 export interface SettingsWidgetProps {
   onOpenThemeStudio?: () => void;
@@ -42,7 +44,8 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
   onOpenFeedbackModal
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<SettingsTab>('theme');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('language');
+  const { language, setLanguage, languages, t } = useLanguage();
   const [currentTheme, setCurrentTheme] = useState<ThemeConfig>(() => loadSavedTheme());
   const [savedThemes, setSavedThemes] = useState<ThemeConfig[]>(() => {
     try {
@@ -231,10 +234,10 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
               </div>
               <div>
                 <h3 className="font-heading font-bold text-sm leading-none">
-                  Settings
+                  {t('settingsTitle', 'Settings')}
                 </h3>
                 <p className="text-[11px] text-[var(--clean-text-secondary,#78716C)] leading-tight mt-0.5">
-                  Color Scheme & Pastoral Feedback
+                  {t('settingsSubtitle', 'Language, Theme & Feedback')}
                 </p>
               </div>
             </div>
@@ -250,15 +253,28 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
             </button>
           </div>
 
-          {/* Fixed Height 2-Tab Navigation: Color Scheme | Feedback */}
+          {/* 3-Tab Navigation: Language | Theme | Feedback */}
           <div
-            className="flex items-center p-1.5 border-b gap-1.5 shrink-0"
+            className="flex items-center p-1.5 border-b gap-1.5 shrink-0 overflow-x-auto custom-scrollbar"
             style={{
               borderColor: 'var(--clean-accent-border, #EBE5DC)',
               backgroundColor: 'var(--clean-surface, #FFFFFF)',
               height: '46px'
             }}
           >
+            <button
+              type="button"
+              onClick={() => setActiveTab('language')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                activeTab === 'language'
+                  ? 'border-[var(--clean-accent-border-strong,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-dark,#78471F)] shadow-2xs'
+                  : 'border-transparent text-[var(--clean-text-secondary,#78716C)] hover:bg-[var(--clean-surface-warm,#FAF5ED)]'
+              }`}
+            >
+              <span className="w-3.5 h-3.5 flex items-center justify-center">🌍</span>
+              <span>{t('tabLanguage', 'Language')}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setActiveTab('theme')}
@@ -269,7 +285,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
               }`}
             >
               <Palette className="w-3.5 h-3.5" />
-              <span>Color Scheme</span>
+              <span>{t('tabColorScheme', 'Theme')}</span>
             </button>
 
             <button
@@ -282,12 +298,46 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
               }`}
             >
               <MessageSquareHeart className="w-3.5 h-3.5" />
-              <span>Feedback</span>
+              <span>{t('tabFeedback', 'Feedback')}</span>
             </button>
           </div>
 
           {/* Content Area - Takes remaining height identically across both tabs */}
           <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3.5 space-y-3.5">
+            {/* TAB 0: LANGUAGE */}
+            {activeTab === 'language' && (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--clean-text-secondary,#78716C)]">
+                    {t('languageSelectTitle', 'Interface & Theology Language')}
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {languages.map(lang => {
+                      const isActive = language === lang.code;
+                      return (
+                        <button
+                          key={lang.code}
+                          type="button"
+                          onClick={() => setLanguage(lang.code)}
+                          className={`p-2 rounded-xl border flex items-center gap-2 text-xs transition-all cursor-pointer ${
+                            isActive
+                              ? 'border-[var(--clean-accent-caramel,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] font-bold shadow-xs'
+                              : 'border-[var(--clean-accent-border,#EBE5DC)] bg-[var(--clean-surface,#FFFFFF)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] font-medium'
+                          }`}
+                        >
+                          <span className="text-base leading-none">{lang.flag}</span>
+                          <span className="truncate text-left flex-1" style={{ color: isActive ? 'var(--clean-accent-dark,#78471F)' : 'var(--clean-text-primary,#26221F)' }}>
+                            {lang.nativeName}
+                          </span>
+                          {isActive && <Check className="w-3.5 h-3.5 shrink-0 text-[var(--clean-accent-caramel,#B4793D)]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* TAB 1: COLOR SCHEME */}
             {activeTab === 'theme' && (
               <div className="space-y-4">

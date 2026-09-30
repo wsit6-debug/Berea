@@ -46,7 +46,7 @@ export const VerseOfTheDay: React.FC<VerseOfTheDayProps> = ({ activeTranslation,
     let isMounted = true;
     const fetchVOTD = async () => {
       setIsLoading(true);
-      setProgressText('Consulting AI theologian...');
+      setProgressText('Loading daily verse...');
       
       try {
         const todayStr = `${new Date().toDateString()} - ${timeOfDay}`;

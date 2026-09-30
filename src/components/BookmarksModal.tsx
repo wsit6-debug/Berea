@@ -197,9 +197,13 @@ export const BookmarksModal: React.FC<BookmarksModalProps> = ({
       {/* Movable Drag Header */}
       <div
         onPointerDown={handleDragStart}
+        onDoubleClick={(e) => {
+          if ((e.target as HTMLElement).closest('button, input, select, a')) return;
+          setIsMinimized(prev => !prev);
+        }}
         className="p-3.5 border-b border-[#EBE5DC] bg-[#FAF5ED] flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
         style={{ touchAction: 'none' }}
-        title="Click and drag to move window"
+        title="Click and drag to move window • Double-click to collapse/expand"
       >
         <div className="flex items-center gap-2.5 min-w-0 pr-2">
           <GripHorizontal className="w-4 h-4 text-[#A8A29E] shrink-0 hover:text-[#B4793D] transition-colors" />

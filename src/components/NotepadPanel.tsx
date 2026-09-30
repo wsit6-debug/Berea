@@ -900,15 +900,16 @@ ${noteText}
   });
 
   // Stats
-  const wordCount = activeTab?.content?.trim() ? activeTab.content.trim().split(/\s+/).length : 0;
-  const charCount = activeTab?.content?.length || 0;
+  const activePlainContent = activeTab?.content ? htmlToPlainText(activeTab.content).trim() : '';
+  const wordCount = activePlainContent ? activePlainContent.split(/\s+/).length : 0;
+  const charCount = activePlainContent.length;
   const activeBadge = getPassageBadge(activeTab?.book, activeTab?.chapter);
 
   return (
     <div className="flex flex-col h-full bg-[#FAF9F6] text-[#26221F] select-text relative overflow-hidden font-sans">
       {/* 1. TOP DOCUMENT NAVIGATION BAR (Single Row) */}
       <div
-        className="px-3 sm:px-4 py-2 border-b flex items-center justify-between bg-white shrink-0 gap-2 select-none"
+        className="px-3 sm:px-4 py-2 border-b flex items-center justify-between bg-white shrink-0 gap-2 select-none relative z-40"
         style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
       >
         {/* Left: Document Switcher Dropdown & Add Button */}
@@ -1187,17 +1188,17 @@ ${noteText}
 
       {/* 2. SINGLE NOTION-STYLE FORMATTING TOOLBAR */}
       <div
-        className="px-3 sm:px-4 py-1.5 border-b bg-[#FCFBF9] flex items-center justify-between text-xs text-stone-700 shrink-0 gap-1.5 overflow-x-auto no-scrollbar flex-nowrap"
+        className="px-3 sm:px-4 py-1.5 border-b bg-[#FCFBF9] flex items-center justify-between text-xs text-stone-700 shrink-0 gap-2 relative z-30 flex-wrap"
         style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
       >
-        <div className="flex items-center gap-1 shrink-0 flex-nowrap">
+        <div className="flex items-center gap-1 flex-wrap">
           {/* Heading Style Dropdown */}
           <div className="relative" ref={styleMenuRef}>
             <button
               type="button"
               onMouseDown={e => e.preventDefault()}
               onClick={() => setShowStyleMenu(prev => !prev)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-stone-200/60 font-medium text-xs text-stone-700 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-stone-200/60 font-medium text-xs text-stone-700 transition-colors cursor-pointer border border-transparent hover:border-stone-300"
               title="Text style"
             >
               <span>Heading</span>
@@ -1205,12 +1206,12 @@ ${noteText}
             </button>
 
             {showStyleMenu && (
-              <div className="absolute left-0 mt-1 w-32 bg-white border border-stone-200 rounded-lg shadow-lg p-1 z-30 animate-fadeIn">
+              <div className="absolute left-0 top-full mt-1 w-36 bg-white border border-stone-200 rounded-lg shadow-xl p-1 z-50 animate-fadeIn">
                 <button
                   type="button"
                   onMouseDown={e => e.preventDefault()}
                   onClick={() => handleFormatBlock('<p>')}
-                  className="w-full text-left px-2 py-1 rounded text-xs hover:bg-stone-100"
+                  className="w-full text-left px-2.5 py-1.5 rounded text-xs hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)] transition-colors cursor-pointer"
                 >
                   Normal text
                 </button>
@@ -1218,7 +1219,7 @@ ${noteText}
                   type="button"
                   onMouseDown={e => e.preventDefault()}
                   onClick={() => handleHeading('h1')}
-                  className="w-full text-left px-2 py-1 rounded text-base font-bold hover:bg-stone-100"
+                  className="w-full text-left px-2.5 py-1.5 rounded text-base font-bold hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)] transition-colors cursor-pointer"
                 >
                   Heading 1
                 </button>
@@ -1226,7 +1227,7 @@ ${noteText}
                   type="button"
                   onMouseDown={e => e.preventDefault()}
                   onClick={() => handleHeading('h2')}
-                  className="w-full text-left px-2 py-1 rounded text-sm font-semibold hover:bg-stone-100"
+                  className="w-full text-left px-2.5 py-1.5 rounded text-sm font-semibold hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)] transition-colors cursor-pointer"
                 >
                   Heading 2
                 </button>
@@ -1234,7 +1235,7 @@ ${noteText}
                   type="button"
                   onMouseDown={e => e.preventDefault()}
                   onClick={() => handleHeading('h3')}
-                  className="w-full text-left px-2 py-1 rounded text-xs font-semibold hover:bg-stone-100"
+                  className="w-full text-left px-2.5 py-1.5 rounded text-xs font-semibold hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)] transition-colors cursor-pointer"
                 >
                   Heading 3
                 </button>
@@ -1406,7 +1407,10 @@ ${noteText}
           />
 
           {/* Document Context Metadata Row */}
-          <div className="flex items-center justify-between text-xs text-stone-500 pb-3 mb-4 border-b border-stone-100 flex-wrap gap-2">
+          <div
+            className="flex items-center justify-between text-xs text-stone-500 pb-3 mb-5 border-b flex-wrap gap-2"
+            style={{ borderBottom: '1.5px solid var(--clean-accent-border, #E2D5C3)' }}
+          >
             <div className="flex items-center gap-2 min-w-0">
               {activeTab?.book && activeTab?.chapter ? (
                 <div className="flex items-center gap-1.5">
@@ -1459,72 +1463,45 @@ ${noteText}
             </div>
           </div>
 
-          {/* Quick Outline Starter Banner for Empty Notes */}
-          {(!activeTab?.content || activeTab.content.trim() === '') && (
-            <div
-              className="p-3 mb-4 rounded-xl border flex items-center justify-between gap-3 select-none animate-fadeIn"
-              style={{
-                backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
-                borderColor: 'var(--clean-accent-border, #EBE5DC)'
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <LayoutTemplate className="w-4 h-4 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
-                <span className="text-xs text-[#26221F] font-medium">
-                  Looking for structure? Insert a study outline with key verses, themes & observations.
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleInsertOutline}
-                className="px-3 py-1 bg-white border rounded-lg text-xs font-bold transition-all shadow-2xs hover:bg-[#FAF3E8] shrink-0"
-                style={{
-                  borderColor: 'var(--clean-accent-border-strong, #D4A373)',
-                  color: 'var(--clean-accent-dark, #B4793D)'
-                }}
-              >
-                + Insert Outline
-              </button>
-            </div>
-          )}
-
           {/* Rich Text Editor or Markdown Preview */}
           <div className="flex-1 flex flex-col relative min-h-[350px]">
             {isPreviewMode ? (
               <div
-                className="w-full h-full overflow-y-auto custom-scrollbar select-text leading-relaxed p-1"
+                className="w-full h-full overflow-y-auto custom-scrollbar select-text leading-relaxed p-0"
                 style={{
                   fontFamily: currentFontConfig.cssFamily,
                   fontSize: currentSizeConfig.cssSize
                 }}
               >
-                {activeTab?.content?.trim() ? (
-                  <MarkdownTheologyRenderer content={activeTab.content} />
+                {activePlainContent ? (
+                  <MarkdownTheologyRenderer content={activeTab?.content || ''} />
                 ) : (
-                  <span className="text-stone-300 italic">This note is currently empty. Click "Edit" above to start typing.</span>
+                  <span className="text-stone-400 italic">Type here...</span>
                 )}
               </div>
             ) : (
-              <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={handleEditorInput}
-                onMouseUp={saveSelection}
-                onKeyUp={saveSelection}
-                onSelect={saveSelection}
-                onBlur={() => {
-                  handleEditorInput();
-                  saveSelection();
-                }}
-                data-placeholder="Start typing your study notes, reflections, or sermon points here..."
-                className="rich-notepad-editor w-full flex-1 outline-none text-[#26221F] leading-relaxed p-1 bg-transparent select-text"
-                style={{
-                  fontFamily: currentFontConfig.cssFamily,
-                  fontSize: currentSizeConfig.cssSize,
-                  lineHeight: activeFontFamilyId === 'script' ? '1.9' : '1.7'
-                }}
-              />
+              <>
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={handleEditorInput}
+                  onMouseUp={saveSelection}
+                  onKeyUp={saveSelection}
+                  onSelect={saveSelection}
+                  onBlur={() => {
+                    handleEditorInput();
+                    saveSelection();
+                  }}
+                  data-placeholder="Type here..."
+                  className="rich-notepad-editor w-full flex-1 outline-none text-[#26221F] leading-relaxed p-0 bg-transparent select-text relative z-10"
+                  style={{
+                    fontFamily: currentFontConfig.cssFamily,
+                    fontSize: currentSizeConfig.cssSize,
+                    lineHeight: activeFontFamilyId === 'script' ? '1.9' : '1.7'
+                  }}
+                />
+              </>
             )}
           </div>
         </div>

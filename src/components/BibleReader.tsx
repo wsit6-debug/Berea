@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Verse, Chapter, TranslationId, getTranslationColor } from '../data/bibleData';
+import { Verse, Chapter, TranslationId, getTranslationColor, TRANSLATIONS } from '../data/bibleData';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, ChevronDown, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Highlighter, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
@@ -78,10 +79,11 @@ interface BibleReaderProps {
   onSelectHighlightColor?: (color: 'yellow' | 'green' | 'red' | 'blue') => void;
   onOpenQuiz?: (type: 'chapter' | 'book') => void;
   isLastChapterOfBook?: boolean;
+  onOpenBookmarks?: () => void;
+  isBookmarksOpen?: boolean;
   onSelectCharacter?: (charId: string) => void;
   selectedCharacter?: string | null;
   onOpenBookSelector?: () => void;
-  onOpenBookmarks?: () => void;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -112,6 +114,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onOpenQuiz,
   isLastChapterOfBook = false,
   onOpenBookmarks,
+  isBookmarksOpen = false,
   onSelectCharacter,
   selectedCharacter,
   onOpenBookSelector
@@ -143,10 +146,16 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const bookmarks = useBookmarkedVerses();
   const effectiveBookId = bookId || bookName.toLowerCase().replace(/\s+/g, '');
   const isVerseSaved = (vNum: number) => isVerseBookmarked(effectiveBookId, chapter.chapterNumber, vNum);
-  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>(() => getAvailableVoices());
+
+  const { language: appLanguage } = useLanguage();
+  const currentTranslationObj = TRANSLATIONS.find(t => t.id === activeTranslation);
+  const effectiveLang = (currentTranslationObj?.language || appLanguage || 'en').toLowerCase();
+
+  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>(() => getAvailableVoices(effectiveLang));
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(() => {
     try {
-      return localStorage.getItem('berea_preferred_voice') || '';
+      return localStorage.getItem(`berea_preferred_voice_${effectiveLang}`) ||
+             localStorage.getItem('berea_preferred_voice') || '';
     } catch {
       return '';
     }
@@ -181,6 +190,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
   const activeRange = isDragging ? tempDragRange : (selectedVerseRange || (selectedVerseNumber ? { start: selectedVerseNumber, end: selectedVerseNumber } : null));
   const isMultiSelect = Boolean(activeRange && activeRange.start !== activeRange.end);
+  const [dismissedVerseNum, setDismissedVerseNum] = useState<number | null>(null);
 
   // AI-verified character/person detection for the current chapter
   const [aiVerifiedCharacters, setAiVerifiedCharacters] = useState<Set<string> | null>(null);
@@ -198,13 +208,22 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     };
   }, [bookName, chapter?.chapterNumber, chapter?.verses, activeTranslation]);
 
+  // Synchronize available voices and stored voice preference with active translation language
+  useEffect(() => {
+    setAvailableVoices(getAvailableVoices(effectiveLang));
+    try {
+      const savedLangVoice = localStorage.getItem(`berea_preferred_voice_${effectiveLang}`) || '';
+      setSelectedVoiceId(savedLangVoice);
+    } catch { }
+  }, [effectiveLang]);
+
   // Subscribe to asynchronously loaded system voices
   useEffect(() => {
     const unsub = subscribeVoicesLoaded(() => {
-      setAvailableVoices(getAvailableVoices());
+      setAvailableVoices(getAvailableVoices(effectiveLang));
     });
     return unsub;
-  }, []);
+  }, [effectiveLang]);
 
   const isPlayingRef = useRef<boolean>(isPlayingAudio);
   isPlayingRef.current = isPlayingAudio;
@@ -279,9 +298,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
       },
       (p) => {
         setTtsProgress(p);
-      }
+      },
+      effectiveLang
     );
-  }, [bookName, chapter.chapterNumber, chapter.verses, activeTranslation, playbackSpeed, onSelectVerse]);
+  }, [bookName, chapter.chapterNumber, chapter.verses, activeTranslation, effectiveLang, playbackSpeed, onSelectVerse]);
 
   // Audio Playback Toggle Button Handler
   const handleToggleAudio = () => {
@@ -369,6 +389,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     if (e.button !== 0) return;
 
     // If Highlighter tool is active in the toolbar, directly highlight on click/drag
+    setDismissedVerseNum(null);
     if (isHighlighterMode && onHighlightVerse) {
       dragStartVerseRef.current = verseNum;
       setIsDragging(true);
@@ -690,13 +711,35 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           {onOpenBookmarks && (
             <button
               onClick={onOpenBookmarks}
-              className="text-xs py-1 px-2.5 rounded-full border border-[#EBE5DC] bg-white hover:border-[#D4A373] text-[#26221F] flex items-center gap-1.5 transition-all shadow-xs"
-              title="View Bookmarked Verses (⌘B)"
+              style={
+                isBookmarksOpen
+                  ? {
+                    backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                    color: '#FFFFFF'
+                  }
+                  : {
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-text-primary, #26221F)'
+                  }
+              }
+              className={`h-7 text-xs px-2.5 rounded-full border flex items-center gap-1.5 transition-all shadow-xs cursor-pointer select-none shrink-0 ${
+                isBookmarksOpen ? 'font-bold shadow-sm' : 'hover:border-[var(--clean-accent-caramel,#B4793D)]'
+              }`}
+              title="Toggle Bookmarked Verses (⌘B)"
             >
-              <Bookmark className={`w-3.5 h-3.5 ${bookmarks.length > 0 ? 'fill-[#B4793D] text-[#B4793D]' : 'text-[#B4793D]'}`} />
-              <span className="hidden sm:inline">Bookmarks</span>
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarksOpen ? 'fill-white text-white' : bookmarks.length > 0 ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[var(--clean-accent-caramel,#B4793D)]'}`} />
+              <span className="hidden sm:inline font-medium" style={{ color: isBookmarksOpen ? '#FFFFFF' : undefined }}>Bookmarks</span>
               {bookmarks.length > 0 && (
-                <span className="px-1.5 py-0.2 bg-[#FAF5ED] text-[#B4793D] rounded-full text-[10px] font-bold">
+                <span
+                  style={{
+                    backgroundColor: isBookmarksOpen ? 'rgba(255, 255, 255, 0.25)' : 'var(--clean-highlight-cream, #FAF5ED)',
+                    color: isBookmarksOpen ? '#FFFFFF' : 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: isBookmarksOpen ? 'transparent' : 'var(--clean-accent-border, #EBE5DC)'
+                  }}
+                  className="px-1.5 py-0.2 border rounded-full text-[10px] font-bold"
+                >
                   {bookmarks.length}
                 </span>
               )}
@@ -800,7 +843,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             ))}
           </div>
         ) : (
-          <div className="w-full pb-16">
+          <div className="w-full pb-6">
             {/* Compact Chapter Header */}
             <div className="mb-4 text-center select-none">
               <h1 className="font-heading font-bold text-2xl sm:text-3xl text-[#26221F] tracking-tight">
@@ -882,237 +925,6 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     );
                   })}
                 </p>
-
-                {/* Contextual Pill: Multi-Verse Range Selection */}
-                {isMultiSelect && activeRange ? (
-                  <div
-                    className="mt-3 p-2.5 rounded-xl border flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none text-xs shadow-xs"
-                    style={{
-                      backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                      borderLeftWidth: '4px',
-                      borderLeftColor: 'var(--clean-accent-caramel, #B4793D)'
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[var(--clean-accent-caramel,#B4793D)] font-heading flex items-center gap-1.5 text-xs">
-                        <Layers className="w-3.5 h-3.5" />
-                        vv. {activeRange.start}–{activeRange.end}
-                      </span>
-                      <span className="text-[10.5px] font-semibold text-[var(--clean-accent-dark,#78471F)] bg-white px-2 py-0.5 rounded-full border border-[var(--clean-accent-border,#EBE5DC)] shadow-2xs">
-                        {activeRange.end - activeRange.start + 1} verses selected for AI
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 ml-auto">
-                      {/* 4-Color Highlighter Palette for Range */}
-                      {onHighlightVerse && (
-                        <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
-                          <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
-                          {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
-                            <button
-                              key={color}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onHighlightVerse(activeRange.start, color, activeRange);
-                              }}
-                              className="w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs"
-                              style={{
-                                backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
-                                border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
-                              }}
-                              title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
-                            />
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => handleCopyRange(activeRange.start, activeRange.end, e)}
-                        className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white flex items-center gap-1"
-                        title="Copy selected verses"
-                      >
-                        {copiedVerseNum === -1 ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-600" />
-                            <span className="text-emerald-700">Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3 text-[#78716C]" />
-                            <span>Copy</span>
-                          </>
-                        )}
-                      </button>
-
-                      {onCreateStudyGuide && (
-                        <button
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCreateStudyGuide(activeVerse, activeRange);
-                          }}
-                          className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs flex items-center gap-1"
-                          title="Generate Study Guide for selected range"
-                        >
-                          <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
-                          <span>Study Guide</span>
-                        </button>
-                      )}
-
-                      <button
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenBereaAi();
-                        }}
-                        className="clean-caramel-btn !py-0.5 !px-2.5 text-xs shadow-xs flex items-center gap-1"
-                        title="Analyze selected passage with Berea AI"
-                      >
-                        <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-                        <span>Ask AI</span>
-                      </button>
-
-                      <button
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onSelectVerseRange) {
-                            onSelectVerseRange(null);
-                          }
-                        }}
-                        className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F]"
-                        title="Clear multi-verse selection"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Floating Contextual Pill for Single Selected Verse in Flow Mode */
-                  activeVerse && (
-                    <div
-                      className="mt-3 p-2.5 rounded-xl border flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none text-xs shadow-xs"
-                      style={{
-                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                        borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                        borderLeftWidth: '4px',
-                        borderLeftColor: 'var(--clean-accent-caramel, #B4793D)'
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-[var(--clean-accent-caramel,#B4793D)] font-heading text-xs">
-                          v{activeVerse.verseNumber}
-                        </span>
-                        {activeVerse.greekHebrew && activeVerse.greekHebrew.length > 0 && (
-                          <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#78716C] truncate max-w-[200px]">
-                            <span>Lemma:</span>
-                            <span className="font-medium text-[#26221F] bg-white px-1.5 py-0.2 rounded border border-[var(--clean-border,#EBE5DC)]">
-                              {activeVerse.greekHebrew[0].word} <em>({activeVerse.greekHebrew[0].transliteration})</em>
-                            </span>
-                          </div>
-                        )}
-                        <span className="hidden md:inline text-[10px] text-[#A8A29E] italic">
-                          (Click & drag to select multiple verses)
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 ml-auto">
-                        {/* 4-Color Highlighter Palette for Single Verse */}
-                        {onHighlightVerse && (
-                          <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
-                            <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
-                            {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
-                              const isCurrent = tabHighlights?.[activeVerse.verseNumber] === color;
-                              return (
-                                <button
-                                  key={color}
-                                  onMouseDown={(e) => e.stopPropagation()}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onHighlightVerse(activeVerse.verseNumber, color);
-                                  }}
-                                  className={`w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : ''}`}
-                                  style={{
-                                    backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
-                                    border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
-                                  }}
-                                  title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
-                                />
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        <button
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={(e) => handleCopyVerse(activeVerse, e)}
-                          className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white"
-                          title="Copy Verse"
-                        >
-                          {copiedVerseNum === activeVerse.verseNumber ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-600" />
-                              <span className="text-emerald-700">Copied</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3 text-[#78716C]" />
-                              <span>Copy</span>
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
-                          className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all ${isVerseSaved(activeVerse.verseNumber)
-                              ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
-                              : 'bg-white hover:border-[#D4A373]'
-                            }`}
-                          title={isVerseSaved(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
-                        >
-                          <Bookmark className={`w-3 h-3 ${isVerseSaved(activeVerse.verseNumber) ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#78716C]'}`} />
-                          <span>{isVerseSaved(activeVerse.verseNumber) ? 'Bookmarked' : 'Bookmark'}</span>
-                        </button>
-
-                        {onCreateStudyGuide && (
-                          <button
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectVerse(activeVerse);
-                              onCreateStudyGuide(activeVerse);
-                            }}
-                            className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs"
-                            title="Generate Study Guide for this passage"
-                          >
-                            <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
-                            <span>Study Guide</span>
-                          </button>
-                        )}
-
-                        {!isAiPanelOpen && (
-                          <button
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectVerse(activeVerse);
-                              onOpenBereaAi();
-                            }}
-                            className="clean-caramel-btn !py-0.5 !px-2.5 text-xs shadow-xs"
-                            title="Open in AI Guide"
-                          >
-                            <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
-                            <span>Insights</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                )}
               </div>
             ) : (
               /* Verse by Verse Mode */
@@ -1399,32 +1211,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               </div>
             )}
 
-            {/* Compact Bottom Stepper Footer with Berea Colophon Seal */}
-            <div className="mt-8 pt-4 border-t border-[#EBE5DC] flex items-center justify-between text-xs select-none">
-              <button
-                onClick={onPrevChapter}
-                disabled={isFirstChapter}
-                className="flex items-center gap-1 text-[#78716C] hover:text-[#26221F] disabled:opacity-25 font-medium transition-colors"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>Previous Chapter</span>
-              </button>
 
-              <div className="flex items-center opacity-85 hover:opacity-100 transition-opacity">
-                <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#EBE5DC] bg-[#FAF7F2] p-0.5 shadow-xs flex items-center justify-center">
-                  <img src="/berea-logo.jpg" alt="Berea" className="w-full h-full object-contain" />
-                </div>
-              </div>
-
-              <button
-                onClick={onNextChapter}
-                disabled={isLastChapter}
-                className="flex items-center gap-1 text-[var(--clean-accent-caramel,#B4793D)] hover:text-[var(--clean-accent-dark,#9A632E)] disabled:opacity-25 font-semibold transition-colors"
-              >
-                <span>Next Chapter</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
             
             {/* Book Completion Quiz Button */}
             {onOpenQuiz && isLastChapterOfBook && (
@@ -1443,7 +1230,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
         {/* Floating Mini Audio Player Bar (Appears when Audio Narration is Playing) */}
         {isPlayingAudio && (
-          <div className="absolute bottom-3 left-4 right-4 sm:left-8 sm:right-8 bg-[#26221F] text-white px-4 py-2.5 rounded-2xl shadow-[0_10px_30px_rgba(38,34,31,0.35)] border border-[#3E3833] flex items-center justify-between gap-3 animate-fadeIn z-30 select-none">
+          <div className="absolute bottom-14 left-4 right-4 sm:left-8 sm:right-8 bg-[#26221F] text-white px-4 py-2.5 rounded-2xl shadow-[0_10px_30px_rgba(38,34,31,0.35)] border border-[#3E3833] flex items-center justify-between gap-3 animate-fadeIn z-30 select-none">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="flex items-center gap-1 h-3.5 px-1 bg-[#38332E] rounded-full">
                 <span className="w-0.5 h-2.5 bg-[var(--clean-accent-honey,#D4A373)] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
@@ -1502,8 +1289,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     const newVoice = e.target.value;
                     setSelectedVoiceId(newVoice);
                     try {
-                      if (newVoice) localStorage.setItem('berea_preferred_voice', newVoice);
-                      else localStorage.removeItem('berea_preferred_voice');
+                      if (newVoice) {
+                        localStorage.setItem(`berea_preferred_voice_${effectiveLang}`, newVoice);
+                        localStorage.setItem('berea_preferred_voice', newVoice);
+                      } else {
+                        localStorage.removeItem(`berea_preferred_voice_${effectiveLang}`);
+                        localStorage.removeItem('berea_preferred_voice');
+                      }
                     } catch { }
                     if (isPlayingAudio) {
                       playVerseAudio(selectedVerseNumber, playbackSpeed, newVoice);
@@ -1512,9 +1304,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   className="bg-[#38332E] text-xs text-[#EBE5DC] border border-[#48423B] rounded-full px-2.5 py-1 focus:outline-none focus:border-[var(--clean-accent-caramel,#B4793D)] font-medium cursor-pointer max-w-[210px] truncate"
                   title="Select Studio Narrator Voice"
                 >
-                  <option value="">⚡ Auto (Dignified British / Clear US)</option>
-                  {availableVoices.filter(v => v.id !== '').map(v => (
-                    <option key={v.id} value={v.id}>
+                  {availableVoices.map(v => (
+                    <option key={v.id || 'auto-voice'} value={v.id}>
                       {v.displayName}
                     </option>
                   ))}
@@ -1554,6 +1345,281 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Docked Selection & Highlight Action Bar (Docked at bottom, never floats in text, never requires scrolling) */}
+      {(isMultiSelect && activeRange) ? (
+        <div
+          className="px-4 sm:px-6 py-2 border-t flex flex-wrap items-center justify-between gap-2 text-xs select-none flex-shrink-0 transition-colors animate-fadeIn"
+          style={{
+            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+            borderColor: 'var(--clean-accent-border, #EBE5DC)',
+            color: 'var(--clean-text-primary, #26221F)'
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[var(--clean-accent-caramel,#B4793D)] font-heading flex items-center gap-1.5 text-xs">
+              <Layers className="w-3.5 h-3.5" />
+              vv. {activeRange.start}–{activeRange.end}
+            </span>
+            <span className="text-[10.5px] font-semibold text-[var(--clean-accent-dark,#78471F)] bg-white px-2 py-0.5 rounded-full border border-[var(--clean-accent-border,#EBE5DC)] shadow-2xs">
+              {activeRange.end - activeRange.start + 1} verses selected
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 ml-auto">
+            {onHighlightVerse && (
+              <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
+                <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
+                {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
+                  <button
+                    key={color}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onHighlightVerse(activeRange.start, color, activeRange);
+                    }}
+                    className="w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer"
+                    style={{
+                      backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                      border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                    }}
+                    title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => handleCopyRange(activeRange.start, activeRange.end, e)}
+              className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white flex items-center gap-1 cursor-pointer"
+              title="Copy selected verses"
+            >
+              {copiedVerseNum === -1 ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span className="text-emerald-700">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3 text-[#78716C]" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+
+            {onCreateStudyGuide && (
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateStudyGuide(activeVerse, activeRange);
+                }}
+                className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs flex items-center gap-1 cursor-pointer"
+                title="Generate Study Guide for selected range"
+              >
+                <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+                <span>Study Guide</span>
+              </button>
+            )}
+
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenBereaAi();
+              }}
+              className="clean-caramel-btn !py-0.5 !px-2.5 text-xs shadow-xs flex items-center gap-1 cursor-pointer"
+              title="Analyze selected passage with Berea AI"
+            >
+              <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
+              <span>Ask AI</span>
+            </button>
+
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onSelectVerseRange) {
+                  onSelectVerseRange(null);
+                }
+              }}
+              className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] cursor-pointer"
+              title="Clear multi-verse selection"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ) : (activeVerse && layoutMode === 'paragraph' && activeVerse.verseNumber !== dismissedVerseNum) ? (
+        <div
+          className="px-4 sm:px-6 py-2 border-t flex flex-wrap items-center justify-between gap-2 text-xs select-none flex-shrink-0 transition-colors animate-fadeIn"
+          style={{
+            backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+            borderColor: 'var(--clean-accent-border, #EBE5DC)',
+            color: 'var(--clean-text-primary, #26221F)'
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[var(--clean-accent-caramel,#B4793D)] font-heading text-xs">
+              v{activeVerse.verseNumber}
+            </span>
+            {activeVerse.greekHebrew && activeVerse.greekHebrew.length > 0 && (
+              <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#78716C] truncate max-w-[200px]">
+                <span>Lemma:</span>
+                <span className="font-medium text-[#26221F] bg-white px-1.5 py-0.2 rounded border border-[var(--clean-border,#EBE5DC)]">
+                  {activeVerse.greekHebrew[0].word} <em>({activeVerse.greekHebrew[0].transliteration})</em>
+                </span>
+              </div>
+            )}
+            <span className="hidden md:inline text-[10px] text-[#A8A29E] italic">
+              (Click & drag to select multiple verses)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 ml-auto">
+            {onHighlightVerse && (
+              <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
+                <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
+                {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
+                  const isCurrent = tabHighlights?.[activeVerse.verseNumber] === color;
+                  return (
+                    <button
+                      key={color}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onHighlightVerse(activeVerse.verseNumber, color);
+                      }}
+                      className={`w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : ''}`}
+                      style={{
+                        backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                        border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                      }}
+                      title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => handleCopyVerse(activeVerse, e)}
+              className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white cursor-pointer"
+              title="Copy Verse"
+            >
+              {copiedVerseNum === activeVerse.verseNumber ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span className="text-emerald-700">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3 text-[#78716C]" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
+              className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all cursor-pointer ${isVerseSaved(activeVerse.verseNumber)
+                ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
+                : 'bg-white hover:border-[#D4A373]'
+              }`}
+              title={isVerseSaved(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
+            >
+              <Bookmark className={`w-3 h-3 ${isVerseSaved(activeVerse.verseNumber) ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#78716C]'}`} />
+              <span>{isVerseSaved(activeVerse.verseNumber) ? 'Bookmarked' : 'Bookmark'}</span>
+            </button>
+
+            {onCreateStudyGuide && (
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectVerse(activeVerse);
+                  onCreateStudyGuide(activeVerse);
+                }}
+                className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs cursor-pointer"
+                title="Generate Study Guide for this passage"
+              >
+                <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+                <span>Study Guide</span>
+              </button>
+            )}
+
+            {!isAiPanelOpen && (
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectVerse(activeVerse);
+                  onOpenBereaAi();
+                }}
+                className="clean-caramel-btn !py-0.5 !px-2.5 text-xs shadow-xs cursor-pointer"
+                title="Open in AI Guide"
+              >
+                <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
+                <span>Insights</span>
+              </button>
+            )}
+
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDismissedVerseNum(activeVerse.verseNumber);
+                if (onSelectVerseRange) {
+                  onSelectVerseRange(null);
+                }
+              }}
+              className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] cursor-pointer ml-1"
+              title="Dismiss verse bar"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Permanent Fixed Bottom Chapter Stepper — Always docked at the bottom */}
+      <div
+        className="px-6 py-2.5 border-t flex items-center justify-between text-xs select-none flex-shrink-0 transition-colors"
+        style={{
+          backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
+          borderColor: 'var(--clean-border, #EBE5DC)',
+          color: 'var(--clean-text-primary, #26221F)'
+        }}
+      >
+        <button
+          onClick={onPrevChapter}
+          disabled={isFirstChapter}
+          className="flex items-center gap-1.5 text-[#78716C] hover:text-[#26221F] disabled:opacity-20 font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
+          title="Previous Chapter"
+        >
+          <ChevronLeft className="w-4 h-4 text-[#B4793D]" />
+          <span>Previous Chapter</span>
+        </button>
+
+        <div className="flex items-center opacity-85 hover:opacity-100 transition-opacity">
+          <div className="w-7 h-7 rounded-lg overflow-hidden border border-[#EBE5DC] bg-white p-0.5 shadow-xs flex items-center justify-center">
+            <img src="/berea-logo.jpg" alt="Berea" className="w-full h-full object-contain" />
+          </div>
+        </div>
+
+        <button
+          onClick={onNextChapter}
+          disabled={isLastChapter}
+          className="flex items-center gap-1.5 text-[#B4793D] hover:text-[#9A632E] disabled:opacity-20 font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
+          title="Next Chapter"
+        >
+          <span>Next Chapter</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

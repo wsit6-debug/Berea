@@ -8,9 +8,11 @@ import {
   Verse,
   Chapter,
   getApprovedTranslationsForDenomination,
-  getDefaultTranslationForDenomination
+  getDefaultTranslationForDenomination,
+  TRANSLATIONS
 } from './data/bibleData';
-import { DenominationalLens } from './data/theologyData';
+import { DenominationalLens, DENOMINATIONS } from './data/theologyData';
+import { useLanguage } from './i18n/LanguageContext';
 import { Header } from './components/Header';
 import { BibleReader } from './components/BibleReader';
 import { BereaAiPanel } from './components/BereaAiPanel';
@@ -31,6 +33,7 @@ import { BereaAiTab, NotepadState } from './types';
 import { loadNotepadState, saveNotepadState, createNewNoteTab } from './services/notepadService';
 
 export function App() {
+  const { language } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // Clear any legacy persistent auth tokens so every visit prompts for password
@@ -229,12 +232,43 @@ export function App() {
   const handleSelectLens = (newLens: DenominationalLens) => {
     setActiveLens(newLens);
     setUserDenominationPreference(newLens);
-    const approved = getApprovedTranslationsForDenomination(newLens);
-    if (!approved.some(t => t.id === activeTranslation)) {
-      const defaultTrans = getDefaultTranslationForDenomination(newLens);
+    const approvedInLang = getApprovedTranslationsForDenomination(newLens).filter(
+      t => (t.language || 'en') === language
+    );
+    if (!approvedInLang.some(t => t.id === activeTranslation)) {
+      const defaultTrans = getDefaultTranslationForDenomination(newLens, language);
       setActiveTranslation(defaultTrans);
     }
   };
+
+  // When interface/scripture language changes, ensure denomination and translation remain valid
+  useEffect(() => {
+    const approvedInLang = getApprovedTranslationsForDenomination(activeLens).filter(
+      t => (t.language || 'en') === language
+    );
+
+    let targetLens = activeLens;
+    if (approvedInLang.length === 0) {
+      const validDenom = DENOMINATIONS.find(d =>
+        getApprovedTranslationsForDenomination(d.id).some(t => (t.language || 'en') === language)
+      );
+      if (validDenom) {
+        targetLens = validDenom.id;
+        setActiveLens(targetLens);
+        setUserDenominationPreference(targetLens);
+      }
+    }
+
+    const curTransObj = TRANSLATIONS.find(t => t.id === activeTranslation);
+    const isTransValid = curTransObj &&
+      (curTransObj.language || 'en') === language &&
+      curTransObj.approvedDenominations.includes(targetLens);
+
+    if (!isTransValid) {
+      const defaultTrans = getDefaultTranslationForDenomination(targetLens, language);
+      setActiveTranslation(defaultTrans);
+    }
+  }, [language]);
 
   // Fetch full multi-translation chapter from YouVersion Scripture API
   const loadChapterFromApi = useCallback(async (targetBookId: string, targetChapterNum: number, currentTrans?: TranslationId) => {
@@ -376,7 +410,8 @@ export function App() {
         onSelectTranslation={setActiveTranslation}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onOpenSearch={() => setIsSearchModalOpen(true)}
-        onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+        onOpenBookmarks={() => setIsBookmarksModalOpen(prev => !prev)}
+        isBookmarksOpen={isBookmarksModalOpen}
         bookmarkCount={bookmarks.length}
         isAiPanelOpen={activeSidebar === 'guide'}
         onToggleAiPanel={() => setActiveSidebar(prev => prev === 'guide' ? null : 'guide')}
@@ -433,7 +468,8 @@ export function App() {
                 setAiPanelTab('studyGuide');
               }}
               isLastChapterOfBook={chapterNum === currentBook.chaptersCount}
-              onOpenBookmarks={() => setIsBookmarksModalOpen(true)}
+              onOpenBookmarks={() => setIsBookmarksModalOpen(prev => !prev)}
+              isBookmarksOpen={isBookmarksModalOpen}
               onOpenBookSelector={() => setIsBookSelectorOpen(true)}
               onOpenQuiz={(type) => {
                 setQuizType(type);

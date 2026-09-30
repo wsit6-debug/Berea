@@ -17,7 +17,7 @@ const issues: string[] = [];
 const SPOT_CHECKS: Record<string, { expectedStoryline: string[]; expectedMentions: string[] }> = {
   // Acts
   'acts_13': {
-    expectedStoryline: ['Perga', 'Antioch 2', 'Iconium'],
+    expectedStoryline: ['Perga', 'Antioch', 'Iconium'],
     expectedMentions: ['Cyrene', 'Egypt', 'Canaan']
   },
   'acts_16': {

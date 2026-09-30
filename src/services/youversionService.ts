@@ -173,6 +173,38 @@ export async function fetchChapterFromYouVersion(
   try {
     const matchedTranslation = TRANSLATIONS.find(t => t.id.toLowerCase() === version.toLowerCase());
     const rawApiVersion = matchedTranslation ? matchedTranslation.apiCode : version;
+
+    // Direct GetBible provider for Tagalog (Ang Dating Biblia 1905)
+    if (rawApiVersion === 'tagalog' || version.toLowerCase() === 'adb') {
+      try {
+        const getBibleRes = await fetch(`https://api.getbible.net/v2/tagalog/${safeBookNum}/${safeChapter}.json`);
+        if (getBibleRes.ok) {
+          const gbData = await getBibleRes.json();
+          if (gbData && Array.isArray(gbData.verses) && gbData.verses.length > 0) {
+            const verses: Verse[] = gbData.verses.map((item: any) => {
+              const isJesus = Boolean(checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text));
+              return {
+                verseNumber: item.verse,
+                text: {
+                  [version]: cleanApiText(item.text)
+                },
+                isWordsOfJesus: isJesus
+              };
+            });
+            chapterCache.set(cacheKey, verses);
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+              try {
+                localStorage.setItem(`berea_chapter_v3_${cacheKey}`, JSON.stringify(verses));
+              } catch {}
+            }
+            return verses;
+          }
+        }
+      } catch (gbErr) {
+        console.warn('GetBible Tagalog fetch error', gbErr);
+      }
+    }
+
     const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
     const response = await fetch(`https://bolls.life/get-chapter/${safeApiVersion}/${safeBookNum}/${safeChapter}/`, {
       headers: { 'Accept': 'application/json' }
