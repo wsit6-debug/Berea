@@ -21,6 +21,7 @@ import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from 
 import { AppliedAiLogo } from './AppliedAiLogo';
 import TypologyPanel from './TypologyPanel';
 import { StudyGuide, SupportingPassage, BereaAiTab, StudyGuideAudience } from '../types';
+
 import {
   getSavedStudyGuides,
   saveStudyGuide,
@@ -356,7 +357,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const [studyGuideScope, setStudyGuideScope] = useState<StudyGuideScope>('chapter');
 
   // Overview Tab Interactive State
-  const [activeKeyWordIndex, setActiveKeyWordIndex] = useState<number>(0);
   const [expandedDoctrinalEntries, setExpandedDoctrinalEntries] = useState<Record<string, boolean>>({});
 
   // Start Verse & Multi-Verse Range State
@@ -890,6 +890,22 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
     }
   };
 
+  useEffect(() => {
+    const handleTriggerChat = (e: any) => {
+      const detail = e.detail;
+      if (detail?.prompt) {
+        setActiveTab('chat');
+        if (detail.autoSend) {
+          handleSendMessage(detail.prompt);
+        } else {
+          setChatInput(detail.prompt);
+        }
+      }
+    };
+    window.addEventListener('berea_trigger_chat', handleTriggerChat);
+    return () => window.removeEventListener('berea_trigger_chat', handleTriggerChat);
+  }, []);
+
   const handleClearChat = () => {
     setChatMessages([
       {
@@ -967,7 +983,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             <HelpCircle className="w-3 h-3 shrink-0" />
             <span className="truncate">Quiz</span>
           </button>
-
           <button
             onClick={() => setActiveTab('symbolism')}
             className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'symbolism' ? 'active' : ''}`}
@@ -976,7 +991,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
             <Feather className="w-3 h-3 shrink-0 text-[#B4793D]" />
             <span className="truncate">Symbolism</span>
           </button>
-
         </div>
 
         {onClose && (
@@ -1989,73 +2003,6 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                 {insight.conciseOverview}
               </p>
 
-              {/* Key Word Translation & Pronunciation Badge directly in Overview */}
-              {insight.originalLanguageInsights && insight.originalLanguageInsights.length > 0 && (() => {
-                const currentTermIndex = activeKeyWordIndex % insight.originalLanguageInsights.length;
-                const activeTerm = insight.originalLanguageInsights[currentTermIndex] || insight.originalLanguageInsights[0];
-
-                return (
-                  <div
-                    className="p-2.5 rounded-lg border bg-white space-y-1.5 shadow-2xs"
-                    style={{
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                      borderLeftWidth: '3.5px',
-                      borderLeftColor: 'var(--clean-accent-caramel, #B4793D)'
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
-                        style={{ color: 'var(--clean-accent-dark, #854D0E)' }}
-                      >
-                        <Languages className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
-                        Key Word Translation &amp; Pronunciation
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-mono text-stone-400 font-medium">
-                          {activeTerm.strongsRef}
-                        </span>
-                        {insight.originalLanguageInsights.length > 1 && (
-                          <div className="flex items-center gap-0.5 ml-1 bg-stone-100 p-0.5 rounded-sm">
-                            {insight.originalLanguageInsights.map((t, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setActiveKeyWordIndex(idx)}
-                                className={`text-[8.5px] px-1 py-0.2 rounded font-mono font-medium transition-colors ${
-                                  currentTermIndex === idx
-                                    ? 'bg-[var(--clean-accent-caramel,#B4793D)] text-white'
-                                    : 'text-stone-500 hover:text-stone-800'
-                                }`}
-                                title={`View ${t.term}`}
-                              >
-                                {idx + 1}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="font-bold text-sm text-[var(--clean-accent-dark,#B4793D)] font-serif">
-                        {activeTerm.term}
-                      </span>
-                      <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--clean-highlight-cream,#FAF5ED)] text-[#26221F] border border-[var(--clean-accent-border,#EBE5DC)]">
-                        {activeTerm.originalScript}
-                      </span>
-                      <span className="text-xs font-mono text-[var(--clean-accent-dark,#8C5E2E)] font-medium">
-                        /{activeTerm.transliteration}/
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-[#57524E] leading-relaxed">
-                      {activeTerm.nuance}
-                    </p>
-                  </div>
-                );
-              })()}
-
               {/* Lens Perspective */}
               <div
                 className="p-2 rounded-lg bg-white border text-xs space-y-0.5"
@@ -2075,14 +2022,18 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             </div>
 
-            {/* Doctrinal Confessional Grounding (RAG Verified Sources) */}
-            {activeDoctrinalSources.length > 0 && (() => {
-              const source = activeDoctrinalSources[0];
-              const sourceKey = source.id || `${source.documentTitle}_${source.citation}`;
+            {/* Official Confessional Standard (Genuine Confessional Standards only) */}
+            {(() => {
+              const confessionalSource = activeDoctrinalSources.find(
+                s => !s.id?.startsWith('apologetics-') && !s.keywords?.includes('Apologetics') && !s.documentTitle?.startsWith('Christian Apologetics')
+              );
+              if (!confessionalSource) return null;
+
+              const sourceKey = confessionalSource.id || `${confessionalSource.documentTitle}_${confessionalSource.citation}`;
               const isExpanded = Boolean(expandedDoctrinalEntries[sourceKey]);
-              const rawCore = source.coreDoctrine || '';
-              const fullText = source.fullExcerpt || rawCore;
-              const hasLongerExcerpt = Boolean(source.fullExcerpt && source.fullExcerpt.trim().length > rawCore.trim().length);
+              const rawCore = confessionalSource.coreDoctrine || '';
+              const fullText = confessionalSource.fullExcerpt || rawCore;
+              const hasLongerExcerpt = Boolean(confessionalSource.fullExcerpt && confessionalSource.fullExcerpt.trim().length > rawCore.trim().length);
               const endsWithEllipsis = rawCore.trim().endsWith('...') || rawCore.trim().endsWith('…');
               const canExpand = hasLongerExcerpt || endsWithEllipsis;
               const displayText = isExpanded ? fullText : rawCore;
@@ -2103,7 +2054,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                       Official Confessional Standard ({activeDenom.traditionGroup})
                     </span>
                     <span className="text-[9px] font-mono text-emerald-900 bg-white px-1.5 py-0.2 rounded border border-emerald-200">
-                      {source.citation}
+                      {confessionalSource.citation}
                     </span>
                   </div>
                   <div
@@ -2122,7 +2073,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <div className="font-semibold text-[11px] text-[#26221F]">
-                        {source.documentTitle}
+                        {confessionalSource.documentTitle}
                       </div>
                       {canExpand && (
                         <span className="text-[9.5px] font-semibold text-emerald-700 group-hover:text-emerald-900 inline-flex items-center gap-0.5">
@@ -2135,6 +2086,78 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                     </p>
                     {canExpand && !isExpanded && (
                       <div className="text-[9.5px] font-medium text-emerald-600/90 group-hover:text-emerald-800 flex items-center gap-1">
+                        <span>(Click to expand full text)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Apologetics & Historical Defenses */}
+            {(() => {
+              const apologeticSource = activeDoctrinalSources.find(
+                s => s.id?.startsWith('apologetics-') || s.keywords?.includes('Apologetics') || s.documentTitle?.startsWith('Christian Apologetics')
+              );
+              if (!apologeticSource) return null;
+
+              const sourceKey = apologeticSource.id || `${apologeticSource.documentTitle}_${apologeticSource.citation}`;
+              const isExpanded = Boolean(expandedDoctrinalEntries[sourceKey]);
+              const rawCore = apologeticSource.coreDoctrine || '';
+              const fullText = apologeticSource.fullExcerpt || rawCore;
+              const hasLongerExcerpt = Boolean(apologeticSource.fullExcerpt && apologeticSource.fullExcerpt.trim().length > rawCore.trim().length);
+              const endsWithEllipsis = rawCore.trim().endsWith('...') || rawCore.trim().endsWith('…');
+              const canExpand = hasLongerExcerpt || endsWithEllipsis;
+              const displayText = isExpanded ? fullText : rawCore;
+
+              return (
+                <div
+                  className="p-2.5 rounded-xl border space-y-1.5 text-xs animate-fadeIn shadow-2xs"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    borderLeftWidth: '4px',
+                    borderLeftColor: 'var(--clean-accent-caramel, #B4793D)'
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9.5px] font-bold text-[#8C5E32] uppercase tracking-wider flex items-center gap-1">
+                      <BookOpenCheck className="w-3 h-3 text-[#B4793D]" />
+                      Apologetics &amp; Historical Defenses
+                    </span>
+                    <span className="text-[9px] font-mono text-[#78716C] bg-white px-1.5 py-0.2 rounded border border-[#EBE5DC]">
+                      {apologeticSource.citation}
+                    </span>
+                  </div>
+                  <div
+                    onClick={() => {
+                      if (canExpand) {
+                        setExpandedDoctrinalEntries(prev => ({
+                          ...prev,
+                          [sourceKey]: !prev[sourceKey]
+                        }));
+                      }
+                    }}
+                    className={`p-2 rounded-lg bg-white border border-[var(--clean-accent-border,#EBE5DC)] space-y-1 transition-all select-text ${
+                      canExpand ? 'cursor-pointer hover:bg-stone-50 group' : ''
+                    }`}
+                    title={canExpand ? (isExpanded ? "Click to collapse" : "Click to view full unabridged text") : undefined}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-[11px] text-[#26221F]">
+                        {apologeticSource.documentTitle.replace(/^Christian Apologetics:\s*/, '')}
+                      </div>
+                      {canExpand && (
+                        <span className="text-[9.5px] font-semibold text-[#B4793D] group-hover:text-[#8C5E32] inline-flex items-center gap-0.5">
+                          {isExpanded ? '▲ Collapse' : '▼ Read full text'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10.5px] text-[#57524E] leading-relaxed italic">
+                      "{displayText}"
+                    </p>
+                    {canExpand && !isExpanded && (
+                      <div className="text-[9.5px] font-medium text-[#B4793D] group-hover:text-[#8C5E32] flex items-center gap-1">
                         <span>(Click to expand full text)</span>
                       </div>
                     )}
