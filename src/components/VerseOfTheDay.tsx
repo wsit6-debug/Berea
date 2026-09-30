@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, ArrowRight, Sun, Bot, ChevronDown, ChevronUp } from 'lucide-react';
 import { TranslationId } from '../data/bibleData';
 import { parsePassageReference, fetchChapterFromYouVersion, cleanApiText } from '../services/youversionService';
-import { generateDailyVerseAndReflection } from '../services/aiService';
+import { generateDailyVerseAndReflection, evaluateVerseAppropriateness } from '../services/aiService';
 
 interface VerseOfTheDayProps {
   activeTranslation: TranslationId;
@@ -52,17 +52,20 @@ export const VerseOfTheDay: React.FC<VerseOfTheDayProps> = ({ activeTranslation,
         const todayStr = `${new Date().toDateString()} - ${timeOfDay}`;
         const cacheKey = `berea_votd_${todayStr}_${activeLens}`;
         
-        // 1. Check local cache
+        // 1. Check local cache and verify it passes appropriateness evaluation
         if (typeof window !== 'undefined' && window.localStorage) {
           const cached = localStorage.getItem(cacheKey);
           if (cached) {
             try {
               const parsed = JSON.parse(cached);
-              // Invalidate cache if the AI hallucinated placeholder text or didn't return text
-              if (parsed && parsed.reference && parsed.reference !== 'Book Chapter:Verse' && parsed.reference !== 'John 1:5' && !(parsed.text || '').includes('The bible verse text')) {
-                if (isMounted) setVotd(parsed);
-                setIsLoading(false);
-                return;
+              // Invalidate cache if hallucinated or if it fails appropriateness evaluation
+              if (parsed && parsed.reference && parsed.reference !== 'Book Chapter:Verse' && !(parsed.text || '').includes('The bible verse text')) {
+                const evalCheck = evaluateVerseAppropriateness(parsed.reference, parsed.text || '');
+                if (evalCheck.isAppropriate) {
+                  if (isMounted) setVotd(parsed);
+                  setIsLoading(false);
+                  return;
+                }
               }
             } catch (e) {
               // bad json in cache, ignore and re-fetch
