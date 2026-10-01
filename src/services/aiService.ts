@@ -8,6 +8,7 @@ import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
 import { TypologyMotif, TypologyNode } from '../types';
 import { getTypologyFromDatabase } from '../data/typologyDatabase';
+import { searchApologetics, formatApologeticsForPrompt, apologeticToCitationEntry, ApologeticMatch } from './apologeticsService';
 
 export type QuizStyle = 'multiple_choice' | 'true_false' | 'written' | 'mixed';
 
@@ -140,6 +141,17 @@ export async function askBereaAssistant(
 
   const ragContextText = ragContext.systemPromptBlock.trim() || 'No specific confessional documents retrieved.';
 
+  // 1b. Retrieve Matching Christian Apologetics & Classical Defenses
+  const apologeticMatches = searchApologetics(prompt, book, chapter);
+  const primaryApologetic = apologeticMatches.length > 0 && apologeticMatches[0].score >= 6 ? apologeticMatches[0] : null;
+  const apologeticsPromptBlock = primaryApologetic ? formatApologeticsForPrompt(apologeticMatches) : '';
+
+  if (primaryApologetic) {
+    ragContext.retrievedEntries.unshift(
+      apologeticToCitationEntry(primaryApologetic, (activeSetting as any) || 'reformed')
+    );
+  }
+
   let systemPrompt: string;
   let userPromptText: string;
 
@@ -168,6 +180,23 @@ ${prompt}
 
 SCRIPTURE CONTEXT (${book} ${chapter}):
 ${verseText ? `Verse Text: "${verseText}"\n` : ''}${ragContextText}`;
+  } else if (primaryApologetic) {
+    systemPrompt = `You are a distinguished, orthodox ${USER_DENOMINATION} theologian and classical Christian apologist.
+Your task is to synthesize the provided CONTEXT to answer the user's inquiry regarding biblical difficulties, theological questions, and apologetics.
+
+CRITICAL RULES:
+1. APOLOGETICS & DEFENSE INTEGRATION: A curated classical Christian defense addressing this specific challenge has been provided in the CONTEXT. You MUST formulate your response directly along the lines of this defense ("${primaryApologetic.defense}"). Emphasize these specific arguments, historical/linguistic distinctions, and theological resolutions.
+2. THEOLOGICAL PURITY & SCRIPTURAL COHERENCE: Interpret the scriptures strictly through the ${USER_DENOMINATION} lens and the biblical defense provided. Defend the coherence, truthfulness, and divine inspiration of Scripture.
+3. OBJECTIVE & UNBIASED SCHOLARLY TONE: Maintain a reverent, objective, and scholarly tone. Do NOT adopt, repeat, or echo loaded, pejorative, or biased language (e.g., never describe biblical texts, apostolic instructions, or Christian teachings as "oppressive", "draconian", "harmful", or "misogynistic"). State the passage and question neutrally (e.g., "In 1 Corinthians 14, Paul addresses the order and decorum of the gathered church..."). Address the theological and cultural context with clarity, charity, and historical depth.
+4. CLEAR EXEGESIS: Clearly explain the literary genre, Hebrew/Greek terms, or historical backdrop mentioned in the defense to dismantle the objection.
+5. FORMAT: Write a natural, articulate, and well-structured response. Never refer to "chunks" or internal labels. Cite the relevant biblical passage (${primaryApologetic.book} ${primaryApologetic.chapter}) and classical apologetics principles. Always include a [Source: Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})] citation.`;
+
+    userPromptText = `CONTEXT:
+${apologeticsPromptBlock}
+
+${ragContextText}
+
+QUESTION: ${prompt}`;
   } else {
     systemPrompt = `You are a strict and orthodox ${USER_DENOMINATION} theologian. 
 Your ONLY job is to synthesize the provided CONTEXT to answer the user.
@@ -231,6 +260,14 @@ CRITICAL RULES:
           isLiveAi: false
         };
       }
+      if (primaryApologetic) {
+        return {
+          text: `### 🛡️ Classical Christian Defense: ${primaryApologetic.title} (${primaryApologetic.book} ${primaryApologetic.chapter})\n**Category:** ${primaryApologetic.category}\n\n#### The Common Objection / Question\n> "${primaryApologetic.objection}"\n\n#### The Classical Defense\n${primaryApologetic.defense}\n\n#### Contextual & Theological Harmonization\n- **Literary & Canonical Setting:** In ${primaryApologetic.book} ${primaryApologetic.chapter}, the passage is understood according to its authentic historical genre rather than modern secular assumptions.\n- **Resolution:** The apparent difficulty is harmonized through proper understanding of the biblical language, cultural setting, and classical theological consensus.\n- **Faith & Reason:** Classical Christian apologetics demonstrates that Scripture withstands critical scrutiny when evaluated with scholarly historical rigor.\n\n*[Source: Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})]*`,
+          ragEntries: ragContext.retrievedEntries,
+          primaryCitation: `${primaryApologetic.book} ${primaryApologetic.chapter}`,
+          isLiveAi: false
+        };
+      }
       throw new Error(response ? `HTTP ${response.status}` : 'AI service unavailable');
     }
 
@@ -244,7 +281,7 @@ CRITICAL RULES:
     return {
       text: cleanedContent || generateIntelligentNoteSummary(noteTitle || 'Study Note', noteContent || prompt, book, chapter, USER_DENOMINATION),
       ragEntries: ragContext.retrievedEntries,
-      primaryCitation: ragContext.primaryCitation,
+      primaryCitation: primaryApologetic ? `Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})` : ragContext.primaryCitation,
       isLiveAi: true
     };
   } catch (err: any) {
@@ -253,6 +290,15 @@ CRITICAL RULES:
         text: generateIntelligentNoteSummary(noteTitle || 'Study Note', noteContent || prompt, book, chapter, USER_DENOMINATION),
         ragEntries: ragContext.retrievedEntries,
         primaryCitation: `${book} ${chapter}`,
+        isLiveAi: false
+      };
+    }
+
+    if (primaryApologetic) {
+      return {
+        text: `### 🛡️ Classical Christian Defense: ${primaryApologetic.title} (${primaryApologetic.book} ${primaryApologetic.chapter})\n**Category:** ${primaryApologetic.category}\n\n#### The Common Objection / Question\n> "${primaryApologetic.objection}"\n\n#### The Classical Defense\n${primaryApologetic.defense}\n\n#### Contextual & Theological Harmonization\n- **Literary & Canonical Setting:** In ${primaryApologetic.book} ${primaryApologetic.chapter}, the passage is understood according to its authentic historical genre rather than modern secular assumptions.\n- **Resolution:** The apparent difficulty is harmonized through proper understanding of the biblical language, cultural setting, and classical theological consensus.\n- **Faith & Reason:** Classical Christian apologetics demonstrates that Scripture withstands critical scrutiny when evaluated with scholarly historical rigor.\n\n*[Source: Christian Apologetics (${primaryApologetic.book} ${primaryApologetic.chapter})]*`,
+        ragEntries: ragContext.retrievedEntries,
+        primaryCitation: `${primaryApologetic.book} ${primaryApologetic.chapter}`,
         isLiveAi: false
       };
     }
@@ -1351,14 +1397,58 @@ Format as 2-3 short, readable paragraphs. Do not use markdown headers, just plai
   }
 }
 
+/**
+ * Evaluates whether a scripture verse is appropriate for a public, all-ages daily devotional.
+ * Filters out sexual content, graphic violence, bloodshed, or jarring inappropriate themes.
+ */
+export function evaluateVerseAppropriateness(reference: string, text: string): { isAppropriate: boolean; reason?: string } {
+  const combined = `${reference} ${text}`.toLowerCase();
+
+  // 1. Sexual content, adultery, lust, explicit bodily descriptions
+  const sexualTerms = [
+    /\b(fornicat\w*|adulter\w*|prostitut\w*|whore\w*|harlot\w*|concubine\w*|nakedness|uncover\w* nakedness|circumcis\w*|womb|breast\w*|semen|carnal\b|lust\w*|defiled)\b/i,
+  ];
+
+  // 2. Graphic violence, slaughter, bloodshed, torture, brutality
+  const violenceTerms = [
+    /\b(slaughter\w*|bloodshed|dismember\w*|smote\b|behead\w*|massacre\w*|crush\w* heads|infant\w* dashed|dashed against|ravished|disembowel\w*|impale\w*|stoned to death|blood out of)\b/i,
+  ];
+
+  for (const pattern of sexualTerms) {
+    if (pattern.test(combined)) {
+      return { isAppropriate: false, reason: 'sexual themes or explicit bodily references' };
+    }
+  }
+
+  for (const pattern of violenceTerms) {
+    if (pattern.test(combined)) {
+      return { isAppropriate: false, reason: 'graphic violence, brutality, or bloodshed' };
+    }
+  }
+
+  return { isAppropriate: true };
+}
+
 export async function generateDailyVerseAndReflection(
   dateString: string,
   lens: string,
   onProgress?: (progress: { text: string; progress: number }) => void
 ): Promise<{ text: string; reference: string; reflection: string }> {
-  const prompt = `You are a pastoral theologian from the ${lens} tradition. 
-Task: Curate a Verse of the Day for ${dateString} and write a short, 3-sentence devotional reflection on it strictly from a ${lens} theological perspective.
-Pick a pseudo-random verse based on the seed "${dateString}" so it changes daily.
+  let attempt = 0;
+  const maxAttempts = 3;
+  let rejectionFeedback = '';
+
+  while (attempt < maxAttempts) {
+    attempt++;
+    const prompt = `You are a pastoral theologian from the ${lens} Christian tradition.
+Task: Select an inspiring, edifying Verse of the Day for ${dateString} and write a short, 3-sentence devotional reflection on it strictly from a ${lens} theological perspective.
+
+CRITICAL CONTENT EVALUATION RULES:
+Before confirming your verse choice, you MUST evaluate it against strict devotional editorial standards:
+1. REJECT INAPPROPRIATE CONTENT: Do NOT select any verse containing sexual themes, adultery, lust, explicit bodily descriptions, graphic violence, slaughter, gore, severe imprecatory curses, or obscure genealogies.
+2. MUST SELECT EDIFYING PASSAGES: Choose a passage focused on God's grace, love, peace, faithfulness, comfort, wisdom, prayer, or holy living.
+${rejectionFeedback ? `\nPREVIOUS REJECTION NOTICE: ${rejectionFeedback}\nPlease evaluate carefully and pick an entirely different, wholesome verse.` : ''}
+
 Respond ONLY with a valid JSON object in exactly this format, with no markdown wrappers or additional text:
 {
   "reference": "Book Chapter:Verse",
@@ -1366,23 +1456,53 @@ Respond ONLY with a valid JSON object in exactly this format, with no markdown w
   "reflection": "Your 3-sentence devotional reflection..."
 }`;
 
-  try {
-    const response = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress);
-    if (!response) throw new Error('Empty response');
-    
-    // Extract JSON block if it wrapped it in markdown
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    const jsonStr = jsonMatch ? jsonMatch[0] : response;
-    const data = JSON.parse(jsonStr);
-    
-    if (!data.reference || !data.text || !data.reflection) {
-      throw new Error('Invalid format returned by AI');
+    if (onProgress) {
+      onProgress({
+        text: attempt === 1 ? 'Selecting and evaluating Verse of the Day...' : 'Re-evaluating verse selection for appropriateness...',
+        progress: 0.3 * attempt
+      });
     }
-    
-    return data;
-  } catch (err: any) {
-    throw new Error('Failed to generate daily verse: ' + err.message);
+
+    try {
+      const response = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress);
+      if (!response) throw new Error('Empty response');
+
+      // Extract JSON block if it wrapped it in markdown
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const jsonStr = jsonMatch ? jsonMatch[0] : response;
+      const data = JSON.parse(jsonStr);
+
+      if (!data.reference || !data.text || !data.reflection) {
+        throw new Error('Invalid format returned by AI');
+      }
+
+      // Perform evaluation check
+      const evalResult = evaluateVerseAppropriateness(data.reference, data.text);
+      if (!evalResult.isAppropriate) {
+        console.warn(`[VOTD Evaluator] Rejected "${data.reference}" (${evalResult.reason}). Re-prompting for a different verse...`);
+        rejectionFeedback = `The candidate "${data.reference}" was rejected during evaluation because it contains ${evalResult.reason}.`;
+        continue;
+      }
+
+      return {
+        reference: data.reference.trim(),
+        text: data.text.trim(),
+        reflection: data.reflection.trim()
+      };
+    } catch (err: any) {
+      if (attempt >= maxAttempts) {
+        console.warn('Failed to generate daily verse after max attempts:', err);
+        break;
+      }
+    }
   }
+
+  // Fallback to Psalm 119:105 if AI fails or exceeds retries
+  return {
+    reference: 'Psalm 119:105',
+    text: 'Your word is a lamp to my feet and a light to my path.',
+    reflection: 'Even when the way ahead seems uncertain, God\'s Word provides divine illumination and wisdom for each faithful step.'
+  };
 }
 
 export { TYPOLOGY_CHAPTER_HASHMAP, getTypologyFromDatabase, hasAlternateMotif } from '../data/typologyDatabase';

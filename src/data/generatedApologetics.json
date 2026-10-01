@@ -1,0 +1,290 @@
+{
+  "Genesis": {
+    "1": [
+      {
+        "id": "gen-1-1",
+        "title": "Age of the Earth & Evolution",
+        "objection": "The creation account contradicts modern scientific consensus regarding the age of the Earth and the evolutionary origin of species.",
+        "defense": "Historically, Christians have held multiple views on Genesis 1. Some hold a Young Earth view based on literal 24-hour days. Others hold an Old Earth or Day-Age view, noting the Hebrew word 'yom' can mean an era. Still others see Genesis 1 as a theological framework (Framework Hypothesis) polemicizing against ancient near eastern polytheism, rather than a material scientific textbook. See ATLA Religion Database for scholarly articles on the Framework Hypothesis.",
+        "category": "Scientific"
+      }
+    ],
+    "2": [
+      {
+        "id": "gen-2-1",
+        "title": "Two Different Creation Accounts?",
+        "objection": "Genesis 2 presents a different topical order of creation events than Genesis 1, leading some to question whether the two chapters contradict each other.",
+        "defense": "Genesis 1 provides a cosmic, chronological overview of creation, while Genesis 2 zooms in topically on the creation of humanity and the Garden of Eden. The differences in order are due to literary focus, not chronological contradiction. This is a common Hebrew narrative technique.",
+        "category": "Contradiction"
+      }
+    ],
+    "6": [
+      {
+        "id": "gen-6-1",
+        "title": "The Global Flood vs Local Flood",
+        "objection": "There is no geological evidence for a worldwide flood covering the highest mountains.",
+        "defense": "Many apologists argue for a localized, yet anthropologically universal flood (wiping out humanity which was localized at the time). The biblical language of 'all the earth' (kol erets) often refers to the known local region rather than the global planet.",
+        "category": "Scientific"
+      }
+    ]
+  },
+  "Exodus": {
+    "9": [
+      {
+        "id": "ex-9-1",
+        "title": "Hardening Pharaoh's Heart",
+        "objection": "God hardened Pharaoh's heart, removing his free will, and then punished him for it. This makes God unjust.",
+        "defense": "The text states that Pharaoh repeatedly hardened his own heart first. God's hardening is often seen as a judicial act\u2014giving Pharaoh over to his own stubborn desires. As C.S. Lewis noted, 'the gates of hell are locked from the inside.'",
+        "category": "Philosophical"
+      }
+    ],
+    "14": [
+      {
+        "id": "ex-14-1",
+        "title": "The Red Sea Crossing",
+        "objection": "There is no archaeological evidence for a massive exodus of millions of Israelites from Egypt.",
+        "defense": "Egyptians notoriously did not record their defeats. Furthermore, nomadic peoples traversing a desert leave very little archaeological footprint. Some scholars also argue that the Hebrew word 'eleph' (translated 'thousands') can mean 'clans' or 'military units', suggesting a smaller, more historically plausible number.",
+        "category": "Historical"
+      }
+    ],
+    "21": [
+      {
+        "id": "ex-21-1",
+        "title": "Slavery in the Bible",
+        "objection": "The Bible endorses slavery, outlining laws for buying and selling human beings.",
+        "defense": "Ancient Near Eastern 'slavery' (indentured servitude) was largely an economic system to pay off debt, quite different from the race-based chattel slavery of the 18th/19th centuries. The biblical laws were actually radical restrictions on the institution, protecting servants from abuse and commanding their release, which ultimately laid the moral foundation for abolition.",
+        "category": "Moral"
+      }
+    ]
+  },
+  "Leviticus": {
+    "18": [
+      {
+        "id": "lev-18-1",
+        "title": "Biblical Sexual Ethics and Holiness",
+        "objection": "The moral and holiness laws in Leviticus 18 are often questioned as being culturally archaic or overly restrictive.",
+        "defense": "These laws were given to set Israel apart from the surrounding Canaanite cultures, which engaged in destructive practices like incest, bestiality, and cultic prostitution. The laws reflect God's design for human flourishing and the sacredness of the family unit.",
+        "category": "Moral"
+      }
+    ]
+  },
+  "Joshua": {
+    "6": [
+      {
+        "id": "joshua-6-1",
+        "title": "The Morality of the Canaanite Conquest",
+        "objection": "God commanding the Israelites concerning Jericho and the Canaanites raises significant moral questions about divine judgment and warfare in the Old Testament.",
+        "defense": "This is one of the most difficult ethical issues in the Old Testament. Apologists point out several factors: 1) It was a unique, unrepeatable judgment against a deeply corrupt culture (engaging in child sacrifice). 2) The hyperbolic language ('destroy them all') was common Ancient Near Eastern war rhetoric (as seen in the Merneptah Stele), meaning a decisive victory, not literal genocide. 3) Rahab and her family were saved by faith, showing God's mercy to any who turned to Him. See Academic Search Ultimate for papers on Ancient Near Eastern warfare rhetoric.",
+        "category": "Moral"
+      }
+    ]
+  },
+  "1 Samuel": {
+    "15": [
+      {
+        "id": "1sam-15-1",
+        "title": "Destruction of the Amalekites",
+        "objection": "God orders the complete destruction of the Amalekites, including infants.",
+        "defense": "Similar to the Canaanite conquest, this is often understood as Ancient Near Eastern hyperbolic war language for a decisive victory. Furthermore, the Amalekites were not completely wiped out, as they appear later in the biblical narrative. Theologically, it represents God's severe judgment against a nation that aggressively preyed on the weak Israelites.",
+        "category": "Moral"
+      }
+    ]
+  },
+  "2 Kings": {
+    "2": [
+      {
+        "id": "2kings-2-1",
+        "title": "Elisha and the Bears",
+        "objection": "God sent bears to maul little children just for mocking Elisha's baldness.",
+        "defense": "The Hebrew word used for 'youths' can mean young men (like teenagers or young adults). This was not a group of innocent toddlers, but a large, threatening mob challenging the prophet's authority and, by extension, God's authority during a time of national apostasy.",
+        "category": "Moral"
+      }
+    ]
+  },
+  "Job": {
+    "1": [
+      {
+        "id": "job-1-1",
+        "title": "The Problem of Evil",
+        "objection": "If God is all-powerful and all-loving, why does He allow Job to suffer so terribly?",
+        "defense": "The Book of Job tackles the 'Problem of Evil' head-on. It argues that human beings lack the cosmic perspective to understand God's ultimate purposes. While suffering is real and painful, God is ultimately just and sovereign. Christian apologists also point to the cross, showing that God entered into human suffering rather than remaining distant from it.",
+        "category": "Philosophical"
+      }
+    ]
+  },
+  "Psalms": {
+    "137": [
+      {
+        "id": "ps-137-1",
+        "title": "Dashing Infants Against Rocks",
+        "objection": "The psalmist blesses the one who dashes Babylonian infants against rocks.",
+        "defense": "This is an 'imprecatory psalm', expressing the raw, agonizing grief and anger of exiled victims who had just witnessed the brutal slaughter of their own children by Babylonians. It is a poetic cry for strict retaliatory justice (lex talionis), not a command from God for believers to commit atrocities.",
+        "category": "Theological"
+      }
+    ]
+  },
+  "Isaiah": {
+    "53": [
+      {
+        "id": "isa-53-1",
+        "title": "The Suffering Servant",
+        "objection": "Jewish critics argue that Isaiah 53 refers to the nation of Israel, not a prophesied Messiah like Jesus.",
+        "defense": "While Israel is sometimes called God's servant, the figure in Isaiah 53 suffers *for* the transgressions of 'my people' (Israel), distinguishing the servant from the nation. Furthermore, the servant is described as innocent, unlike Israel in the surrounding context. Early Jewish interpretations (like the Targum Jonathan) recognized messianic overtones, which were perfectly fulfilled in Christ.",
+        "category": "Theological"
+      }
+    ]
+  },
+  "Daniel": {
+    "1": [
+      {
+        "id": "dan-1-1",
+        "title": "Late Dating of Daniel",
+        "objection": "Daniel's prophecies are so accurate that skeptics argue they must have been written after the fact (circa 165 BC).",
+        "defense": "Conservative scholars argue for a 6th-century BC date. Jesus Himself referred to Daniel as a historic prophet. Furthermore, Daniel's accurate use of Persian and Babylonian loan words, and his knowledge of Belshazzar (unknown to later historians but confirmed by the Nabonidus Cylinder), support an early, authentic authorship.",
+        "category": "Historical"
+      }
+    ]
+  },
+  "Matthew": {
+    "1": [
+      {
+        "id": "matt-1-1",
+        "title": "Contradictory Genealogies",
+        "objection": "Matthew and Luke give two completely different genealogies for Jesus.",
+        "defense": "The classic harmonization is that Matthew gives the legal line through Joseph (demonstrating Jesus' right to the Davidic throne), while Luke gives the biological line through Mary. Another view is that one represents a biological lineage and the other a levirate marriage lineage.",
+        "category": "Contradiction"
+      }
+    ],
+    "28": [
+      {
+        "id": "matt-28-1",
+        "title": "Harmonizing the Resurrection Accounts",
+        "objection": "The Gospels contradict each other on who went to the tomb, how many angels were there, and what they saw.",
+        "defense": "The differences are actually hallmarks of independent eyewitness testimony. For example, Matthew mentions one angel (the one who spoke), while Luke mentions two (the total number). If they had colluded to fabricate a story, their accounts would be perfectly identical. Instead, they represent different perspectives of the same chaotic, historical morning.",
+        "category": "Contradiction"
+      }
+    ]
+  },
+  "Mark": {
+    "16": [
+      {
+        "id": "mark-16-1",
+        "title": "The Longer Ending of Mark",
+        "objection": "The last 12 verses of Mark are not in the earliest manuscripts, meaning the resurrection appearances were added later.",
+        "defense": "It is true that the earliest manuscripts end at verse 8. However, the early church was completely transparent about manuscript variants. The core facts of the resurrection do not depend on Mark 16:9-20, as they are fully established by Paul (1 Corinthians 15) and the other three Gospels. Textual criticism actually strengthens the reliability of the Bible by allowing us to reconstruct the original.",
+        "category": "Historical"
+      }
+    ]
+  },
+  "Luke": {
+    "2": [
+      {
+        "id": "luke-2-1",
+        "title": "The Census of Quirinius",
+        "objection": "Luke claims Jesus was born during a census by Quirinius, but history shows Quirinius wasn't governor of Syria until 6 AD, after Herod's death.",
+        "defense": "Scholars propose several solutions: 1) The Greek word 'prote' can mean 'before', translating to 'this census took place *before* Quirinius was governor'. 2) Quirinius may have had an earlier administrative role in Syria alongside Saturninus. Luke's proven accuracy as a historian in Acts gives him the benefit of the doubt here.",
+        "category": "Historical"
+      }
+    ],
+    "1": [
+      {
+        "id": "luk-1-1",
+        "title": "Reliability of the New Testament Manuscripts",
+        "objection": "The Bible has been translated and re-translated like a game of telephone for thousands of years, so we cannot know what the original authors actually wrote.",
+        "defense": "Textual criticism demonstrates the New Testament is the best-attested document of antiquity by an overwhelming margin. We possess over 5,800 Greek manuscripts and over 20,000 early translations (Latin, Syriac, Coptic). The earliest fragments (like P52) date to within decades of the originals, compared to centuries for classical works like Plato or Caesar. Modern translations do not translate from previous translations, but directly from the earliest Greek and Hebrew manuscripts. Over 99% of variants are minor spelling differences or word orders, and not a single core Christian doctrine rests on a disputed reading.",
+        "category": "Historical"
+      }
+    ]
+  },
+  "John": {
+    "1": [
+      {
+        "id": "john-1-1",
+        "title": "Did Jesus Claim to be God?",
+        "objection": "The idea that Jesus is God was a later invention of the church, not something Jesus actually claimed.",
+        "defense": "Jesus made profound claims to divinity. He forgave sins (a right reserved only for God), accepted worship (John 20:28), and took the divine name 'I AM' (John 8:58). The fact that the Jewish leaders crucified Him for blasphemy proves they understood exactly what He was claiming.",
+        "category": "Theological"
+      }
+    ],
+    "14": [
+      {
+        "id": "john-14-1",
+        "title": "The Exclusivity of Christ",
+        "objection": "Jesus claiming 'I am the way' and that no one comes to the Father except through Him is intolerant and arrogant.",
+        "defense": "Truth by nature is exclusive; if 2+2=4, it excludes 5. If humanity is hopelessly separated from God by sin, and God provides a singular, incredibly costly rescue mission through the cross, it is an act of supreme love and grace, not arrogance. The exclusivity lies in the cure, which is offered freely to everyone.",
+        "category": "Philosophical"
+      }
+    ]
+  },
+  "Romans": {
+    "9": [
+      {
+        "id": "rom-9-1",
+        "title": "Predestination vs Free Will",
+        "objection": "If God predestines who is saved (as Romans 9 suggests), then human beings have no free will and God is unjust for punishing sinners.",
+        "defense": "This is a historic debate between Calvinists and Arminians. Calvinists argue that because humanity is totally depraved, God's sovereign election is the only way anyone is saved, and God has the right to show mercy to whom He wills. Arminians argue that predestination is based on God's foreknowledge of who will freely choose Him. Both agree that humans are responsible and God is completely just.",
+        "category": "Theological"
+      }
+    ],
+    "1": [
+      {
+        "id": "rom-1-1",
+        "title": "The Origin of the Universe & Fine-Tuning",
+        "objection": "The universe does not need a Creator God; modern physics shows the universe could have emerged from quantum fluctuations without divine intervention.",
+        "defense": "The Kalam Cosmological Argument affirms: (1) Whatever begins to exist has a cause; (2) The universe began to exist (supported by cosmic expansion, the Big Bang, and the Second Law of Thermodynamics); therefore (3) The universe has a cause beyond time, space, and matter. Furthermore, the universal physical constants (gravitational force, cosmological constant, electromagnetic ratio) are fine-tuned to an incomprehensible degree of precision\u2014if altered by one part in 10^120, life could not exist anywhere. Design is the most mathematically and philosophically rational inference.",
+        "category": "Philosophical"
+      }
+    ],
+    "2": [
+      {
+        "id": "rom-2-1",
+        "title": "Objective Morality & The Moral Argument",
+        "objection": "Morality is merely a subjective evolutionary byproduct for survival; there is no objective moral law, and religion is not necessary for morality.",
+        "defense": "While people can behave morally without believing in God, objective moral values and duties cannot logically exist without a transcendent standard. If atheistic naturalism is true, human moral opinions are merely social conventions or chemical reactions in the brain\u2014neither objectively right nor wrong. Yet virtually all human beings universally recognize that torturing innocents or genocide is objectively evil. Objective moral obligations point directly to an objective, transcendent Moral Lawgiver.",
+        "category": "Philosophical"
+      }
+    ]
+  },
+  "1 Corinthians": {
+    "14": [
+      {
+        "id": "1cor-14-1",
+        "title": "Women Speaking in Church",
+        "objection": "Paul writes that women should keep silent in the churches, leading some to question the biblical perspective on women in public worship.",
+        "defense": "Paul's command here must be balanced with 1 Corinthians 11, where he explicitly assumes women are praying and prophesying publicly. Many scholars believe 1 Corinthians 14 refers specifically to women disrupting the service by asking questions across the aisle, or inappropriately evaluating prophecies. It was a specific cultural correction, not a universal ban on female speech.",
+        "category": "Moral"
+      }
+    ],
+    "15": [
+      {
+        "id": "1cor-15-1",
+        "title": "The Resurrection: Myth or History?",
+        "objection": "Dead men do not rise. The resurrection of Jesus is a legendary myth invented by grieving disciples who hallucinated or fabricated the empty tomb.",
+        "defense": "The historical resurrection is supported by the \"minimal facts\" admitted by virtually all critical and secular New Testament scholars: (1) Jesus died by Roman crucifixion; (2) shortly afterward, multiple individuals and groups experienced appearances of the risen Jesus; (3) skeptics like James (brother of Jesus) and Paul (a violent persecutor) were suddenly converted; and (4) the tomb was found empty in Jerusalem, where preaching began. Hallucinations do not occur to groups across different times, nor do they explain an empty tomb. The disciples suffered persecution and martyrdom for what they saw, demonstrating sincerity and eyewitness reality.",
+        "category": "Historical"
+      }
+    ]
+  },
+  "Ephesians": {
+    "5": [
+      {
+        "id": "eph-5-1",
+        "title": "Wives Submit to Husbands",
+        "objection": "The command for wives to submit to their husbands is often viewed as promoting unilateral male dominance rather than mutual honor.",
+        "defense": "The command is grounded in verse 21, 'Submit to one another out of reverence for Christ.' Paul then completely revolutionizes ancient patriarchy by commanding husbands to love their wives self-sacrificially, just as Christ died for the church. It is a picture of mutual, loving sacrifice rather than dominance.",
+        "category": "Moral"
+      }
+    ]
+  },
+  "Acts": {
+    "17": [
+      {
+        "id": "act-17-1",
+        "title": "Did Jesus Truly Exist? (Historicity of Jesus)",
+        "objection": "Some critics claim Jesus of Nazareth was modeled after pagan dying-and-rising mystery cults rather than being a verified historical figure.",
+        "defense": "Virtually all ancient historians, both Christian and secular (including Bart Ehrman and E.P. Sanders), reject Christ-mythicism as unscholarly. Jesus is explicitly referenced by non-Christian first- and second-century historians, including the Jewish historian Flavius Josephus (Antiquities of the Jews), the Roman historian Cornelius Tacitus (Annals), Pliny the Younger (Letters), and Suetonius. Tacitus confirms Jesus was executed under Pontius Pilate during the reign of Tiberius, and Josephus corroborates His leadership and crucifixion.",
+        "category": "Historical"
+      }
+    ]
+  }
+}
