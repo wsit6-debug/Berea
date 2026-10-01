@@ -14,10 +14,10 @@
   --clean-accent-caramel: #B4793D;
   --clean-accent-honey: #D4A373;
   --clean-highlight-cream: #FAF3E8;
-  /* Dynamic Contrast Highlight Tokens */
-  --hl-yellow-bg: #FEF08A;
-  --hl-yellow-text: #451A03;
-  --hl-yellow-border: #EAB308;
+  /* Dynamic Contrast Highlight Tokens: Theme Accent by default */
+  --hl-yellow-bg: rgba(var(--clean-accent-rgb, 180, 121, 61), 0.40);
+  --hl-yellow-text: var(--clean-accent-dark, #1C1917);
+  --hl-yellow-border: var(--clean-accent-caramel, #B4793D);
 
   --hl-green-bg: #BBF7D0;
   --hl-green-text: #052E16;
@@ -155,6 +155,37 @@ body {
 
 .translation-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9A622A;
+}
+
+/* Rich Notepad Editor */
+
+.rich-notepad-editor {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text !important;
+  outline: none !important;
+}
+
+.rich-notepad-editor.is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--clean-text-tertiary, #A8A29E);
+  font-style: italic;
+  pointer-events: none;
+  display: inline-block;
+  float: left;
+  height: 0;
+  line-height: inherit;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.rich-notepad-editor p {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+}
+
+.rich-notepad-editor p:first-child {
+  margin-top: 0;
 }
 
 /* Animations */
@@ -976,6 +1007,89 @@ button:active:not(:disabled) {
 .hover\:text-\[\#26221F\]:hover { color: #26221F !important; }
 .hover\:text-white:hover { color: #FFFFFF !important; }
 .hover\:border-\[\#D4A373\]:hover { border-color: #D4A373 !important; }
+
+/* Dynamic CSS Variable Theme Utilities */
+.text-accent,
+[class*="text-[var(--clean-accent-caramel"] {
+  color: var(--clean-accent-caramel, #B4793D) !important;
+}
+.text-accent-dark,
+[class*="text-[var(--clean-accent-dark"] {
+  color: var(--clean-accent-dark, #8C5E2E) !important;
+}
+.text-clean-primary,
+[class*="text-[var(--clean-text-primary"] {
+  color: var(--clean-text-primary, #26221F) !important;
+}
+.text-clean-secondary,
+[class*="text-[var(--clean-text-secondary"] {
+  color: var(--clean-text-secondary, #78716C) !important;
+}
+.text-clean-tertiary,
+[class*="text-[var(--clean-text-tertiary"] {
+  color: var(--clean-text-tertiary, #A8A29E) !important;
+}
+
+.bg-accent,
+[class*="bg-[var(--clean-accent-caramel"] {
+  background-color: var(--clean-accent-caramel, #B4793D) !important;
+}
+.bg-highlight-cream,
+[class*="bg-[var(--clean-highlight-cream"] {
+  background-color: var(--clean-highlight-cream, #FAF5ED) !important;
+}
+.bg-clean-surface,
+[class*="bg-[var(--clean-surface,"] {
+  background-color: var(--clean-surface, #FFFFFF) !important;
+}
+.bg-clean-surface-warm,
+[class*="bg-[var(--clean-surface-warm"] {
+  background-color: var(--clean-surface-warm, #FAF7F2) !important;
+}
+
+.border-accent,
+[class*="border-[var(--clean-accent-border"] {
+  border-color: var(--clean-accent-border, #EBE5DC) !important;
+}
+[class*="border-[var(--clean-accent-caramel"] {
+  border-color: var(--clean-accent-caramel, #B4793D) !important;
+}
+[class*="border-t-[var(--clean-accent-border"] {
+  border-top-color: var(--clean-accent-border, #EBE5DC) !important;
+}
+[class*="border-b-[var(--clean-accent-border"] {
+  border-bottom-color: var(--clean-accent-border, #EBE5DC) !important;
+}
+[class*="border-l-[var(--clean-accent-border"] {
+  border-left-color: var(--clean-accent-border, #EBE5DC) !important;
+}
+[class*="border-l-[var(--clean-accent-caramel"] {
+  border-left-color: var(--clean-accent-caramel, #B4793D) !important;
+}
+.border-l-3 {
+  border-left-width: 3px !important;
+  border-left-style: solid;
+}
+
+[class*="fill-[var(--clean-accent-caramel"] {
+  fill: var(--clean-accent-caramel, #B4793D) !important;
+}
+
+[class*="hover:text-[var(--clean-accent-caramel"]:hover {
+  color: var(--clean-accent-caramel, #B4793D) !important;
+}
+[class*="hover:text-[var(--clean-accent-dark"]:hover {
+  color: var(--clean-accent-dark, #8C5E2E) !important;
+}
+[class*="hover:bg-[var(--clean-highlight-cream"]:hover {
+  background-color: var(--clean-highlight-cream, #FAF5ED) !important;
+}
+[class*="hover:border-[var(--clean-accent-caramel"]:hover {
+  border-color: var(--clean-accent-caramel, #B4793D) !important;
+}
+[class*="hover:border-[var(--clean-accent-border"]:hover {
+  border-color: var(--clean-accent-border, #EBE5DC) !important;
+}
 
 /* ==========================================================================
    Berea Login Screen

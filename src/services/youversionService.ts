@@ -126,22 +126,50 @@ export async function fetchChapterFromYouVersion(
   chapterNum: number,
   version: TranslationId = 'KJV'
 ): Promise<Verse[]> {
+  const book = BIBLE_BOOKS.find(b => b.id.toLowerCase() === bookId.toLowerCase()) || BIBLE_BOOKS[0];
+  const rawBookNum = getBookNumber(book.id);
+  const safeBookNum = Math.max(1, Math.min(80, Math.floor(rawBookNum) || 1));
+  const safeChapter = Math.max(1, Math.min(150, Math.floor(chapterNum) || 1));
+
+  const matchedTranslation = TRANSLATIONS.find(t => t.id.toLowerCase() === version.toLowerCase());
+  const rawApiVersion = matchedTranslation ? matchedTranslation.apiCode : version;
+  const isEnglish = (matchedTranslation?.language || 'en') === 'en';
+  const isNTOnly = Boolean(
+    matchedTranslation?.badge?.toLowerCase().includes('nt only') ||
+    matchedTranslation?.badge?.toLowerCase().includes('nt epistles') ||
+    matchedTranslation?.description?.toLowerCase().includes('new testament only')
+  );
+
+  // If translation is New Testament only and requested book is Old Testament (books 1-39), return empty
+  if (isNTOnly && safeBookNum < 40) {
+    return [];
+  }
+
   const cacheKey = `${version}_${bookId}_${chapterNum}`;
   
   if (chapterCache.has(cacheKey)) {
-    return chapterCache.get(cacheKey)!;
+    const cached = chapterCache.get(cacheKey)!;
+    // Invalidate cached short Slavic Psalm 119
+    if (!(safeBookNum === 19 && safeChapter === 119 && cached.length < 50)) {
+      return cached;
+    }
+    chapterCache.delete(cacheKey);
   }
 
-  // Check LocalStorage cache for previously downloaded chapters
+  // Check LocalStorage cache for previously downloaded chapters (v4 cache schema)
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     try {
-      const localCached = localStorage.getItem(`berea_chapter_v3_${cacheKey}`);
+      const localCached = localStorage.getItem(`berea_chapter_v5_${cacheKey}`);
       if (localCached) {
         const parsed = JSON.parse(localCached);
         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.text) {
           const firstText = String(Object.values(parsed[0].text)[0] || '');
-          // If previous cache was the placeholder fallback, invalidate and refetch
-          if (!firstText.includes('The word of the Lord came unto His servants')) {
+          // If previous cache was placeholder fallback, truncated Slavic Psalm 119, or English text for non-Latin script edition
+          const isStaleShortPsalm119 = safeBookNum === 19 && safeChapter === 119 && parsed.length < 50;
+          const NON_LATIN_LANGS = new Set(['ru', 'uk', 'zh', 'ja', 'ko', 'he', 'el', 'ar', 'fa', 'hi', 'ta', 'kn', 'ml', 'ne']);
+          const isNonLatin = NON_LATIN_LANGS.has(matchedTranslation?.language || '');
+          const isStaleEnglishInNonLatin = isNonLatin && /^[A-Za-z\s,;:'"?.!-]+$/.test(firstText.slice(0, 40));
+          if (!firstText.includes('The word of the Lord came unto His servants') && !isStaleShortPsalm119 && !isStaleEnglishInNonLatin) {
             const sanitizedVerses: Verse[] = parsed.map((v: Verse) => {
               const cleanText: Record<string, string> = {};
               if (v.text) {
@@ -156,6 +184,8 @@ export async function fetchChapterFromYouVersion(
             });
             chapterCache.set(cacheKey, sanitizedVerses);
             return sanitizedVerses;
+          } else {
+            localStorage.removeItem(`berea_chapter_v5_${cacheKey}`);
           }
         }
       }
@@ -164,20 +194,23 @@ export async function fetchChapterFromYouVersion(
     }
   }
 
-  const book = BIBLE_BOOKS.find(b => b.id.toLowerCase() === bookId.toLowerCase()) || BIBLE_BOOKS[0];
-  const rawBookNum = getBookNumber(book.id);
-  const safeBookNum = Math.max(1, Math.min(80, Math.floor(rawBookNum) || 1));
-  const safeChapter = Math.max(1, Math.min(150, Math.floor(chapterNum) || 1));
+  // Slavic / Septuagint Psalter offset mapping (Western Psalm 119 -> Slavic/LXX Psalm 118)
+  const SEPTUAGINT_PSALMS_CODES = new Set(['SYNOD', 'NRT', 'RBS2', 'BTI', 'UKRK', 'UBIO', 'LXX', 'VULG']);
+  let targetChapter = safeChapter;
+  if (safeBookNum === 19 && SEPTUAGINT_PSALMS_CODES.has(rawApiVersion.toUpperCase())) {
+    if (safeChapter >= 11 && safeChapter <= 113) targetChapter = safeChapter - 1;
+    else if (safeChapter === 114 || safeChapter === 115) targetChapter = 113;
+    else if (safeChapter === 116) targetChapter = 114;
+    else if (safeChapter >= 117 && safeChapter <= 146) targetChapter = safeChapter - 1;
+    else if (safeChapter === 147) targetChapter = 146;
+  }
 
   // Strategy 1: High-Speed Open Scripture Endpoint (Bolls Life Scripture API - 66 books, all major versions)
   try {
-    const matchedTranslation = TRANSLATIONS.find(t => t.id.toLowerCase() === version.toLowerCase());
-    const rawApiVersion = matchedTranslation ? matchedTranslation.apiCode : version;
-
     // Direct GetBible provider for Tagalog (Ang Dating Biblia 1905)
     if (rawApiVersion === 'tagalog' || version.toLowerCase() === 'adb') {
       try {
-        const getBibleRes = await fetch(`https://api.getbible.net/v2/tagalog/${safeBookNum}/${safeChapter}.json`);
+        const getBibleRes = await fetch(`https://api.getbible.net/v2/tagalog/${safeBookNum}/${targetChapter}.json`);
         if (getBibleRes.ok) {
           const gbData = await getBibleRes.json();
           if (gbData && Array.isArray(gbData.verses) && gbData.verses.length > 0) {
@@ -194,7 +227,7 @@ export async function fetchChapterFromYouVersion(
             chapterCache.set(cacheKey, verses);
             if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
               try {
-                localStorage.setItem(`berea_chapter_v3_${cacheKey}`, JSON.stringify(verses));
+                localStorage.setItem(`berea_chapter_v5_${cacheKey}`, JSON.stringify(verses));
               } catch {}
             }
             return verses;
@@ -206,7 +239,7 @@ export async function fetchChapterFromYouVersion(
     }
 
     const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
-    const response = await fetch(`https://bolls.life/get-chapter/${safeApiVersion}/${safeBookNum}/${safeChapter}/`, {
+    const response = await fetch(`https://bolls.life/get-chapter/${safeApiVersion}/${safeBookNum}/${targetChapter}/`, {
       headers: { 'Accept': 'application/json' }
     });
 
@@ -229,7 +262,7 @@ export async function fetchChapterFromYouVersion(
         chapterCache.set(cacheKey, verses);
         if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
           try {
-            localStorage.setItem(`berea_chapter_v3_${cacheKey}`, JSON.stringify(verses));
+            localStorage.setItem(`berea_chapter_v5_${cacheKey}`, JSON.stringify(verses));
           } catch {
             // ignore quota limits
           }
@@ -241,10 +274,11 @@ export async function fetchChapterFromYouVersion(
     console.warn(`Primary YouVersion endpoint failed for ${book.name} ${chapterNum} (${version}), trying fallback:`, err);
   }
 
-  // Strategy 2: Fallback Bible API (bible-api.com)
-  try {
-    const bibleApiTrans = version.toLowerCase() === 'kjv' ? 'kjv' : 'web';
-    const fallbackRes = await fetch(`https://bible-api.com/${encodeURIComponent(book.name)}+${chapterNum}?translation=${bibleApiTrans}`);
+  // Strategy 2: Fallback Bible API (bible-api.com) - strictly for English translations
+  if (isEnglish) {
+    try {
+      const bibleApiTrans = version.toLowerCase() === 'kjv' ? 'kjv' : 'web';
+      const fallbackRes = await fetch(`https://bible-api.com/${encodeURIComponent(book.name)}+${chapterNum}?translation=${bibleApiTrans}`);
     if (fallbackRes.ok) {
       const fbData = await fallbackRes.json();
       if (fbData && Array.isArray(fbData.verses) && fbData.verses.length > 0) {
@@ -267,6 +301,7 @@ export async function fetchChapterFromYouVersion(
   } catch (fbErr) {
     console.warn('Fallback Scripture API error:', fbErr);
   }
+}
 
   // Strategy 3: Built-in Preloaded Curated Verses
   if (book.chapters && book.chapters[chapterNum]) {
