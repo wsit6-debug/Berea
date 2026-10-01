@@ -89,14 +89,8 @@ export function App() {
   const targetVerseRef = useRef<number | undefined>(savedPassage?.verseNum || 1);
   const currentBookName = currentBook.name;
 
-  // Selected Verse State
-  const [selectedVerse, setSelectedVerse] = useState<Verse>(() => {
-    const initialVerseNum = savedPassage?.verseNum || 1;
-    return currentChapter.verses.find(v => v.verseNumber === initialVerseNum) || currentChapter.verses[0] || {
-      verseNumber: 1,
-      text: { KJV: 'Loading scripture...' }
-    };
-  });
+  // Selected Verse State (null represents whole chapter view)
+  const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
   const [selectedVerseRange, setSelectedVerseRange] = useState<{ start: number; end: number } | null>(null);
 
   // Synchronized Notepad State lifted to App level so highlights on book side correlate to active tab
@@ -436,7 +430,7 @@ export function App() {
               bookId={bookId}
               chapter={currentChapter}
               activeTranslation={activeTranslation}
-              selectedVerseNumber={selectedVerse.verseNumber}
+              selectedVerseNumber={selectedVerse?.verseNumber ?? null}
               onSelectVerse={(v) => {
                 setSelectedVerse(v);
                 setSelectedVerseRange(null);
@@ -444,7 +438,7 @@ export function App() {
               selectedVerseRange={selectedVerseRange}
               onSelectVerseRange={(range, primaryVerse) => {
                 setSelectedVerseRange(range);
-                if (primaryVerse) {
+                if (primaryVerse !== undefined) {
                   setSelectedVerse(primaryVerse);
                 }
               }}

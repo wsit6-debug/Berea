@@ -17,7 +17,7 @@ import { cleanApiText } from '../services/youversionService';
 import { useBookmarkedVerses, toggleBookmark, isVerseBookmarked } from '../services/bookmarkService';
 
 export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue', { bg: string; border: string; label: string }> = {
-  yellow: { bg: 'var(--hl-yellow-bg, #FEF08A)', border: 'var(--hl-yellow-border, #EAB308)', label: 'Yellow' },
+  yellow: { bg: 'var(--hl-yellow-bg, rgba(180, 121, 61, 0.28))', border: 'var(--hl-yellow-border, var(--clean-accent-caramel, #B4793D))', label: 'Theme' },
   green: { bg: 'var(--hl-green-bg, #BBF7D0)', border: 'var(--hl-green-border, #22C55E)', label: 'Green' },
   red: { bg: 'var(--hl-red-bg, #FECDD3)', border: 'var(--hl-red-border, #F43F5E)', label: 'Red' },
   blue: { bg: 'var(--hl-blue-bg, #BAE6FD)', border: 'var(--hl-blue-border, #0EA5E9)', label: 'Blue' }
@@ -53,10 +53,10 @@ interface BibleReaderProps {
   bookId?: string;
   chapter: Chapter;
   activeTranslation: TranslationId;
-  selectedVerseNumber: number;
-  onSelectVerse: (verse: Verse) => void;
+  selectedVerseNumber?: number | null;
+  onSelectVerse: (verse: Verse | null) => void;
   selectedVerseRange?: { start: number; end: number } | null;
-  onSelectVerseRange?: (range: { start: number; end: number } | null, primaryVerse?: Verse) => void;
+  onSelectVerseRange?: (range: { start: number; end: number } | null, primaryVerse?: Verse | null) => void;
   onNextChapter: () => void;
   onPrevChapter: () => void;
   isFirstChapter: boolean;
@@ -187,6 +187,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [tempDragRange, setTempDragRange] = useState<{ start: number; end: number } | null>(null);
   const dragStartVerseRef = useRef<number | null>(null);
+  const wasDraggingRef = useRef<boolean>(false);
 
   const activeRange = isDragging ? tempDragRange : (selectedVerseRange || (selectedVerseNumber ? { start: selectedVerseNumber, end: selectedVerseNumber } : null));
   const isMultiSelect = Boolean(activeRange && activeRange.start !== activeRange.end);
@@ -228,7 +229,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const isPlayingRef = useRef<boolean>(isPlayingAudio);
   isPlayingRef.current = isPlayingAudio;
 
-  const currentVerseRef = useRef<number>(selectedVerseNumber);
+  const currentVerseRef = useRef<number | null | undefined>(selectedVerseNumber);
   currentVerseRef.current = selectedVerseNumber;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -312,7 +313,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     } else {
       playAuditoryCue('start');
       setIsPlayingAudio(true);
-      playVerseAudio(selectedVerseNumber, playbackSpeed, selectedVoiceId);
+      playVerseAudio(selectedVerseNumber || 1, playbackSpeed, selectedVoiceId);
     }
   };
 
@@ -450,9 +451,11 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             onSelectVerseRange({ start: finalRange.start, end: finalRange.end }, targetVerse);
           }
         } else {
-          if (targetVerse) {
-            onSelectVerse(targetVerse);
-          }
+          wasDraggingRef.current = true;
+          setTimeout(() => {
+            wasDraggingRef.current = false;
+          }, 150);
+          playAuditoryCue('select');
           if (onSelectVerseRange) {
             onSelectVerseRange(finalRange, targetVerse);
           }
@@ -488,7 +491,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     <div
       className="flex flex-col h-full bg-white rounded-2xl border shadow-md overflow-hidden transition-colors duration-300"
       style={{
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--clean-surface, #FFFFFF)',
         borderColor: 'var(--clean-border, #EBE5DC)'
       }}
     >
@@ -870,7 +873,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
       )}
 
       {/* Main Scripture Canvas */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 custom-scrollbar bg-white relative">
+      <div
+        ref={scrollContainerRef}
+        onClick={(e) => {
+          if (wasDraggingRef.current) return;
+          const target = e.target as HTMLElement;
+          if (!target.closest('[data-verse-number]') && !target.closest('button') && !target.closest('a') && !target.closest('input')) {
+            onSelectVerse(null);
+            if (onSelectVerseRange) {
+              onSelectVerseRange(null);
+            }
+          }
+        }}
+        className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 custom-scrollbar bg-white relative"
+        style={{
+          backgroundColor: 'var(--clean-surface, #FFFFFF)'
+        }}
+      >
         {isLoading ? (
           <div className="w-full space-y-3 py-6 animate-pulse">
             <div className="h-6 bg-[#FAF5ED] rounded w-1/4 mx-auto mb-4"></div>
@@ -920,38 +939,68 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     let highlightClasses = '';
                     let highlightInlineStyle: React.CSSProperties = {};
                     if (tabHighlight === 'yellow') {
-                      highlightClasses = 'hl-verse-yellow font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-yellow-bg)', color: 'var(--hl-yellow-text)' };
+                      highlightClasses = 'hl-verse-yellow font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-yellow-bg)',
+                        color: 'var(--hl-yellow-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-yellow-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-yellow-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     } else if (tabHighlight === 'green') {
-                      highlightClasses = 'hl-verse-green font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-green-bg)', color: 'var(--hl-green-text)' };
+                      highlightClasses = 'hl-verse-green font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-green-bg)',
+                        color: 'var(--hl-green-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-green-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-green-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     } else if (tabHighlight === 'red') {
-                      highlightClasses = 'hl-verse-red font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-red-bg)', color: 'var(--hl-red-text)' };
+                      highlightClasses = 'hl-verse-red font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-red-bg)',
+                        color: 'var(--hl-red-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-red-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-red-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     } else if (tabHighlight === 'blue') {
-                      highlightClasses = 'hl-verse-blue font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-blue-bg)', color: 'var(--hl-blue-text)' };
+                      highlightClasses = 'hl-verse-blue font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-blue-bg)',
+                        color: 'var(--hl-blue-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-blue-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-blue-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     }
 
-                    let selectionStyle: React.CSSProperties = {};
+                    let selectionStyle: React.CSSProperties | undefined = undefined;
                     if (isSelected) {
-                      const isStart = !isMultiSelect || isRangeStart;
-                      const isEnd = !isMultiSelect || isRangeEnd;
                       selectionStyle = {
-                        backgroundColor: 'rgba(180, 121, 61, 0.16)',
-                        color: 'var(--clean-text-primary, #1C1917)',
-                        WebkitBoxDecorationBreak: 'clone',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--clean-accent-caramel, #B4793D)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
                         boxDecorationBreak: 'clone',
-                        borderTop: '1.5px solid var(--clean-accent-caramel, #B4793D)',
-                        borderBottom: '1.5px solid var(--clean-accent-caramel, #B4793D)',
-                        borderLeft: isStart ? '1.5px solid var(--clean-accent-caramel, #B4793D)' : 'none',
-                        borderRight: isEnd ? '1.5px solid var(--clean-accent-caramel, #B4793D)' : 'none',
-                        borderTopLeftRadius: isStart ? '4px' : '0',
-                        borderBottomLeftRadius: isStart ? '4px' : '0',
-                        borderTopRightRadius: isEnd ? '4px' : '0',
-                        borderBottomRightRadius: isEnd ? '4px' : '0',
-                        paddingLeft: isStart ? '4px' : '1px',
-                        paddingRight: isEnd ? '4px' : '1px',
+                        WebkitBoxDecorationBreak: 'clone'
                       };
                     }
 
@@ -965,15 +1014,15 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                         className={`cursor-pointer transition-colors duration-100 py-0.5 inline ${tabHighlight
                           ? `${highlightClasses} ${isSelected ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)]' : ''}`
                           : isSelected
-                            ? 'font-normal shadow-2xs'
+                            ? 'font-normal'
                             : isHighlighterMode
-                              ? 'hover:bg-amber-100/70 hover:shadow-2xs rounded'
-                              : 'hover:bg-[var(--clean-highlight-cream,#FAF9F5)] rounded'
+                              ? 'hover:bg-black/5 hover:shadow-2xs rounded'
+                              : 'hover:bg-black/5 rounded'
                           }`}
                       >
                         <sup
-                          style={!tabHighlight && isSelected ? { color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' } : undefined}
-                          className={`text-[10.5px] select-none mr-1 ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'font-black' : 'text-[#8C827A] font-bold'}`}
+                          style={!tabHighlight && isSelected ? { color: 'var(--clean-accent-caramel, #B4793D)' } : undefined}
+                          className={`text-[10.5px] select-none mr-1 ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'font-black text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#8C827A] font-bold'}`}
                         >
                           {verse.verseNumber}
                           {isBookmarked && <span style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} className="ml-0.5">★</span>}
@@ -1004,17 +1053,49 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   let highlightContainerClasses = '';
                   let highlightVerseStyle: React.CSSProperties = {};
                   if (tabHighlight === 'yellow') {
-                    highlightContainerClasses = 'border-l-4 border-amber-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-yellow-bg)', color: 'var(--hl-yellow-text)' };
+                    highlightContainerClasses = 'border-l-4 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-yellow-bg)',
+                      color: 'var(--hl-yellow-text)',
+                      borderLeftColor: 'var(--hl-yellow-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-yellow-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   } else if (tabHighlight === 'green') {
-                    highlightContainerClasses = 'border-l-4 border-emerald-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-green-bg)', color: 'var(--hl-green-text)' };
+                    highlightContainerClasses = 'border-l-4 border-emerald-500 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-green-bg)',
+                      color: 'var(--hl-green-text)',
+                      borderLeftColor: 'var(--hl-green-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-green-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   } else if (tabHighlight === 'red') {
-                    highlightContainerClasses = 'border-l-4 border-rose-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-red-bg)', color: 'var(--hl-red-text)' };
+                    highlightContainerClasses = 'border-l-4 border-rose-500 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-red-bg)',
+                      color: 'var(--hl-red-text)',
+                      borderLeftColor: 'var(--hl-red-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-red-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   } else if (tabHighlight === 'blue') {
-                    highlightContainerClasses = 'border-l-4 border-sky-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-blue-bg)', color: 'var(--hl-blue-text)' };
+                    highlightContainerClasses = 'border-l-4 border-sky-500 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-blue-bg)',
+                      color: 'var(--hl-blue-text)',
+                      borderLeftColor: 'var(--hl-blue-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-blue-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   }
 
                   return (
@@ -1026,9 +1107,11 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           ? highlightVerseStyle
                           : isSelected
                             ? {
-                                backgroundColor: 'rgba(180, 121, 61, 0.12)',
-                                border: '1px solid var(--clean-accent-border, #EBE5DC)',
-                                borderLeft: '3.5px solid var(--clean-accent-border-strong, var(--clean-accent-caramel, #B4793D))',
+                                borderLeft: '3.5px solid var(--clean-accent-caramel, #B4793D)',
+                                textDecorationLine: 'underline',
+                                textDecorationColor: 'var(--clean-accent-caramel, #B4793D)',
+                                textDecorationThickness: '2px',
+                                textUnderlineOffset: '3.5px',
                                 color: 'var(--clean-text-primary, #1C1917)'
                               }
                             : undefined
@@ -1446,7 +1529,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       }
                     } catch { }
                     if (isPlayingAudio) {
-                      playVerseAudio(selectedVerseNumber, playbackSpeed, newVoice);
+                      playVerseAudio(selectedVerseNumber || 1, playbackSpeed, newVoice);
                     }
                   }}
                   className="bg-[#38332E] text-xs text-[#EBE5DC] border border-[#48423B] rounded-full px-2.5 py-1 focus:outline-none focus:border-[var(--clean-accent-caramel,#B4793D)] font-medium cursor-pointer max-w-[210px] truncate"
@@ -1467,7 +1550,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     key={rate}
                     onClick={() => {
                       setPlaybackSpeed(rate);
-                      playVerseAudio(selectedVerseNumber, rate, selectedVoiceId);
+                      playVerseAudio(selectedVerseNumber || 1, rate, selectedVoiceId);
                     }}
                     className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono transition-all ${playbackSpeed === rate
                         ? 'bg-[var(--clean-accent-caramel,#B4793D)] text-white font-bold'

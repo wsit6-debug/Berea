@@ -14,10 +14,10 @@
   --clean-accent-caramel: #B4793D;
   --clean-accent-honey: #D4A373;
   --clean-highlight-cream: #FAF3E8;
-  /* Dynamic Contrast Highlight Tokens */
-  --hl-yellow-bg: #FEF08A;
-  --hl-yellow-text: #451A03;
-  --hl-yellow-border: #EAB308;
+  /* Dynamic Contrast Highlight Tokens: Theme Accent by default */
+  --hl-yellow-bg: rgba(var(--clean-accent-rgb, 180, 121, 61), 0.40);
+  --hl-yellow-text: var(--clean-accent-dark, #1C1917);
+  --hl-yellow-border: var(--clean-accent-caramel, #B4793D);
 
   --hl-green-bg: #BBF7D0;
   --hl-green-text: #052E16;
