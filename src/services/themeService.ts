@@ -265,6 +265,9 @@ export function applyThemeToDocument(theme: ThemeConfig): void {
   root.style.setProperty('--clean-accent-border', accentBorderHex);
   root.style.setProperty('--clean-accent-border-strong', accentBorderStrongHex);
   root.style.setProperty('--clean-accent-contrast-text', accentContrastText);
+  root.style.setProperty('--hl-yellow-bg', `rgba(${r}, ${g}, ${b}, 0.40)`);
+  root.style.setProperty('--hl-yellow-text', accentDarkHex);
+  root.style.setProperty('--hl-yellow-border', accentHex);
 
   // 2. Bible pages: Keep the clean crisp white background & readable text
   root.style.setProperty('--clean-surface', '#FFFFFF');

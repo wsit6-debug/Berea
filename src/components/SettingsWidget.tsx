@@ -13,7 +13,8 @@ import {
   Sparkles,
   Trash2,
   Plus,
-  Lock
+  Lock,
+  Globe
 } from 'lucide-react';
 import {
   ThemeConfig,
@@ -203,8 +204,8 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
           className="absolute top-full right-0 mt-2 z-50 flex flex-col rounded-2xl border shadow-2xl backdrop-blur-xl animate-fadeIn overflow-hidden"
           style={{
             zIndex: 70,
-            width: '380px',
-            maxWidth: 'calc(100vw - 2.5rem)',
+            width: '410px',
+            maxWidth: 'calc(100vw - 1.5rem)',
             height: '520px',
             maxHeight: '85vh',
             backgroundColor: 'var(--clean-surface, #FFFFFF)',
@@ -255,7 +256,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
 
           {/* 3-Tab Navigation: Language | Theme | Feedback */}
           <div
-            className="flex items-center p-1.5 border-b gap-1.5 shrink-0 overflow-x-auto custom-scrollbar"
+            className="grid grid-cols-3 p-1.5 border-b gap-1.5 shrink-0"
             style={{
               borderColor: 'var(--clean-accent-border, #EBE5DC)',
               backgroundColor: 'var(--clean-surface, #FFFFFF)',
@@ -265,39 +266,39 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('language')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+              className={`w-full h-full px-1.5 rounded-lg text-[11.5px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border whitespace-nowrap min-w-0 ${
                 activeTab === 'language'
                   ? 'border-[var(--clean-accent-border-strong,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-dark,#78471F)] shadow-2xs'
                   : 'border-transparent text-[var(--clean-text-secondary,#78716C)] hover:bg-[var(--clean-surface-warm,#FAF5ED)]'
               }`}
             >
-              <span className="w-3.5 h-3.5 flex items-center justify-center">🌍</span>
+              <Globe className="w-3.5 h-3.5 shrink-0" />
               <span>{t('tabLanguage', 'Language')}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('theme')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+              className={`w-full h-full px-1.5 rounded-lg text-[11.5px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border whitespace-nowrap min-w-0 ${
                 activeTab === 'theme'
                   ? 'border-[var(--clean-accent-border-strong,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-dark,#78471F)] shadow-2xs'
                   : 'border-transparent text-[var(--clean-text-secondary,#78716C)] hover:bg-[var(--clean-surface-warm,#FAF5ED)]'
               }`}
             >
-              <Palette className="w-3.5 h-3.5" />
+              <Palette className="w-3.5 h-3.5 shrink-0" />
               <span>{t('tabColorScheme', 'Theme')}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('feedback')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+              className={`w-full h-full px-1.5 rounded-lg text-[11.5px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border whitespace-nowrap min-w-0 ${
                 activeTab === 'feedback'
                   ? 'border-[var(--clean-accent-border-strong,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] text-[var(--clean-accent-dark,#78471F)] shadow-2xs'
                   : 'border-transparent text-[var(--clean-text-secondary,#78716C)] hover:bg-[var(--clean-surface-warm,#FAF5ED)]'
               }`}
             >
-              <MessageSquareHeart className="w-3.5 h-3.5" />
+              <MessageSquareHeart className="w-3.5 h-3.5 shrink-0" />
               <span>{t('tabFeedback', 'Feedback')}</span>
             </button>
           </div>
@@ -308,7 +309,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
             {activeTab === 'language' && (
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--clean-text-secondary,#78716C)]">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--clean-text-secondary,#78716C)] block text-center">
                     {t('languageSelectTitle', 'Interface & Theology Language')}
                   </span>
                   <div className="grid grid-cols-2 gap-2">
@@ -319,17 +320,28 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
                           key={lang.code}
                           type="button"
                           onClick={() => setLanguage(lang.code)}
-                          className={`p-2 rounded-xl border flex items-center gap-2 text-xs transition-all cursor-pointer ${
+                          className={`p-2.5 rounded-xl relative flex items-center justify-center gap-2 text-xs transition-all cursor-pointer ${
                             isActive
-                              ? 'border-[var(--clean-accent-caramel,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] font-bold shadow-xs'
-                              : 'border-[var(--clean-accent-border,#EBE5DC)] bg-[var(--clean-surface,#FFFFFF)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] font-medium'
+                              ? 'border-2 border-[var(--clean-accent-caramel,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] shadow-xs ring-1 ring-[var(--clean-accent-caramel,#B4793D)]/20'
+                              : 'border border-[var(--clean-accent-border,#EBE5DC)] bg-[var(--clean-surface,#FFFFFF)] hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:border-[var(--clean-accent-border-strong,#B4793D)]/40'
                           }`}
                         >
-                          <span className="text-base leading-none">{lang.flag}</span>
-                          <span className="truncate text-left flex-1" style={{ color: isActive ? 'var(--clean-accent-dark,#78471F)' : 'var(--clean-text-primary,#26221F)' }}>
+                          <span className="text-base leading-none shrink-0">{lang.flag}</span>
+                          <span
+                            className="truncate text-center"
+                            style={{
+                              color: isActive ? 'var(--clean-accent-dark,#78471F)' : 'var(--clean-text-primary,#26221F)',
+                              fontWeight: isActive ? 700 : 500
+                            }}
+                          >
                             {lang.nativeName}
                           </span>
-                          {isActive && <Check className="w-3.5 h-3.5 shrink-0 text-[var(--clean-accent-caramel,#B4793D)]" />}
+                          {isActive && (
+                            <span
+                              className="absolute bottom-1 w-6 h-0.5 rounded-full"
+                              style={{ backgroundColor: 'var(--clean-accent-caramel, #B4793D)' }}
+                            />
+                          )}
                         </button>
                       );
                     })}

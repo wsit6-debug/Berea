@@ -65,13 +65,10 @@ export function App() {
   });
   const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination(activeLens));
   const [activeSidebar, setActiveSidebar] = useState<'guide' | 'notepad' | 'compare' | null>('guide');
-  const [displayedSidebar, setDisplayedSidebar] = useState<'guide' | 'notepad' | 'compare'>('guide');
-
-  useEffect(() => {
-    if (activeSidebar) {
-      setDisplayedSidebar(activeSidebar);
-    }
-  }, [activeSidebar]);
+  const lastActiveSidebarRef = useRef<'guide' | 'notepad' | 'compare'>('guide');
+  if (activeSidebar) {
+    lastActiveSidebarRef.current = activeSidebar;
+  }
   const [aiPanelTab, setAiPanelTab] = useState<BereaAiTab>('overview');
 
   // Modals state
@@ -93,14 +90,8 @@ export function App() {
   const targetVerseRef = useRef<number | undefined>(savedPassage?.verseNum || 1);
   const currentBookName = currentBook.name;
 
-  // Selected Verse State
-  const [selectedVerse, setSelectedVerse] = useState<Verse>(() => {
-    const initialVerseNum = savedPassage?.verseNum || 1;
-    return currentChapter.verses.find(v => v.verseNumber === initialVerseNum) || currentChapter.verses[0] || {
-      verseNumber: 1,
-      text: { KJV: 'Loading scripture...' }
-    };
-  });
+  // Selected Verse State (null represents whole chapter view)
+  const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
   const [selectedVerseRange, setSelectedVerseRange] = useState<{ start: number; end: number } | null>(null);
 
   // Synchronized Notepad State lifted to App level so highlights on book side correlate to active tab
@@ -442,7 +433,7 @@ export function App() {
               bookId={bookId}
               chapter={currentChapter}
               activeTranslation={activeTranslation}
-              selectedVerseNumber={selectedVerse.verseNumber}
+              selectedVerseNumber={selectedVerse?.verseNumber ?? null}
               onSelectVerse={(v) => {
                 setSelectedVerse(v);
                 setSelectedVerseRange(null);
@@ -450,7 +441,7 @@ export function App() {
               selectedVerseRange={selectedVerseRange}
               onSelectVerseRange={(range, primaryVerse) => {
                 setSelectedVerseRange(range);
-                if (primaryVerse) {
+                if (primaryVerse !== undefined) {
                   setSelectedVerse(primaryVerse);
                 }
               }}
@@ -493,12 +484,13 @@ export function App() {
             />
           </div>
 
-          {/* Dedicated Right Sidebar Container (Guide / Notepad / Compare) */}
+          {/* Unified Right Sidebar: Berea AI Guide, Study Notepad & Version Compare */}
           <AnimatedPresence isVisible={activeSidebar !== null} duration={250}>
-            {(isClosing) => (
-              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
-                {displayedSidebar === 'guide' && (
-                  <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+            {(isClosing) => {
+              const displayedSidebar = activeSidebar || lastActiveSidebarRef.current;
+              return (
+                <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
+                  <div className={`h-full flex-col min-h-0 overflow-hidden ${displayedSidebar === 'guide' ? 'flex' : 'hidden'}`}>
                     <BereaAiPanel
                       currentBook={currentBook.name}
                       currentChapter={chapterNum}
@@ -525,10 +517,8 @@ export function App() {
                       onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
                     />
                   </div>
-                )}
 
-                {displayedSidebar === 'notepad' && (
-                  <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+                  <div className={`h-full flex-col min-h-0 overflow-hidden ${displayedSidebar === 'notepad' ? 'flex' : 'hidden'}`}>
                     <div
                       className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
                       style={{
@@ -573,7 +563,7 @@ export function App() {
 
                         <button
                           onClick={() => setActiveSidebar(null)}
-                          className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
+                          className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0 cursor-pointer"
                           title="Close Notepad"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -602,10 +592,8 @@ export function App() {
                       </div>
                     </div>
                   </div>
-                )}
 
-                {displayedSidebar === 'compare' && (
-                  <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+                  <div className={`h-full flex-col min-h-0 overflow-hidden ${displayedSidebar === 'compare' ? 'flex' : 'hidden'}`}>
                     <div
                       className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
                       style={{
@@ -650,7 +638,7 @@ export function App() {
 
                         <button
                           onClick={() => setActiveSidebar(null)}
-                          className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
+                          className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0 cursor-pointer"
                           title="Close Compare"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -661,7 +649,7 @@ export function App() {
                         <VersionComparePanel
                           currentBook={currentBook.name}
                           currentChapter={chapterNum}
-                          chapterVerses={currentChapter.verses}
+                          chapterVerses={currentChapter?.verses}
                           selectedVerse={selectedVerse}
                           activeTranslation={activeTranslation}
                           activeLens={activeLens}
@@ -671,9 +659,9 @@ export function App() {
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              );
+            }}
           </AnimatedPresence>
         </div>
       </main>
