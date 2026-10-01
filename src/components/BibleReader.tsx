@@ -130,6 +130,37 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     }
     setIsEditingFontSize(false);
   };
+  // Toolbar horizontal scroll navigation state
+  const toolbarScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollToolbarLeft, setCanScrollToolbarLeft] = useState(false);
+  const [canScrollToolbarRight, setCanScrollToolbarRight] = useState(false);
+
+  const checkToolbarScroll = useCallback(() => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+    setCanScrollToolbarLeft(el.scrollLeft > 4);
+    setCanScrollToolbarRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+    checkToolbarScroll();
+    const ro = new ResizeObserver(checkToolbarScroll);
+    ro.observe(el);
+    el.addEventListener('scroll', checkToolbarScroll, { passive: true });
+    return () => {
+      ro.disconnect();
+      el.removeEventListener('scroll', checkToolbarScroll);
+    };
+  }, [checkToolbarScroll]);
+
+  const scrollToolbar = (direction: 'left' | 'right') => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction === 'left' ? -160 : 160, behavior: 'smooth' });
+  };
+
   const [showRedLetter, setShowRedLetter] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('berea_show_red_letters');
@@ -495,13 +526,33 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
       {/* Top Compact Reading Bar (Single Row, Never Wraps) */}
       <div
-        className="reader-toolbar px-3 sm:px-4 py-1.5 border-b flex items-center justify-between select-none flex-shrink-0 transition-colors gap-2 overflow-x-auto no-scrollbar flex-nowrap"
+        className="p-1 px-2 border-b border-[var(--clean-border,#EBE5DC)] flex items-center gap-1 select-none flex-shrink-0 relative overflow-hidden"
         style={{
           backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
-          borderColor: 'var(--clean-border, #EBE5DC)',
           color: 'var(--clean-text-primary, #26221F)'
         }}
       >
+        {/* Scroll Left Push Button (visible when scrolled right) */}
+        {canScrollToolbarLeft && (
+          <button
+            onClick={() => scrollToolbar('left')}
+            className="w-5 h-6 rounded flex items-center justify-center bg-white hover:bg-[#FAF5ED] border border-[#E2D5C3] text-[#78716C] hover:text-[#B4793D] shadow-xs flex-shrink-0 transition-all z-10 cursor-pointer"
+            title="Scroll toolbar left"
+            aria-label="Scroll toolbar left"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        <div
+          ref={toolbarScrollRef}
+          onWheel={(e) => {
+            if (e.deltaY !== 0 && toolbarScrollRef.current) {
+              toolbarScrollRef.current.scrollLeft += e.deltaY;
+            }
+          }}
+          className="reader-toolbar flex-1 flex items-center justify-between select-none flex-shrink-0 transition-colors gap-2 flex-nowrap scroll-smooth no-scrollbar overflow-x-auto"
+        >
         {/* Left Side: Chapter Navigation & Reading Mode */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap">
           {/* Chapter Stepper */}
@@ -801,6 +852,19 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Scroll Right Push Button (visible when content overflows right) */}
+      {canScrollToolbarRight && (
+        <button
+          onClick={() => scrollToolbar('right')}
+          className="w-5 h-6 rounded flex items-center justify-center bg-white hover:bg-[#FAF5ED] border border-[#E2D5C3] text-[#78716C] hover:text-[#B4793D] shadow-xs flex-shrink-0 transition-all z-10 cursor-pointer"
+          title="Scroll toolbar right"
+          aria-label="Scroll toolbar right"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
 
       {/* Red Lines Active Notification when current passage has no direct words of Christ */}
       {showRedLetter && !chapterHasRedLines && (

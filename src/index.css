@@ -157,6 +157,33 @@ body {
   background: #9A622A;
 }
 
+/* Elegant Visible Horizontal Scroller for Toolbar and Tabs */
+.custom-horizontal-scroller {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(180, 121, 61, 0.45) rgba(235, 229, 220, 0.35);
+}
+
+.custom-horizontal-scroller::-webkit-scrollbar {
+  height: 4px;
+  display: block;
+}
+
+.custom-horizontal-scroller::-webkit-scrollbar-track {
+  background: rgba(235, 229, 220, 0.3);
+  border-radius: 9999px;
+}
+
+.custom-horizontal-scroller::-webkit-scrollbar-thumb {
+  background: rgba(180, 121, 61, 0.45);
+  border-radius: 9999px;
+  transition: background 0.15s ease-in-out;
+}
+
+.custom-horizontal-scroller::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 121, 61, 0.85);
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {

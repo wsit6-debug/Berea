@@ -66,6 +66,104 @@ export function App() {
   const [activeSidebar, setActiveSidebar] = useState<'guide' | 'notepad' | null>('guide');
   const [aiPanelTab, setAiPanelTab] = useState<BereaAiTab>('overview');
 
+  // Split pane slider state (VS Code style resizable sidebar)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [sidebarWidthPct, setSidebarWidthPct] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('berea_sidebar_width_pct');
+      if (saved) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 22 && parsed <= 68) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return 41.67; // Default 5/12 split
+  });
+  const [isDraggingSplitter, setIsDraggingSplitter] = useState(false);
+  const [isWideScreen, setIsWideScreen] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsWideScreen(window.innerWidth >= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Pointer drag listener for the VS Code style splitter
+  useEffect(() => {
+    if (!isDraggingSplitter) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      if (rect.width <= 0) return;
+
+      const rightWidthPx = rect.right - e.clientX;
+      let newPct = (rightWidthPx / rect.width) * 100;
+
+      // Keep comfortable minimum bounds so tabs & reading are never crushed:
+      // Bible reader min 400px, sidebar min 360px, max sidebar 62%, min sidebar 25%
+      const minSidebarPct = Math.max(25, (360 / rect.width) * 100);
+      const maxSidebarPct = Math.min(62, ((rect.width - 400) / rect.width) * 100);
+      newPct = Math.min(Math.max(newPct, minSidebarPct), maxSidebarPct);
+
+      setSidebarWidthPct(newPct);
+    };
+
+    const handlePointerUp = () => {
+      setIsDraggingSplitter(false);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDraggingSplitter]);
+
+  // Persist sidebar width preference
+  useEffect(() => {
+    try {
+      localStorage.setItem('berea_sidebar_width_pct', sidebarWidthPct.toFixed(2));
+    } catch {
+      // ignore
+    }
+  }, [sidebarWidthPct]);
+
+  const handleSplitterPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDraggingSplitter(true);
+  };
+
+  const handleResetSplitter = () => {
+    setSidebarWidthPct(41.67);
+  };
+
+  const handleSplitterKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSidebarWidthPct(prev => Math.min(prev + 2, 68));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSidebarWidthPct(prev => Math.max(prev - 2, 22));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setSidebarWidthPct(41.67);
+    }
+  };
+
   // Modals state
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
@@ -424,9 +522,25 @@ export function App() {
 
       {/* Main App Workspace: Clean Scripture Reading + Berea AI Guide or Notepad */}
       <main className="flex-1 max-w-[1740px] w-full mx-auto px-2 sm:px-4 lg:px-6 py-2 flex flex-col min-h-0 overflow-hidden">
-        <div className={`flex-1 grid grid-cols-1 ${activeSidebar ? 'lg:grid-cols-12' : 'max-w-5xl mx-auto w-full'} gap-3 sm:gap-4 h-full min-h-0 overflow-hidden`}>
+        <div 
+          ref={containerRef}
+          style={
+            activeSidebar && isWideScreen
+              ? {
+                  display: 'grid',
+                  gridTemplateColumns: `minmax(380px, 1fr) 26px minmax(340px, ${sidebarWidthPct.toFixed(1)}%)`,
+                  transition: isDraggingSplitter ? 'none' : 'grid-template-columns 0.15s ease-out'
+                }
+              : undefined
+          }
+          className={`flex-1 ${
+            activeSidebar 
+              ? (isWideScreen ? 'w-full' : 'grid grid-cols-1 gap-3') 
+              : 'max-w-5xl mx-auto w-full'
+          } h-full min-h-0 overflow-hidden relative`}
+        >
           {/* Bible Reader Pane */}
-          <div className={`${activeSidebar ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
+          <div className="w-full flex flex-col h-full min-h-0 overflow-hidden">
             <BibleReader
               bookName={currentBook.name}
               bookId={bookId}
@@ -483,116 +597,239 @@ export function App() {
             />
           </div>
 
+          {/* Book Spine Slider (The middle binding of an open book spanning the line area) */}
+          {activeSidebar && isWideScreen && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-valuenow={Math.round(sidebarWidthPct)}
+              aria-valuemin={22}
+              aria-valuemax={68}
+              aria-label="Resize Scripture and Study pages"
+              tabIndex={0}
+              onPointerDown={handleSplitterPointerDown}
+              onDoubleClick={handleResetSplitter}
+              onKeyDown={handleSplitterKeyDown}
+              title="Book Spine • Drag left or right to adjust page split • Double-click to center"
+              className={`flex items-center justify-center w-[26px] h-full cursor-col-resize select-none touch-none relative group z-30 flex-shrink-0 ${
+                isDraggingSplitter ? 'cursor-col-resize' : ''
+              }`}
+            >
+              {/* Page Gutter Crease Shadow (Casts realistic paper curve shadows onto left and right pages) */}
+              <div 
+                className="absolute inset-y-0 -left-3 -right-3 pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity"
+                style={{
+                  background: 'linear-gradient(to right, rgba(0,0,0,0.15) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.15) 100%)'
+                }}
+              />
+
+              {/* Full-Length Book Spine Slider Cursor (Styled with active color scheme tokens) */}
+              <div
+                className="w-[20px] sm:w-[22px] h-full rounded-full sm:rounded-xl transition-all duration-200 relative flex flex-col items-center justify-between py-2 cursor-col-resize select-none"
+                style={{
+                  background: isDraggingSplitter
+                    ? 'linear-gradient(to bottom, var(--clean-accent-dark, #8C5A28) 0%, var(--clean-accent-caramel, #B4793D) 50%, var(--clean-accent-dark, #8C5A28) 100%)'
+                    : 'linear-gradient(to bottom, var(--clean-accent-dark, #8C5A28) 0%, var(--clean-accent-caramel, #B4793D) 35%, var(--clean-accent-honey, #D4A373) 50%, var(--clean-accent-caramel, #B4793D) 65%, var(--clean-accent-dark, #8C5A28) 100%)',
+                  border: '1.5px solid var(--clean-accent-border-strong, #8C5A28)',
+                  boxShadow: isDraggingSplitter
+                    ? '0 0 18px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.8), inset 0 1px 3px rgba(255,255,255,0.45), inset 0 -1px 3px rgba(0,0,0,0.35)'
+                    : '0 2px 10px rgba(0,0,0,0.22), inset 0 1px 2px rgba(255,255,255,0.35), inset 0 -1px 3px rgba(0,0,0,0.3)'
+                }}
+              >
+                {/* Top Book Headband Accent (Woven embroidery matching theme accent) */}
+                <div 
+                  className="w-[18px] h-[7px] rounded-t-md border shadow-xs flex-shrink-0"
+                  style={{
+                    background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), var(--clean-highlight-cream, #FAF5ED), var(--clean-accent-dark, #8C5A28))',
+                    borderColor: 'var(--clean-accent-border, #D4A373)'
+                  }}
+                  title="Spine Headband" 
+                />
+
+                {/* Upper Raised Spine Cords (Traditional bookbinding ribs) */}
+                <div className="flex flex-col gap-10 items-center w-full my-auto opacity-90 group-hover:opacity-100 transition-opacity">
+                  <div 
+                    className="w-[14px] h-[3px] rounded-full shadow-xs"
+                    style={{
+                      background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), #FFFFFF, var(--clean-accent-dark, #8C5A28))'
+                    }} 
+                  />
+                  <div 
+                    className="w-[14px] h-[3px] rounded-full shadow-xs"
+                    style={{
+                      background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), #FFFFFF, var(--clean-accent-dark, #8C5A28))'
+                    }} 
+                  />
+                  <div 
+                    className="w-[14px] h-[3px] rounded-full shadow-xs"
+                    style={{
+                      background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), #FFFFFF, var(--clean-accent-dark, #8C5A28))'
+                    }} 
+                  />
+                </div>
+
+                {/* Center Tactile Grip & Chevron Indicators */}
+                <div 
+                  className="flex flex-col items-center gap-1.5 my-auto py-2.5 px-1.5 rounded-full border backdrop-blur-xs flex-shrink-0 shadow-sm"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.28)',
+                    borderColor: 'rgba(255, 255, 255, 0.45)'
+                  }}
+                >
+                  <span className="text-[11px] font-bold leading-none text-white select-none opacity-95 drop-shadow-xs">‹</span>
+                  <div className="flex flex-col gap-1 items-center">
+                    <div className="w-2.5 h-0.5 rounded-full bg-white opacity-85 shadow-2xs" />
+                    <div className="w-3.5 h-0.5 rounded-full bg-white opacity-95 shadow-2xs" />
+                    <div className="w-2.5 h-0.5 rounded-full bg-white opacity-85 shadow-2xs" />
+                  </div>
+                  <span className="text-[11px] font-bold leading-none text-white select-none opacity-95 drop-shadow-xs">›</span>
+                </div>
+
+                {/* Lower Raised Spine Cords (Traditional bookbinding ribs) */}
+                <div className="flex flex-col gap-10 items-center w-full my-auto opacity-90 group-hover:opacity-100 transition-opacity">
+                  <div 
+                    className="w-[14px] h-[3px] rounded-full shadow-xs"
+                    style={{
+                      background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), #FFFFFF, var(--clean-accent-dark, #8C5A28))'
+                    }} 
+                  />
+                  <div 
+                    className="w-[14px] h-[3px] rounded-full shadow-xs"
+                    style={{
+                      background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), #FFFFFF, var(--clean-accent-dark, #8C5A28))'
+                    }} 
+                  />
+                  <div 
+                    className="w-[14px] h-[3px] rounded-full shadow-xs"
+                    style={{
+                      background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), #FFFFFF, var(--clean-accent-dark, #8C5A28))'
+                    }} 
+                  />
+                </div>
+
+                {/* Bottom Book Tailband Accent (Woven embroidery matching theme accent) */}
+                <div 
+                  className="w-[18px] h-[7px] rounded-b-md border shadow-xs flex-shrink-0"
+                  style={{
+                    background: 'linear-gradient(to right, var(--clean-accent-dark, #8C5A28), var(--clean-highlight-cream, #FAF5ED), var(--clean-accent-dark, #8C5A28))',
+                    borderColor: 'var(--clean-accent-border, #D4A373)'
+                  }}
+                  title="Spine Tailband" 
+                />
+              </div>
+            </div>
+          )}
+
           {/* Berea AI Guide Inspector Sidebar */}
           <AnimatedPresence isVisible={activeSidebar === 'guide'} duration={250}>
             {(isClosing) => (
-              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
-              <BereaAiPanel
-                currentBook={currentBook.name}
-                currentChapter={chapterNum}
-                selectedVerse={selectedVerse}
-                selectedVerseRange={selectedVerseRange}
-                onVerseRangeChange={setSelectedVerseRange}
-                onNavigateToChapterAndVerse={(c, v, range) => handleSelectPassage(currentBook.id, c, v, range)}
-                chapterVerses={currentChapter?.verses}
-                activeLens={activeLens}
-                onLensChange={handleSelectLens}
-                activeTranslation={activeTranslation}
-                onTranslationChange={setActiveTranslation}
-                onClose={() => setActiveSidebar(null)}
-                activeTab={aiPanelTab}
-                onTabChange={setAiPanelTab}
-                activeQuizType={quizType}
-                onQuizTypeChange={setQuizType}
-                onOpenQuiz={(type) => {
-                  setQuizType(type);
-                  setAiPanelTab('quiz');
-                  setActiveSidebar('guide');
-                }}
-                selectedCharacter={selectedCharacter}
-                onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
-              />
-            </div>
+              <div className={`w-full flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
+                <BereaAiPanel
+                  currentBook={currentBook.name}
+                  currentChapter={chapterNum}
+                  selectedVerse={selectedVerse}
+                  selectedVerseRange={selectedVerseRange}
+                  onVerseRangeChange={setSelectedVerseRange}
+                  onNavigateToChapterAndVerse={(c, v, range) => handleSelectPassage(currentBook.id, c, v, range)}
+                  chapterVerses={currentChapter?.verses}
+                  activeLens={activeLens}
+                  onLensChange={handleSelectLens}
+                  activeTranslation={activeTranslation}
+                  onTranslationChange={setActiveTranslation}
+                  onClose={() => setActiveSidebar(null)}
+                  activeTab={aiPanelTab}
+                  onTabChange={setAiPanelTab}
+                  activeQuizType={quizType}
+                  onQuizTypeChange={setQuizType}
+                  onOpenQuiz={(type) => {
+                    setQuizType(type);
+                    setAiPanelTab('quiz');
+                    setActiveSidebar('guide');
+                  }}
+                  selectedCharacter={selectedCharacter}
+                  onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
+                />
+              </div>
             )}
           </AnimatedPresence>
 
           {/* Dedicated Notepad Sidebar (Independent Tab) */}
           <AnimatedPresence isVisible={activeSidebar === 'notepad'} duration={250}>
             {(isClosing) => (
-              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
-              <div
-                className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
-                style={{
-                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                }}
-              >
-                {/* Header with Title & Close Button */}
+              <div className={`w-full flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
                 <div
-                  className="p-2 px-3 border-b flex items-center justify-between select-none flex-shrink-0"
+                  className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
                   style={{
-                    backgroundColor: '#FFFFFF',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                    color: '#26221F'
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
                   }}
                 >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-lg border flex items-center justify-center"
-                      style={{
-                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                        borderColor: 'var(--clean-accent-border, #E2D5C3)'
-                      }}
+                  {/* Header with Title & Close Button */}
+                  <div
+                    className="p-2 px-3 border-b flex items-center justify-between select-none flex-shrink-0"
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                      color: '#26221F'
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-6 h-6 rounded-lg border flex items-center justify-center"
+                        style={{
+                          backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                          borderColor: 'var(--clean-accent-border, #E2D5C3)'
+                        }}
+                      >
+                        <NotebookPen className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                      </div>
+                      <div>
+                        <h3
+                          className="font-serif font-bold text-xs leading-none"
+                          style={{ color: '#26221F' }}
+                        >
+                          Personal Study Notepad
+                        </h3>
+                        <p
+                          className="text-[10px] leading-none mt-0.5"
+                          style={{ color: '#78716C' }}
+                        >
+                          Reflections, study notes & chapter journals
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setActiveSidebar(null)}
+                      className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
+                      title="Close Notepad"
                     >
-                      <NotebookPen className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-                    </div>
-                    <div>
-                      <h3
-                        className="font-serif font-bold text-xs leading-none"
-                        style={{ color: '#26221F' }}
-                      >
-                        Personal Study Notepad
-                      </h3>
-                      <p
-                        className="text-[10px] leading-none mt-0.5"
-                        style={{ color: '#78716C' }}
-                      >
-                        Reflections, study notes & chapter journals
-                      </p>
-                    </div>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => setActiveSidebar(null)}
-                    className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
-                    title="Close Notepad"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-                  <NotepadPanel
-                    currentBook={currentBook.name}
-                    currentChapter={chapterNum}
-                    selectedVerse={selectedVerse}
-                    selectedVerseRange={selectedVerseRange}
-                    activeTranslation={activeTranslation}
-                    activeLens={activeLens}
-                    notepadState={notepadState}
-                    setNotepadState={setNotepadState}
-                    tabHighlights={activeTabHighlights}
-                    onHighlightVerse={handleToggleVerseHighlight}
-                    activeTabTitle={activeTab?.title}
-                    isHighlighterMode={isHighlighterMode}
-                    onToggleHighlighterMode={() => setIsHighlighterMode(prev => !prev)}
-                    activeHighlightColor={activeHighlightColor}
-                    onSelectHighlightColor={setActiveHighlightColor}
-                    onSelectPassage={handleSelectPassage}
-                  />
+                  <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                    <NotepadPanel
+                      currentBook={currentBook.name}
+                      currentChapter={chapterNum}
+                      selectedVerse={selectedVerse}
+                      selectedVerseRange={selectedVerseRange}
+                      activeTranslation={activeTranslation}
+                      activeLens={activeLens}
+                      notepadState={notepadState}
+                      setNotepadState={setNotepadState}
+                      tabHighlights={activeTabHighlights}
+                      onHighlightVerse={handleToggleVerseHighlight}
+                      activeTabTitle={activeTab?.title}
+                      isHighlighterMode={isHighlighterMode}
+                      onToggleHighlighterMode={() => setIsHighlighterMode(prev => !prev)}
+                      activeHighlightColor={activeHighlightColor}
+                      onSelectHighlightColor={setActiveHighlightColor}
+                      onSelectPassage={handleSelectPassage}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
             )}
           </AnimatedPresence>
         </div>
