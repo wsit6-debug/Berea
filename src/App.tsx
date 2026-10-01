@@ -65,6 +65,13 @@ export function App() {
   });
   const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination(activeLens));
   const [activeSidebar, setActiveSidebar] = useState<'guide' | 'notepad' | 'compare' | null>('guide');
+  const [displayedSidebar, setDisplayedSidebar] = useState<'guide' | 'notepad' | 'compare'>('guide');
+
+  useEffect(() => {
+    if (activeSidebar) {
+      setDisplayedSidebar(activeSidebar);
+    }
+  }, [activeSidebar]);
   const [aiPanelTab, setAiPanelTab] = useState<BereaAiTab>('overview');
 
   // Modals state
@@ -486,187 +493,185 @@ export function App() {
             />
           </div>
 
-          {/* Berea AI Guide Inspector Sidebar */}
-          <AnimatedPresence isVisible={activeSidebar === 'guide'} duration={250}>
+          {/* Dedicated Right Sidebar Container (Guide / Notepad / Compare) */}
+          <AnimatedPresence isVisible={activeSidebar !== null} duration={250}>
             {(isClosing) => (
               <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
-              <BereaAiPanel
-                currentBook={currentBook.name}
-                currentChapter={chapterNum}
-                selectedVerse={selectedVerse}
-                selectedVerseRange={selectedVerseRange}
-                onVerseRangeChange={setSelectedVerseRange}
-                onNavigateToChapterAndVerse={(c, v, range) => handleSelectPassage(currentBook.id, c, v, range)}
-                chapterVerses={currentChapter?.verses}
-                activeLens={activeLens}
-                onLensChange={handleSelectLens}
-                activeTranslation={activeTranslation}
-                onTranslationChange={setActiveTranslation}
-                onClose={() => setActiveSidebar(null)}
-                activeTab={aiPanelTab}
-                onTabChange={setAiPanelTab}
-                activeQuizType={quizType}
-                onQuizTypeChange={setQuizType}
-                onOpenQuiz={(type) => {
-                  setQuizType(type);
-                  setAiPanelTab('quiz');
-                  setActiveSidebar('guide');
-                }}
-                selectedCharacter={selectedCharacter}
-                onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
-              />
-            </div>
-            )}
-          </AnimatedPresence>
-
-          {/* Dedicated Notepad Sidebar (Independent Tab) */}
-          <AnimatedPresence isVisible={activeSidebar === 'notepad'} duration={250}>
-            {(isClosing) => (
-              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
-              <div
-                className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
-                style={{
-                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                }}
-              >
-                {/* Header with Title & Close Button */}
-                <div
-                  className="p-2 px-3 border-b flex items-center justify-between select-none flex-shrink-0"
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                    color: '#26221F'
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-lg border flex items-center justify-center"
-                      style={{
-                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                        borderColor: 'var(--clean-accent-border, #E2D5C3)'
-                      }}
-                    >
-                      <NotebookPen className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-                    </div>
-                    <div>
-                      <h3
-                        className="font-serif font-bold text-xs leading-none"
-                        style={{ color: '#26221F' }}
-                      >
-                        Personal Study Notepad
-                      </h3>
-                      <p
-                        className="text-[10px] leading-none mt-0.5"
-                        style={{ color: '#78716C' }}
-                      >
-                        Reflections, study notes & chapter journals
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setActiveSidebar(null)}
-                    className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
-                    title="Close Notepad"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-                  <NotepadPanel
-                    currentBook={currentBook.name}
-                    currentChapter={chapterNum}
-                    selectedVerse={selectedVerse}
-                    selectedVerseRange={selectedVerseRange}
-                    activeTranslation={activeTranslation}
-                    activeLens={activeLens}
-                    notepadState={notepadState}
-                    setNotepadState={setNotepadState}
-                    tabHighlights={activeTabHighlights}
-                    onHighlightVerse={handleToggleVerseHighlight}
-                    activeTabTitle={activeTab?.title}
-                    isHighlighterMode={isHighlighterMode}
-                    onToggleHighlighterMode={() => setIsHighlighterMode(prev => !prev)}
-                    activeHighlightColor={activeHighlightColor}
-                    onSelectHighlightColor={setActiveHighlightColor}
-                    onSelectPassage={handleSelectPassage}
-                  />
-                </div>
-              </div>
-            </div>
-            )}
-          </AnimatedPresence>
-
-          {/* Dedicated Version Compare Sidebar (Opens like Notepad) */}
-          <AnimatedPresence isVisible={activeSidebar === 'compare'} duration={250}>
-            {(isClosing) => (
-              <div className={`lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col h-full min-h-0 overflow-hidden ${isClosing ? 'animate-springSlideOutRight' : 'animate-springSlideInRight'}`}>
-                <div
-                  className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
-                  style={{
-                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                    borderColor: 'var(--clean-accent-border, #EBE5DC)'
-                  }}
-                >
-                  {/* Header with Title & Close Button */}
-                  <div
-                    className="p-2 px-3 border-b flex items-center justify-between select-none flex-shrink-0"
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
-                      color: '#26221F'
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 rounded-lg border flex items-center justify-center"
-                        style={{
-                          backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
-                          borderColor: 'var(--clean-accent-border, #E2D5C3)'
-                        }}
-                      >
-                        <Columns className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
-                      </div>
-                      <div>
-                        <h3
-                          className="font-serif font-bold text-xs leading-none"
-                          style={{ color: '#26221F' }}
-                        >
-                          Compare Bible Versions
-                        </h3>
-                        <p
-                          className="text-[10px] leading-none mt-0.5"
-                          style={{ color: '#78716C' }}
-                        >
-                          Parallel text matrix across translations
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => setActiveSidebar(null)}
-                      className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
-                      title="Close Compare"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-                    <VersionComparePanel
+                {displayedSidebar === 'guide' && (
+                  <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+                    <BereaAiPanel
                       currentBook={currentBook.name}
                       currentChapter={chapterNum}
-                      chapterVerses={currentChapter.verses}
                       selectedVerse={selectedVerse}
-                      activeTranslation={activeTranslation}
+                      selectedVerseRange={selectedVerseRange}
+                      onVerseRangeChange={setSelectedVerseRange}
+                      onNavigateToChapterAndVerse={(c, v, range) => handleSelectPassage(currentBook.id, c, v, range)}
+                      chapterVerses={currentChapter?.verses}
                       activeLens={activeLens}
-                      onSelectTranslation={setActiveTranslation}
-                      onSelectVerse={setSelectedVerse}
+                      onLensChange={handleSelectLens}
+                      activeTranslation={activeTranslation}
+                      onTranslationChange={setActiveTranslation}
+                      onClose={() => setActiveSidebar(null)}
+                      activeTab={aiPanelTab}
+                      onTabChange={setAiPanelTab}
+                      activeQuizType={quizType}
+                      onQuizTypeChange={setQuizType}
+                      onOpenQuiz={(type) => {
+                        setQuizType(type);
+                        setAiPanelTab('quiz');
+                        setActiveSidebar('guide');
+                      }}
+                      selectedCharacter={selectedCharacter}
+                      onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
                     />
                   </div>
-                </div>
+                )}
+
+                {displayedSidebar === 'notepad' && (
+                  <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+                    <div
+                      className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
+                      style={{
+                        backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
+                      {/* Header with Title & Close Button */}
+                      <div
+                        className="p-2 px-3 border-b flex items-center justify-between select-none flex-shrink-0"
+                        style={{
+                          backgroundColor: '#FFFFFF',
+                          borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                          color: '#26221F'
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-6 h-6 rounded-lg border flex items-center justify-center"
+                            style={{
+                              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                              borderColor: 'var(--clean-accent-border, #E2D5C3)'
+                            }}
+                          >
+                            <NotebookPen className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                          </div>
+                          <div>
+                            <h3
+                              className="font-serif font-bold text-xs leading-none"
+                              style={{ color: '#26221F' }}
+                            >
+                              Personal Study Notepad
+                            </h3>
+                            <p
+                              className="text-[10px] leading-none mt-0.5"
+                              style={{ color: '#78716C' }}
+                            >
+                              Reflections, study notes & chapter journals
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => setActiveSidebar(null)}
+                          className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
+                          title="Close Notepad"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                        <NotepadPanel
+                          currentBook={currentBook.name}
+                          currentChapter={chapterNum}
+                          selectedVerse={selectedVerse}
+                          selectedVerseRange={selectedVerseRange}
+                          activeTranslation={activeTranslation}
+                          activeLens={activeLens}
+                          notepadState={notepadState}
+                          setNotepadState={setNotepadState}
+                          tabHighlights={activeTabHighlights}
+                          onHighlightVerse={handleToggleVerseHighlight}
+                          activeTabTitle={activeTab?.title}
+                          isHighlighterMode={isHighlighterMode}
+                          onToggleHighlighterMode={() => setIsHighlighterMode(prev => !prev)}
+                          activeHighlightColor={activeHighlightColor}
+                          onSelectHighlightColor={setActiveHighlightColor}
+                          onSelectPassage={handleSelectPassage}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {displayedSidebar === 'compare' && (
+                  <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden animate-fadeIn">
+                    <div
+                      className="flex flex-col h-full bg-white text-[#26221F] border rounded-2xl overflow-hidden shadow-xs"
+                      style={{
+                        backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                        borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                      }}
+                    >
+                      {/* Header with Title & Close Button */}
+                      <div
+                        className="p-2 px-3 border-b flex items-center justify-between select-none flex-shrink-0"
+                        style={{
+                          backgroundColor: '#FFFFFF',
+                          borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                          color: '#26221F'
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-6 h-6 rounded-lg border flex items-center justify-center"
+                            style={{
+                              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                              borderColor: 'var(--clean-accent-border, #E2D5C3)'
+                            }}
+                          >
+                            <Columns className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                          </div>
+                          <div>
+                            <h3
+                              className="font-serif font-bold text-xs leading-none"
+                              style={{ color: '#26221F' }}
+                            >
+                              Compare Bible Versions
+                            </h3>
+                            <p
+                              className="text-[10px] leading-none mt-0.5"
+                              style={{ color: '#78716C' }}
+                            >
+                              Parallel text matrix across translations
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => setActiveSidebar(null)}
+                          className="ios-icon-btn !w-6 !h-6 text-xs text-[#78716C] hover:text-[#26221F] flex-shrink-0"
+                          title="Close Compare"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                        <VersionComparePanel
+                          currentBook={currentBook.name}
+                          currentChapter={chapterNum}
+                          chapterVerses={currentChapter.verses}
+                          selectedVerse={selectedVerse}
+                          activeTranslation={activeTranslation}
+                          activeLens={activeLens}
+                          onSelectTranslation={setActiveTranslation}
+                          onSelectVerse={setSelectedVerse}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </AnimatedPresence>
