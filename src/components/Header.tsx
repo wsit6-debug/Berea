@@ -313,14 +313,11 @@ export const Header: React.FC<HeaderProps> = ({
                         setShowTranslationDropdown(false);
                       }}
                       style={{
-                        backgroundColor: isSelected
-                          ? 'var(--clean-accent-caramel, #B4793D)'
-                          : 'transparent',
-                        color: isSelected
-                          ? 'var(--clean-accent-contrast-text, #FFFFFF)'
-                          : 'var(--clean-text-primary, #26221F)'
+                        backgroundColor: isSelected ? 'var(--clean-highlight-cream, #FAF3E8)' : 'transparent',
+                        borderColor: isSelected ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
+                        color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-primary, #26221F)'
                       }}
-                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors hover:bg-[var(--clean-surface-warm,#FAF5ED)]"
+                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]"
                     >
                       <div className="flex-1 pr-2">
                         <div className="flex items-center gap-1.5 mb-0.5">
@@ -328,26 +325,23 @@ export const Header: React.FC<HeaderProps> = ({
                             className="w-1.5 h-1.5 rounded-full shrink-0"
                             style={{ backgroundColor: getTranslationColor(t.id).primary }}
                           />
-                          <span className="font-bold text-xs">
+                          <span
+                            className="font-bold text-xs"
+                            style={{ color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-primary, #26221F)' }}
+                          >
                             {t.id}
                           </span>
                           <span
                             style={{
-                              backgroundColor: isSelected
-                                ? 'rgba(255, 255, 255, 0.25)'
-                                : isApproved
-                                  ? 'var(--clean-highlight-cream, #FAF3E8)'
-                                  : 'var(--clean-surface-warm, #FAF5ED)',
-                              borderColor: isSelected
-                                ? 'transparent'
-                                : isApproved
-                                  ? 'var(--clean-accent-border, #B4793D)'
-                                  : 'var(--clean-accent-border, #EBE5DC)',
-                              color: isSelected
-                                ? 'inherit'
-                                : isApproved
-                                  ? 'var(--clean-accent-dark, #B4793D)'
-                                  : 'var(--clean-text-secondary, #78716C)'
+                              backgroundColor: isApproved
+                                ? 'var(--clean-highlight-cream, #FAF3E8)'
+                                : 'var(--clean-surface-warm, #FAF5ED)',
+                              borderColor: isApproved
+                                ? 'var(--clean-accent-border, #B4793D)'
+                                : 'var(--clean-accent-border, #EBE5DC)',
+                              color: isApproved
+                                ? 'var(--clean-accent-dark, #B4793D)'
+                                : 'var(--clean-text-secondary, #78716C)'
                             }}
                             className="text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px]"
                           >
@@ -355,7 +349,7 @@ export const Header: React.FC<HeaderProps> = ({
                           </span>
                         </div>
                         <div
-                          style={{ color: isSelected ? 'inherit' : 'var(--clean-text-secondary, #57524E)', opacity: isSelected ? 0.9 : 1 }}
+                          style={{ color: 'var(--clean-text-secondary, #57524E)' }}
                           className="text-[11px] font-normal leading-snug line-clamp-1"
                         >
                           {t.name}
@@ -364,7 +358,7 @@ export const Header: React.FC<HeaderProps> = ({
                       {isSelected && (
                         <Check
                           className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"
-                          style={{ color: 'var(--clean-accent-contrast-text, #FFFFFF)' }}
+                          style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
                         />
                       )}
                     </button>
