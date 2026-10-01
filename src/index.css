@@ -1005,39 +1005,592 @@ button:active:not(:disabled) {
 .hover\:border-\[\#D4A373\]:hover { border-color: #D4A373 !important; }
 
 /* ==========================================================================
-   Berea Login Screen
+   Berea 3D Book Login Experience & Transition
    ========================================================================== */
 .berea-login-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
   min-height: 100vh;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #FAF7F2;
+  background: radial-gradient(circle at 50% 45%, #24140D 0%, #170C07 55%, #0D0604 100%);
   padding: 1.25rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: opacity 0.18s ease 0.22s;
+}
+
+.berea-login-wrap.is-unlocked {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Perspective stage for the 3D book */
+.berea-book-stage {
+  perspective: 2600px;
+  perspective-origin: center center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Book Scene Container: 
+   Perfect single volume proportions when closed; smoothly expands on open */
+.berea-book-scene {
+  position: relative;
+  width: min(90vw, 490px);
+  height: min(88vh, 720px);
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1) translateZ(0px);
+  will-change: transform;
+  transition: width 0.52s cubic-bezier(0.18, 0.9, 0.28, 1), 
+              height 0.52s cubic-bezier(0.18, 0.9, 0.28, 1), 
+              transform 0.52s cubic-bezier(0.18, 0.9, 0.28, 1);
+}
+
+@media (max-width: 768px) {
+  .berea-book-scene {
+    width: min(94vw, 390px);
+    height: min(88vh, 650px);
+  }
+}
+
+/* When opening: Book smoothly widens to full two-page spread and zooms in */
+.berea-book-scene.is-opening {
+  width: min(96vw, 1360px);
+  height: min(92vh, 820px);
+  transform: scale(1.02) translateZ(30px);
+}
+
+/* ==========================================================================
+   Realistic 3D Closed Bible Anatomy (Spine, Gilded Page Blocks, Back Cover)
+   ========================================================================== */
+
+/* 3D Contact Desk Shadow */
+.berea-closed-shadow {
+  position: absolute;
+  inset: 14px -18px -20px -32px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.42) 50%, transparent 75%);
+  filter: blur(14px);
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.22s ease;
+}
+
+.berea-book-scene.is-opening .berea-closed-shadow {
+  opacity: 0;
+}
+
+/* Heavy Leather Back Cover Base (Slight overhang past pages) */
+.berea-closed-back-cover {
+  position: absolute;
+  inset: -4px -16px -12px -34px;
+  background: linear-gradient(145deg, #261208 0%, #160A04 60%, #0C0502 100%);
+  border-radius: 12px 10px 10px 12px;
+  box-shadow: -15px 25px 50px rgba(0, 0, 0, 0.8), inset 0 2px 3px rgba(255, 255, 255, 0.1);
+  border: 1px solid #44210E;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.22s ease;
+}
+
+.berea-book-scene.is-opening .berea-closed-back-cover {
+  opacity: 0;
+}
+
+/* Thick 3D Rounded Leather Spine on Left */
+.berea-closed-spine {
+  position: absolute;
+  left: -34px;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  background: linear-gradient(to right, #100502 0%, #251006 20%, #462210 50%, #251006 80%, #120603 100%);
+  border-radius: 12px 0 0 12px;
+  box-shadow: -14px 12px 30px rgba(0, 0, 0, 0.68), inset 2px 0 3px rgba(255, 255, 255, 0.15), inset -2px 0 4px rgba(0, 0, 0, 0.65);
+  border-left: 1px solid #6A351A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 35;
+  overflow: hidden;
+  transition: opacity 0.22s ease, transform 0.45s ease;
+}
+
+.berea-book-scene.is-opening .berea-closed-spine {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+/* Traditional Woven Cloth Headband & Tailband */
+.berea-spine-headband-top {
+  width: 100%;
+  height: 6px;
+  background: repeating-linear-gradient(45deg, #8A1C1C 0px, #8A1C1C 2px, #D4AF37 2px, #D4AF37 4px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.berea-spine-headband-bottom {
+  width: 100%;
+  height: 6px;
+  background: repeating-linear-gradient(45deg, #8A1C1C 0px, #8A1C1C 2px, #D4AF37 2px, #D4AF37 4px);
+  box-shadow: 0 -1px 2px rgba(0,0,0,0.5);
+}
+
+/* Hinge Crease / French Groove along spine */
+.berea-spine-hinge-crease {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+  pointer-events: none;
+  z-index: 36;
+  transition: opacity 0.22s ease;
+}
+
+.berea-book-scene.is-opening .berea-spine-hinge-crease {
+  opacity: 0;
+}
+
+/* Traditional Raised Bookbinding Ribs (Spine Cords) */
+.berea-spine-ribs-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3.25rem;
+  width: 100%;
+  align-items: center;
+  margin: auto 0;
+}
+
+.berea-spine-rib {
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.22) 0%, rgba(0,0,0,0.55) 100%),
+              linear-gradient(to right, #160803, #603017, #160803);
+  box-shadow: 0 2px 3px rgba(0,0,0,0.55), 0 -1px 1px rgba(255,255,255,0.12);
+  border-radius: 2px;
+}
+
+/* Gold Embossed Vertical Spine Title */
+.berea-spine-title {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-family: serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #D4AF37;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.85), 0 0 6px rgba(212, 175, 55, 0.4);
+  opacity: 0.92;
+  margin: auto 0;
+  user-select: none;
+}
+
+/* Realistic Sculpted Bible Pages Block (Fore-edge with concave hollow and micro paper lines) */
+.berea-gilded-block-right {
+  position: absolute;
+  right: -14px;
+  top: 6px;
+  bottom: 6px;
+  width: 16px;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 3px
+  ),
+  linear-gradient(to right, 
+    #4D3308 0%, 
+    #8C6016 16%, 
+    #D4AF37 42%, 
+    #FFF4C8 54%, 
+    #C49826 76%, 
+    #5E3D0A 100%
+  );
+  border-radius: 0 4px 4px 0;
+  box-shadow: inset 3px 0 6px rgba(0, 0, 0, 0.45), 7px 7px 20px rgba(0, 0, 0, 0.55), inset 1px 0 2px rgba(255, 255, 255, 0.35);
+  border: 1px solid #4D3308;
+  border-left: none;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.22s ease;
+}
+
+.berea-gilded-block-top {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: -14px;
+  height: 10px;
+  background: repeating-linear-gradient(
+    to right,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 3px
+  ),
+  linear-gradient(to bottom, 
+    #5E3D0A 0%, 
+    #C49826 30%, 
+    #FFF4C8 55%, 
+    #8C6016 80%, 
+    #4D3308 100%
+  );
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #4D3308;
+  border-bottom: none;
+  box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.22s ease;
+}
+
+.berea-gilded-block-bottom {
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: -14px;
+  height: 12px;
+  background: repeating-linear-gradient(
+    to right,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 3px
+  ),
+  linear-gradient(to bottom, 
+    #4D3308 0%, 
+    #8C6016 25%, 
+    #C49826 50%, 
+    #8C6016 75%, 
+    #3A2204 100%
+  );
+  border-radius: 0 0 3px 3px;
+  border: 1px solid #4D3308;
+  border-top: none;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.22s ease;
+}
+
+.berea-book-scene.is-opening .berea-gilded-block-right,
+.berea-book-scene.is-opening .berea-gilded-block-top,
+.berea-book-scene.is-opening .berea-gilded-block-bottom {
+  opacity: 0;
+}
+
+/* Tasteful Metallic Gold Corner Filigrees */
+.berea-corner-filigree {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.berea-corner-filigree.top-left {
+  top: 10px;
+  left: 10px;
+  border-top: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-left: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-top-left-radius: 5px;
+}
+
+.berea-corner-filigree.top-right {
+  top: 10px;
+  right: 10px;
+  border-top: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-right: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-top-right-radius: 5px;
+}
+
+.berea-corner-filigree.bottom-left {
+  bottom: 10px;
+  left: 10px;
+  border-bottom: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-left: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-bottom-left-radius: 5px;
+}
+
+.berea-corner-filigree.bottom-right {
+  bottom: 10px;
+  right: 10px;
+  border-bottom: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-right: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-bottom-right-radius: 5px;
+}
+
+/* The Open Book Spread (Two-page book layout) */
+.berea-open-spread {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
+  border-radius: 1rem;
+  background: #FAF7F2;
+  box-shadow: 0 30px 80px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(180, 121, 61, 0.15);
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.97) translateZ(0);
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: transform 0.52s cubic-bezier(0.18, 0.9, 0.28, 1), opacity 0.22s ease 0.02s;
+  z-index: 10;
+}
+
+.berea-book-scene.is-opening .berea-open-spread {
+  opacity: 1;
+  transform: scale(1) translateZ(0);
+  pointer-events: auto;
+}
+
+/* Left Page in the Open Book (Empty archival vellum) */
+.berea-open-page-left {
+  background: linear-gradient(to right, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
+  border-radius: 0.9rem 0 0 0.9rem;
+  border: 1px solid #EBE5DC;
+  border-right: none;
+  box-shadow: inset -20px 0 35px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Center Binding Spine of the Open Book */
+.berea-open-center-spine {
+  background: linear-gradient(to right, #381C06 0%, #7E4F20 50%, #381C06 100%);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  border-left: 1px solid #281404;
+  border-right: 1px solid #281404;
+  z-index: 20;
+}
+
+/* Silk Bookmark Ribbon in the center fold */
+.berea-spine-ribbon-drop {
+  position: absolute;
+  top: 0;
+  bottom: -32px;
+  width: 14px;
+  background: linear-gradient(135deg, #B4793D 0%, #E2B98E 45%, #8C5A28 100%);
+  box-shadow: 2px 5px 12px rgba(0, 0, 0, 0.45);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+  z-index: 25;
+}
+
+/* Right Page in the Open Book (Empty archival vellum) */
+.berea-open-page-right {
+  background: linear-gradient(to left, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
+  border-radius: 0 0.9rem 0.9rem 0;
+  border: 1px solid #EBE5DC;
+  border-left: none;
+  box-shadow: inset 20px 0 35px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Blank Page Inner Vellum Texture */
+.berea-blank-page-inner {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.6) 0%, rgba(245, 239, 230, 0.3) 100%);
+  position: relative;
+}
+
+.berea-blank-page-inner.left {
+  box-shadow: inset -14px 0 24px rgba(0, 0, 0, 0.03);
+}
+
+.berea-blank-page-inner.right {
+  box-shadow: inset 14px 0 24px rgba(0, 0, 0, 0.03);
+}
+
+/* Flapping Assembly: Covers full book when closed; aligns to right half during open spread */
+.berea-flap-assembly {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 30;
+  will-change: width, left;
+  transition: width 0.50s cubic-bezier(0.2, 1, 0.3, 1),
+              left 0.50s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.berea-book-scene.is-opening .berea-flap-assembly {
+  left: calc(50% + 12px);
+  right: 0;
+  width: calc(50% - 12px);
+}
+
+/* Hardware-Accelerated 60 FPS Turning Page Leaf (Clean Empty Vellum) */
+.berea-turning-leaf {
+  position: absolute;
+  inset: 4px 4px 4px 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  border-radius: 0 0.85rem 0.85rem 0;
+  opacity: 0;
+  will-change: transform;
+  transform: rotateY(0deg) translateZ(0);
+  transition: transform 0.50s cubic-bezier(0.2, 1, 0.3, 1),
+              opacity 0.16s ease;
+}
+
+.berea-book-scene.is-opening .berea-turning-leaf {
+  opacity: 1;
+  transform: rotateY(-172deg) translateZ(0);
+}
+
+/* Empty Archival Paper Leaf Styling with deckled gold edge */
+.berea-leaf-face {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
+  border: 1px solid #EBE5DC;
+  border-left: none;
+  border-radius: 0 0.75rem 0.75rem 0;
+  border-right: 2px solid #D4AF37;
+  box-shadow: 4px 6px 18px rgba(0, 0, 0, 0.12), inset -6px 0 10px rgba(212, 175, 55, 0.08);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(1px);
+}
+
+.berea-leaf-face-back {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to left, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
+  border: 1px solid #E2D5C3;
+  border-right: none;
+  border-left: 2px solid #D4AF37;
+  border-radius: 0.75rem 0 0 0.75rem;
+  box-shadow: -4px 6px 18px rgba(0, 0, 0, 0.12);
+  transform: rotateY(180deg) translateZ(1px);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* 3D Flipping Front Book Cover Leaf */
+.berea-flipping-cover {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transform: rotateY(0deg) translateZ(0);
+  transition: transform 0.50s cubic-bezier(0.2, 1, 0.3, 1);
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.berea-book-scene.is-opening .berea-flipping-cover {
+  transform: rotateY(-180deg) translateZ(0);
+  pointer-events: none;
+}
+
+/* Front Face of Cover (Rich Leather Book Cover with Illuminated Bookplate) */
+.cover-face-front {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(0deg);
+  border-radius: 14px;
+  background: radial-gradient(ellipse at 50% 30%, #341A0E 0%, #200E06 55%, #100602 100%);
+  border: 1.5px solid #4D2612;
+  box-shadow: 0 25px 65px -10px rgba(0, 0, 0, 0.85), 
+              inset 0 1px 2px rgba(255, 255, 255, 0.16), 
+              inset 0 -2px 5px rgba(0, 0, 0, 0.7);
+  padding: 1.5rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Back Face of Cover (Empty Left Endpaper when flipped 180deg) */
+.cover-face-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(180deg);
+  border-radius: 0.9rem 0 0 0.9rem;
+  background: linear-gradient(to right, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
+  box-shadow: -15px 25px 60px rgba(0, 0, 0, 0.35), inset -22px 0 40px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  border: 1px solid var(--clean-border, #EBE5DC);
+  border-right: none;
   box-sizing: border-box;
 }
 
+/* Refined Gold Foil Double Frame on Front */
+.berea-book-gold-frame {
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  outline: 1px solid rgba(212, 175, 55, 0.15);
+  outline-offset: -5px;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.25) 100%);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Illuminated Parchment Bookplate / Title Inset */
 .berea-login-card {
   width: 100%;
-  max-width: 400px;
-  background: #FFFFFF;
-  border: 1px solid #EBE5DC;
-  border-radius: 1.25rem;
-  box-shadow: 0 20px 40px -15px rgba(180, 121, 61, 0.15), 0 0 0 1px rgba(235, 229, 220, 0.5);
+  max-width: 380px;
+  background: #FAF8F5;
+  border: 1px solid #D4AF37;
+  border-radius: 0.875rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 
+              0 2px 6px rgba(0, 0, 0, 0.2),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.75);
   padding: 2.25rem 2rem;
   box-sizing: border-box;
   text-align: center;
+  position: relative;
 }
 
 .berea-login-logo {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
   margin: 0 auto;
   border-radius: 1rem;
   overflow: hidden;
-  border: 1.5px solid #D4A373;
-  box-shadow: 0 8px 20px rgba(180, 121, 61, 0.18);
+  border: 2px solid #D4A373;
+  box-shadow: 0 8px 24px rgba(180, 121, 61, 0.25);
   background: #FAF7F2;
   padding: 4px;
   box-sizing: border-box;
@@ -1073,9 +1626,9 @@ button:active:not(:disabled) {
 .berea-login-input {
   width: 100%;
   height: 44px;
-  padding: 0 2.6rem;
-  background-color: #FAF7F2;
-  border: 1px solid #EBE5DC;
+  padding: 0 2.5rem 0 2.5rem;
+  background: #FFFFFF;
+  border: 1.5px solid #E2D5C3;
   border-radius: 0.75rem;
   font-family: inherit;
   font-size: 0.875rem;
@@ -1087,7 +1640,7 @@ button:active:not(:disabled) {
 
 .berea-login-input:focus {
   border-color: #B4793D;
-  box-shadow: 0 0 0 3px rgba(180, 121, 61, 0.15);
+  box-shadow: 0 0 0 3px rgba(180, 121, 61, 0.18);
   background-color: #FFFFFF;
 }
 
@@ -1115,27 +1668,28 @@ button:active:not(:disabled) {
 
 .berea-login-btn {
   width: 100%;
-  height: 44px;
+  height: 46px;
   margin-top: 1rem;
-  background: #26221F;
+  background: linear-gradient(135deg, var(--clean-accent-caramel, #B4793D) 0%, var(--clean-accent-dark, #8C5A28) 100%);
   color: #FFFFFF;
   font-family: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
-  border: none;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(38, 34, 31, 0.12);
-  transition: background-color 0.15s ease, transform 0.08s ease;
+  box-shadow: 0 6px 18px rgba(180, 121, 61, 0.35);
+  transition: transform 0.08s ease, filter 0.15s ease;
   box-sizing: border-box;
 }
 
 .berea-login-btn:hover:not(:disabled) {
-  background: #38332E;
+  filter: brightness(1.08);
 }
 
 .berea-login-btn:active:not(:disabled) {
@@ -1155,6 +1709,18 @@ button:active:not(:disabled) {
   align-items: center;
   gap: 0.375rem;
   text-align: left;
+}
+
+/* ==========================================================================
+   Post-Login Website Book Frame (Clean Editorial Reader & AI Workspace)
+   ========================================================================== */
+.berea-app-book-frame {
+  position: relative;
+  border-radius: 1rem;
+  background: var(--clean-surface, #FFFFFF);
+  box-shadow: 0 8px 30px -4px rgba(38, 34, 31, 0.08), 
+              0 0 0 1px var(--clean-border, #EBE5DC);
+  transition: all 0.25s ease;
 }
 
 /* Route / Highway Hover Tooltip */

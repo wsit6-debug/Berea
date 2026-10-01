@@ -56,13 +56,13 @@ export function App() {
     return null;
   })();
 
-  const [bookId, setBookId] = useState<string>(() => savedPassage?.bookId || 'genesis');
-  const [chapterNum, setChapterNum] = useState<number>(() => savedPassage?.chapterNum || 1);
+  const [bookId, setBookId] = useState<string>(() => savedPassage?.bookId || 'john');
+  const [chapterNum, setChapterNum] = useState<number>(() => savedPassage?.chapterNum || 2);
   const [activeLens, setActiveLens] = useState<DenominationalLens>(() => {
     const pref = getUserDenominationPreference();
     return (pref === 'all' || pref === 'none') ? 'catholic' : pref;
   });
-  const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination(activeLens));
+  const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => savedPassage?.translation || 'NABRE');
   const [activeSidebar, setActiveSidebar] = useState<'guide' | 'notepad' | null>('guide');
   const [aiPanelTab, setAiPanelTab] = useState<BereaAiTab>('overview');
 
@@ -491,15 +491,24 @@ export function App() {
     }
   };
 
-  if (!isAuthenticated) {
-    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
-  }
-
   return (
-    <div
-      className="berea-app h-screen flex flex-col font-sans text-[#26221F] overflow-hidden transition-colors duration-300"
-      style={{ backgroundColor: 'var(--clean-bg, #FAF7F2)' }}
-    >
+    <>
+      {!isAuthenticated && (
+        <LoginScreen 
+          onLogin={() => setIsAuthenticated(true)}
+          bookName={currentBook.name}
+          chapterNumber={currentChapter.chapterNumber}
+          verses={currentChapter.verses}
+          activeTranslation={activeTranslation}
+          selectedVerse={selectedVerse}
+          activeSidebar={activeSidebar}
+          userNotes={notepadState.tabs.find(t => t.id === notepadState.activeTabId)?.content || ''}
+        />
+      )}
+      <div
+        className="berea-app h-screen flex flex-col font-sans text-[#26221F] overflow-hidden transition-colors duration-300"
+        style={{ backgroundColor: 'var(--clean-bg, #FAF7F2)' }}
+      >
       {/* Top Application Header with Global Denomination and Approved Translation Selectors */}
       <Header
         activeLens={activeLens}
@@ -537,7 +546,7 @@ export function App() {
             activeSidebar 
               ? (isWideScreen ? 'w-full' : 'grid grid-cols-1 gap-3') 
               : 'max-w-5xl mx-auto w-full'
-          } h-full min-h-0 overflow-hidden relative`}
+          } h-full min-h-0 overflow-hidden relative berea-app-book-frame`}
         >
           {/* Bible Reader Pane */}
           <div className="w-full flex flex-col h-full min-h-0 overflow-hidden">
@@ -885,6 +894,7 @@ export function App() {
       />
 
     </div>
+    </>
   );
 }
 
