@@ -933,27 +933,39 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       highlightInlineStyle = { backgroundColor: 'var(--hl-blue-bg)', color: 'var(--hl-blue-text)' };
                     }
 
+                    let selectionStyle: React.CSSProperties = {};
+                    if (isSelected) {
+                      const isStart = !isMultiSelect || isRangeStart;
+                      const isEnd = !isMultiSelect || isRangeEnd;
+                      selectionStyle = {
+                        backgroundColor: 'rgba(180, 121, 61, 0.16)',
+                        color: 'var(--clean-text-primary, #1C1917)',
+                        WebkitBoxDecorationBreak: 'clone',
+                        boxDecorationBreak: 'clone',
+                        borderTop: '1.5px solid var(--clean-accent-caramel, #B4793D)',
+                        borderBottom: '1.5px solid var(--clean-accent-caramel, #B4793D)',
+                        borderLeft: isStart ? '1.5px solid var(--clean-accent-caramel, #B4793D)' : 'none',
+                        borderRight: isEnd ? '1.5px solid var(--clean-accent-caramel, #B4793D)' : 'none',
+                        borderTopLeftRadius: isStart ? '4px' : '0',
+                        borderBottomLeftRadius: isStart ? '4px' : '0',
+                        borderTopRightRadius: isEnd ? '4px' : '0',
+                        borderBottomRightRadius: isEnd ? '4px' : '0',
+                        paddingLeft: isStart ? '4px' : '1px',
+                        paddingRight: isEnd ? '4px' : '1px',
+                      };
+                    }
+
                     return (
                       <span
                         key={verse.verseNumber}
                         data-verse-number={verse.verseNumber}
-                        style={
-                          tabHighlight
-                            ? highlightInlineStyle
-                            : isSelected
-                              ? {
-                                  backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
-                                  color: 'var(--clean-text-primary, #26221F)',
-                                  outline: '1.5px solid var(--clean-accent-border-strong, #B4793D)'
-                                }
-                              : undefined
-                        }
+                        style={tabHighlight ? highlightInlineStyle : isSelected ? selectionStyle : undefined}
                         onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
                         onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
-                        className={`cursor-pointer transition-all duration-100 px-1 py-0.5 inline ${tabHighlight
+                        className={`cursor-pointer transition-colors duration-100 py-0.5 inline ${tabHighlight
                           ? `${highlightClasses} ${isSelected ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)]' : ''}`
                           : isSelected
-                            ? `font-normal shadow-2xs ${isRangeStart ? 'rounded-l-md pl-1.5' : ''} ${isRangeEnd ? 'rounded-r-md pr-1.5' : ''} ${isMultiSelect ? 'border-y-2 border-[var(--clean-accent-caramel,#B4793D)] ring-1 ring-[var(--clean-accent-caramel,#B4793D)]/40' : 'rounded'}`
+                            ? 'font-normal shadow-2xs'
                             : isHighlighterMode
                               ? 'hover:bg-amber-100/70 hover:shadow-2xs rounded'
                               : 'hover:bg-[var(--clean-highlight-cream,#FAF9F5)] rounded'
@@ -1014,10 +1026,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           ? highlightVerseStyle
                           : isSelected
                             ? {
-                                backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                                backgroundColor: 'rgba(180, 121, 61, 0.12)',
                                 border: '1px solid var(--clean-accent-border, #EBE5DC)',
                                 borderLeft: '3.5px solid var(--clean-accent-border-strong, var(--clean-accent-caramel, #B4793D))',
-                                color: 'var(--clean-text-primary, #26221F)'
+                                color: 'var(--clean-text-primary, #1C1917)'
                               }
                             : undefined
                       }

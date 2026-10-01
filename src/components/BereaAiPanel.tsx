@@ -8,7 +8,7 @@ import {
 import { DENOMINATIONS, DenominationalLens, getTheologicalInsight, DENOMINATION_COMMENTATORS } from '../data/theologyData';
 import { getVerbatimCommentary, summarizeCommentaryText } from '../services/commentaryDatabaseService';
 import { ChapterSymbolismPanel } from './ChapterSymbolismPanel';
-import { TRANSLATIONS, TranslationId, Verse, getTranslationColor } from '../data/bibleData';
+import { TRANSLATIONS, TranslationId, Verse, getTranslationColor, getApprovedTranslationsForDenomination } from '../data/bibleData';
 import { getChapterGeoData, ChapterGeoEvent, calculateDistanceMiles, getShortPlaceName } from '../data/geoData';
 import { OpenFreeMapWidget } from './OpenFreeMapWidget';
 import { askBereaAssistant, ChatMessage, QuizQuestion, QuizStyle, WrittenGradingResult, gradeWrittenAnswer, generateHistoricalCommentary } from '../services/aiService';
@@ -32,6 +32,7 @@ import {
   formatContextSnapshotForDisplay
 } from '../services/studyGuideService';
 import confetti from 'canvas-confetti';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const DEFAULT_WELCOME_TEXT = "Welcome to Berea. Ask any question about Scripture, theology, church history, or the active passage, or choose a prompt below to get started.";
 
@@ -291,8 +292,111 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   }, [activeQuizType, currentBook, currentChapter]);
   const [comparisonTranslations, setComparisonTranslations] = useState<TranslationId[]>(['ESV', 'KJV', 'NIV']);
 
+  const { language } = useLanguage();
+  const matrixTranslations = useMemo(() => {
+    return TRANSLATIONS.filter(t => 
+      (t.language || 'en') === (language || 'en') && 
+      Array.isArray(t.approvedDenominations) && 
+      t.approvedDenominations.length > 0
+    );
+  }, [language]);
+
+  useEffect(() => {
+    const validSelections = comparisonTranslations.filter(id => matrixTranslations.some(t => t.id === id));
+    if (validSelections.length > 0) {
+      if (validSelections.length !== comparisonTranslations.length) {
+        setComparisonTranslations(validSelections);
+      }
+    } else if (matrixTranslations.length > 0) {
+      setComparisonTranslations(matrixTranslations.slice(0, Math.min(3, matrixTranslations.length)).map(t => t.id));
+    }
+  }, [language, matrixTranslations]);
+
   const activeVerseNum = selectedVerse?.verseNumber || 1;
   const currentVerseRef = `${currentBook} ${currentChapter}:${activeVerseNum}`;
+
+  // Asynchronous external scripture loader for comparison translations not bundled locally
+  const [externalComparisonTexts, setExternalComparisonTexts] = useState<Record<string, string>>({});
+  const [loadingComparisonTrans, setLoadingComparisonTrans] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (activeTab !== 'compare') return;
+
+    let isMounted = true;
+
+    comparisonTranslations.forEach((tId) => {
+      const tObj = TRANSLATIONS.find(x => x.id === tId);
+      const isNTOnly = Boolean(
+        tObj?.badge?.toLowerCase().includes('nt only') ||
+        tObj?.badge?.toLowerCase().includes('nt epistles') ||
+        tObj?.description?.toLowerCase().includes('new testament only')
+      );
+      const currentBookObj = BIBLE_BOOKS.find(b => b.name.toLowerCase() === currentBook.toLowerCase() || b.id.toLowerCase() === currentBook.toLowerCase());
+      const isOT = currentBookObj ? currentBookObj.testament === 'OT' : false;
+      const cacheKey = `${tId}_${currentBook}_${currentChapter}_${activeVerseNum}`;
+
+      // Immediate short-circuit for NT-only translations on Old Testament books
+      if (isNTOnly && isOT) {
+        setExternalComparisonTexts(prev => ({
+          ...prev,
+          [cacheKey]: 'This translation contains the New Testament only.'
+        }));
+        return;
+      }
+
+      // Check if local text already exists in selectedVerse
+      if (selectedVerse?.text?.[tId]) return;
+
+      const NON_LATIN_LANGS = new Set(['ru', 'uk', 'zh', 'ja', 'ko', 'he', 'el', 'ar', 'fa', 'hi', 'ta', 'kn', 'ml', 'ne']);
+      const isNonLatin = tObj && NON_LATIN_LANGS.has(tObj.language || '');
+      const existing = externalComparisonTexts[cacheKey];
+      const isCorruptedEnglish = isNonLatin && existing && /^[A-Za-z\s,;:'"?.!-]+$/.test(existing.trim().slice(0, 30));
+
+      if (existing && !isCorruptedEnglish) return;
+
+      setLoadingComparisonTrans(prev => ({ ...prev, [tId]: true }));
+
+      fetchChapterFromYouVersion(currentBook, currentChapter, tId)
+        .then((verses) => {
+          if (!isMounted) return;
+          const match = verses.find(v => v.verseNumber === activeVerseNum);
+          const rawText = match?.text?.[tId] || (match?.text ? Object.values(match.text)[0] : '');
+          const isRawEnglish = isNonLatin && rawText && /^[A-Za-z\s,;:'"?.!-]+$/.test(rawText.trim().slice(0, 30));
+
+          if (rawText && !isRawEnglish) {
+            setExternalComparisonTexts(prev => ({
+              ...prev,
+              [cacheKey]: cleanApiText(rawText)
+            }));
+          } else {
+            setExternalComparisonTexts(prev => ({
+              ...prev,
+              [cacheKey]: isNTOnly
+                ? 'This translation contains the New Testament only.'
+                : 'Passage not present in this translation edition.'
+            }));
+          }
+        })
+        .catch((err) => {
+          console.warn(`Error fetching scripture for ${tId}:`, err);
+          if (isMounted) {
+            setExternalComparisonTexts(prev => ({
+              ...prev,
+              [cacheKey]: 'Failed to retrieve scripture from remote server.'
+            }));
+          }
+        })
+        .finally(() => {
+          if (isMounted) {
+            setLoadingComparisonTrans(prev => ({ ...prev, [tId]: false }));
+          }
+        });
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, comparisonTranslations, currentBook, currentChapter, activeVerseNum, selectedVerse]);
 
   // Dynamic Chat State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -2672,9 +2776,9 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               </div>
             </div>
 
-            {/* Translation Pills */}
-            <div className="flex flex-wrap gap-1 p-1 rounded-lg border bg-[var(--clean-surface-subtle,#FAF7F2)] border-[var(--clean-border-soft,#EBE5DC)]">
-              {TRANSLATIONS.map((t) => {
+            {/* Translation Pills - Filtered by Selected Language */}
+            <div className="flex flex-wrap gap-1 p-1 rounded-lg border bg-[var(--clean-surface-subtle,#FAF7F2)] border-[var(--clean-border-soft,#EBE5DC)] max-h-48 overflow-y-auto custom-scrollbar">
+              {matrixTranslations.map((t) => {
                 const selectedIndex = comparisonTranslations.indexOf(t.id);
                 const isSelected = selectedIndex !== -1;
                 const orderNum = isSelected ? selectedIndex + 1 : null;
@@ -2735,8 +2839,39 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               {comparisonTranslations.map((tId, idx) => {
                 const tObj = TRANSLATIONS.find(x => x.id === tId);
                 const colorTheme = getTranslationColor(tId);
-                const rawCompareText = (selectedVerse?.text && (selectedVerse.text[tId] || selectedVerse.text['KJV'] || Object.values(selectedVerse.text)[0])) || 'Loading scripture...';
-                const verseText = cleanApiText(rawCompareText);
+                const cacheKey = `${tId}_${currentBook}_${currentChapter}_${activeVerseNum}`;
+                const localText = selectedVerse?.text?.[tId];
+                const externalText = externalComparisonTexts[cacheKey];
+                const isLoading = loadingComparisonTrans[tId];
+
+                const isNTOnly = Boolean(
+                  tObj?.badge?.toLowerCase().includes('nt only') ||
+                  tObj?.badge?.toLowerCase().includes('nt epistles') ||
+                  tObj?.description?.toLowerCase().includes('new testament only')
+                );
+                const currentBookObj = BIBLE_BOOKS.find(b => b.name.toLowerCase() === currentBook.toLowerCase() || b.id.toLowerCase() === currentBook.toLowerCase());
+                const isOT = currentBookObj ? currentBookObj.testament === 'OT' : false;
+                const NON_LATIN_LANGS = new Set(['ru', 'uk', 'zh', 'ja', 'ko', 'he', 'el', 'ar', 'fa', 'hi', 'ta', 'kn', 'ml', 'ne']);
+                const isNonLatin = tObj && NON_LATIN_LANGS.has(tObj.language || '');
+
+                let verseText = '';
+                if (isNTOnly && isOT) {
+                  verseText = 'This translation contains the New Testament only.';
+                } else if (localText) {
+                  verseText = cleanApiText(localText);
+                } else if (externalText) {
+                  verseText = externalText;
+                } else if (isLoading) {
+                  verseText = `Fetching authentic ${tObj?.name || tId} text...`;
+                } else {
+                  verseText = `Loading ${tObj?.name || tId} scripture...`;
+                }
+
+                if (!localText && isNonLatin && /^[A-Za-z\s,;:'"?.!-]+$/.test(verseText.trim().slice(0, 30))) {
+                  verseText = isNTOnly && isOT
+                    ? 'This translation contains the New Testament only.'
+                    : 'Passage not present in this translation edition.';
+                }
 
                 return (
                   <div
@@ -2791,11 +2926,22 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
                         <span className="text-stone-500 font-medium">{tObj?.year}</span>
                       </div>
                     </div>
-                    <p
-                      className="font-scripture text-xs text-[#26221F] leading-relaxed pl-1"
-                    >
-                      {verseText}
-                    </p>
+                    {isLoading && !localText && !externalText ? (
+                      <div className="flex items-center gap-2 py-1.5 pl-1 text-[var(--clean-text-secondary,#78716C)]">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
+                        <span className="text-xs italic">{verseText}</span>
+                      </div>
+                    ) : !localText && externalText && (externalText.includes('New Testament only') || externalText.includes('not present') || externalText.includes('Failed to retrieve')) ? (
+                      <p className="text-xs italic text-[var(--clean-text-secondary,#78716C)] pl-1 py-0.5">
+                        {verseText}
+                      </p>
+                    ) : (
+                      <p
+                        className="font-scripture text-xs text-[#26221F] leading-relaxed pl-1"
+                      >
+                        {verseText}
+                      </p>
+                    )}
                   </div>
                 );
               })}
