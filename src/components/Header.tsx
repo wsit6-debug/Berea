@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark } from 'lucide-react';
+import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark, Columns } from 'lucide-react';
 import {
   TRANSLATIONS,
   TranslationId,
@@ -27,6 +27,8 @@ interface HeaderProps {
   onToggleAiPanel?: () => void;
   onOpenNotepad?: () => void;
   isNotepadActive?: boolean;
+  onOpenCompare?: () => void;
+  isCompareActive?: boolean;
   onOpenColorScheme?: () => void;
   onOpenFeedback?: () => void;
   onLogout?: () => void;
@@ -46,6 +48,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleAiPanel,
   onOpenNotepad,
   isNotepadActive = false,
+  onOpenCompare,
+  isCompareActive = false,
   onOpenColorScheme,
   onOpenFeedback,
   onLogout
@@ -245,6 +249,38 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 className="absolute top-full left-0 mt-1.5 w-80 border rounded-xl shadow-2xl z-50 p-2 animate-fadeIn"
               >
+                {/* Quick Access to Compare Versions Matrix */}
+                {onOpenCompare && (
+                  <button
+                    onClick={() => {
+                      onOpenCompare();
+                      setShowTranslationDropdown(false);
+                    }}
+                    style={{
+                      background: 'linear-gradient(to bottom right, var(--clean-highlight-cream, #FAF5ED), var(--clean-surface, #FFFFFF))',
+                      borderColor: isCompareActive ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                      color: 'var(--clean-text-primary, #26221F)'
+                    }}
+                    className="w-full mb-2 px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-all border shadow-xs hover:border-[var(--clean-accent-border-strong,#B4793D)] cursor-pointer"
+                    title="Open side-by-side Scripture Comparison Matrix"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Columns
+                        className="w-3.5 h-3.5 shrink-0"
+                        style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
+                      />
+                      <span className="font-semibold" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
+                        Compare Versions
+                      </span>
+                    </div>
+                    {isCompareActive && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#15803D]/10 text-[#15803D] font-semibold">
+                        Active
+                      </span>
+                    )}
+                  </button>
+                )}
+
                 <div
                   style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
                   className="text-[10px] uppercase font-bold text-[var(--clean-text-secondary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-2 sticky top-0 bg-[var(--clean-surface,#FFFFFF)] z-10"
