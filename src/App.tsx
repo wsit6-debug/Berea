@@ -65,10 +65,24 @@ export function App() {
   });
   const [activeTranslation, setActiveTranslation] = useState<TranslationId>(() => getDefaultTranslationForDenomination(activeLens));
   const [activeSidebar, setActiveSidebar] = useState<'guide' | 'notepad' | 'compare' | null>('guide');
+  const [isSidebarClosing, setIsSidebarClosing] = useState(false);
+  const prevActiveSidebarRef = useRef(activeSidebar);
   const lastActiveSidebarRef = useRef<'guide' | 'notepad' | 'compare'>('guide');
+
   if (activeSidebar) {
     lastActiveSidebarRef.current = activeSidebar;
   }
+
+  if (prevActiveSidebarRef.current !== activeSidebar) {
+    if (activeSidebar === null && prevActiveSidebarRef.current !== null) {
+      setIsSidebarClosing(true);
+    } else if (activeSidebar !== null) {
+      setIsSidebarClosing(false);
+    }
+    prevActiveSidebarRef.current = activeSidebar;
+  }
+
+  const isSidebarGridActive = activeSidebar !== null || isSidebarClosing;
   const [aiPanelTab, setAiPanelTab] = useState<BereaAiTab>('overview');
 
   // Modals state
@@ -425,9 +439,9 @@ export function App() {
 
       {/* Main App Workspace: Clean Scripture Reading + Berea AI Guide or Notepad */}
       <main className="flex-1 max-w-[1740px] w-full mx-auto px-2 sm:px-4 lg:px-6 py-2 flex flex-col min-h-0 overflow-hidden">
-        <div className={`flex-1 grid grid-cols-1 ${activeSidebar ? 'lg:grid-cols-12' : 'max-w-5xl mx-auto w-full'} gap-3 sm:gap-4 h-full min-h-0 overflow-hidden`}>
+        <div className={`flex-1 grid grid-cols-1 ${isSidebarGridActive ? 'lg:grid-cols-12' : 'max-w-5xl mx-auto w-full'} gap-3 sm:gap-4 h-full min-h-0 overflow-hidden`}>
           {/* Bible Reader Pane */}
-          <div className={`${activeSidebar ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
+          <div className={`${isSidebarGridActive ? 'lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'w-full'} flex flex-col h-full min-h-0 overflow-hidden`}>
             <BibleReader
               bookName={currentBook.name}
               bookId={bookId}
@@ -485,7 +499,11 @@ export function App() {
           </div>
 
           {/* Unified Right Sidebar: Berea AI Guide, Study Notepad & Version Compare */}
-          <AnimatedPresence isVisible={activeSidebar !== null} duration={250}>
+          <AnimatedPresence
+            isVisible={activeSidebar !== null}
+            duration={250}
+            onExitComplete={() => setIsSidebarClosing(false)}
+          >
             {(isClosing) => {
               const displayedSidebar = activeSidebar || lastActiveSidebarRef.current;
               return (
