@@ -17,7 +17,7 @@ import { cleanApiText } from '../services/youversionService';
 import { useBookmarkedVerses, toggleBookmark, isVerseBookmarked } from '../services/bookmarkService';
 
 export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue', { bg: string; border: string; label: string }> = {
-  yellow: { bg: 'var(--hl-yellow-bg, #FEF08A)', border: 'var(--hl-yellow-border, #EAB308)', label: 'Yellow' },
+  yellow: { bg: 'var(--hl-yellow-bg, rgba(180, 121, 61, 0.28))', border: 'var(--hl-yellow-border, var(--clean-accent-caramel, #B4793D))', label: 'Theme' },
   green: { bg: 'var(--hl-green-bg, #BBF7D0)', border: 'var(--hl-green-border, #22C55E)', label: 'Green' },
   red: { bg: 'var(--hl-red-bg, #FECDD3)', border: 'var(--hl-red-border, #F43F5E)', label: 'Red' },
   blue: { bg: 'var(--hl-blue-bg, #BAE6FD)', border: 'var(--hl-blue-border, #0EA5E9)', label: 'Blue' }
@@ -53,10 +53,10 @@ interface BibleReaderProps {
   bookId?: string;
   chapter: Chapter;
   activeTranslation: TranslationId;
-  selectedVerseNumber: number;
-  onSelectVerse: (verse: Verse) => void;
+  selectedVerseNumber?: number | null;
+  onSelectVerse: (verse: Verse | null) => void;
   selectedVerseRange?: { start: number; end: number } | null;
-  onSelectVerseRange?: (range: { start: number; end: number } | null, primaryVerse?: Verse) => void;
+  onSelectVerseRange?: (range: { start: number; end: number } | null, primaryVerse?: Verse | null) => void;
   onNextChapter: () => void;
   onPrevChapter: () => void;
   isFirstChapter: boolean;
@@ -218,6 +218,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [tempDragRange, setTempDragRange] = useState<{ start: number; end: number } | null>(null);
   const dragStartVerseRef = useRef<number | null>(null);
+  const wasDraggingRef = useRef<boolean>(false);
 
   const activeRange = isDragging ? tempDragRange : (selectedVerseRange || (selectedVerseNumber ? { start: selectedVerseNumber, end: selectedVerseNumber } : null));
   const isMultiSelect = Boolean(activeRange && activeRange.start !== activeRange.end);
@@ -259,7 +260,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const isPlayingRef = useRef<boolean>(isPlayingAudio);
   isPlayingRef.current = isPlayingAudio;
 
-  const currentVerseRef = useRef<number>(selectedVerseNumber);
+  const currentVerseRef = useRef<number | null | undefined>(selectedVerseNumber);
   currentVerseRef.current = selectedVerseNumber;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -343,7 +344,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     } else {
       playAuditoryCue('start');
       setIsPlayingAudio(true);
-      playVerseAudio(selectedVerseNumber, playbackSpeed, selectedVoiceId);
+      playVerseAudio(selectedVerseNumber || 1, playbackSpeed, selectedVoiceId);
     }
   };
 
@@ -481,9 +482,11 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             onSelectVerseRange({ start: finalRange.start, end: finalRange.end }, targetVerse);
           }
         } else {
-          if (targetVerse) {
-            onSelectVerse(targetVerse);
-          }
+          wasDraggingRef.current = true;
+          setTimeout(() => {
+            wasDraggingRef.current = false;
+          }, 150);
+          playAuditoryCue('select');
           if (onSelectVerseRange) {
             onSelectVerseRange(finalRange, targetVerse);
           }
@@ -519,7 +522,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     <div
       className="flex flex-col h-full bg-white rounded-2xl border shadow-md overflow-hidden transition-colors duration-300"
       style={{
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--clean-surface, #FFFFFF)',
         borderColor: 'var(--clean-border, #EBE5DC)'
       }}
     >
@@ -566,7 +569,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             <button
               onClick={onPrevChapter}
               disabled={isFirstChapter}
-              className="text-[var(--clean-accent-caramel,#B4793D)] hover:text-[var(--clean-accent-dark,#9A632E)] disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold cursor-pointer"
+              style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+              className="disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold cursor-pointer"
               title="Previous Chapter"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -588,7 +592,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             <button
               onClick={onNextChapter}
               disabled={isLastChapter}
-              className="text-[var(--clean-accent-caramel,#B4793D)] hover:text-[var(--clean-accent-dark,#9A632E)] disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold cursor-pointer"
+              style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+              className="disabled:opacity-25 transition-colors p-0.5 flex items-center justify-center font-bold cursor-pointer"
               title="Next Chapter"
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -619,33 +624,55 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           {/* Dedicated Direct Highlighter Mode */}
           {onHighlightVerse && (
             <div
-              className="h-7 inline-flex items-center gap-1.5 px-3 rounded-full border shadow-2xs transition-all shrink-0"
+              className="inline-flex items-center h-7 rounded-full border p-0.5 gap-0.5 shadow-2xs transition-colors shrink-0"
               style={{
-                backgroundColor: isHighlighterMode ? 'var(--clean-highlight-cream, #FAF7F2)' : '#FFFFFF',
-                borderColor: isHighlighterMode ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)'
+                backgroundColor: '#FFFFFF',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
               }}
             >
               <button
                 type="button"
                 onClick={toggleHighlighterMode}
-                className={`inline-flex items-center gap-1 text-xs font-medium transition-colors whitespace-nowrap ${isHighlighterMode
-                    ? 'text-[var(--clean-accent-caramel,#B4793D)] font-bold'
-                    : 'text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)]'
-                  }`}
+                style={
+                  isHighlighterMode
+                    ? {
+                        backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                        color: '#FFFFFF'
+                      }
+                    : {
+                        backgroundColor: 'transparent',
+                        color: 'var(--clean-text-primary, #26221F)'
+                      }
+                }
+                className="inline-flex items-center gap-1.5 px-2.5 h-full rounded-full text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap"
                 title={isHighlighterMode ? 'Exit highlight mode' : 'Direct highlight mode (click/drag verses to highlight)'}
               >
-                <Highlighter className="w-3.5 h-3.5" style={{ color: isHighlighterMode ? 'var(--clean-accent-caramel, #B4793D)' : undefined }} />
-                <span>Highlight</span>
+                <Highlighter
+                  className="w-3.5 h-3.5"
+                  style={{
+                    color: isHighlighterMode ? '#FFFFFF' : 'var(--clean-accent-caramel, #B4793D)'
+                  }}
+                />
+                <span style={{ color: isHighlighterMode ? '#FFFFFF' : 'var(--clean-text-primary, #26221F)' }}>
+                  Highlight
+                </span>
               </button>
 
               {isHighlighterMode && (
-                <div className="flex items-center gap-1 pl-1.5 border-l border-[#E2D5C3] animate-fadeIn">
+                <div
+                  className="flex items-center gap-1 px-1.5 border-l"
+                  style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                >
                   {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
                     <button
                       key={color}
                       type="button"
                       onClick={() => setReaderHighlightColor(color)}
-                      className={`w-3.5 h-3.5 rounded-full transition-transform hover:scale-115 active:scale-95 shadow-2xs ${readerHighlightColor === color ? 'ring-2 ring-[#26221F] ring-offset-1 scale-110' : 'opacity-85 hover:opacity-100'}`}
+                      className={`w-3.5 h-3.5 rounded-full transition-transform hover:scale-115 active:scale-95 shadow-2xs cursor-pointer ${
+                        readerHighlightColor === color
+                          ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)] ring-offset-1 scale-110'
+                          : 'opacity-85 hover:opacity-100'
+                      }`}
                       style={{
                         backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
                         border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
@@ -700,25 +727,39 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           {/* Audio Player Pill with Real Web Speech API */}
           <button
             onClick={handleToggleAudio}
-            className={`text-xs py-1 px-2.5 rounded-full border flex items-center gap-1.5 transition-all shadow-xs active:scale-95 ${isPlayingAudio
-                ? 'bg-[#B4793D] text-white border-[#B4793D] font-medium shadow-[0_2px_8px_rgba(180,121,61,0.25)]'
-                : 'bg-white text-[#26221F] border-[#EBE5DC] hover:border-[#D4A373]'
-              }`}
+            style={
+              isPlayingAudio
+                ? {
+                    backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                    borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                    color: 'var(--clean-accent-contrast-text, #FFFFFF)',
+                    boxShadow: '0 2px 8px rgba(var(--clean-accent-rgb, 180, 121, 61), 0.25)',
+                  }
+                : {
+                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                    color: 'var(--clean-text-primary, #26221F)',
+                  }
+            }
+            className="text-xs py-1 px-2.5 rounded-full border flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer font-medium"
             title={isPlayingAudio ? 'Pause Narration' : 'Listen to Audio Narration'}
           >
             {isPlayingAudio ? (
               <>
-                <Pause className="w-3.5 h-3.5 fill-white" />
+                <Pause className="w-3.5 h-3.5 fill-current" />
                 <div className="flex items-center gap-0.5 h-3">
-                  <span className="w-0.5 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                  <span className="w-0.5 h-3 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                  <span className="w-0.5 h-1.5 bg-white rounded-full animate-bounce"></span>
+                  <span className="w-0.5 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-0.5 h-3 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-0.5 h-1.5 bg-current rounded-full animate-bounce"></span>
                 </div>
                 <span>Pause</span>
               </>
             ) : (
               <>
-                <Volume2 className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+                <Volume2
+                  className="w-3.5 h-3.5"
+                  style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+                />
                 <span>Listen</span>
               </>
             )}
@@ -762,6 +803,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           {onOpenBookmarks && (
             <button
               onClick={onOpenBookmarks}
+              data-bookmarks-toggle="true"
               style={
                 isBookmarksOpen
                   ? {
@@ -895,7 +937,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
       )}
 
       {/* Main Scripture Canvas */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 custom-scrollbar bg-white relative">
+      <div
+        ref={scrollContainerRef}
+        onClick={(e) => {
+          if (wasDraggingRef.current) return;
+          const target = e.target as HTMLElement;
+          if (!target.closest('[data-verse-number]') && !target.closest('button') && !target.closest('a') && !target.closest('input')) {
+            onSelectVerse(null);
+            if (onSelectVerseRange) {
+              onSelectVerseRange(null);
+            }
+          }
+        }}
+        className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 custom-scrollbar bg-white relative"
+        style={{
+          backgroundColor: 'var(--clean-surface, #FFFFFF)'
+        }}
+      >
         {isLoading ? (
           <div className="w-full space-y-3 py-6 animate-pulse">
             <div className="h-6 bg-[#FAF5ED] rounded w-1/4 mx-auto mb-4"></div>
@@ -945,44 +1003,93 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     let highlightClasses = '';
                     let highlightInlineStyle: React.CSSProperties = {};
                     if (tabHighlight === 'yellow') {
-                      highlightClasses = 'hl-verse-yellow font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-yellow-bg)', color: 'var(--hl-yellow-text)' };
+                      highlightClasses = 'hl-verse-yellow font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-yellow-bg)',
+                        color: 'var(--hl-yellow-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-yellow-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-yellow-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     } else if (tabHighlight === 'green') {
-                      highlightClasses = 'hl-verse-green font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-green-bg)', color: 'var(--hl-green-text)' };
+                      highlightClasses = 'hl-verse-green font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-green-bg)',
+                        color: 'var(--hl-green-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-green-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-green-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     } else if (tabHighlight === 'red') {
-                      highlightClasses = 'hl-verse-red font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-red-bg)', color: 'var(--hl-red-text)' };
+                      highlightClasses = 'hl-verse-red font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-red-bg)',
+                        color: 'var(--hl-red-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-red-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-red-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     } else if (tabHighlight === 'blue') {
-                      highlightClasses = 'hl-verse-blue font-normal shadow-2xs rounded px-1';
-                      highlightInlineStyle = { backgroundColor: 'var(--hl-blue-bg)', color: 'var(--hl-blue-text)' };
+                      highlightClasses = 'hl-verse-blue font-medium shadow-xs rounded px-1';
+                      highlightInlineStyle = {
+                        backgroundColor: 'var(--hl-blue-bg)',
+                        color: 'var(--hl-blue-text)',
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--hl-blue-border)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        borderBottom: '2px solid var(--hl-blue-border)',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
+                    }
+
+                    let selectionStyle: React.CSSProperties | undefined = undefined;
+                    if (isSelected) {
+                      selectionStyle = {
+                        textDecorationLine: 'underline',
+                        textDecorationColor: 'var(--clean-accent-caramel, #B4793D)',
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '3.5px',
+                        boxDecorationBreak: 'clone',
+                        WebkitBoxDecorationBreak: 'clone'
+                      };
                     }
 
                     return (
                       <span
                         key={verse.verseNumber}
                         data-verse-number={verse.verseNumber}
-                        style={
-                          tabHighlight
-                            ? highlightInlineStyle
-                            : isSelected
-                              ? { backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)', color: 'var(--clean-text-primary, #26221F)' }
-                              : undefined
-                        }
+                        style={tabHighlight ? highlightInlineStyle : isSelected ? selectionStyle : undefined}
                         onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
                         onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
-                        className={`cursor-pointer transition-all duration-100 px-1 py-0.5 inline ${tabHighlight
+                        className={`cursor-pointer transition-colors duration-100 py-0.5 inline ${tabHighlight
                           ? `${highlightClasses} ${isSelected ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)]' : ''}`
                           : isSelected
-                            ? `font-normal shadow-2xs ${isRangeStart ? 'rounded-l-md pl-1.5' : ''} ${isRangeEnd ? 'rounded-r-md pr-1.5' : ''} ${isMultiSelect ? 'border-y-2 border-[var(--clean-accent-caramel,#B4793D)] ring-1 ring-[var(--clean-accent-caramel,#B4793D)]/40' : 'rounded ring-2 ring-[var(--clean-accent-caramel,#B4793D)]'}`
+                            ? 'font-normal'
                             : isHighlighterMode
-                              ? 'hover:bg-amber-100/70 hover:shadow-2xs rounded'
-                              : 'hover:bg-[var(--clean-highlight-cream,#FAF9F5)] rounded'
+                              ? 'hover:bg-black/5 hover:shadow-2xs rounded'
+                              : 'hover:bg-black/5 rounded'
                           }`}
                       >
-                        <sup className={`text-[10.5px] select-none mr-1 ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'text-[var(--clean-accent-caramel,#B4793D)] font-black' : 'text-[#8C827A] font-bold'}`}>
+                        <sup
+                          style={!tabHighlight && isSelected ? { color: 'var(--clean-accent-caramel, #B4793D)' } : undefined}
+                          className={`text-[10.5px] select-none mr-1 ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'font-black text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#8C827A] font-bold'}`}
+                        >
                           {verse.verseNumber}
-                          {isBookmarked && <span className="text-[var(--clean-accent-caramel,#B4793D)] ml-0.5">★</span>}
+                          {isBookmarked && <span style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} className="ml-0.5">★</span>}
                         </sup>{' '}
                         {renderRedLetterContent(verseText, isWordOfJesus, showRedLetter, isSelected, bookName, chapter.chapterNumber, verse.verseNumber, onSelectCharacter, matchedCharacters, selectedCharacter, aiVerifiedCharacters)}{' '}
                       </span>
@@ -1010,17 +1117,49 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   let highlightContainerClasses = '';
                   let highlightVerseStyle: React.CSSProperties = {};
                   if (tabHighlight === 'yellow') {
-                    highlightContainerClasses = 'border-l-4 border-amber-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-yellow-bg)', color: 'var(--hl-yellow-text)' };
+                    highlightContainerClasses = 'border-l-4 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-yellow-bg)',
+                      color: 'var(--hl-yellow-text)',
+                      borderLeftColor: 'var(--hl-yellow-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-yellow-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   } else if (tabHighlight === 'green') {
-                    highlightContainerClasses = 'border-l-4 border-emerald-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-green-bg)', color: 'var(--hl-green-text)' };
+                    highlightContainerClasses = 'border-l-4 border-emerald-500 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-green-bg)',
+                      color: 'var(--hl-green-text)',
+                      borderLeftColor: 'var(--hl-green-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-green-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   } else if (tabHighlight === 'red') {
-                    highlightContainerClasses = 'border-l-4 border-rose-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-red-bg)', color: 'var(--hl-red-text)' };
+                    highlightContainerClasses = 'border-l-4 border-rose-500 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-red-bg)',
+                      color: 'var(--hl-red-text)',
+                      borderLeftColor: 'var(--hl-red-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-red-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   } else if (tabHighlight === 'blue') {
-                    highlightContainerClasses = 'border-l-4 border-sky-500 shadow-2xs';
-                    highlightVerseStyle = { backgroundColor: 'var(--hl-blue-bg)', color: 'var(--hl-blue-text)' };
+                    highlightContainerClasses = 'border-l-4 border-sky-500 shadow-xs';
+                    highlightVerseStyle = {
+                      backgroundColor: 'var(--hl-blue-bg)',
+                      color: 'var(--hl-blue-text)',
+                      borderLeftColor: 'var(--hl-blue-border)',
+                      textDecorationLine: 'underline',
+                      textDecorationColor: 'var(--hl-blue-border)',
+                      textDecorationThickness: '2px',
+                      textUnderlineOffset: '3.5px'
+                    };
                   }
 
                   return (
@@ -1031,21 +1170,30 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                         tabHighlight
                           ? highlightVerseStyle
                           : isSelected
-                            ? { backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)', color: 'var(--clean-text-primary, #26221F)' }
+                            ? {
+                                borderLeft: '3.5px solid var(--clean-accent-caramel, #B4793D)',
+                                textDecorationLine: 'underline',
+                                textDecorationColor: 'var(--clean-accent-caramel, #B4793D)',
+                                textDecorationThickness: '2px',
+                                textUnderlineOffset: '3.5px',
+                                color: 'var(--clean-text-primary, #1C1917)'
+                              }
                             : undefined
                       }
                       onMouseDown={(e) => handleVerseMouseDown(verse.verseNumber, e)}
                       onMouseEnter={() => handleVerseMouseEnter(verse.verseNumber)}
                       className={`group relative px-2.5 py-1.5 rounded-lg cursor-pointer transition-all duration-150 ${isSelected
-                          ? 'bg-[#FAF3E8] border-l-3 border-[#B4793D] shadow-xs'
+                          ? 'shadow-xs'
                           : showRedLetter && isWordOfJesus
                             ? 'bg-red-50/20 border-l-2 border-red-500 hover:bg-red-50/40'
-                            : 'hover:bg-[#FAF9F5] border-l-2 border-transparent'
+                            : 'hover:bg-[var(--clean-highlight-cream,#FAF9F5)] border-l-2 border-transparent'
                         }`}
                     >
                       <div className="flex items-baseline gap-2">
-                        <span className={`text-[10.5px] select-none font-semibold flex-shrink-0 w-4 text-right ${isSelected
-                            ? 'text-[#B4793D] font-bold'
+                        <span
+                          style={isSelected ? { color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' } : undefined}
+                          className={`text-[10.5px] select-none font-semibold flex-shrink-0 w-4 text-right font-heading ${isSelected
+                            ? 'font-bold'
                             : showRedLetter && isWordOfJesus
                               ? 'text-red-600 font-bold'
                               : 'text-[#A8A29E]'
@@ -1063,13 +1211,25 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
                           {/* Multi-Verse Action Banner when at the end of the range in Verse Mode */}
                           {isMultiSelect && activeRange && isRangeEnd && (
-                            <div className="mt-2 pt-2 border-t border-[var(--clean-border,#EBE5DC)] flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none">
+                            <div
+                              style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                              className="mt-2 pt-2 border-t flex flex-wrap items-center justify-between gap-2 animate-fadeIn select-none"
+                            >
                               <div className="flex items-center gap-1.5">
-                                <span className="text-[11px] font-bold text-[var(--clean-accent-caramel,#B4793D)] flex items-center gap-1">
+                                <span
+                                  style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+                                  className="text-[11px] font-bold font-heading flex items-center gap-1"
+                                >
                                   <Layers className="w-3 h-3" />
                                   vv. {activeRange.start}–{activeRange.end}
                                 </span>
-                                <span className="text-[9.5px] font-medium text-[#78716C] bg-white px-1.5 py-0.2 rounded border border-[var(--clean-border,#EBE5DC)]">
+                                <span
+                                  style={{
+                                    color: 'var(--clean-accent-dark, #78471F)',
+                                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                  }}
+                                  className="text-[9.5px] font-semibold bg-white px-1.5 py-0.2 rounded border font-heading shadow-2xs"
+                                >
                                   {activeRange.end - activeRange.start + 1} verses for AI
                                 </span>
                               </div>
@@ -1077,31 +1237,46 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                               <div className="flex items-center gap-1.5 ml-auto">
                                 {/* 4-Color Highlighter Palette for Range */}
                                 {onHighlightVerse && (
-                                  <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
-                                    <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
-                                    {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
-                                      <button
-                                        key={color}
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onHighlightVerse(activeRange.start, color, activeRange);
-                                        }}
-                                        className="w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs"
-                                        style={{
-                                          backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
-                                          border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
-                                        }}
-                                        title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
-                                      />
-                                    ))}
+                                  <div
+                                    style={{
+                                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                                    }}
+                                    className="ios-glass-btn text-xs !py-0.5 !px-2 border flex items-center gap-1.5 shadow-xs"
+                                  >
+                                    <Highlighter
+                                      className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] shrink-0"
+                                    />
+                                    <div className="flex items-center gap-1">
+                                      {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
+                                        <button
+                                          key={color}
+                                          onMouseDown={(e) => e.stopPropagation()}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onHighlightVerse(activeRange.start, color, activeRange);
+                                          }}
+                                          className="w-3.5 h-3.5 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer opacity-85 hover:opacity-100"
+                                          style={{
+                                            backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                                            border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                                          }}
+                                          title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
+                                        />
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
 
                                 <button
                                   onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => handleCopyRange(activeRange.start, activeRange.end, e)}
-                                  className="ios-glass-btn text-xs !py-0.5 !px-2 bg-white flex items-center gap-1"
+                                  style={{
+                                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                    color: 'var(--clean-text-primary, #26221F)'
+                                  }}
+                                  className="ios-glass-btn text-xs !py-0.5 !px-2 border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] flex items-center gap-1 cursor-pointer font-heading"
                                   title="Copy selected verses"
                                 >
                                   {copiedVerseNum === -1 ? (
@@ -1111,7 +1286,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                     </>
                                   ) : (
                                     <>
-                                      <Copy className="w-3 h-3 text-[#78716C]" />
+                                      <Copy className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
                                       <span>Copy</span>
                                     </>
                                   )}
@@ -1124,10 +1299,14 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                       e.stopPropagation();
                                       onCreateStudyGuide(activeVerse, activeRange);
                                     }}
-                                    className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs flex items-center gap-1"
+                                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                                    className="ios-glass-btn !py-0.5 !px-2 text-xs border text-[var(--clean-text-secondary,#78716C)] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] shadow-xs flex items-center gap-1 cursor-pointer font-heading"
                                     title="Generate Study Guide for selected range"
                                   >
-                                    <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+                                    <BookOpenCheck
+                                      className="w-3 h-3"
+                                      style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+                                    />
                                     <span>Study Guide</span>
                                   </button>
                                 )}
@@ -1164,11 +1343,22 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
                           {/* Selected Verse Compact Actions (Single Verse Selection) */}
                           {!isMultiSelect && isSelected && (
-                            <div className="mt-2 pt-1.5 border-t border-[var(--clean-border,#EBE5DC)] flex items-center justify-between animate-fadeIn select-none">
+                            <div
+                              style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                              className="mt-2 pt-1.5 border-t flex items-center justify-between animate-fadeIn select-none"
+                            >
                               {verse.greekHebrew && verse.greekHebrew.length > 0 ? (
-                                <div className="flex items-center gap-1 text-[10.5px] text-[#78716C] truncate max-w-[200px]">
-                                  <span className="text-[var(--clean-accent-caramel,#B4793D)] font-semibold">Lemma:</span>
-                                  <span className="font-medium text-[#26221F] bg-white px-1.5 py-0.2 rounded border border-[var(--clean-border,#EBE5DC)]">
+                                <div className="flex items-center gap-1 text-[10.5px] text-[var(--clean-text-secondary,#78716C)] truncate max-w-[200px]">
+                                  <span
+                                    style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+                                    className="font-semibold font-heading"
+                                  >
+                                    Lemma:
+                                  </span>
+                                  <span
+                                    style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                                    className="font-medium text-[var(--clean-text-primary,#26221F)] bg-white px-1.5 py-0.2 rounded border shadow-2xs"
+                                  >
                                     {verse.greekHebrew[0].word} <em>({verse.greekHebrew[0].transliteration})</em>
                                   </span>
                                 </div>
@@ -1177,34 +1367,49 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                               <div className="flex items-center gap-1.5 ml-auto">
                                 {/* 4-Color Highlighter Palette for Single Verse */}
                                 {onHighlightVerse && (
-                                  <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
-                                    <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
-                                    {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
-                                      const isCurrent = tabHighlights?.[verse.verseNumber] === color;
-                                      return (
-                                        <button
-                                          key={color}
-                                          onMouseDown={(e) => e.stopPropagation()}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            onHighlightVerse(verse.verseNumber, color);
-                                          }}
-                                          className={`w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : ''}`}
-                                          style={{
-                                            backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
-                                            border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
-                                          }}
-                                          title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
-                                        />
-                                      );
-                                    })}
+                                  <div
+                                    style={{
+                                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                      borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                                    }}
+                                    className="ios-glass-btn text-xs !py-0.5 !px-2 border flex items-center gap-1.5 shadow-xs"
+                                  >
+                                    <Highlighter
+                                      className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] shrink-0"
+                                    />
+                                    <div className="flex items-center gap-1">
+                                      {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
+                                        const isCurrent = tabHighlights?.[verse.verseNumber] === color;
+                                        return (
+                                          <button
+                                            key={color}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onHighlightVerse(verse.verseNumber, color);
+                                            }}
+                                            className={`w-3.5 h-3.5 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer ${isCurrent ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)] ring-offset-1 scale-110' : ''}`}
+                                            style={{
+                                              backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                                              border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                                            }}
+                                            title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
+                                          />
+                                        );
+                                      })}
+                                    </div>
                                   </div>
                                 )}
 
                                 <button
                                   onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => handleCopyVerse(verse, e)}
-                                  className="ios-glass-btn text-xs !py-0.5 !px-2 bg-white"
+                                  style={{
+                                    backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                    borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                    color: 'var(--clean-text-primary, #26221F)'
+                                  }}
+                                  className="ios-glass-btn text-xs !py-0.5 !px-2 border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] cursor-pointer font-heading"
                                   title="Copy Verse"
                                 >
                                   {copiedVerseNum === verse.verseNumber ? (
@@ -1214,7 +1419,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                     </>
                                   ) : (
                                     <>
-                                      <Copy className="w-3 h-3 text-[#78716C]" />
+                                      <Copy className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
                                       <span>Copy</span>
                                     </>
                                   )}
@@ -1223,14 +1428,32 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                 <button
                                   onMouseDown={(e) => e.stopPropagation()}
                                   onClick={(e) => handleToggleBookmark(verse.verseNumber, e)}
-                                  className={`ios-glass-btn text-xs !py-0.5 !px-2.5 transition-all ${isBookmarked
-                                      ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
-                                      : 'bg-white hover:border-[#D4A373]'
-                                    }`}
+                                  style={
+                                    isBookmarked
+                                      ? {
+                                          backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                                          color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))',
+                                          borderColor: 'var(--clean-accent-border-strong, var(--clean-accent-border, #D4A373))',
+                                        }
+                                      : {
+                                          backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                          borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                          color: 'var(--clean-text-primary, #26221F)',
+                                        }
+                                  }
+                                  className="ios-glass-btn text-xs !py-0.5 !px-2.5 transition-all cursor-pointer font-heading shadow-2xs"
                                   title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Verse'}
                                 >
-                                  <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#78716C]'}`} />
-                                  <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+                                  <Bookmark
+                                    className="w-3 h-3"
+                                    style={{
+                                      color: isBookmarked ? 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' : 'var(--clean-text-secondary, #78716C)',
+                                      fill: isBookmarked ? 'var(--clean-accent-caramel, #B4793D)' : 'none',
+                                    }}
+                                  />
+                                  <span style={{ color: isBookmarked ? 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' : 'var(--clean-text-primary, #26221F)' }}>
+                                    {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                                  </span>
                                 </button>
 
                                 {onCreateStudyGuide && (
@@ -1241,10 +1464,18 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                       onSelectVerse(verse);
                                       onCreateStudyGuide(verse);
                                     }}
-                                    className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs"
+                                    style={{
+                                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                                      borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                                      color: 'var(--clean-text-primary, #26221F)'
+                                    }}
+                                    className="ios-glass-btn !py-0.5 !px-2 text-xs shadow-2xs flex items-center gap-1 cursor-pointer font-heading"
                                     title="Generate Study Guide for this passage"
                                   >
-                                    <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+                                    <BookOpenCheck
+                                      className="w-3 h-3"
+                                      style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+                                    />
                                     <span>Study Guide</span>
                                   </button>
                                 )}
@@ -1257,7 +1488,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                                       onSelectVerse(verse);
                                       onOpenBereaAi();
                                     }}
-                                    className="clean-caramel-btn text-xs !py-0.5 !px-2.5 shadow-xs"
+                                    className="clean-caramel-btn text-xs !py-0.5 !px-2.5 shadow-xs cursor-pointer font-heading font-semibold"
                                     title="Open in AI Guide"
                                   >
                                     <Sparkles className="w-3 h-3 text-amber-100 fill-amber-100" />
@@ -1282,7 +1513,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               <div className="mt-4 flex flex-wrap items-center justify-center gap-3 animate-fadeIn">
                 <button
                   onClick={() => onOpenQuiz('book')}
-                  className="px-4 py-2 bg-[#B4793D] text-white hover:bg-[#9A632E] rounded-full text-xs font-semibold flex items-center gap-2 transition-all shadow-sm"
+                  className="px-4 py-2 bg-[var(--clean-accent-caramel,#B4793D)] text-white hover:bg-[var(--clean-accent-dark,#9A632E)] rounded-full text-xs font-semibold flex items-center gap-2 transition-all shadow-sm font-heading cursor-pointer"
                 >
                   <Trophy className="w-3.5 h-3.5" />
                   Finished Book
@@ -1362,7 +1593,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       }
                     } catch { }
                     if (isPlayingAudio) {
-                      playVerseAudio(selectedVerseNumber, playbackSpeed, newVoice);
+                      playVerseAudio(selectedVerseNumber || 1, playbackSpeed, newVoice);
                     }
                   }}
                   className="bg-[#38332E] text-xs text-[#EBE5DC] border border-[#48423B] rounded-full px-2.5 py-1 focus:outline-none focus:border-[var(--clean-accent-caramel,#B4793D)] font-medium cursor-pointer max-w-[210px] truncate"
@@ -1383,10 +1614,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     key={rate}
                     onClick={() => {
                       setPlaybackSpeed(rate);
-                      playVerseAudio(selectedVerseNumber, rate, selectedVoiceId);
+                      playVerseAudio(selectedVerseNumber || 1, rate, selectedVoiceId);
                     }}
                     className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono transition-all ${playbackSpeed === rate
-                        ? 'bg-[#B4793D] text-white font-bold'
+                        ? 'bg-[var(--clean-accent-caramel,#B4793D)] text-white font-bold'
                         : 'text-[#A8A29E] hover:text-white'
                       }`}
                   >
@@ -1433,31 +1664,44 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
           <div className="flex items-center gap-1.5 ml-auto">
             {onHighlightVerse && (
-              <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
-                <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
-                {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
-                  <button
-                    key={color}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onHighlightVerse(activeRange.start, color, activeRange);
-                    }}
-                    className="w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer"
-                    style={{
-                      backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
-                      border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
-                    }}
-                    title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
-                  />
-                ))}
+              <div
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+                className="ios-glass-btn !py-0.5 !px-2 text-xs border flex items-center gap-1.5 shadow-xs"
+              >
+                <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
+                <div className="flex items-center gap-1">
+                  {(['yellow', 'green', 'red', 'blue'] as const).map(color => (
+                    <button
+                      key={color}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onHighlightVerse(activeRange.start, color, activeRange);
+                      }}
+                      className="w-3.5 h-3.5 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer opacity-85 hover:opacity-100"
+                      style={{
+                        backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                        border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                      }}
+                      title={`Highlight vv. ${activeRange.start}–${activeRange.end} in ${HIGHLIGHT_BUTTON_STYLES[color].label}`}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
             <button
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => handleCopyRange(activeRange.start, activeRange.end, e)}
-              className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white flex items-center gap-1 cursor-pointer"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                color: 'var(--clean-text-primary, #26221F)'
+              }}
+              className="ios-glass-btn !py-0.5 !px-2 text-xs border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] flex items-center gap-1 cursor-pointer font-heading"
               title="Copy selected verses"
             >
               {copiedVerseNum === -1 ? (
@@ -1467,7 +1711,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                 </>
               ) : (
                 <>
-                  <Copy className="w-3 h-3 text-[#78716C]" />
+                  <Copy className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
                   <span>Copy</span>
                 </>
               )}
@@ -1480,10 +1724,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   e.stopPropagation();
                   onCreateStudyGuide(activeVerse, activeRange);
                 }}
-                className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs flex items-center gap-1 cursor-pointer"
+                className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-accent-border,#EBE5DC)] text-[var(--clean-text-secondary,#78716C)] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] shadow-xs flex items-center gap-1 cursor-pointer font-heading"
                 title="Generate Study Guide for selected range"
               >
-                <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+                <BookOpenCheck
+                  className="w-3 h-3"
+                  style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+                />
                 <span>Study Guide</span>
               </button>
             )}
@@ -1544,34 +1791,47 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
           <div className="flex items-center gap-1.5 ml-auto">
             {onHighlightVerse && (
-              <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full border border-[var(--clean-border,#EBE5DC)] shadow-2xs">
-                <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] ml-0.5" />
-                {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
-                  const isCurrent = tabHighlights?.[activeVerse.verseNumber] === color;
-                  return (
-                    <button
-                      key={color}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onHighlightVerse(activeVerse.verseNumber, color);
-                      }}
-                      className={`w-4 h-4 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer ${isCurrent ? 'ring-2 ring-stone-700 ring-offset-1 scale-110' : ''}`}
-                      style={{
-                        backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
-                        border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
-                      }}
-                      title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
-                    />
-                  );
-                })}
+              <div
+                style={{
+                  backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+                className="ios-glass-btn !py-0.5 !px-2 text-xs border flex items-center gap-1.5 shadow-xs"
+              >
+                <Highlighter className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)] shrink-0" />
+                <div className="flex items-center gap-1">
+                  {(['yellow', 'green', 'red', 'blue'] as const).map(color => {
+                    const isCurrent = tabHighlights?.[activeVerse.verseNumber] === color;
+                    return (
+                      <button
+                        key={color}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onHighlightVerse(activeVerse.verseNumber, color);
+                        }}
+                        className={`w-3.5 h-3.5 rounded-full transition-transform hover:scale-120 active:scale-95 shadow-2xs cursor-pointer ${isCurrent ? 'ring-2 ring-[var(--clean-accent-caramel,#B4793D)] ring-offset-1 scale-110' : ''}`}
+                        style={{
+                          backgroundColor: HIGHLIGHT_BUTTON_STYLES[color].bg,
+                          border: `1.5px solid ${HIGHLIGHT_BUTTON_STYLES[color].border}`
+                        }}
+                        title={`Highlight verse in ${HIGHLIGHT_BUTTON_STYLES[color].label}${isCurrent ? ' (click to toggle off)' : ''}`}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             )}
 
             <button
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => handleCopyVerse(activeVerse, e)}
-              className="ios-glass-btn !py-0.5 !px-2 text-xs bg-white cursor-pointer"
+              style={{
+                backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                color: 'var(--clean-text-primary, #26221F)'
+              }}
+              className="ios-glass-btn !py-0.5 !px-2 text-xs border hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] hover:text-[var(--clean-accent-dark,#78471F)] cursor-pointer font-heading"
               title="Copy Verse"
             >
               {copiedVerseNum === activeVerse.verseNumber ? (
@@ -1581,7 +1841,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                 </>
               ) : (
                 <>
-                  <Copy className="w-3 h-3 text-[#78716C]" />
+                  <Copy className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
                   <span>Copy</span>
                 </>
               )}
@@ -1590,13 +1850,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             <button
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => handleToggleBookmark(activeVerse.verseNumber, e)}
-              className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all cursor-pointer ${isVerseSaved(activeVerse.verseNumber)
-                ? '!bg-[#FAF3E8] !text-[#B4793D] !border-[#D4A373] font-medium'
-                : 'bg-white hover:border-[#D4A373]'
+              className={`ios-glass-btn !py-0.5 !px-2.5 text-xs transition-all cursor-pointer font-heading ${isVerseSaved(activeVerse.verseNumber)
+                ? '!bg-[var(--clean-highlight-cream,#FAF3E8)] !text-[var(--clean-accent-caramel,#B4793D)] !border-[var(--clean-accent-border,#D4A373)] font-semibold'
+                : 'bg-white border-[var(--clean-accent-border,#EBE5DC)] hover:border-[var(--clean-accent-caramel,#D4A373)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)]'
               }`}
               title={isVerseSaved(activeVerse.verseNumber) ? 'Remove Bookmark' : 'Bookmark Verse'}
             >
-              <Bookmark className={`w-3 h-3 ${isVerseSaved(activeVerse.verseNumber) ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#78716C]'}`} />
+              <Bookmark className={`w-3 h-3 ${isVerseSaved(activeVerse.verseNumber) ? 'fill-[var(--clean-accent-caramel,#B4793D)] text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[var(--clean-text-secondary,#78716C)]'}`} />
               <span>{isVerseSaved(activeVerse.verseNumber) ? 'Bookmarked' : 'Bookmark'}</span>
             </button>
 
@@ -1608,10 +1868,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   onSelectVerse(activeVerse);
                   onCreateStudyGuide(activeVerse);
                 }}
-                className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-border,#EBE5DC)] text-[#78716C] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] shadow-xs cursor-pointer"
+                className="ios-glass-btn !py-0.5 !px-2 text-xs border border-[var(--clean-accent-border,#EBE5DC)] text-[var(--clean-text-secondary,#78716C)] hover:text-[var(--clean-accent-caramel,#B4793D)] hover:border-[var(--clean-accent-caramel,#B4793D)] hover:bg-[var(--clean-highlight-cream,#FAF5ED)] shadow-xs cursor-pointer font-heading"
                 title="Generate Study Guide for this passage"
               >
-                <BookOpenCheck className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+                <BookOpenCheck
+                  className="w-3 h-3"
+                  style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+                />
                 <span>Study Guide</span>
               </button>
             )}
@@ -1662,15 +1925,22 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         <button
           onClick={onPrevChapter}
           disabled={isFirstChapter}
-          className="flex items-center gap-1.5 text-[#78716C] hover:text-[#26221F] disabled:opacity-20 font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
+          style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+          className="flex items-center gap-1.5 disabled:opacity-20 font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
           title="Previous Chapter"
         >
-          <ChevronLeft className="w-4 h-4 text-[#B4793D]" />
+          <ChevronLeft className="w-4 h-4" />
           <span>Previous Chapter</span>
         </button>
 
         <div className="flex items-center opacity-85 hover:opacity-100 transition-opacity">
-          <div className="w-7 h-7 rounded-lg overflow-hidden border border-[#EBE5DC] bg-white p-0.5 shadow-xs flex items-center justify-center">
+          <div
+            className="w-7 h-7 rounded-xl overflow-hidden border p-0.5 shadow-xs flex items-center justify-center"
+            style={{
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              backgroundColor: 'var(--clean-surface, #FFFFFF)'
+            }}
+          >
             <img src="/berea-logo.jpg" alt="Berea" className="w-full h-full object-contain" />
           </div>
         </div>
@@ -1678,7 +1948,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         <button
           onClick={onNextChapter}
           disabled={isLastChapter}
-          className="flex items-center gap-1.5 text-[#B4793D] hover:text-[#9A632E] disabled:opacity-20 font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
+          style={{ color: 'var(--clean-accent-dark, var(--clean-accent-caramel, #B4793D))' }}
+          className="flex items-center gap-1.5 disabled:opacity-20 font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
           title="Next Chapter"
         >
           <span>Next Chapter</span>

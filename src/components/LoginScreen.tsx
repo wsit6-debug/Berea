@@ -123,8 +123,8 @@ interface LoginScreenProps {
   chapterNumber?: number;
   verses?: Verse[];
   activeTranslation?: TranslationId;
-  selectedVerse?: Verse;
-  activeSidebar?: 'guide' | 'notepad' | null;
+  selectedVerse?: Verse | null;
+  activeSidebar?: 'guide' | 'notepad' | 'compare' | null;
   userNotes?: string;
 }
 

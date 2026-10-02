@@ -174,7 +174,7 @@ export const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
   ko: '한국어',
   tl: 'Tagalog',
   fil: 'Filipino',
-  la: 'Latina',
+  la: 'Latin',
   uk: 'Українська',
   ar: 'العربية',
   nl: 'Nederlands',

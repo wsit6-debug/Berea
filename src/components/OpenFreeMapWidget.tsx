@@ -30,8 +30,8 @@ function createEventIcon(ev: ChapterGeoEvent, isCurrent: boolean) {
         position: relative;
         width: ${isCurrent ? '36px' : isRef ? '20px' : '28px'};
         height: ${isCurrent ? '36px' : isRef ? '20px' : '28px'};
-        background: ${isCurrent ? '#B4793D' : isRef ? '#EBE5DC' : '#FAF7F2'};
-        border: ${isRef ? '1.5px' : '2.5px'} solid ${isCurrent ? '#FFFFFF' : isRef ? '#D4A373' : '#B4793D'};
+        background: ${isCurrent ? 'var(--clean-accent-caramel, #B4793D)' : isRef ? 'var(--clean-surface-warm, #EBE5DC)' : 'var(--clean-highlight-cream, #FAF7F2)'};
+        border: ${isRef ? '1.5px' : '2.5px'} solid ${isCurrent ? '#FFFFFF' : isRef ? 'var(--clean-accent-border, #D4A373)' : 'var(--clean-accent-caramel, #B4793D)'};
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -43,7 +43,7 @@ function createEventIcon(ev: ChapterGeoEvent, isCurrent: boolean) {
       ">
         <span style="
           font-size: ${isCurrent ? '13px' : isRef ? '9px' : '11px'};
-          color: ${isCurrent ? '#FFFFFF' : isRef ? '#78471F' : '#78471F'};
+          color: ${isCurrent ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-accent-dark, #78471F)'};
           font-weight: 800;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         ">
@@ -54,7 +54,7 @@ function createEventIcon(ev: ChapterGeoEvent, isCurrent: boolean) {
             position: absolute;
             inset: -6px;
             border-radius: 50%;
-            border: 2px solid #B4793D;
+            border: 2px solid var(--clean-accent-caramel, #B4793D);
             animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
             opacity: 0.6;
           "></div>
@@ -65,13 +65,13 @@ function createEventIcon(ev: ChapterGeoEvent, isCurrent: boolean) {
           left: 50%;
           transform: translateX(-50%);
           background: rgba(255, 255, 255, 0.96);
-          color: ${isCurrent ? '#78471F' : isRef ? '#78716C' : '#26221F'};
+          color: ${isCurrent ? 'var(--clean-accent-dark, #78471F)' : isRef ? 'var(--clean-text-secondary, #78716C)' : 'var(--clean-text-primary, #26221F)'};
           padding: ${isRef ? '1px 4px' : '2px 7px'};
           border-radius: 6px;
           font-size: ${isRef ? '9px' : '10px'};
           font-weight: ${isRef ? '600' : '700'};
           white-space: nowrap;
-          border: 1px solid ${isCurrent ? '#B4793D' : isRef ? 'transparent' : '#EBE5DC'};
+          border: 1px solid ${isCurrent ? 'var(--clean-accent-caramel, #B4793D)' : isRef ? 'transparent' : 'var(--clean-accent-border, #EBE5DC)'};
           box-shadow: 0 2px 6px rgba(0,0,0,0.12);
           pointer-events: none;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -95,31 +95,31 @@ function bindEventPopup(
     : undefined;
 
   marker.bindPopup(`
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #26221F; padding: 4px; max-width: 260px;">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--clean-text-primary, #26221F); padding: 4px; max-width: 260px;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 4px; flex-wrap: wrap;">
-        <span style="font-size: 10px; font-weight: 800; background: #FAF3E8; color: #78471F; padding: 2px 6px; border-radius: 4px; border: 1px solid #B4793D; flex-shrink: 0;">
+        <span style="font-size: 10px; font-weight: 800; background: var(--clean-highlight-cream, #FAF3E8); color: var(--clean-accent-dark, #78471F); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--clean-accent-caramel, #B4793D); flex-shrink: 0;">
           ${ev.isReferencedOnly ? 'Reference' : 'Storyline'} ${escapeHtml(ev.stepNumber)} • ${escapeHtml(ev.passageRef)}
         </span>
-        ${ev.isDeparturePoint ? `<span style="font-size: 9px; font-weight: 400; color: #8C827A; white-space: nowrap;">From ${escapeHtml(ev.departureFromChapter || 'previous chapter')}</span>` : ''}
+        ${ev.isDeparturePoint ? `<span style="font-size: 9px; font-weight: 400; color: var(--clean-text-tertiary, #8C827A); white-space: nowrap;">From ${escapeHtml(ev.departureFromChapter || 'previous chapter')}</span>` : ''}
         ${ev.isEducatedGuess ? `<span style="font-size: 9px; font-weight: 700; background: #FFF3CD; color: #856404; padding: 2px 4px; border-radius: 4px; border: 1px solid #FFEEBA; white-space: nowrap;">Educated Guess</span>` : ''}
       </div>
-      <h4 style="margin: 0 0 3px 0; font-size: 13px; font-weight: 700; color: #78471F;">${escapeHtml(ev.title)}</h4>
-      <p style="margin: 0 0 4px 0; font-size: 10.5px; color: #78716C; font-weight: 500;">${escapeHtml(ev.locationName)}${ev.modernLocation ? ` (${escapeHtml(ev.modernLocation)})` : ''}</p>
+      <h4 style="margin: 0 0 3px 0; font-size: 13px; font-weight: 700; color: var(--clean-accent-dark, #78471F);">${escapeHtml(ev.title)}</h4>
+      <p style="margin: 0 0 4px 0; font-size: 10.5px; color: var(--clean-text-secondary, #78716C); font-weight: 500;">${escapeHtml(ev.locationName)}${ev.modernLocation ? ` (${escapeHtml(ev.modernLocation)})` : ''}</p>
 
       ${distInfo && !distInfo.isOrigin && distInfo.distanceMiles ? `
-        <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; font-size: 9.5px; background: #FAF5ED; padding: 4px 6px; border-radius: 6px; border: 1px solid #EBE5DC;">
-          <div style="display: flex; justify-content: space-between; font-weight: 700; color: #B4793D;">
+        <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; font-size: 9.5px; background: var(--clean-highlight-cream, #FAF5ED); padding: 4px 6px; border-radius: 6px; border: 1px solid var(--clean-accent-border, #EBE5DC);">
+          <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--clean-accent-caramel, #B4793D);">
             <span>+${distInfo.distanceMiles} miles</span>
             <span>${daysText || ''}</span>
           </div>
-          ${distInfo.roadName ? `<div style="color: #78471F; font-size: 9px;">Road: <strong>${escapeHtml(distInfo.roadName)}</strong></div>` : ''}
+          ${distInfo.roadName ? `<div style="color: var(--clean-accent-dark, #78471F); font-size: 9px;">Road: <strong>${escapeHtml(distInfo.roadName)}</strong></div>` : ''}
         </div>
       ` : ''}
 
-      <p style="margin: 0 0 6px 0; font-size: 11px; line-height: 1.4; color: #44403C;">${escapeHtml(ev.description)}</p>
+      <p style="margin: 0 0 6px 0; font-size: 11px; line-height: 1.4; color: var(--clean-text-primary, #44403C);">${escapeHtml(ev.description)}</p>
       ${ev.theologicalSignificance ? `
-        <div style="font-size: 10px; background: #FAF5ED; padding: 5px; border-radius: 6px; border-left: 2px solid #B4793D; color: #57524E; line-height: 1.35;">
-          <strong style="color: #78471F;">Theology:</strong> ${escapeHtml(ev.theologicalSignificance)}
+        <div style="font-size: 10px; background: var(--clean-highlight-cream, #FAF5ED); padding: 5px; border-radius: 6px; border-left: 2px solid var(--clean-accent-caramel, #B4793D); color: var(--clean-text-secondary, #57524E); line-height: 1.35;">
+          <strong style="color: var(--clean-accent-dark, #78471F);">Theology:</strong> ${escapeHtml(ev.theologicalSignificance)}
         </div>
       ` : ''}
     </div>
@@ -691,34 +691,46 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
         key={ev.id}
         ref={(el) => { storylineButtonsRef.current[idx] = el; }}
         onClick={onClick}
+        style={{
+          backgroundColor: isCurrent ? 'var(--clean-surface, #FFFFFF)' : isRef ? 'var(--clean-highlight-cream, #FAF5ED)' : 'var(--clean-surface-subtle, #FAF7F2)',
+          borderColor: isCurrent ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)'
+        }}
         className={`flex-shrink-0 flex items-center gap-2 p-1.5 pr-2.5 rounded-lg border text-left transition-all ${isCurrent
-          ? 'bg-white border-[#B4793D] shadow-md ring-1 ring-[#B4793D]/20 z-10 scale-100'
+          ? 'shadow-md z-10 scale-100'
           : isRef
-            ? 'bg-[#FAF5ED]/50 border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-75 hover:opacity-100 scale-95 hover:scale-100'
-            : 'bg-[#FAF7F2] border-transparent hover:bg-white hover:border-[#EBE5DC] opacity-85 hover:opacity-100 scale-95 hover:scale-100'
+            ? 'hover:bg-white opacity-75 hover:opacity-100 scale-95 hover:scale-100'
+            : 'hover:bg-white opacity-85 hover:opacity-100 scale-95 hover:scale-100'
           }`}
       >
         <div
-          style={{ fontSize: '10px' }}
-          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${isCurrent ? 'bg-[#B4793D] text-white' : 'bg-[#EBE5DC] text-[#78471F]'
-          }`}>
+          style={{
+            fontSize: '10px',
+            backgroundColor: isCurrent ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+            color: isCurrent ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-accent-dark, #78471F)'
+          }}
+          className="w-6 h-6 rounded-full flex items-center justify-center font-bold">
           {ev.stepNumber}
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 justify-between">
             <span
-              style={{ fontSize: '11px' }}
-              className={`block font-bold truncate leading-tight ${isCurrent ? 'text-[#78471F]' : isRef ? 'text-[#78716C]' : 'text-[#26221F]'}`}
+              style={{
+                fontSize: '11px',
+                color: isCurrent ? 'var(--clean-accent-dark, #78471F)' : isRef ? 'var(--clean-text-secondary, #78716C)' : 'var(--clean-text-primary, #26221F)'
+              }}
+              className="block font-bold truncate leading-tight"
             >
               {getShortPlaceName(ev)}
             </span>
             {distInfo && (
               <span
-                style={{ fontSize: '8.5px' }}
-                className={`font-semibold px-1 py-0.5 rounded border leading-none flex-shrink-0 whitespace-nowrap ${distInfo.isOrigin
-                ? 'bg-white text-[#78716C] border-[#EBE5DC]'
-                : 'bg-[#FAF5ED] text-[#B4793D] border-[#D4A373]/40'
-                }`}>
+                style={{
+                  fontSize: '8.5px',
+                  backgroundColor: distInfo.isOrigin ? 'var(--clean-surface, #FFFFFF)' : 'var(--clean-highlight-cream, #FAF5ED)',
+                  color: distInfo.isOrigin ? 'var(--clean-text-secondary, #78716C)' : 'var(--clean-accent-caramel, #B4793D)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+                className="font-semibold px-1 py-0.5 rounded border leading-none flex-shrink-0 whitespace-nowrap">
                 {distInfo.label}
               </span>
             )}
@@ -749,12 +761,22 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
       {/* Top Map Control Bar */}
       <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none" style={{ zIndex: 1000 }}>
         {/* Active Chapter Badge */}
-        <div className="ios-glass-btn !py-1 !px-2.5 flex items-center gap-1.5 shadow-sm bg-white/95 border border-[#EBE5DC] pointer-events-auto">
-          <Mountain className="w-3.5 h-3.5 text-[#B4793D]" />
-          <span className="font-bold text-xs text-[#26221F] truncate max-w-[130px] sm:max-w-[180px]">
+        <div
+          className="ios-glass-btn !py-1 !px-2.5 flex items-center gap-1.5 shadow-sm bg-white/95 border pointer-events-auto"
+          style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+        >
+          <Mountain className="w-3.5 h-3.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />
+          <span className="font-bold text-xs truncate max-w-[130px] sm:max-w-[180px]" style={{ color: 'var(--clean-text-primary, #26221F)' }}>
             {viewMode === 'book' ? currentBook.toUpperCase() : `${currentBook.toUpperCase()} ${currentChapter}`}
           </span>
-          <span className="text-[10px] text-[#B4793D] font-medium bg-[#FAF5ED] px-1.5 py-0.2 rounded border border-[#EBE5DC]">
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.2 rounded border"
+            style={{
+              backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)',
+              color: 'var(--clean-accent-caramel, #B4793D)'
+            }}
+          >
             {storylineEvents.length} Storyline{referencedEvents.length > 0 ? ` • ${referencedEvents.length} Ref${referencedEvents.length === 1 ? '' : 's'}` : ''}
           </span>
         </div>
@@ -782,10 +804,12 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
           {referencedEvents.length > 0 && (
             <button
               onClick={() => setShowMentionedPins(!showMentionedPins)}
-              className={`flex items-center gap-1 h-[26px] px-2.5 rounded-full border shadow-sm transition-all text-[10px] font-bold tracking-wider ${showMentionedPins
-                ? 'bg-[#B4793D] border-[#B4793D] text-white hover:bg-[#9A632E]'
-                : 'bg-white/95 border-[#EBE5DC] text-[#78716C] hover:bg-[#FAF5ED] hover:text-[#26221F]'
-                }`}
+              className="flex items-center gap-1 h-[26px] px-2.5 rounded-full border shadow-sm transition-all text-[10px] font-bold tracking-wider cursor-pointer"
+              style={{
+                backgroundColor: showMentionedPins ? 'var(--clean-accent-caramel, #B4793D)' : 'rgba(255,255,255,0.95)',
+                borderColor: showMentionedPins ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
+                color: showMentionedPins ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-text-secondary, #78716C)'
+              }}
               title={showMentionedPins ? "Hide Mentioned Pins" : "Show Mentioned Pins"}
             >
               {showMentionedPins ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -811,7 +835,10 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
       />
 
       {/* Chapter Event Sequence Timeline Bar */}
-      <div className="bg-white/95 p-2 border-t border-[#EBE5DC] z-20 space-y-1.5 relative">
+      <div
+        className="bg-white/95 p-2 border-t z-20 space-y-1.5 relative"
+        style={{ borderColor: 'var(--clean-accent-border, #EBE5DC)' }}
+      >
         <div className="flex items-center justify-between text-[10px] text-[#78716C] px-1 font-medium flex-wrap gap-1">
           {/* Tabs: Storyline vs References */}
           <div className="flex items-center gap-1.5">
@@ -822,13 +849,21 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                   onEventSelect(storylineEvents[activeStorylineIndex]);
                 }
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${activeTab === 'storyline'
-                ? 'bg-[#B4793D] text-white shadow-xs'
-                : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
-                }`}
+              style={{
+                backgroundColor: activeTab === 'storyline' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-highlight-cream, #FAF5ED)',
+                color: activeTab === 'storyline' ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-text-secondary, #78716C)',
+                borderColor: 'var(--clean-accent-border, #EBE5DC)'
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all border cursor-pointer"
             >
               <span>Storyline</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${activeTab === 'storyline' ? 'bg-white/20 text-white' : 'bg-[#EBE5DC] text-[#78471F]'}`}>
+              <span
+                style={{
+                  backgroundColor: activeTab === 'storyline' ? 'rgba(255,255,255,0.25)' : 'var(--clean-accent-border, #EBE5DC)',
+                  color: activeTab === 'storyline' ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-accent-dark, #78471F)'
+                }}
+                className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold"
+              >
                 {storylineEvents.length}
               </span>
             </button>
@@ -842,13 +877,21 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                     onEventSelect(referencedEvents[activeReferenceIndex]);
                   }
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all ${activeTab === 'references'
-                  ? 'bg-[#B4793D] text-white shadow-xs'
-                  : 'bg-[#FAF5ED] text-[#78716C] hover:text-[#26221F] border border-[#EBE5DC]'
-                  }`}
+                style={{
+                  backgroundColor: activeTab === 'references' ? 'var(--clean-accent-caramel, #B4793D)' : 'var(--clean-highlight-cream, #FAF5ED)',
+                  color: activeTab === 'references' ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-text-secondary, #78716C)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10.5px] font-bold transition-all border cursor-pointer"
               >
                 <span>References</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-extrabold ${activeTab === 'references' ? 'bg-white/20 text-white' : 'bg-[#EBE5DC] text-[#78471F]'}`}>
+                <span
+                  style={{
+                    backgroundColor: activeTab === 'references' ? 'rgba(255,255,255,0.25)' : 'var(--clean-accent-border, #EBE5DC)',
+                    color: activeTab === 'references' ? 'var(--clean-accent-contrast-text, #FFFFFF)' : 'var(--clean-accent-dark, #78471F)'
+                  }}
+                  className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold"
+                >
                   {referencedEvents.length}
                 </span>
               </button>
@@ -863,12 +906,22 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                 setActiveStorylineIndex(0);
                 setActiveReferenceIndex(0);
               }}
-              className="text-[#B4793D] hover:text-[#78716C] underline transition-colors px-1 border-r border-[#D4A373]/30 mr-1 pr-2 text-[9.5px]"
+              style={{
+                color: 'var(--clean-accent-caramel, #B4793D)',
+                borderRightColor: 'var(--clean-accent-border, #D4A373)'
+              }}
+              className="hover:underline transition-colors px-1 border-r mr-1 pr-2 text-[9.5px] cursor-pointer"
             >
               {viewMode === 'chapter' ? 'View Entire Book' : 'View Chapter'}
             </button>
 
-            <div className="flex items-center bg-[#FAF3E8] rounded border border-[#D4A373] shadow-sm overflow-hidden">
+            <div
+              className="flex items-center rounded border shadow-sm overflow-hidden"
+              style={{
+                backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                borderColor: 'var(--clean-accent-border, #D4A373)'
+              }}
+            >
               <button
                 onClick={() => {
                   if (activeTab === 'storyline') {
@@ -882,12 +935,20 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                   }
                 }}
                 disabled={currentTabIndex === 0}
-                className="p-0.5 text-[#78471F] hover:bg-[#F2E8D5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                style={{ color: 'var(--clean-accent-dark, #78471F)' }}
+                className="p-0.5 hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
                 title={`Previous ${activeTab === 'storyline' ? 'Storyline' : 'Reference'} place`}
               >
                 <ChevronLeft size={12} />
               </button>
-              <span className="text-[9.5px] text-[#78471F] font-bold px-1.5 min-w-[36px] text-center border-x border-[#D4A373]/30">
+              <span
+                style={{
+                  color: 'var(--clean-accent-dark, #78471F)',
+                  borderLeftColor: 'var(--clean-accent-border, #D4A373)',
+                  borderRightColor: 'var(--clean-accent-border, #D4A373)'
+                }}
+                className="text-[9.5px] font-bold px-1.5 min-w-[36px] text-center border-x"
+              >
                 {currentTabEvents.length > 0 ? `${currentTabIndex + 1} / ${currentTabEvents.length}` : '0 / 0'}
               </span>
               <button
@@ -903,7 +964,8 @@ export const OpenFreeMapWidget: React.FC<OpenFreeMapWidgetProps> = ({
                   }
                 }}
                 disabled={currentTabEvents.length === 0 || currentTabIndex >= currentTabEvents.length - 1}
-                className="p-0.5 text-[#78471F] hover:bg-[#F2E8D5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                style={{ color: 'var(--clean-accent-dark, #78471F)' }}
+                className="p-0.5 hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
                 title={`Next ${activeTab === 'storyline' ? 'Storyline' : 'Reference'} place`}
               >
                 <ChevronRight size={12} />

@@ -32,7 +32,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹' },
   { code: 'ru', name: 'Russian', nativeName: 'Русский', flag: '🇷🇺' },
   { code: 'tl', name: 'Tagalog', nativeName: 'Tagalog', flag: '🇵🇭' },
-  { code: 'la', name: 'Latin', nativeName: 'Latina', flag: '🇻🇦' }
+  { code: 'la', name: 'Latin', nativeName: 'Latin', flag: '🇻🇦' }
 ];
 
 export interface TranslationSchema {
