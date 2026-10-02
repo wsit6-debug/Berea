@@ -1,6 +1,7 @@
 export type BackgroundMode = 'warm' | 'white' | 'sepia' | 'dark' | 'custom';
 
 export interface ThemeConfig {
+  id?: string;
   hue: number; // 0 to 360 (Accent)
   saturation: number; // 0 to 100
   lightness: number; // 0 to 100
@@ -109,6 +110,7 @@ export const PRESET_THEMES: PresetTheme[] = [
 ];
 
 export const DEFAULT_THEME: ThemeConfig = {
+  id: 'original',
   hue: 30,
   saturation: 49,
   lightness: 47,

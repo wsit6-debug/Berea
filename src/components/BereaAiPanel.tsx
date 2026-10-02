@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, RefreshCw, Send, Sliders, X,
+  Sparkles, BookOpen, MapPin, Columns, MessageSquare, ChevronRight, ChevronLeft, RefreshCw, Send, Sliders, X,
   Trash2, ArrowUpRight, ShieldCheck, BookOpenCheck, Copy, Check, Printer, ChevronDown, ChevronUp,
   History, Bookmark, Users, GraduationCap, Baby, ArrowRight, Layers, FileText, ListFilter, Languages, Trophy, HelpCircle, Network,
   Plus, Minus, CheckCircle2, Feather
@@ -93,6 +93,51 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
   const setActiveTab = (t: BereaAiTab) => {
     setInternalTab(t);
     onTabChange?.(t);
+  };
+
+  // Tab horizontal scroll navigation state
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkTabScroll = React.useCallback(() => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    checkTabScroll();
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', checkTabScroll, { passive: true });
+    window.addEventListener('resize', checkTabScroll);
+    const ro = new ResizeObserver(checkTabScroll);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      el.removeEventListener('scroll', checkTabScroll);
+      window.removeEventListener('resize', checkTabScroll);
+    };
+  }, [checkTabScroll]);
+
+  // When active tab changes, scroll it into view smoothly
+  useEffect(() => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    const activeEl = el.querySelector('.active') as HTMLElement | null;
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+    checkTabScroll();
+  }, [activeTab, checkTabScroll]);
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    const offset = direction === 'left' ? -120 : 120;
+    el.scrollBy({ left: offset, behavior: 'smooth' });
   };
 
   // Embedded Quiz State (runs inline at bottom of tab)
@@ -1029,65 +1074,107 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       className="berea-ai-inspector flex flex-col h-full bg-white text-[#26221F] border border-[var(--clean-accent-border,#EBE5DC)] rounded-2xl overflow-hidden shadow-xs"
       style={{ backgroundColor: '#FFFFFF' }}
     >
-      {/* Segmented Tab Capsule / Header */}
+      {/* Segmented Tab Capsule / Header with Horizontal Scroller */}
       <div
-        className="p-1.5 px-2.5 border-b border-[var(--clean-accent-border,#EBE5DC)] flex items-center gap-1.5 select-none flex-shrink-0"
+        className="p-1 px-2 border-b border-[var(--clean-accent-border,#EBE5DC)] flex items-center gap-1 select-none flex-shrink-0 relative overflow-hidden"
         style={{ backgroundColor: '#FFFFFF', color: '#26221F' }}
       >
-        <div className="ios-segmented-capsule flex-1 flex overflow-x-auto gap-0.5">
+        {/* Scroll Left Button (visible when scrolled right) */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scrollTabs('left')}
+            className="w-5 h-6 rounded flex items-center justify-center bg-white hover:bg-[#FAF5ED] border border-[#E2D5C3] text-[#78716C] hover:text-[#B4793D] shadow-xs flex-shrink-0 transition-all z-10 cursor-pointer"
+            title="Scroll tabs left"
+            aria-label="Scroll tabs left"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        <div
+          ref={tabsScrollRef}
+          onWheel={(e) => {
+            if (e.deltaY !== 0 && tabsScrollRef.current) {
+              tabsScrollRef.current.scrollLeft += e.deltaY;
+            }
+          }}
+          className="ios-segmented-capsule flex-1 flex justify-center gap-0.5 scroll-smooth no-scrollbar overflow-x-auto min-w-0"
+        >
           <button
             onClick={() => setActiveTab('overview')}
-            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'overview' ? 'active' : ''}`}
+            className={`ios-segment-pill shrink-0 !text-[10.5px] !py-0.5 px-2.5 ${activeTab === 'overview' ? 'active font-bold' : ''}`}
             title="Passage Overview"
           >
             <BookOpen className="w-3 h-3 shrink-0" />
-            <span className="truncate">Overview</span>
+            <span className="whitespace-nowrap">Overview</span>
           </button>
 
           <button
             onClick={() => setActiveTab('studyGuide')}
-            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'studyGuide' ? 'active' : ''}`}
+            className={`ios-segment-pill shrink-0 !text-[10.5px] !py-0.5 px-2.5 ${activeTab === 'studyGuide' ? 'active font-bold' : ''}`}
             title="Study Guide Generator"
           >
             <BookOpenCheck className="w-3 h-3 shrink-0" />
-            <span className="truncate">Study Guide</span>
+            <span className="whitespace-nowrap">Study Guide</span>
           </button>
 
           <button
             onClick={() => setActiveTab('chat')}
-            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[65px] ${activeTab === 'chat' ? 'active' : ''}`}
+            className={`ios-segment-pill shrink-0 !text-[10.5px] !py-0.5 px-2.5 ${activeTab === 'chat' ? 'active font-bold' : ''}`}
             title="Ask AI Assistant"
           >
             <MessageSquare className="w-3 h-3 shrink-0" />
-            <span className="truncate">Ask AI</span>
+            <span className="whitespace-nowrap">Ask AI</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('compare')}
+            className={`ios-segment-pill shrink-0 !text-[10.5px] !py-0.5 px-2.5 ${activeTab === 'compare' ? 'active font-bold' : ''}`}
+            title="Parallel Comparison"
+          >
+            <Columns className="w-3 h-3 shrink-0" />
+            <span className="whitespace-nowrap">Compare</span>
           </button>
 
           <button
             onClick={() => setActiveTab('map')}
-            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'map' ? 'active' : ''}`}
+            className={`ios-segment-pill shrink-0 !text-[10.5px] !py-0.5 px-2.5 ${activeTab === 'map' ? 'active font-bold' : ''}`}
             title="Biblical Atlas"
           >
             <MapPin className="w-3 h-3 shrink-0" />
-            <span className="truncate">Atlas</span>
+            <span className="whitespace-nowrap">Atlas</span>
           </button>
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[60px] ${activeTab === 'quiz' ? 'active' : ''}`}
+            className={`ios-segment-pill shrink-0 !text-[10.5px] !py-0.5 px-2.5 ${activeTab === 'quiz' ? 'active font-bold' : ''}`}
             title="Interactive Quiz"
           >
             <HelpCircle className="w-3 h-3 shrink-0" />
-            <span className="truncate">Quiz</span>
+            <span className="whitespace-nowrap">Quiz</span>
           </button>
+
           <button
             onClick={() => setActiveTab('symbolism')}
-            className={`ios-segment-pill flex-1 shrink !text-[10.5px] !py-0.5 min-w-[75px] ${activeTab === 'symbolism' ? 'active' : ''}`}
+            className={`ios-segment-pill shrink-0 !text-[10.5px] !py-0.5 px-2.5 ${activeTab === 'symbolism' ? 'active font-bold' : ''}`}
             title="Symbolism & Typology"
           >
-            <Feather className="w-3 h-3 shrink-0" />
-            <span className="truncate">Symbolism</span>
+            <Feather className="w-3 h-3 shrink-0 text-[#B4793D]" />
+            <span className="whitespace-nowrap">Symbolism</span>
           </button>
         </div>
+
+        {/* Scroll Right Button (visible when scrolled left) */}
+        {canScrollRight && (
+          <button
+            onClick={() => scrollTabs('right')}
+            className="w-5 h-6 rounded flex items-center justify-center bg-white hover:bg-[#FAF5ED] border border-[#E2D5C3] text-[#78716C] hover:text-[#B4793D] shadow-xs flex-shrink-0 transition-all z-10 cursor-pointer"
+            title="Scroll tabs right"
+            aria-label="Scroll tabs right"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         {onClose && (
           <button
