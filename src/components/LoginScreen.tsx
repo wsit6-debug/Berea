@@ -243,11 +243,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           sessionStorage.removeItem('berea_auth_lockout');
         } catch {}
 
-        // Smooth 1250ms cinematic handoff directly into the active website as pages unfold
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+
+        // Brisk 800ms transition: faster book open with a momentary glimpse before app entrance
         setIsOpening(true);
         setTimeout(() => {
           onLogin();
-        }, 1250);
+        }, 800);
       } else {
         const nextAttempts = failedAttempts + 1;
         setFailedAttempts(nextAttempts);
@@ -285,63 +289,117 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const displayChapterNum = chapterNumber || 1;
   const displayTranslation = activeTranslation || 'ESV';
 
-  // Load prior two chapters if chapterNumber >= 3
-  const [previousChapters, setPreviousChapters] = useState<{
-    left: { bookName: string; chapterNum: number; verses: Verse[] };
-    right: { bookName: string; chapterNum: number; verses: Verse[] };
+  // Adjacent chapter data (left page prior chapter when chapterNumber >= 2, or right page next chapter when chapterNumber === 1)
+  const [adjacentChapterData, setAdjacentChapterData] = useState<{
+    bookName: string;
+    chapterNum: number;
+    verses: Verse[];
   } | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
-    async function loadPriorChapters() {
-      if (!chapterNumber || chapterNumber <= 2 || !bookId) {
-        return;
-      }
-      try {
-        const leftNum = chapterNumber - 2;
-        const rightNum = chapterNumber - 1;
-        const [leftData, rightData] = await Promise.all([
-          fetchFullMultiTranslationChapter(bookId, leftNum, [displayTranslation]),
-          fetchFullMultiTranslationChapter(bookId, rightNum, [displayTranslation])
-        ]);
-        if (!isCancelled && leftData?.verses?.length > 0 && rightData?.verses?.length > 0) {
-          setPreviousChapters({
-            left: { bookName: displayBookName, chapterNum: leftNum, verses: leftData.verses },
-            right: { bookName: displayBookName, chapterNum: rightNum, verses: rightData.verses }
+    async function loadAdjacentChapter() {
+      if (!bookId) return;
+
+      // If chapterNumber >= 2, load (chapterNumber - 1) for the left-hand page
+      if (displayChapterNum >= 2) {
+        const leftNum = displayChapterNum - 1;
+        if (leftNum === 1 && (bookId === 'GEN' || displayBookName.toLowerCase() === 'genesis')) {
+          setAdjacentChapterData({
+            bookName: displayBookName,
+            chapterNum: 1,
+            verses: GENESIS_1_VERSES
           });
+          return;
         }
-      } catch (e) {
-        console.warn('Failed to load prior chapters for login animation', e);
+        try {
+          const data = await fetchFullMultiTranslationChapter(bookId, leftNum, [displayTranslation]);
+          if (!isCancelled && data?.verses?.length > 0) {
+            setAdjacentChapterData({
+              bookName: displayBookName,
+              chapterNum: leftNum,
+              verses: data.verses
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to load prior chapter for login animation', e);
+        }
+      } else {
+        // chapterNumber === 1: load chapter 2 for the right-hand page
+        if (bookId === 'GEN' || displayBookName.toLowerCase() === 'genesis') {
+          setAdjacentChapterData({
+            bookName: displayBookName,
+            chapterNum: 2,
+            verses: GENESIS_2_VERSES
+          });
+          return;
+        }
+        try {
+          const data = await fetchFullMultiTranslationChapter(bookId, 2, [displayTranslation]);
+          if (!isCancelled && data?.verses?.length > 0) {
+            setAdjacentChapterData({
+              bookName: displayBookName,
+              chapterNum: 2,
+              verses: data.verses
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to load next chapter for login animation', e);
+        }
       }
     }
-    loadPriorChapters();
+
+    loadAdjacentChapter();
     return () => { isCancelled = true; };
-  }, [bookId, chapterNumber, displayBookName, displayTranslation]);
+  }, [bookId, displayChapterNum, displayBookName, displayTranslation]);
 
   const leftPageInfo = useMemo(() => {
-    if (previousChapters) return previousChapters.left;
-    if (chapterNumber === 2) {
+    if (displayChapterNum === 1) {
+      return {
+        bookName: displayBookName,
+        chapterNum: 1,
+        verses: (verses && verses.length > 0) ? verses : GENESIS_1_VERSES
+      };
+    }
+    // displayChapterNum >= 2: left page displays prior chapter (chapterNum - 1)
+    if (adjacentChapterData && adjacentChapterData.chapterNum === displayChapterNum - 1) {
+      return adjacentChapterData;
+    }
+    if (displayChapterNum === 2) {
       return { bookName: displayBookName, chapterNum: 1, verses: GENESIS_1_VERSES };
     }
-    return { bookName: 'Genesis', chapterNum: 1, verses: GENESIS_1_VERSES };
-  }, [previousChapters, chapterNumber, displayBookName]);
+    return {
+      bookName: displayBookName,
+      chapterNum: displayChapterNum - 1,
+      verses: (verses && verses.length > 0) ? verses : GENESIS_1_VERSES
+    };
+  }, [adjacentChapterData, displayChapterNum, displayBookName, verses]);
 
   const rightPageInfo = useMemo(() => {
-    if (previousChapters) return previousChapters.right;
-    if (chapterNumber === 2 && verses && verses.length > 0) {
-      return { bookName: displayBookName, chapterNum: 2, verses };
+    if (displayChapterNum === 1) {
+      if (adjacentChapterData && adjacentChapterData.chapterNum === 2) {
+        return adjacentChapterData;
+      }
+      return { bookName: displayBookName, chapterNum: 2, verses: GENESIS_2_VERSES };
     }
-    return { bookName: 'Genesis', chapterNum: 2, verses: GENESIS_2_VERSES };
-  }, [previousChapters, chapterNumber, displayBookName, verses]);
+    // displayChapterNum >= 2: right page displays the active chapter where the user left off!
+    return {
+      bookName: displayBookName,
+      chapterNum: displayChapterNum,
+      verses: (verses && verses.length > 0) ? verses : GENESIS_2_VERSES
+    };
+  }, [adjacentChapterData, displayChapterNum, displayBookName, verses]);
 
   return (
     <div className={`berea-login-wrap ${isOpening ? 'is-unlocked' : ''}`}>
       <div className="berea-book-stage">
         <div className={`berea-book-scene ${isOpening ? 'is-opening' : ''}`}>
 
-          {/* REALISTIC 3D CLOSED BIBLE EXTERIOR (Contact shadow, back cover, left spine, gilded edges) */}
+          {/* Table Surface Mat beneath the book */}
+          <div className="berea-table-mat" />
+
+          {/* Clean Flat 2D Book Shadow and Spine */}
           <div className="berea-closed-shadow" />
-          <div className="berea-closed-back-cover" />
           
           <div className="berea-closed-spine">
             <div className="berea-spine-headcap" />
@@ -358,10 +416,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           {/* Hinge Joint (French Groove) along the spine edge */}
           <div className="berea-spine-hinge-crease" />
 
-          {/* Realistic Sculpted Bible Pages Block (Top, Fore-edge Right, Bottom) */}
-          <div className="berea-gilded-block-right" />
-          <div className="berea-gilded-block-top" />
-          <div className="berea-gilded-block-bottom" />
+          {/* Scarlet Silk Bookmark Ribbon hanging near bottom */}
+          <div className="berea-closed-ribbon-tail" />
 
           {/* TWO-PAGE OPEN BIBLE SPREAD (Scripture Chapters Layout) */}
           <div className="berea-open-spread">
@@ -390,30 +446,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           </div>
 
-          {/* 3D FLAPPING BOOK ASSEMBLY (Turning Page with Scripture) */}
+          {/* 3D FLAPPING BOOK ASSEMBLY (Cover only) */}
           <div className="berea-flap-assembly">
-
-            {/* TURNING LEAF WITH TWO-SIDED SCRIPTURE */}
-            <div className="berea-turning-leaf">
-              <div className="berea-leaf-face">
-                <BiblePageContent
-                  bookName={rightPageInfo.bookName}
-                  chapterNum={rightPageInfo.chapterNum}
-                  verses={rightPageInfo.verses}
-                  translation={displayTranslation}
-                  side="right"
-                />
-              </div>
-              <div className="berea-leaf-face-back">
-                <BiblePageContent
-                  bookName={leftPageInfo.bookName}
-                  chapterNum={leftPageInfo.chapterNum}
-                  verses={leftPageInfo.verses}
-                  translation={displayTranslation}
-                  side="left"
-                />
-              </div>
-            </div>
 
             {/* 3D FLIPPING FRONT COVER (Hinged on the left, rotates 180° outward like a book cover) */}
             <div className={`berea-flipping-cover ${isShaking ? 'animate-shake' : ''}`}>
@@ -450,9 +484,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       <span style={{ 
                         fontSize: '10px', 
                         fontWeight: 600, 
-                        color: 'var(--clean-accent-caramel, #B4793D)', 
-                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)', 
-                        border: '1px solid var(--clean-accent-border, #EBE5DC)', 
+                        color: '#B4793D', 
+                        backgroundColor: '#FAF5ED', 
+                        border: '1px solid #EBE5DC', 
                         padding: '2px 6px', 
                         borderRadius: '9999px' 
                       }}>
@@ -541,7 +575,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   <div style={{
                     marginTop: '1.25rem',
                     paddingTop: '0.85rem',
-                    borderTop: '1px solid var(--clean-accent-border, #F0EAE1)',
+                    borderTop: '1px solid #EBE5DC',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -555,7 +589,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                       gap: '0.375rem',
                       color: 'var(--clean-text-tertiary, #A8A29E)'
                     }}>
-                      <ShieldCheck style={{ width: '14px', height: '14px', color: 'var(--clean-accent-caramel, #B4793D)' }} />
+                      <ShieldCheck style={{ width: '14px', height: '14px', color: '#B4793D' }} />
                       <span>Private Theological Study Access</span>
                     </div>
 

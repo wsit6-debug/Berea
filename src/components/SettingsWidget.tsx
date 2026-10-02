@@ -39,6 +39,30 @@ const ORIGINAL_DEFAULT_PRESET: ThemeConfig = {
   name: 'Warm Caramel (Original)'
 };
 
+const normalizeAndPersistPresets = (raw: string | null): ThemeConfig[] => {
+  if (!raw) return [];
+  try {
+    const list: ThemeConfig[] = JSON.parse(raw);
+    let modified = false;
+    const normalized = list.map((t, idx) => {
+      if (!t.id) {
+        modified = true;
+        return {
+          ...t,
+          id: `preset_${idx}_${(t.name || 'profile').replace(/\s+/g, '_').toLowerCase()}`
+        };
+      }
+      return t;
+    });
+    if (modified) {
+      localStorage.setItem('berea_saved_themes_list', JSON.stringify(normalized));
+    }
+    return normalized;
+  } catch {
+    return [];
+  }
+};
+
 export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
   onOpenThemeStudio,
   onOpenFeedbackModal
@@ -47,10 +71,16 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
   const [activeTab, setActiveTab] = useState<SettingsTab>('language');
   const { language, setLanguage, languages, t } = useLanguage();
   const [currentTheme, setCurrentTheme] = useState<ThemeConfig>(() => loadSavedTheme());
+  const [activePresetId, setActivePresetId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('berea_active_preset_id') || 'original';
+    } catch {
+      return 'original';
+    }
+  });
   const [savedThemes, setSavedThemes] = useState<ThemeConfig[]>(() => {
     try {
-      const stored = localStorage.getItem('berea_saved_themes_list');
-      if (stored) return JSON.parse(stored);
+      return normalizeAndPersistPresets(localStorage.getItem('berea_saved_themes_list'));
     } catch {}
     return [];
   });
@@ -63,8 +93,9 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
     const handleStorage = () => {
       setCurrentTheme(loadSavedTheme());
       try {
-        const stored = localStorage.getItem('berea_saved_themes_list');
-        setSavedThemes(stored ? JSON.parse(stored) : []);
+        setSavedThemes(normalizeAndPersistPresets(localStorage.getItem('berea_saved_themes_list')));
+        const active = localStorage.getItem('berea_active_preset_id');
+        if (active) setActivePresetId(active);
       } catch {}
     };
 
@@ -105,10 +136,16 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
     };
   }, [isOpen]);
 
-  const handleApplyTheme = (newTheme: ThemeConfig) => {
+  const handleApplyTheme = (newTheme: ThemeConfig, presetId?: string) => {
     setCurrentTheme(newTheme);
     saveTheme(newTheme);
     applyThemeToDocument(newTheme);
+    if (presetId) {
+      setActivePresetId(presetId);
+      try {
+        localStorage.setItem('berea_active_preset_id', presetId);
+      } catch {}
+    }
   };
 
   const handleApplyBgMode = (mode: BackgroundMode) => {
@@ -122,28 +159,46 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
       bgMode: mode,
       bgHex
     };
+    setActivePresetId(null);
+    try {
+      localStorage.removeItem('berea_active_preset_id');
+    } catch {}
     handleApplyTheme(newTheme);
   };
 
   const handleResetTheme = () => {
-    handleApplyTheme(DEFAULT_THEME);
+    setActivePresetId('original');
+    try {
+      localStorage.setItem('berea_active_preset_id', 'original');
+    } catch {}
+    handleApplyTheme(DEFAULT_THEME, 'original');
   };
 
   const handleSaveCurrentPreset = () => {
     const newProfileName = `Saved Preset ${savedThemes.length + 1}`;
-    const newTheme: ThemeConfig = { ...currentTheme, name: newProfileName };
+    const newId = `preset_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const newTheme: ThemeConfig = { ...currentTheme, id: newId, name: newProfileName };
     const updated = [...savedThemes, newTheme];
     setSavedThemes(updated);
+    setActivePresetId(newId);
     try {
       localStorage.setItem('berea_saved_themes_list', JSON.stringify(updated));
+      localStorage.setItem('berea_active_preset_id', newId);
       window.dispatchEvent(new Event('berea_saved_themes_updated'));
     } catch {}
   };
 
   const handleDeletePreset = (indexToDelete: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    const toDelete = savedThemes[indexToDelete];
     const updated = savedThemes.filter((_, idx) => idx !== indexToDelete);
     setSavedThemes(updated);
+    if (toDelete && activePresetId === toDelete.id) {
+      setActivePresetId('original');
+      try {
+        localStorage.setItem('berea_active_preset_id', 'original');
+      } catch {}
+    }
     try {
       localStorage.setItem('berea_saved_themes_list', JSON.stringify(updated));
       window.dispatchEvent(new Event('berea_saved_themes_updated'));
@@ -151,6 +206,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
   };
 
   const isOriginalThemeActive =
+    (activePresetId === 'original' || !activePresetId) &&
     currentTheme.accentHex?.toUpperCase() === DEFAULT_THEME.accentHex?.toUpperCase() &&
     (currentTheme.bgMode === 'warm' || currentTheme.bgHex === '#FAF7F2');
 
@@ -404,7 +460,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
                   <div className="space-y-1.5 max-h-[160px] overflow-y-auto custom-scrollbar pr-0.5">
                     {/* HARD-STUCK ORIGINAL PRESET (Permanent, Not Removable) */}
                     <div
-                      onClick={() => handleApplyTheme(ORIGINAL_DEFAULT_PRESET)}
+                      onClick={handleResetTheme}
                       className={`p-2 rounded-xl border flex items-center justify-between gap-2 transition-all cursor-pointer ${
                         isOriginalThemeActive
                           ? 'border-[var(--clean-accent-caramel,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] shadow-2xs font-semibold'
@@ -447,14 +503,23 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
 
                     {/* USER-SAVED PRESETS (Removable) */}
                     {savedThemes.map((saved, idx) => {
-                      const isSelected =
+                      const isColorMatch =
                         currentTheme.accentHex?.toUpperCase() === saved.accentHex?.toUpperCase() &&
                         currentTheme.bgHex?.toUpperCase() === (saved.bgHex || (saved.bgMode === 'dark' ? '#121214' : '#FAF7F2')).toUpperCase();
 
+                      const isSelected = isColorMatch && (
+                        activePresetId
+                          ? activePresetId === saved.id
+                          : savedThemes.findIndex(s =>
+                              currentTheme.accentHex?.toUpperCase() === s.accentHex?.toUpperCase() &&
+                              currentTheme.bgHex?.toUpperCase() === (s.bgHex || (s.bgMode === 'dark' ? '#121214' : '#FAF7F2')).toUpperCase()
+                            ) === idx
+                      );
+
                       return (
                         <div
-                          key={idx}
-                          onClick={() => handleApplyTheme(saved)}
+                          key={saved.id || idx}
+                          onClick={() => handleApplyTheme(saved, saved.id)}
                           className={`p-2 rounded-xl border flex items-center justify-between gap-2 transition-all cursor-pointer group ${
                             isSelected
                               ? 'border-[var(--clean-accent-caramel,#B4793D)] bg-[var(--clean-highlight-cream,#FAF3E8)] shadow-2xs font-semibold'

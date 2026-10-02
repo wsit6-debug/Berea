@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark } from 'lucide-react';
 import {
   TRANSLATIONS,
@@ -54,6 +54,35 @@ export const Header: React.FC<HeaderProps> = ({
   const [showDenomDropdown, setShowDenomDropdown] = useState(false);
   const [showTranslationDropdown, setShowTranslationDropdown] = useState(false);
   const [showAllTranslations, setShowAllTranslations] = useState(false);
+  const denomRef = useRef<HTMLDivElement>(null);
+  const translationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (denomRef.current && !denomRef.current.contains(e.target as Node)) {
+        setShowDenomDropdown(false);
+      }
+      if (translationRef.current && !translationRef.current.contains(e.target as Node)) {
+        setShowTranslationDropdown(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowDenomDropdown(false);
+        setShowTranslationDropdown(false);
+      }
+    };
+
+    if (showDenomDropdown || showTranslationDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showDenomDropdown, showTranslationDropdown]);
 
   // Filter denominations to only those that have approved Bibles in the currently selected language
   const availableDenominations = useMemo(() => {
@@ -125,20 +154,42 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="h-4 w-px bg-[var(--clean-border,#EBE5DC)] hidden sm:block"></div>
 
           {/* 1. TOP GLOBAL DENOMINATION SELECTOR */}
-          <div className="relative">
+          <div className="relative" ref={denomRef}>
             <button
               onClick={() => {
                 setShowDenomDropdown(prev => !prev);
                 setShowTranslationDropdown(false);
               }}
-              className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
+              style={
+                showDenomDropdown
+                  ? {
+                      backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                      color: '#FFFFFF'
+                    }
+                  : {
+                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                      borderColor: 'var(--clean-border, #EBE5DC)',
+                      color: 'var(--clean-text-primary, #26221F)'
+                    }
+              }
+              className={`ios-glass-btn transition-all !px-2 sm:!px-2.5 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
+                showDenomDropdown ? 'active font-bold shadow-sm' : 'hover:border-[var(--clean-accent-caramel,#B4793D)]'
+              }`}
               title="Select Confessional Tradition (Filters Approved Bibles)"
             >
               <span className="text-xs sm:text-sm">{currentDenom.icon}</span>
-              <span className="font-semibold text-xs text-[var(--clean-text-primary,#26221F)] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors truncate max-w-[90px] sm:max-w-[140px]">
+              <span
+                style={{ color: showDenomDropdown ? '#FFFFFF' : 'var(--clean-text-primary, #26221F)' }}
+                className="font-semibold text-xs truncate max-w-[90px] sm:max-w-[140px]"
+              >
                 {currentDenom.name}
               </span>
-              <ChevronDown className="w-3 h-3 text-[var(--clean-text-tertiary,#A8A29E)]" />
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${
+                  showDenomDropdown ? 'rotate-180 text-white' : 'text-[var(--clean-text-tertiary,#A8A29E)]'
+                }`}
+              />
             </button>
 
             {showDenomDropdown && (
@@ -210,26 +261,65 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* 2. TOP APPROVED TRANSLATION SELECTOR */}
-          <div className="relative">
+          <div className="relative" ref={translationRef}>
             <button
               onClick={() => {
                 setShowTranslationDropdown(prev => !prev);
                 setShowDenomDropdown(false);
               }}
-              className="ios-glass-btn group !px-2 sm:!px-2.5 !py-1"
+              style={
+                showTranslationDropdown
+                  ? {
+                      backgroundColor: 'var(--clean-accent-caramel, #B4793D)',
+                      borderColor: 'var(--clean-accent-caramel, #B4793D)',
+                      color: '#FFFFFF'
+                    }
+                  : {
+                      backgroundColor: 'var(--clean-surface, #FFFFFF)',
+                      borderColor: 'var(--clean-border, #EBE5DC)',
+                      color: 'var(--clean-text-primary, #26221F)'
+                    }
+              }
+              className={`ios-glass-btn transition-all !px-2 sm:!px-2.5 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
+                showTranslationDropdown ? 'active font-bold shadow-sm' : 'hover:border-[var(--clean-accent-caramel,#B4793D)]'
+              }`}
               title="Select Scripture Translation (Approved for your denomination)"
             >
               <span
                 className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: getTranslationColor(activeTranslation).primary }}
+                style={{
+                  backgroundColor: showTranslationDropdown ? '#FFFFFF' : getTranslationColor(activeTranslation).primary
+                }}
               />
-              <span className="text-xs font-semibold text-[var(--clean-text-primary,#26221F)] group-hover:text-[var(--clean-accent-caramel,#B4793D)] transition-colors">
+              <span
+                style={{ color: showTranslationDropdown ? '#FFFFFF' : 'var(--clean-text-primary, #26221F)' }}
+                className="text-xs font-semibold"
+              >
                 {activeTranslation}
               </span>
-              <span className="hidden md:inline-block text-[9px] px-1.5 py-0.2 rounded bg-[var(--clean-highlight-cream,#FAF5ED)] text-[var(--clean-accent-caramel,#B4793D)] border border-[var(--clean-accent-caramel,#B4793D)]/25 font-bold">
+              <span
+                style={
+                  showTranslationDropdown
+                    ? {
+                        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                        color: '#FFFFFF',
+                        borderColor: 'transparent'
+                      }
+                    : {
+                        backgroundColor: 'var(--clean-highlight-cream, #FAF5ED)',
+                        color: 'var(--clean-accent-caramel, #B4793D)',
+                        borderColor: 'rgba(180, 121, 61, 0.25)'
+                      }
+                }
+                className="hidden md:inline-block text-[9px] px-1.5 py-0.2 rounded border font-bold"
+              >
                 Approved
               </span>
-              <ChevronDown className="w-3 h-3 text-[var(--clean-text-tertiary,#A8A29E)]" />
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${
+                  showTranslationDropdown ? 'rotate-180 text-white' : 'text-[var(--clean-text-tertiary,#A8A29E)]'
+                }`}
+              />
             </button>
 
             {showTranslationDropdown && (

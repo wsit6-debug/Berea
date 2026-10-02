@@ -45,11 +45,18 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
     }
   }, [controlledOnClose, controlledOnOpen]);
 
+  const normalizePresets = (themes: ThemeConfig[]): ThemeConfig[] => {
+    return themes.map((t, idx) => ({
+      ...t,
+      id: t.id || `preset_${idx}_${(t.name || 'profile').replace(/\s+/g, '_').toLowerCase()}`
+    }));
+  };
+
   const [theme, setTheme] = useState<ThemeConfig>(() => loadSavedTheme());
   const [savedThemes, setSavedThemes] = useState<ThemeConfig[]>(() => {
     try {
       const stored = localStorage.getItem('berea_saved_themes_list');
-      if (stored) return JSON.parse(stored);
+      if (stored) return normalizePresets(JSON.parse(stored));
     } catch { }
     return [];
   });
@@ -59,16 +66,26 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
   const [hexInput, setHexInput] = useState(theme.accentHex);
 
   const handleSaveProfile = () => {
-    const newThemes = [...savedThemes, { ...theme, name: `Profile ${savedThemes.length + 1}` }];
+    const newId = `profile_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const newProfile = { ...theme, id: newId, name: `Profile ${savedThemes.length + 1}` };
+    const newThemes = [...savedThemes, newProfile];
     setSavedThemes(newThemes);
     localStorage.setItem('berea_saved_themes_list', JSON.stringify(newThemes));
+    localStorage.setItem('berea_active_preset_id', newId);
     window.dispatchEvent(new Event('berea_saved_themes_updated'));
   };
 
   const handleDeleteProfile = (indexToDelete: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    const toDelete = savedThemes[indexToDelete];
     const newThemes = savedThemes.filter((_, idx) => idx !== indexToDelete);
     setSavedThemes(newThemes);
+    try {
+      const activeId = localStorage.getItem('berea_active_preset_id');
+      if (toDelete && activeId === toDelete.id) {
+        localStorage.setItem('berea_active_preset_id', 'original');
+      }
+    } catch {}
     localStorage.setItem('berea_saved_themes_list', JSON.stringify(newThemes));
     window.dispatchEvent(new Event('berea_saved_themes_updated'));
   };
@@ -97,6 +114,14 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
     setTheme(newTheme);
     applyThemeToDocument(newTheme);
     saveTheme(newTheme);
+    try {
+      if (newTheme.id) {
+        localStorage.setItem('berea_active_preset_id', newTheme.id);
+      } else {
+        localStorage.removeItem('berea_active_preset_id');
+      }
+      window.dispatchEvent(new Event('berea_saved_themes_updated'));
+    } catch {}
   }, []);
 
   // Synchronize hex input
@@ -113,7 +138,7 @@ export const ColorThemeWheel: React.FC<ColorThemeWheelProps> = ({
     const handleSavedThemesSync = () => {
       try {
         const stored = localStorage.getItem('berea_saved_themes_list');
-        setSavedThemes(stored ? JSON.parse(stored) : []);
+        setSavedThemes(stored ? normalizePresets(JSON.parse(stored)) : []);
       } catch {}
     };
     window.addEventListener('berea_saved_themes_updated', handleSavedThemesSync);
