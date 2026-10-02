@@ -20,6 +20,7 @@ import { VerseOfTheDay } from './VerseOfTheDay';
 import { cleanApiText, parsePassageReference, fetchChapterFromYouVersion } from '../services/youversionService';
 import { AppliedAiLogo } from './AppliedAiLogo';
 import TypologyPanel from './TypologyPanel';
+import { safeLocalStorageSet } from '../services/storageService';
 import { StudyGuide, SupportingPassage, BereaAiTab, StudyGuideAudience } from '../types';
 
 import {
@@ -859,8 +860,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       if (verbatim && verbatim.text) {
         setCommentaryText(verbatim.text);
         setIsCommentaryVerbatim(true);
-        localStorage.setItem(cacheKey, verbatim.text);
-        localStorage.setItem(`${cacheKey}_is_verbatim`, 'true');
+        safeLocalStorageSet(cacheKey, verbatim.text);
+        safeLocalStorageSet(`${cacheKey}_is_verbatim`, 'true');
         return;
       }
 
@@ -875,8 +876,8 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
       );
       setCommentaryText(result);
       setIsCommentaryVerbatim(false);
-      localStorage.setItem(cacheKey, result);
-      localStorage.setItem(`${cacheKey}_is_verbatim`, 'false');
+      safeLocalStorageSet(cacheKey, result);
+      safeLocalStorageSet(`${cacheKey}_is_verbatim`, 'false');
     } catch (err: any) {
       setCommentaryError(err.message || 'Failed to generate commentary.');
     } finally {

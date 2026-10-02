@@ -1536,23 +1536,75 @@ export async function generateChapterSymbolism(
   book: string,
   chapter: number,
   lens: string,
-  chapterText?: string,
-  onProgress?: (progress: { text: string; progress: number }) => void
+  _chapterText?: string,
+  onProgress?: (progress: { text: string; progress: number }) => void,
+  onToken?: (delta: string, accumulated: string) => void
 ): Promise<string> {
   const { generateLocalAiResponse } = await import('./webLlmService');
   
-  const prompt = `You are a biblical scholar specialized in typology, symbolism, and theology.
-Analyze the biblical chapter ${book} ${chapter}. 
-Identify 3-4 key symbols, motifs, or typological elements in the chapter and explain their significance according to the ${lens} theological tradition.
-Format your response as a bulleted list of the specific symbols found in the chapter with a short explanation for each (e.g. - **The Lamb**: explanation).
+  // Retrieve verified canonical motifs to ground the small 1B LLM and prevent hallucinations
+  const canonicalData = getTypologyFromDatabase(`${book} ${chapter}`);
+  const nodes = canonicalData?.nodes || [];
+  
+  // Extract 3 concrete themes across OT covenants to anchor the model
+  const otNodes = nodes.filter(n => ['Creation & Patriarchs', 'Exodus & Kingdom', 'Prophets'].includes(n.era));
+  const fallbackNodes = nodes.slice(0, 3);
+  const selectedNodes = otNodes.length >= 3 ? otNodes.slice(0, 3) : fallbackNodes;
 
-PASSAGE TEXT (if available):
-${chapterText || "Use your canonical knowledge of this chapter."}
-`;
+  const themes = selectedNodes.map((node) => {
+    const isRefCitations = /\d+:\d+/.test(node.reference);
+    const title = isRefCitations ? node.event.replace(/:\s*.*$/, '').trim() : node.reference.trim();
+    const bg = isRefCitations ? node.reference.trim() : node.event.replace(/:\s*.*$/, '').trim();
+    return { title, bg };
+  });
+
+  const t1 = themes[0] || { title: 'The Covenant & Sacrifice', bg: 'Exodus 12' };
+  const t2 = themes[1] || { title: 'The Kingdom & Discipleship', bg: '2 Samuel 7' };
+  const t3 = themes[2] || { title: 'Spiritual Vision & Illumination', bg: 'Isaiah 35' };
+
+  const prompt = `You are a biblical scholar and theologian.
+Write an in-depth typological analysis of ${book} ${chapter} through a ${lens} theological lens.
+
+Explain the following 3 biblical motifs found in ${book} ${chapter}:
+1. ${t1.title} (Old Testament background: ${t1.bg})
+2. ${t2.title} (Old Testament background: ${t2.bg})
+3. ${t3.title} (Old Testament background: ${t3.bg})
+
+Provide a comprehensive section for EACH of the 3 motifs with these exact Markdown headers:
+
+### 1. ${t1.title}
+- **Old Testament Shadow:** Explain the Old Testament covenant context and prefiguring type (${t1.bg}).
+- **Fulfillment in ${book} ${chapter}:** Explain in detail how Jesus Christ fulfills and elevates this in this chapter.
+- **Theological & Sacramental Meaning:** Explain the ${lens} doctrinal and sacramental significance.
+
+### 2. ${t2.title}
+- **Old Testament Shadow:** Explain the Old Testament covenant context and prefiguring type (${t2.bg}).
+- **Fulfillment in ${book} ${chapter}:** Explain in detail how Jesus Christ fulfills and elevates this in this chapter.
+- **Theological & Sacramental Meaning:** Explain the ${lens} doctrinal and sacramental significance.
+
+### 3. ${t3.title}
+- **Old Testament Shadow:** Explain the Old Testament covenant context and prefiguring type (${t3.bg}).
+- **Fulfillment in ${book} ${chapter}:** Explain in detail how Jesus Christ fulfills and elevates this in this chapter.
+- **Theological & Sacramental Meaning:** Explain the ${lens} doctrinal and sacramental significance.
+
+CRITICAL RULES:
+- Never use Roman numerals (no I., II., III.).
+- Write substantive, articulate sentences for each bullet point. Do not leave placeholder brackets or category lists.
+- Do not include conversational introductory or concluding remarks.`;
 
   try {
-    if (onProgress) onProgress({ text: 'Analyzing symbolism...', progress: 0.1 });
-    const responseText = await generateLocalAiResponse([{ role: 'user', content: prompt }], onProgress, true);
+    if (onProgress) onProgress({ text: 'Analyzing symbolism with canonical grounding...', progress: 0.1 });
+    const responseText = await generateLocalAiResponse(
+      [{ role: 'user', content: prompt }],
+      onProgress,
+      true,
+      {
+        max_tokens: 650,
+        temperature: 0.3,
+        top_p: 0.85,
+        onToken
+      }
+    );
     
     if (onProgress) onProgress({ text: 'Done.', progress: 1.0 });
     return responseText;
