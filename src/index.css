@@ -1020,12 +1020,13 @@ button:active:not(:disabled) {
   padding: 1.25rem;
   box-sizing: border-box;
   overflow: hidden;
-  transition: opacity 0.18s ease 0.22s;
+  transition: opacity 0.32s ease-out;
 }
 
 .berea-login-wrap.is-unlocked {
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.32s ease 0.95s;
 }
 
 /* Perspective stage for the 3D book */
@@ -1052,9 +1053,9 @@ button:active:not(:disabled) {
   justify-content: center;
   transform: scale(1) translateZ(0px);
   will-change: transform;
-  transition: width 0.52s cubic-bezier(0.18, 0.9, 0.28, 1), 
-              height 0.52s cubic-bezier(0.18, 0.9, 0.28, 1), 
-              transform 0.52s cubic-bezier(0.18, 0.9, 0.28, 1);
+  transition: width 0.95s cubic-bezier(0.22, 1, 0.36, 1), 
+              height 0.95s cubic-bezier(0.22, 1, 0.36, 1), 
+              transform 0.95s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (max-width: 768px) {
@@ -1078,10 +1079,10 @@ button:active:not(:disabled) {
 /* 3D Contact Desk Shadow */
 .berea-closed-shadow {
   position: absolute;
-  inset: 14px -18px -20px -32px;
-  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.42) 50%, transparent 75%);
-  filter: blur(14px);
-  border-radius: 20px;
+  inset: 10px -22px -24px -36px;
+  background: radial-gradient(ellipse at 48% 52%, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.46) 50%, transparent 75%);
+  filter: blur(16px);
+  border-radius: 22px;
   pointer-events: none;
   z-index: 1;
   transition: opacity 0.22s ease;
@@ -1091,14 +1092,14 @@ button:active:not(:disabled) {
   opacity: 0;
 }
 
-/* Heavy Leather Back Cover Base (Slight overhang past pages) */
+/* Heavy Leather Back Cover Base (Authentic overhang / squares protecting pages) */
 .berea-closed-back-cover {
   position: absolute;
-  inset: -4px -16px -12px -34px;
-  background: linear-gradient(145deg, #261208 0%, #160A04 60%, #0C0502 100%);
-  border-radius: 12px 10px 10px 12px;
-  box-shadow: -15px 25px 50px rgba(0, 0, 0, 0.8), inset 0 2px 3px rgba(255, 255, 255, 0.1);
-  border: 1px solid #44210E;
+  inset: -6px -17px -8px -33px;
+  background: linear-gradient(145deg, #1A0903 0%, #100502 60%, #080301 100%);
+  border-radius: 8px 7px 7px 8px;
+  box-shadow: -15px 22px 48px rgba(0, 0, 0, 0.85), inset 0 1px 2px rgba(255, 255, 255, 0.08);
+  border: 1px solid #38180A;
   pointer-events: none;
   z-index: 2;
   transition: opacity 0.22s ease;
@@ -1111,18 +1112,28 @@ button:active:not(:disabled) {
 /* Thick 3D Rounded Leather Spine on Left */
 .berea-closed-spine {
   position: absolute;
-  left: -34px;
+  left: -32px;
   top: 0;
   bottom: 0;
-  width: 36px;
-  background: linear-gradient(to right, #100502 0%, #251006 20%, #462210 50%, #251006 80%, #120603 100%);
-  border-radius: 12px 0 0 12px;
-  box-shadow: -14px 12px 30px rgba(0, 0, 0, 0.68), inset 2px 0 3px rgba(255, 255, 255, 0.15), inset -2px 0 4px rgba(0, 0, 0, 0.65);
-  border-left: 1px solid #6A351A;
+  width: 34px;
+  background: linear-gradient(to right, 
+    #0A0301 0%, 
+    #1A0A04 15%, 
+    #3A1B0C 42%, 
+    #4A2412 52%, 
+    #260E05 82%, 
+    #100401 100%
+  );
+  border-radius: 6px 0 0 6px;
+  box-shadow: -14px 10px 28px rgba(0, 0, 0, 0.72), 
+              inset 2px 0 3px rgba(255, 255, 255, 0.12), 
+              inset -2px 0 5px rgba(0, 0, 0, 0.75);
+  border-left: 1px solid #5C2D16;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  padding: 10px 0;
   box-sizing: border-box;
   pointer-events: none;
   z-index: 35;
@@ -1135,19 +1146,23 @@ button:active:not(:disabled) {
   transform: translateX(-16px);
 }
 
-/* Traditional Woven Cloth Headband & Tailband */
-.berea-spine-headband-top {
+/* Authentic Turned Leather Spine Headcap & Tailcap */
+.berea-spine-headcap {
   width: 100%;
-  height: 6px;
-  background: repeating-linear-gradient(45deg, #8A1C1C 0px, #8A1C1C 2px, #D4AF37 2px, #D4AF37 4px);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  height: 9px;
+  background: linear-gradient(to bottom, #090301 0%, #291207 70%, #150602 100%);
+  border-bottom: 1px solid #482310;
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.5);
+  border-radius: 5px 0 0 0;
 }
 
-.berea-spine-headband-bottom {
+.berea-spine-tailcap {
   width: 100%;
-  height: 6px;
-  background: repeating-linear-gradient(45deg, #8A1C1C 0px, #8A1C1C 2px, #D4AF37 2px, #D4AF37 4px);
-  box-shadow: 0 -1px 2px rgba(0,0,0,0.5);
+  height: 9px;
+  background: linear-gradient(to top, #090301 0%, #291207 70%, #150602 100%);
+  border-top: 1px solid #482310;
+  box-shadow: inset 0 -2px 3px rgba(255, 255, 255, 0.08), 0 -2px 4px rgba(0, 0, 0, 0.5);
+  border-radius: 0 0 0 5px;
 }
 
 /* Hinge Crease / French Groove along spine */
@@ -1156,8 +1171,14 @@ button:active:not(:disabled) {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 5px;
-  background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+  width: 6px;
+  background: linear-gradient(to right, 
+    rgba(0, 0, 0, 0.75) 0%, 
+    rgba(0, 0, 0, 0.35) 50%, 
+    rgba(255, 255, 255, 0.08) 90%, 
+    transparent 100%
+  );
+  box-shadow: inset 1px 0 2px rgba(0, 0, 0, 0.8);
   pointer-events: none;
   z-index: 36;
   transition: opacity 0.22s ease;
@@ -1167,23 +1188,38 @@ button:active:not(:disabled) {
   opacity: 0;
 }
 
-/* Traditional Raised Bookbinding Ribs (Spine Cords) */
-.berea-spine-ribs-group {
-  display: flex;
-  flex-direction: column;
-  gap: 3.25rem;
-  width: 100%;
-  align-items: center;
-  margin: auto 0;
-}
-
+/* Traditional Raised Bookbinding Ribs (Spine Cords with gold tooling rules) */
 .berea-spine-rib {
   width: 100%;
   height: 5px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.22) 0%, rgba(0,0,0,0.55) 100%),
-              linear-gradient(to right, #160803, #603017, #160803);
-  box-shadow: 0 2px 3px rgba(0,0,0,0.55), 0 -1px 1px rgba(255,255,255,0.12);
-  border-radius: 2px;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.25) 0%, 
+    #5A2B14 30%, 
+    #331507 70%, 
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.65), 0 -1px 2px rgba(255, 255, 255, 0.12);
+  position: relative;
+}
+
+.berea-spine-rib::before {
+  content: '';
+  position: absolute;
+  top: -1.5px;
+  left: 4px;
+  right: 4px;
+  height: 0.5px;
+  background: rgba(212, 175, 55, 0.35);
+}
+
+.berea-spine-rib::after {
+  content: '';
+  position: absolute;
+  bottom: -1.5px;
+  left: 4px;
+  right: 4px;
+  height: 0.5px;
+  background: rgba(212, 175, 55, 0.35);
 }
 
 /* Gold Embossed Vertical Spine Title */
@@ -1194,38 +1230,42 @@ button:active:not(:disabled) {
   font-family: serif;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.22em;
-  color: #D4AF37;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.85), 0 0 6px rgba(212, 175, 55, 0.4);
-  opacity: 0.92;
+  letter-spacing: 0.26em;
+  color: #E2B960;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(212, 175, 55, 0.45);
   margin: auto 0;
   user-select: none;
+  opacity: 0.95;
+  text-align: center;
 }
 
 /* Realistic Sculpted Bible Pages Block (Fore-edge with concave hollow and micro paper lines) */
 .berea-gilded-block-right {
   position: absolute;
   right: -14px;
-  top: 6px;
-  bottom: 6px;
+  top: 3px;
+  bottom: 3px;
   width: 16px;
   background: repeating-linear-gradient(
     to bottom,
     transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.08) 2px,
-    rgba(0, 0, 0, 0.08) 3px
+    transparent 1.5px,
+    rgba(40, 20, 5, 0.08) 1.5px,
+    rgba(40, 20, 5, 0.08) 2px
   ),
   linear-gradient(to right, 
-    #4D3308 0%, 
-    #8C6016 16%, 
-    #D4AF37 42%, 
-    #FFF4C8 54%, 
-    #C49826 76%, 
-    #5E3D0A 100%
+    #381F07 0%, 
+    #6B4210 14%, 
+    #B88B2A 34%, 
+    #FFEBA6 50%, 
+    #E0B342 64%, 
+    #875514 84%, 
+    #422306 100%
   );
-  border-radius: 0 4px 4px 0;
-  box-shadow: inset 3px 0 6px rgba(0, 0, 0, 0.45), 7px 7px 20px rgba(0, 0, 0, 0.55), inset 1px 0 2px rgba(255, 255, 255, 0.35);
+  border-radius: 0 5px 5px 0;
+  box-shadow: inset 3px 0 5px rgba(0, 0, 0, 0.55), 
+              8px 8px 22px rgba(0, 0, 0, 0.65), 
+              inset 1px 0 2px rgba(255, 255, 255, 0.3);
   border: 1px solid #4D3308;
   border-left: none;
   pointer-events: none;
@@ -1235,28 +1275,27 @@ button:active:not(:disabled) {
 
 .berea-gilded-block-top {
   position: absolute;
-  top: -8px;
-  left: 0;
+  top: -5px;
+  left: 2px;
   right: -14px;
-  height: 10px;
+  height: 7px;
   background: repeating-linear-gradient(
-    to right,
+    to bottom,
     transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.08) 2px,
-    rgba(0, 0, 0, 0.08) 3px
+    transparent 1.5px,
+    rgba(40, 20, 5, 0.08) 1.5px,
+    rgba(40, 20, 5, 0.08) 2px
   ),
   linear-gradient(to bottom, 
-    #5E3D0A 0%, 
-    #C49826 30%, 
-    #FFF4C8 55%, 
-    #8C6016 80%, 
-    #4D3308 100%
+    #2A1404 0%, 
+    #684110 30%, 
+    #D4A536 70%, 
+    #4A2B09 100%
   );
-  border-radius: 3px 3px 0 0;
-  border: 1px solid #4D3308;
+  border-radius: 2px 4px 0 0;
+  border: 1px solid #422808;
   border-bottom: none;
-  box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4);
   pointer-events: none;
   z-index: 5;
   transition: opacity 0.22s ease;
@@ -1264,28 +1303,26 @@ button:active:not(:disabled) {
 
 .berea-gilded-block-bottom {
   position: absolute;
-  bottom: -10px;
-  left: 0;
+  bottom: -4px;
+  left: 2px;
   right: -14px;
-  height: 12px;
+  height: 5px;
   background: repeating-linear-gradient(
-    to right,
+    to bottom,
     transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.08) 2px,
-    rgba(0, 0, 0, 0.08) 3px
+    transparent 1.5px,
+    rgba(0, 0, 0, 0.1) 1.5px,
+    rgba(0, 0, 0, 0.1) 2px
   ),
   linear-gradient(to bottom, 
-    #4D3308 0%, 
-    #8C6016 25%, 
-    #C49826 50%, 
-    #8C6016 75%, 
-    #3A2204 100%
+    #3D2206 0%, 
+    #7A5016 40%, 
+    #2A1404 100%
   );
-  border-radius: 0 0 3px 3px;
-  border: 1px solid #4D3308;
+  border-radius: 0 0 4px 2px;
+  border: 1px solid #381E05;
   border-top: none;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.55);
   pointer-events: none;
   z-index: 5;
   transition: opacity 0.22s ease;
@@ -1297,45 +1334,89 @@ button:active:not(:disabled) {
   opacity: 0;
 }
 
-/* Tasteful Metallic Gold Corner Filigrees */
+/* Tasteful Metallic Gold Corner Filigrees with Fine Double Rules */
 .berea-corner-filigree {
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   pointer-events: none;
   z-index: 15;
 }
 
 .berea-corner-filigree.top-left {
-  top: 10px;
-  left: 10px;
-  border-top: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-left: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-top-left-radius: 5px;
+  top: 12px;
+  left: 12px;
+  border-top: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-left: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-top-left-radius: 3px;
+  box-shadow: -1px -1px 0 rgba(0, 0, 0, 0.6);
+}
+.berea-corner-filigree.top-left::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid rgba(226, 185, 96, 0.45);
+  border-left: 1px solid rgba(226, 185, 96, 0.45);
 }
 
 .berea-corner-filigree.top-right {
-  top: 10px;
-  right: 10px;
-  border-top: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-right: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-top-right-radius: 5px;
+  top: 12px;
+  right: 12px;
+  border-top: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-right: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-top-right-radius: 4px;
+  box-shadow: 1px -1px 0 rgba(0, 0, 0, 0.6);
+}
+.berea-corner-filigree.top-right::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid rgba(226, 185, 96, 0.45);
+  border-right: 1px solid rgba(226, 185, 96, 0.45);
 }
 
 .berea-corner-filigree.bottom-left {
-  bottom: 10px;
-  left: 10px;
-  border-bottom: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-left: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-bottom-left-radius: 5px;
+  bottom: 12px;
+  left: 12px;
+  border-bottom: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-left: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-bottom-left-radius: 3px;
+  box-shadow: -1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+.berea-corner-filigree.bottom-left::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  width: 9px;
+  height: 9px;
+  border-bottom: 1px solid rgba(226, 185, 96, 0.45);
+  border-left: 1px solid rgba(226, 185, 96, 0.45);
 }
 
 .berea-corner-filigree.bottom-right {
-  bottom: 10px;
-  right: 10px;
-  border-bottom: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-right: 1.5px solid rgba(212, 175, 55, 0.55);
-  border-bottom-right-radius: 5px;
+  bottom: 12px;
+  right: 12px;
+  border-bottom: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-right: 1.5px solid rgba(226, 185, 96, 0.75);
+  border-bottom-right-radius: 4px;
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+.berea-corner-filigree.bottom-right::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 9px;
+  height: 9px;
+  border-bottom: 1px solid rgba(226, 185, 96, 0.45);
+  border-right: 1px solid rgba(226, 185, 96, 0.45);
 }
 
 /* The Open Book Spread (Two-page book layout) */
@@ -1352,7 +1433,7 @@ button:active:not(:disabled) {
   transform: scale(0.97) translateZ(0);
   pointer-events: none;
   will-change: transform, opacity;
-  transition: transform 0.52s cubic-bezier(0.18, 0.9, 0.28, 1), opacity 0.22s ease 0.02s;
+  transition: transform 0.92s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease 0.05s;
   z-index: 10;
 }
 
@@ -1362,13 +1443,13 @@ button:active:not(:disabled) {
   pointer-events: auto;
 }
 
-/* Left Page in the Open Book (Empty archival vellum) */
+/* Left Page in the Open Book */
 .berea-open-page-left {
-  background: linear-gradient(to right, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
+  background: var(--clean-surface, #FFFFFF);
   border-radius: 0.9rem 0 0 0.9rem;
-  border: 1px solid #EBE5DC;
+  border: 1px solid var(--clean-accent-border, #EBE5DC);
   border-right: none;
-  box-shadow: inset -20px 0 35px rgba(0, 0, 0, 0.05);
+  box-shadow: inset -18px 0 28px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   position: relative;
 }
@@ -1393,37 +1474,67 @@ button:active:not(:disabled) {
   top: 0;
   bottom: -32px;
   width: 14px;
-  background: linear-gradient(135deg, #B4793D 0%, #E2B98E 45%, #8C5A28 100%);
+  background: linear-gradient(135deg, var(--clean-accent-caramel, #B4793D) 0%, var(--clean-accent-honey, #E2B98E) 45%, var(--clean-accent-dark, #8C5A28) 100%);
   box-shadow: 2px 5px 12px rgba(0, 0, 0, 0.45);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
   z-index: 25;
 }
 
-/* Right Page in the Open Book (Empty archival vellum) */
+/* Right Page in the Open Book */
 .berea-open-page-right {
-  background: linear-gradient(to left, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
+  background: var(--clean-surface, #FFFFFF);
   border-radius: 0 0.9rem 0.9rem 0;
-  border: 1px solid #EBE5DC;
+  border: 1px solid var(--clean-accent-border, #EBE5DC);
   border-left: none;
-  box-shadow: inset 20px 0 35px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 18px 0 28px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   position: relative;
 }
 
-/* Blank Page Inner Vellum Texture */
-.berea-blank-page-inner {
+/* Authentic Berea Scripture Page Layout (Matches BibleReader) */
+.berea-scripture-page {
   width: 100%;
   height: 100%;
-  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.6) 0%, rgba(245, 239, 230, 0.3) 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.75rem;
+  box-sizing: border-box;
+  color: var(--clean-text-primary, #26221F);
+  user-select: none;
+  overflow: hidden;
   position: relative;
+  background: var(--clean-surface, #FFFFFF);
 }
 
-.berea-blank-page-inner.left {
-  box-shadow: inset -14px 0 24px rgba(0, 0, 0, 0.03);
+.berea-scripture-page.left {
+  box-shadow: inset -16px 0 28px rgba(0, 0, 0, 0.035);
 }
 
-.berea-blank-page-inner.right {
-  box-shadow: inset 14px 0 24px rgba(0, 0, 0, 0.03);
+.berea-scripture-page.right {
+  box-shadow: inset 16px 0 28px rgba(0, 0, 0, 0.035);
+}
+
+.berea-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--clean-accent-border, #EBE5DC);
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.berea-page-text-flow {
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}
+
+.berea-page-footer {
+  margin-top: auto;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--clean-accent-border, #EBE5DC);
+  display: flex;
+  justify-content: center;
 }
 
 /* Flapping Assembly: Covers full book when closed; aligns to right half during open spread */
@@ -1436,8 +1547,8 @@ button:active:not(:disabled) {
   pointer-events: none;
   z-index: 30;
   will-change: width, left;
-  transition: width 0.50s cubic-bezier(0.2, 1, 0.3, 1),
-              left 0.50s cubic-bezier(0.2, 1, 0.3, 1);
+  transition: width 0.90s cubic-bezier(0.22, 1, 0.36, 1),
+              left 0.90s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .berea-book-scene.is-opening .berea-flap-assembly {
@@ -1446,7 +1557,7 @@ button:active:not(:disabled) {
   width: calc(50% - 12px);
 }
 
-/* Hardware-Accelerated 60 FPS Turning Page Leaf (Clean Empty Vellum) */
+/* Hardware-Accelerated 60 FPS Turning Page Leaf with Scripture */
 .berea-turning-leaf {
   position: absolute;
   inset: 4px 4px 4px 0;
@@ -1457,8 +1568,8 @@ button:active:not(:disabled) {
   opacity: 0;
   will-change: transform;
   transform: rotateY(0deg) translateZ(0);
-  transition: transform 0.50s cubic-bezier(0.2, 1, 0.3, 1),
-              opacity 0.16s ease;
+  transition: transform 0.88s cubic-bezier(0.22, 1, 0.36, 1) 0.08s,
+              opacity 0.2s ease;
 }
 
 .berea-book-scene.is-opening .berea-turning-leaf {
@@ -1466,33 +1577,35 @@ button:active:not(:disabled) {
   transform: rotateY(-172deg) translateZ(0);
 }
 
-/* Empty Archival Paper Leaf Styling with deckled gold edge */
+/* Archival Paper Leaf Faces with theme-tinted edge */
 .berea-leaf-face {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
-  border: 1px solid #EBE5DC;
+  background: var(--clean-surface, #FFFFFF);
+  border: 1px solid var(--clean-accent-border, #EBE5DC);
   border-left: none;
   border-radius: 0 0.75rem 0.75rem 0;
-  border-right: 2px solid #D4AF37;
-  box-shadow: 4px 6px 18px rgba(0, 0, 0, 0.12), inset -6px 0 10px rgba(212, 175, 55, 0.08);
+  border-right: 2px solid var(--clean-accent-caramel, #B4793D);
+  box-shadow: 4px 6px 18px rgba(0, 0, 0, 0.10);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform: translateZ(1px);
+  overflow: hidden;
 }
 
 .berea-leaf-face-back {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to left, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
-  border: 1px solid #E2D5C3;
+  background: var(--clean-surface, #FFFFFF);
+  border: 1px solid var(--clean-accent-border, #EBE5DC);
   border-right: none;
-  border-left: 2px solid #D4AF37;
+  border-left: 2px solid var(--clean-accent-caramel, #B4793D);
   border-radius: 0.75rem 0 0 0.75rem;
-  box-shadow: -4px 6px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: -4px 6px 18px rgba(0, 0, 0, 0.10);
   transform: rotateY(180deg) translateZ(1px);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  overflow: hidden;
 }
 
 /* 3D Flipping Front Book Cover Leaf */
@@ -1503,7 +1616,7 @@ button:active:not(:disabled) {
   transform-style: preserve-3d;
   will-change: transform;
   transform: rotateY(0deg) translateZ(0);
-  transition: transform 0.50s cubic-bezier(0.2, 1, 0.3, 1);
+  transition: transform 0.90s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 30;
   pointer-events: auto;
 }
@@ -1520,11 +1633,12 @@ button:active:not(:disabled) {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform: rotateY(0deg);
-  border-radius: 14px;
-  background: radial-gradient(ellipse at 50% 30%, #341A0E 0%, #200E06 55%, #100602 100%);
-  border: 1.5px solid #4D2612;
-  box-shadow: 0 25px 65px -10px rgba(0, 0, 0, 0.85), 
-              inset 0 1px 2px rgba(255, 255, 255, 0.16), 
+  border-radius: 4px 12px 12px 4px;
+  background: 
+    radial-gradient(ellipse at 50% 30%, #30160B 0%, #1A0B05 55%, #0B0401 100%);
+  border: 1.5px solid #482310;
+  box-shadow: 0 20px 55px -8px rgba(0, 0, 0, 0.88), 
+              inset 0 1px 2px rgba(255, 255, 255, 0.14), 
               inset 0 -2px 5px rgba(0, 0, 0, 0.7);
   padding: 1.5rem;
   box-sizing: border-box;
@@ -1533,7 +1647,17 @@ button:active:not(:disabled) {
   justify-content: center;
 }
 
-/* Back Face of Cover (Empty Left Endpaper when flipped 180deg) */
+/* Blind Debossed Groove (Traditional leather perimeter tooling) */
+.berea-book-blind-groove {
+  position: absolute;
+  inset: 9px;
+  border-radius: 2px 8px 8px 2px;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.7), 0.5px 0.5px 1px rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+/* Back Face of Cover (Inside front cover leather rim with illuminated endpaper) */
 .cover-face-back {
   position: absolute;
   inset: 0;
@@ -1541,26 +1665,93 @@ button:active:not(:disabled) {
   -webkit-backface-visibility: hidden;
   transform: rotateY(180deg);
   border-radius: 0.9rem 0 0 0.9rem;
-  background: linear-gradient(to right, #F4EEE4 0%, #FAF7F2 20%, #FAF8F5 100%);
-  box-shadow: -15px 25px 60px rgba(0, 0, 0, 0.35), inset -22px 0 40px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  border: 1px solid var(--clean-border, #EBE5DC);
+  background: var(--clean-highlight-cream, #FAF6EE);
+  border: 10px solid #200E06;
   border-right: none;
+  box-shadow: -15px 25px 60px rgba(0, 0, 0, 0.45), inset -22px 0 40px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.berea-endpaper-bookplate {
+  width: 82%;
+  height: 82%;
+  border: 1px solid var(--clean-accent-border, rgba(180, 121, 61, 0.4));
+  outline: 1px solid var(--clean-accent-border, rgba(180, 121, 61, 0.2));
+  outline-offset: -5px;
+  background: var(--clean-surface, rgba(255, 255, 255, 0.65));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.berea-endpaper-border {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.berea-endpaper-ornament {
+  font-size: 0.75rem;
+  color: var(--clean-accent-caramel, #B4793D);
+  letter-spacing: 0.3em;
+}
+
+.berea-endpaper-title {
+  font-family: var(--font-heading, inherit);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--clean-text-primary, #261A12);
+  margin: 0;
+}
+
+.berea-endpaper-sub {
+  font-family: var(--font-heading, inherit);
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  color: var(--clean-accent-caramel, #B4793D);
+  font-weight: 700;
+}
+
+.berea-endpaper-motto {
+  font-family: var(--font-scripture, serif);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  font-style: italic;
+  color: var(--clean-text-secondary, #604B3E);
+  margin: 0.5rem 0 0 0;
+  max-width: 220px;
+}
+
+.berea-endpaper-ref {
+  font-family: var(--font-heading, inherit);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--clean-accent-dark, #8C5D30);
 }
 
 /* Refined Gold Foil Double Frame on Front */
 .berea-book-gold-frame {
   width: 100%;
   height: 100%;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  outline: 1px solid rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  outline: 1px solid rgba(212, 175, 55, 0.2);
   outline-offset: -5px;
-  border-radius: 0.875rem;
+  border-radius: 2px 7px 7px 2px;
   padding: 1.5rem;
   box-sizing: border-box;
-  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.25) 100%);
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.02) 0%, rgba(0, 0, 0, 0.3) 100%);
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;

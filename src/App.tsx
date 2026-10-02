@@ -497,6 +497,7 @@ export function App() {
         <LoginScreen 
           onLogin={() => setIsAuthenticated(true)}
           bookName={currentBook.name}
+          bookId={bookId}
           chapterNumber={currentChapter.chapterNumber}
           verses={currentChapter.verses}
           activeTranslation={activeTranslation}
