@@ -78,6 +78,32 @@ export interface GenerateLocalOptions {
   frequency_penalty?: number;
   presence_penalty?: number;
   max_tokens?: number;
+  onToken?: (delta: string, accumulated: string) => void;
+}
+
+let lastOllamaCheckTime = 0;
+let isOllamaReachable: boolean | null = null;
+
+async function checkOllamaAvailability(): Promise<boolean> {
+  const now = Date.now();
+  if (isOllamaReachable !== null && now - lastOllamaCheckTime < 45000) {
+    return isOllamaReachable;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 400);
+    const res = await fetch('http://localhost:11434/api/tags', {
+      method: 'GET',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    isOllamaReachable = res.ok;
+  } catch {
+    isOllamaReachable = false;
+  }
+  lastOllamaCheckTime = now;
+  return isOllamaReachable;
 }
 
 export async function generateLocalAiResponse(
@@ -91,63 +117,94 @@ export async function generateLocalAiResponse(
   const max_tokens = options?.max_tokens ?? 1200;
   const frequency_penalty = options?.frequency_penalty ?? 0.5;
   const presence_penalty = options?.presence_penalty ?? 0.4;
+  const onToken = options?.onToken;
 
   // 1. Try local Ollama server if available (e.g. http://localhost:11434)
-  try {
-    let ollamaRes: Response;
+  const ollamaAvailable = await checkOllamaAvailability();
+  if (ollamaAvailable) {
     try {
-      ollamaRes = await fetch('http://localhost:11434/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'llama3.1',
-          messages,
-          stream: false,
-          options: {
-            temperature: Math.min(temperature, 0.2),
-            top_p: Math.min(top_p, 0.2)
-          }
-        })
-      });
-    } catch (_directErr) {
-      // In-browser fallback to Vite proxy in case of direct CORS or network error
-      ollamaRes = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'llama3.1',
-          messages,
-          stream: false,
-          options: {
-            temperature: Math.min(temperature, 0.2),
-            top_p: Math.min(top_p, 0.2)
-          }
-        })
-      });
-    }
-
-    if (ollamaRes.ok) {
-      const data = await ollamaRes.json();
-      if (data.message?.content) {
-        return skipDeduplication ? data.message.content : deduplicateRepetitions(data.message.content);
+      let ollamaRes: Response;
+      try {
+        ollamaRes = await fetch('http://localhost:11434/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'llama3.1',
+            messages,
+            stream: false,
+            options: {
+              temperature: Math.min(temperature, 0.2),
+              top_p: Math.min(top_p, 0.2),
+              num_predict: max_tokens
+            }
+          })
+        });
+      } catch (_directErr) {
+        ollamaRes = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'llama3.1',
+            messages,
+            stream: false,
+            options: {
+              temperature: Math.min(temperature, 0.2),
+              top_p: Math.min(top_p, 0.2),
+              num_predict: max_tokens
+            }
+          })
+        });
       }
+
+      if (ollamaRes.ok) {
+        const data = await ollamaRes.json();
+        if (data.message?.content) {
+          const content = data.message.content;
+          if (onToken) onToken(content, content);
+          return skipDeduplication ? content : deduplicateRepetitions(content);
+        }
+      }
+    } catch {
+      isOllamaReachable = false;
     }
-    throw new Error(`Ollama generation failed: ${ollamaRes.status} ${ollamaRes.statusText}`);
-  } catch (ollamaErr) {
-    // Fall back to in-browser WebLLM engine
-    const engine = await getOrInitLocalEngine(onProgress);
-    const reply = await engine.chat.completions.create({
+  }
+
+  // 2. Fall back to in-browser WebLLM engine
+  const engine = await getOrInitLocalEngine(onProgress);
+
+  if (onToken) {
+    const asyncChunkGenerator = await engine.chat.completions.create({
       messages,
       temperature,
       top_p,
       frequency_penalty,
       presence_penalty,
-      max_tokens
+      max_tokens,
+      stream: true
     });
 
-    const rawContent = reply.choices[0]?.message?.content || '';
-    return skipDeduplication ? rawContent : deduplicateRepetitions(rawContent);
+    let accumulated = '';
+    for await (const chunk of asyncChunkGenerator) {
+      const delta = chunk.choices[0]?.delta?.content || '';
+      if (delta) {
+        accumulated += delta;
+        onToken(delta, accumulated);
+      }
+    }
+    return skipDeduplication ? accumulated : deduplicateRepetitions(accumulated);
   }
+
+  const reply = await engine.chat.completions.create({
+    messages,
+    temperature,
+    top_p,
+    frequency_penalty,
+    presence_penalty,
+    max_tokens
+  });
+
+  const rawContent = reply.choices[0]?.message?.content || '';
+  return skipDeduplication ? rawContent : deduplicateRepetitions(rawContent);
 }
 
 export function isLocalEngineReady(): boolean {
