@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Lock, Eye, EyeOff, ArrowRight, AlertCircle, ShieldCheck, BookOpen, 
   MapPin, Columns, Sparkles, Compass, Volume2, FileText, ChevronLeft, ChevronRight,
@@ -118,6 +118,8 @@ const BiblePageContent: React.FC<{
 
 interface LoginScreenProps {
   onLogin: () => void;
+  isClosingOnMount?: boolean;
+  onClosingComplete?: () => void;
   bookName?: string;
   bookId?: string;
   chapterNumber?: number;
@@ -130,6 +132,8 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ 
   onLogin,
+  isClosingOnMount = false,
+  onClosingComplete,
   bookName,
   bookId,
   chapterNumber,
@@ -145,6 +149,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+  const [isClosing, setIsClosing] = useState(isClosingOnMount);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isClosingOnMount) {
+      // Trigger closing swing immediately on next tick without any artificial delay
+      const closeTimer = setTimeout(() => {
+        setIsClosing(false);
+      }, 20);
+
+      // Finish cleanly when the 0.60s swing lands
+      const finishTimer = setTimeout(() => {
+        onClosingComplete?.();
+        passwordInputRef.current?.focus();
+      }, 620);
+
+      return () => {
+        clearTimeout(closeTimer);
+        clearTimeout(finishTimer);
+      };
+    }
+  }, [isClosingOnMount, onClosingComplete]);
 
   // Persist lockout across page refreshes via sessionStorage
   const [failedAttempts, setFailedAttempts] = useState<number>(() => {
@@ -390,10 +416,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     };
   }, [adjacentChapterData, displayChapterNum, displayBookName, verses]);
 
+  const isBookOpen = isOpening || isClosing;
+
   return (
     <div className={`berea-login-wrap ${isOpening ? 'is-unlocked' : ''}`}>
       <div className="berea-book-stage">
-        <div className={`berea-book-scene ${isOpening ? 'is-opening' : ''}`}>
+        <div className={`berea-book-scene ${isBookOpen ? 'is-opening' : ''}`}>
 
           {/* Table Surface Mat beneath the book */}
           <div className="berea-table-mat" />
@@ -419,18 +447,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           {/* Scarlet Silk Bookmark Ribbon hanging near bottom */}
           <div className="berea-closed-ribbon-tail" />
 
-          {/* TWO-PAGE OPEN BIBLE SPREAD (Scripture Chapters Layout) */}
+          {/* TWO-PAGE OPEN BIBLE SPREAD (Center spine & right page) */}
           <div className="berea-open-spread">
-            <div className="berea-open-page-left">
-              <BiblePageContent
-                bookName={leftPageInfo.bookName}
-                chapterNum={leftPageInfo.chapterNum}
-                verses={leftPageInfo.verses}
-                translation={displayTranslation}
-                side="left"
-              />
-            </div>
-
             <div className="berea-open-center-spine">
               <div className="berea-spine-ribbon-drop" />
             </div>
@@ -523,6 +541,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                         </span>
 
                         <input
+                          ref={passwordInputRef}
                           id="berea-password"
                           type={showPassword ? 'text' : 'password'}
                           value={password}
@@ -534,7 +553,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                           autoComplete="current-password"
                           placeholder="Enter password"
                           className="berea-login-input"
-                          disabled={isOpening}
+                          disabled={isOpening || isClosing}
                         />
 
                         <button
@@ -543,7 +562,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                           className="berea-login-eye-btn"
                           title={showPassword ? "Hide password" : "Show password"}
                           aria-label={showPassword ? "Hide password" : "Show password"}
-                          disabled={isOpening}
+                          disabled={isOpening || isClosing}
                         >
                           {showPassword ? (
                             <EyeOff style={{ width: '16px', height: '16px' }} />
@@ -563,10 +582,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
                     <button
                       type="submit"
-                      disabled={isSubmitting || isOpening || Boolean(lockoutUntil && Date.now() < lockoutUntil)}
+                      disabled={isSubmitting || isOpening || isClosing || Boolean(lockoutUntil && Date.now() < lockoutUntil)}
                       className="berea-login-btn"
                     >
-                      <span>{isOpening ? 'Opening Book...' : 'Open Berea'}</span>
+                      <span>{isOpening ? 'Opening Book...' : isClosing ? 'Closing Book...' : 'Open Berea'}</span>
                       <ArrowRight style={{ width: '16px', height: '16px', color: 'currentColor' }} />
                     </button>
                   </form>
@@ -608,17 +627,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </div>
             </div>
 
-            {/* BACK FACE: Inside front cover with historical bookplate */}
+            {/* BACK FACE: Left scripture page in the open book spread (closes in unison with cover) */}
             <div className="cover-face-back">
-              <div className="berea-endpaper-bookplate">
-                <div className="berea-endpaper-border">
-                  <div className="berea-endpaper-ornament">✦ ✦ ✦</div>
-                  <h3 className="berea-endpaper-title">THE HOLY SCRIPTURES</h3>
-                  <div className="berea-endpaper-sub">BEREA EDITION</div>
-                  <p className="berea-endpaper-motto">“Examining the Scriptures daily to see if these things were so.”</p>
-                  <div className="berea-endpaper-ref">ACTS 17:11</div>
-                </div>
-              </div>
+              <BiblePageContent
+                bookName={leftPageInfo.bookName}
+                chapterNum={leftPageInfo.chapterNum}
+                verses={leftPageInfo.verses}
+                translation={displayTranslation}
+                side="left"
+              />
             </div>
 
             </div>

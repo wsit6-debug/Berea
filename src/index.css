@@ -1166,7 +1166,7 @@ button:active:not(:disabled) {
   justify-content: center;
   transform: translateX(0px) scale(1) translateZ(0px);
   will-change: transform;
-  transition: transform 0.56s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.60s cubic-bezier(0.25, 0.9, 0.3, 1);
 }
 
 @media (max-width: 768px) {
@@ -1182,6 +1182,7 @@ button:active:not(:disabled) {
 /* When opening: Book glides to center as front cover swings open */
 .berea-book-scene.is-opening {
   transform: translateX(calc(min(90vw, 490px) / 2)) scale(1.02) translateZ(10px);
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ==========================================================================
@@ -1480,27 +1481,7 @@ button:active:not(:disabled) {
   z-index: 10;
 }
 
-/* Left Page in the Open Book (Positioned to the left of the spine fold) */
-.berea-open-page-left {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 100%;
-  width: 100%;
-  height: 100%;
-  background: var(--clean-surface, #FFFFFF);
-  border-radius: 12px 0 0 12px;
-  border: 1px solid var(--clean-accent-border, #EBE5DC);
-  border-right: none;
-  box-shadow: inset -18px 0 28px rgba(0, 0, 0, 0.04), 0 20px 50px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.22s ease 0.06s;
-}
 
-.berea-book-scene.is-opening .berea-open-page-left {
-  opacity: 1;
-}
 
 /* Center Binding Spine of the Open Book */
 .berea-open-center-spine {
@@ -1520,11 +1501,12 @@ button:active:not(:disabled) {
   z-index: 25;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.22s ease 0.06s;
+  transition: opacity 0.16s ease-out;
 }
 
 .berea-book-scene.is-opening .berea-open-center-spine {
   opacity: 1;
+  transition: opacity 0.25s ease-out 0.04s;
 }
 
 /* Silk Bookmark Ribbon in the center fold */
@@ -1620,7 +1602,7 @@ button:active:not(:disabled) {
   transform-style: preserve-3d;
   will-change: transform;
   transform: rotateY(0deg) translateZ(0);
-  transition: transform 0.56s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.60s cubic-bezier(0.25, 0.9, 0.3, 1);
   z-index: 30;
   pointer-events: auto;
 }
@@ -1628,6 +1610,7 @@ button:active:not(:disabled) {
 .berea-book-scene.is-opening .berea-flipping-cover {
   transform: rotateY(-180deg) translateZ(1px);
   pointer-events: none;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Front Face of Cover (Rich Leather Book Cover with Illuminated Bookplate) */
@@ -1661,23 +1644,22 @@ button:active:not(:disabled) {
   pointer-events: none;
 }
 
-/* Back Face of Cover (Inside front cover leather rim with illuminated endpaper) */
+/* Back Face of Cover (Left page of open Bible spread - swings in 1:1 physical lockstep with cover) */
 .cover-face-back {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform: rotateY(180deg) translateZ(1px);
-  border-radius: 0.9rem 0 0 0.9rem;
-  background: var(--clean-highlight-cream, #FAF6EE);
-  border: 10px solid #200E06;
-  border-right: none;
-  box-shadow: -15px 25px 60px rgba(0, 0, 0, 0.45), inset -22px 0 40px rgba(0, 0, 0, 0.06);
+  border-radius: 0 12px 12px 0;
+  background: var(--clean-surface, #FFFFFF);
+  border: 1px solid var(--clean-accent-border, #EBE5DC);
+  border-left: none;
+  box-shadow: inset -18px 0 28px rgba(0, 0, 0, 0.04), -15px 25px 60px rgba(0, 0, 0, 0.45);
   overflow: hidden;
   box-sizing: border-box;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
 }
 
 .berea-endpaper-bookplate {

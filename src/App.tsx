@@ -43,7 +43,10 @@ export function App() {
     localStorage.removeItem('berea_auth_timestamp');
   }, []);
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = () => {
+    setIsLoggingOut(true);
     setIsAuthenticated(false);
   };
   // Retrieve saved passage from local storage if available, otherwise default to Genesis 1:1
@@ -508,7 +511,12 @@ export function App() {
     <>
       {!isAuthenticated && (
         <LoginScreen 
-          onLogin={() => setIsAuthenticated(true)}
+          onLogin={() => {
+            setIsLoggingOut(false);
+            setIsAuthenticated(true);
+          }}
+          isClosingOnMount={isLoggingOut}
+          onClosingComplete={() => setIsLoggingOut(false)}
           bookName={currentBook.name}
           bookId={bookId}
           chapterNumber={currentChapter.chapterNumber}
