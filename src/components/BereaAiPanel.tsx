@@ -1098,7 +1098,7 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
               tabsScrollRef.current.scrollLeft += e.deltaY;
             }
           }}
-          className="ios-segmented-capsule flex-1 flex gap-0.5 scroll-smooth no-scrollbar overflow-x-auto"
+          className="ios-segmented-capsule flex-1 flex justify-center gap-0.5 scroll-smooth no-scrollbar overflow-x-auto min-w-0"
         >
           <button
             onClick={() => setActiveTab('overview')}
