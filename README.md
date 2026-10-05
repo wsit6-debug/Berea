@@ -7,15 +7,24 @@
 
 ---
 
-## 🚀 Quickstart & Installation
+## 🚀 Quickstart & One-Click Run
 
-### Prerequisites
-* **Node.js**: Version 18.0 or higher ([Download Node.js](https://nodejs.org/))
-* **npm**: Version 9.0 or higher (comes bundled with Node.js)
-* **Ollama (Optional Manual Setup)**: The dev server will **automatically install Ollama**, launch `ollama serve`, and download `llama3.1` if not found. If you prefer to install it manually ahead of time, grab it from [ollama.com](https://ollama.com) or run `brew install ollama`.
+Anyone—even with zero technical knowledge—can install and launch Berea using two simple scripts:
 
-### 1. Installation
-Clone the repository and install all dependencies:
+### macOS / Linux
+1. **One-Time Install**: Double-click or run `./install.sh`
+   - *Automatically detects or installs Node.js, installs dependencies, sets up Ollama, and downloads the local AI model (`llama3.1`).*
+2. **Start Berea**: Double-click or run `./start.sh`
+   - *Starts the local server, launches Ollama in the background, and opens Berea in your default web browser (`http://localhost:5173`).*
+
+### Windows
+1. **One-Time Install**: Double-click `install.bat`
+2. **Start Berea**: Double-click `start.bat`
+
+---
+
+### Manual / Developer Setup (Optional)
+If you prefer running via npm:
 ```bash
 git clone <repo-url> Berea
 cd Berea
