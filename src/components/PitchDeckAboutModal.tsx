@@ -243,6 +243,46 @@ export const PitchDeckAboutModal: React.FC<PitchDeckAboutModalProps> = ({ isOpen
               </div>
             </div>
           </div>
+
+          {/* Section 4: Licensing, Open Source & Scripture Attribution */}
+          <div
+            className="p-5 rounded-2xl border space-y-3 shadow-xs"
+            style={{
+              backgroundColor: 'var(--clean-highlight-cream, #FAF7F2)',
+              borderColor: 'var(--clean-accent-border, #EBE5DC)'
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <h4
+                className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                style={{ color: 'var(--clean-text-primary, #26221F)' }}
+              >
+                <Compass className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+                Licensing & Scripture Attribution
+              </h4>
+              <span
+                className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border bg-white"
+                style={{
+                  color: 'var(--clean-accent-dark, #8C5E2E)',
+                  borderColor: 'var(--clean-accent-border, #EBE5DC)'
+                }}
+              >
+                MIT Open Source
+              </span>
+            </div>
+
+            <div className="text-xs space-y-2 leading-relaxed text-[var(--clean-text-secondary,#57524E)]">
+              <p>
+                <strong>Offline Scripture Engine:</strong> Berea's bundled offline Scripture translations are 100% compliant and restricted to verified <em>Public Domain</em> and <em>Creative Commons (CC0)</em> datasets—including the Berean Standard Bible (BSB), World English Bible (WEB), King James Version (KJV), Douay-Rheims (DRB), American Standard Version (ASV), Septuagint (LXX), Westminster Leningrad Codex (WLC), and Textus Receptus (TR).
+              </p>
+              <p>
+                <strong>Proprietary Translations & Fair Use:</strong> Modern copyrighted versions (e.g. ESV, NIV, NASB, CSB) are queried dynamically on-demand at runtime for personal exegetical study and sermon preparation. Respective trademarks and copyrights remain the sole property of their publishers (Crossway, Biblica, Lockman Foundation, Holman Bible Publishers).
+              </p>
+              <p>
+                <strong>Confessions & Commentaries:</strong> All historical confessions (Westminster, Augsburg, 39 Articles, Dort, Trent, 1689 London) and classical commentaries (Aquinas, Calvin, Henry, Chrysostom, Luther, Wesley) are historical public domain heritage.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

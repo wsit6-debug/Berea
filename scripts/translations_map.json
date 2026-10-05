@@ -1,0 +1,23 @@
+[
+  ["BSB", "BSB", "Berean Standard Bible", "CC0 / Public Domain"],
+  ["WEB", "WEB", "World English Bible", "Public Domain"],
+  ["KJV", "KJV", "King James Version (1769/1611)", "Public Domain"],
+  ["ASV", "ASV", "American Standard Version (1901)", "Public Domain"],
+  ["DRB", "DRB", "Douay-Rheims Bible (Challoner 1899)", "Public Domain"],
+  ["GNV", "GNV", "Geneva Bible (1599)", "Public Domain"],
+  ["YLT", "YLT", "Young's Literal Translation (1898)", "Public Domain"],
+  ["ADB", "tagalog", "Ang Dating Biblia (1905)", "Public Domain"],
+  ["VULG", "VULG", "Biblia Sacra Vulgata (Clementine)", "Public Domain"],
+  ["LXX", "LXX", "Septuaginta (Greek Old Testament)", "Public Domain"],
+  ["LXXE", "LXXE", "Septuagint (Brenton 1851 English)", "Public Domain"],
+  ["WLC", "WLC", "Westminster Leningrad Codex", "Public Domain"],
+  ["WLCC", "WLCC", "Westminster Leningrad Codex (Consonantal)", "Public Domain"],
+  ["WLCa", "WLCa", "Westminster Leningrad Codex (Accented)", "Public Domain"],
+  ["TR", "TR", "Textus Receptus (1550/1894 Greek NT)", "Public Domain"],
+  ["TISCH", "TISCH", "Tischendorf Greek NT (8th ed)", "Public Domain"],
+  ["LUT", "LUT", "Luther Bibel (1912 German)", "Public Domain"],
+  ["FRLSG", "FRLSG", "Louis Segond (1910 French)", "Public Domain"],
+  ["FRDBY", "FRDBY", "Darby Bible (1885 French)", "Public Domain"],
+  ["CUV", "CUV", "Chinese Union Version (1919 Traditional)", "Public Domain"],
+  ["SYNOD", "SYNOD", "Russian Synodal Bible (1876)", "Public Domain"]
+]
