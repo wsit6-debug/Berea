@@ -243,6 +243,12 @@ export const PitchDeckAboutModal: React.FC<PitchDeckAboutModalProps> = ({ isOpen
               </div>
             </div>
           </div>
+
+          {/* Open Source License & Compliance Notice */}
+          <div className="pt-2 pb-1 border-t flex items-center justify-between text-[11px] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-accent-border,#EBE5DC)]">
+            <span>Licensed under the open-source <strong className="font-semibold text-[var(--clean-text-primary,#26221F)]">MIT License</strong></span>
+            <span>Berea v1.0.0</span>
+          </div>
         </div>
       </div>
     </div>
