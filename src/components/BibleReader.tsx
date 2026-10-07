@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Verse, Chapter, TranslationId, getTranslationColor, TRANSLATIONS } from '../data/bibleData';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, ChevronDown, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Highlighter, Trophy } from 'lucide-react';
+import { Bookmark, Copy, Sparkles, ChevronLeft, ChevronRight, ChevronDown, Pause, Check, ZoomIn, ZoomOut, Volume2, AlignLeft, List, FastForward, Rewind, X, BookOpenCheck, Layers, Highlighter, Trophy, HardDrive, Globe, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { checkIsWordsOfJesus, renderRedLetterContent } from '../services/redLetterService';
 import { detectChapterPersonsWithAi } from '../services/characterHighlightService';
@@ -13,7 +13,7 @@ import {
   subscribeVoicesLoaded,
   VoiceOption
 } from '../services/audioNarrationService';
-import { cleanApiText } from '../services/youversionService';
+import { cleanApiText, BUNDLED_OFFLINE_TRANSLATIONS } from '../services/youversionService';
 import { useBookmarkedVerses, toggleBookmark, isVerseBookmarked } from '../services/bookmarkService';
 
 export const HIGHLIGHT_BUTTON_STYLES: Record<'yellow' | 'green' | 'red' | 'blue', { bg: string; border: string; label: string }> = {
@@ -84,6 +84,7 @@ interface BibleReaderProps {
   onSelectCharacter?: (charId: string) => void;
   selectedCharacter?: string | null;
   onOpenBookSelector?: () => void;
+  onOpenOfflineBibles?: () => void;
 }
 
 export const BibleReader: React.FC<BibleReaderProps> = ({
@@ -117,7 +118,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   isBookmarksOpen = false,
   onSelectCharacter,
   selectedCharacter,
-  onOpenBookSelector
+  onOpenBookSelector,
+  onOpenOfflineBibles
 }) => {
   const [fontSize, setFontSize] = useState<number>(17);
   const [isEditingFontSize, setIsEditingFontSize] = useState<boolean>(false);
@@ -602,22 +604,57 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
           {(() => {
             const tColor = getTranslationColor(activeTranslation);
+            const activeTransObj = TRANSLATIONS.find(x => x.id === activeTranslation);
+            const apiCode = activeTransObj?.apiCode || activeTranslation;
+            const isOfflineReady = BUNDLED_OFFLINE_TRANSLATIONS.has(apiCode.toUpperCase());
+
             return (
-              <span
-                className="h-7 inline-flex items-center text-[11px] font-bold px-2.5 rounded-full border shadow-2xs transition-colors shrink-0"
-                style={{
-                  backgroundColor: tColor.bg,
-                  borderColor: tColor.border,
-                  color: tColor.text
-                }}
-                title={`Active Translation: ${activeTranslation}`}
-              >
+              <div className="inline-flex items-center gap-1.5 shrink-0">
                 <span
-                  className="w-1.5 h-1.5 rounded-full mr-1.5 shrink-0"
-                  style={{ backgroundColor: tColor.primary }}
-                />
-                {activeTranslation}
-              </span>
+                  className="h-7 inline-flex items-center text-[11px] font-bold px-2.5 rounded-full border shadow-2xs transition-colors shrink-0"
+                  style={{
+                    backgroundColor: tColor.bg,
+                    borderColor: tColor.border,
+                    color: tColor.text
+                  }}
+                  title={`Active Translation: ${activeTranslation}`}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full mr-1.5 shrink-0"
+                    style={{ backgroundColor: tColor.primary }}
+                  />
+                  {activeTranslation}
+                </span>
+
+                {onOpenOfflineBibles && (
+                  <button
+                    type="button"
+                    onClick={onOpenOfflineBibles}
+                    className={`h-7 inline-flex items-center text-[10.5px] font-semibold px-2 rounded-full border shadow-2xs transition-colors shrink-0 cursor-pointer ${
+                      isOfflineReady
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                    }`}
+                    title={
+                      isOfflineReady
+                        ? 'Offline Ready (CC0 / Public Domain) — Click to manage offline downloads'
+                        : 'Online Only (Publisher Protected) — Click to view licensing rules'
+                    }
+                  >
+                    {isOfflineReady ? (
+                      <>
+                        <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
+                        Offline Ready
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-3 h-3 mr-1 text-amber-600" />
+                        Online Only
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             );
           })()}
 

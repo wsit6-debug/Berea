@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark, Columns } from 'lucide-react';
+import { Search, ChevronDown, Check, Sparkles, Lock, MessageSquareHeart, NotebookPen, Palette, Bookmark, Columns, HardDrive, Download, Globe, CheckCircle2 } from 'lucide-react';
 import {
   TRANSLATIONS,
   TranslationId,
@@ -7,6 +7,7 @@ import {
   getApprovedTranslationsForDenomination,
   getTranslationColor
 } from '../data/bibleData';
+import { BUNDLED_OFFLINE_TRANSLATIONS } from '../services/youversionService';
 import { DENOMINATIONS, DenominationConfig, DenominationalLens } from '../data/theologyData';
 import { BereaLogo } from './BereaLogo';
 import { FEEDBACK_CONFIG } from '../data/feedbackConfig';
@@ -30,6 +31,7 @@ interface HeaderProps {
   onOpenCompare?: () => void;
   isCompareActive?: boolean;
   onOpenColorScheme?: () => void;
+  onOpenOfflineBibles?: () => void;
   onOpenFeedback?: () => void;
   onLogout?: () => void;
 }
@@ -41,6 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTranslation,
   onOpenAbout,
   onOpenSearch,
+  onOpenOfflineBibles,
   onOpenBookmarks,
   isBookmarksOpen = false,
   bookmarkCount = 0,
@@ -426,7 +429,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]"
                     >
                       <div className="flex-1 pr-2">
-                        <div className="flex items-center gap-1.5 mb-0.5">
+                        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                           <span
                             className="w-1.5 h-1.5 rounded-full shrink-0"
                             style={{ backgroundColor: getTranslationColor(t.id).primary }}
@@ -455,10 +458,27 @@ export const Header: React.FC<HeaderProps> = ({
                                   ? 'var(--clean-accent-dark, #B4793D)'
                                   : 'var(--clean-text-secondary, #78716C)'
                             }}
-                            className="text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[140px]"
+                            className="text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[120px]"
                           >
                             {t.badge}
                           </span>
+                          {BUNDLED_OFFLINE_TRANSLATIONS.has(t.apiCode.toUpperCase()) ? (
+                            <span
+                              className="text-[8.5px] px-1 py-0.2 rounded font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 flex items-center gap-0.5"
+                              title="Offline Ready (CC0 / Public Domain)"
+                            >
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              Offline
+                            </span>
+                          ) : (
+                            <span
+                              className="text-[8.5px] px-1 py-0.2 rounded font-medium bg-amber-50 text-amber-800 border border-amber-200 shrink-0 flex items-center gap-0.5"
+                              title="Online Only (Publisher Restricted)"
+                            >
+                              <Globe className="w-2.5 h-2.5" />
+                              Online
+                            </span>
+                          )}
                         </div>
                         <div
                           style={{
@@ -479,6 +499,30 @@ export const Header: React.FC<HeaderProps> = ({
                   );
                 })}
                 </div>
+
+                {/* Offline Management & Downloads Button */}
+                {onOpenOfflineBibles && (
+                  <div
+                    style={{ borderTopColor: 'var(--clean-accent-border, #EBE5DC)' }}
+                    className="pt-2 mt-2 border-t"
+                  >
+                    <button
+                      onClick={() => {
+                        setShowTranslationDropdown(false);
+                        onOpenOfflineBibles();
+                      }}
+                      className="w-full text-left p-1.5 rounded-lg text-xs flex items-center justify-between text-[var(--clean-accent-dark,#8C5E2E)] hover:bg-[var(--clean-highlight-cream,#FAF3E8)] transition-colors font-medium"
+                    >
+                      <span className="flex items-center gap-1.5 text-[11px]">
+                        <HardDrive className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
+                        Manage Offline Bibles & Downloads
+                      </span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                        21 CC0/PD
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,5 +1,6 @@
 import { BIBLE_BOOKS, BibleBook, Chapter, Verse, TranslationId, TRANSLATIONS } from '../data/bibleData';
 import { checkIsWordsOfJesus } from './redLetterService';
+import { getOfflineBibleFromDb, saveOfflineBibleToDb, OFFLINE_FILE_MAP } from './offlineBibleStorage';
 
 export interface YouVersionConfig {
   apiKey?: string;
@@ -9,6 +10,16 @@ export interface YouVersionConfig {
 
 // In-memory chapter cache to prevent duplicate network calls: key is `${version}_${bookId}_${chapterNum}`
 const chapterCache = new Map<string, Verse[]>();
+
+// In-memory cache for full locally-stored Bible translations: key is apiCode
+const localTranslationCache = new Map<string, Record<string, Array<{ verse: number; text: string }>>>();
+
+// Verified Public Domain & CC0 translations bundled offline in /bibles/
+export const BUNDLED_OFFLINE_TRANSLATIONS = new Set([
+  'BSB', 'WEB', 'KJV', 'ASV', 'DRB', 'GNV', 'YLT', 'TAGALOG',
+  'VULG', 'LXX', 'LXXE', 'WLC', 'WLCC', 'WLCA', 'TR', 'TISCH',
+  'LUT', 'FRLSG', 'FRDBY', 'CUV', 'SYNOD'
+]);
 
 // Clean HTML tags, remove Strong's concordance numbers, and strip footnote / cross-ref markers (e.g. [AA], [AB], [a], [1], †, ⓐ)
 export function cleanApiText(raw: string): string {
@@ -205,6 +216,53 @@ export async function fetchChapterFromYouVersion(
     else if (safeChapter === 147) targetChapter = 146;
   }
 
+  // Strategy 0: 100% Offline Local Scripture Files (IndexedDB / /bibles/{apiCode}.json)
+  const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
+  const upperCode = safeApiVersion.toUpperCase();
+  if (BUNDLED_OFFLINE_TRANSLATIONS.has(upperCode)) {
+    try {
+      let localBible = localTranslationCache.get(upperCode);
+      if (!localBible) {
+        const fromDb = await getOfflineBibleFromDb(upperCode);
+        if (fromDb) {
+          localBible = fromDb as Record<string, Array<{ verse: number; text: string }>>;
+        }
+      }
+      if (!localBible) {
+        const fileName = OFFLINE_FILE_MAP[upperCode] || `${safeApiVersion}.json`;
+        const res = await fetch(`/bibles/${fileName}`);
+        if (res.ok) {
+          localBible = await res.json();
+          saveOfflineBibleToDb(upperCode, localBible!);
+        }
+      }
+
+      if (localBible) {
+        localTranslationCache.set(upperCode, localBible);
+        const chapterKey = `${safeBookNum}_${targetChapter}`;
+        const chapterData = localBible[chapterKey];
+        if (Array.isArray(chapterData) && chapterData.length > 0) {
+          const verses: Verse[] = chapterData.map((item: any) => {
+            const hasWj = /<(?:span\s+class=["'][^"']*\bwj\b|wj\b)/i.test(item.text);
+            const isJesus = Boolean(hasWj || checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text));
+            return {
+              verseNumber: item.verse,
+              text: {
+                [version]: cleanApiText(item.text)
+              },
+              isWordsOfJesus: isJesus
+            };
+          });
+
+          chapterCache.set(cacheKey, verses);
+          return verses;
+        }
+      }
+    } catch (localErr) {
+      console.debug(`[youversionService] Local scripture read for ${safeApiVersion} deferred:`, localErr);
+    }
+  }
+
   // Strategy 1: High-Speed Open Scripture Endpoint (Bolls Life Scripture API - 66 books, all major versions)
   try {
     // Direct GetBible provider for Tagalog (Ang Dating Biblia 1905)
@@ -238,7 +296,6 @@ export async function fetchChapterFromYouVersion(
       }
     }
 
-    const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
     const response = await fetch(`https://bolls.life/get-chapter/${safeApiVersion}/${safeBookNum}/${targetChapter}/`, {
       headers: { 'Accept': 'application/json' }
     });
