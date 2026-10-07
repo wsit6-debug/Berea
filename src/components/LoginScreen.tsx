@@ -259,6 +259,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       const inputHash = await computeHash(password, salt);
       const expectedHash = import.meta.env.VITE_APP_PASSWORD_HASH;
 
+      if (expectedHash?.startsWith('encrypted:')) {
+        setError('Environment Error: Secrets not decrypted. Please launch with "npm run dev" (dotenvx).');
+        setIsSubmitting(false);
+        return;
+      }
+
       const isValid = expectedHash ? timingSafeEqual(inputHash, expectedHash) : false;
 
       if (isValid) {

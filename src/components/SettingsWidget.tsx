@@ -218,7 +218,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
-        className={`ios-glass-btn transition-all !px-2.5 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer flex-shrink-0 whitespace-nowrap ${
+        className={`ios-glass-btn transition-all !px-3 !py-1.5 flex items-center gap-1.5 rounded-full select-none cursor-pointer flex-shrink-0 whitespace-nowrap ${
           isOpen ? 'active font-bold shadow-sm' : ''
         }`}
         style={
@@ -230,7 +230,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
               }
             : {
                 backgroundColor: 'var(--clean-surface, #FFFFFF)',
-                borderColor: 'var(--clean-accent-border, #EBE5DC)',
+                borderColor: 'var(--clean-border, #EBE5DC)',
                 color: 'var(--clean-text-primary, #26221F)'
               }
         }
@@ -257,7 +257,7 @@ export const SettingsWidget: React.FC<SettingsWidgetProps> = ({
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute top-full right-0 mt-2 z-50 flex flex-col rounded-2xl border shadow-2xl backdrop-blur-xl animate-fadeIn overflow-hidden"
+          className="absolute top-full right-0 mt-2 z-50 flex flex-col rounded-2xl border shadow-[0_20px_48px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.04)] backdrop-blur-xl animate-dropdown overflow-hidden"
           style={{
             zIndex: 70,
             width: '410px',
