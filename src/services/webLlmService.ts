@@ -3,11 +3,14 @@ import { CreateMLCEngine, MLCEngine, InitProgressReport } from '@mlc-ai/web-llm'
 export const BUILTIN_LOCAL_MODEL = 'Llama-3.2-1B-Instruct-q4f16_1-MLC';
 
 let globalEngine: MLCEngine | null = null;
-let isInitializing = false;
+let initPromise: Promise<MLCEngine> | null = null;
+const progressCallbacks = new Set<(progress: { text: string; progress: number }) => void>();
 
 export function isWebGpuSupported(): boolean {
   return typeof navigator !== 'undefined' && 'gpu' in navigator;
 }
+
+
 
 export async function getOrInitLocalEngine(
   onProgress?: (progress: { text: string; progress: number }) => void
@@ -16,35 +19,46 @@ export async function getOrInitLocalEngine(
     return globalEngine;
   }
 
-  if (isInitializing) {
-    throw new Error('Local model is loading. Please wait a moment.');
+  if (onProgress) {
+    progressCallbacks.add(onProgress);
+  }
+
+  if (initPromise) {
+    return initPromise;
   }
 
   if (!isWebGpuSupported()) {
     throw new Error('WebGPU is not supported in this environment.');
   }
 
-  isInitializing = true;
-
-  try {
-    const engine = await CreateMLCEngine(BUILTIN_LOCAL_MODEL, {
-      initProgressCallback: (report: InitProgressReport) => {
-        if (onProgress) {
-          onProgress({
+  initPromise = (async () => {
+    try {
+      const engine = await CreateMLCEngine(BUILTIN_LOCAL_MODEL, {
+        initProgressCallback: (report: InitProgressReport) => {
+          const payload = {
             text: report.text,
             progress: Math.round((report.progress || 0) * 100)
-          });
+          };
+          for (const cb of progressCallbacks) {
+            try {
+              cb(payload);
+            } catch {}
+          }
         }
-      }
-    });
+      });
 
-    globalEngine = engine;
-    isInitializing = false;
-    return engine;
-  } catch (err) {
-    isInitializing = false;
-    throw err;
-  }
+      globalEngine = engine;
+      return engine;
+    } catch (err) {
+      globalEngine = null;
+      throw err;
+    } finally {
+      initPromise = null;
+      progressCallbacks.clear();
+    }
+  })();
+
+  return initPromise;
 }
 
 /**
@@ -112,11 +126,11 @@ export async function generateLocalAiResponse(
   skipDeduplication: boolean = false,
   options?: GenerateLocalOptions
 ): Promise<string> {
-  const temperature = options?.temperature ?? 0.6;
-  const top_p = options?.top_p ?? 0.9;
+  const temperature = options?.temperature ?? 0.2;
+  const top_p = options?.top_p ?? 0.2;
   const max_tokens = options?.max_tokens ?? 1200;
-  const frequency_penalty = options?.frequency_penalty ?? 0.5;
-  const presence_penalty = options?.presence_penalty ?? 0.4;
+  const frequency_penalty = options?.frequency_penalty ?? 0.0;
+  const presence_penalty = options?.presence_penalty ?? 0.0;
   const onToken = options?.onToken;
 
   // 1. Try local Ollama server if available (e.g. http://localhost:11434)
