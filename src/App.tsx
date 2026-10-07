@@ -26,6 +26,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { ColorThemeWheel } from './components/ColorThemeWheel';
 import { FeedbackModal } from './components/FeedbackModal';
 import { BookmarksModal } from './components/BookmarksModal';
+import { OfflineBiblesModal } from './components/OfflineBiblesModal';
 import { fetchFullMultiTranslationChapter } from './services/youversionService';
 import { getUserDenominationPreference, setUserDenominationPreference } from './services/configService';
 import { scheduleBackgroundQuizPreGeneration } from './services/quizService';
@@ -193,6 +194,7 @@ export function App() {
   const [isColorSchemeOpen, setIsColorSchemeOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isBookmarksModalOpen, setIsBookmarksModalOpen] = useState(false);
+  const [isOfflineBiblesOpen, setIsOfflineBiblesOpen] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
   const [quizType, setQuizType] = useState<'chapter' | 'book' | null>(null);
   const bookmarks = useBookmarkedVerses();
@@ -549,6 +551,7 @@ export function App() {
         onOpenCompare={() => setActiveSidebar(prev => prev === 'compare' ? null : 'compare')}
         isCompareActive={activeSidebar === 'compare'}
         onOpenColorScheme={() => setIsColorSchemeOpen(true)}
+        onOpenOfflineBibles={() => setIsOfflineBiblesOpen(true)}
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onLogout={handleLogout}
       />
@@ -627,6 +630,7 @@ export function App() {
                 setSelectedCharacter(charId);
               }}
               selectedCharacter={selectedCharacter}
+              onOpenOfflineBibles={() => setIsOfflineBiblesOpen(true)}
             />
           </div>
 
@@ -986,6 +990,14 @@ export function App() {
         isOpen={isBookmarksModalOpen}
         onClose={() => setIsBookmarksModalOpen(false)}
         onNavigateToPassage={(bId, chNum, vNum) => handleSelectPassage(bId, chNum, vNum)}
+      />
+
+      {/* Offline Bibles & Compliant Downloads Modal */}
+      <OfflineBiblesModal
+        isOpen={isOfflineBiblesOpen}
+        onClose={() => setIsOfflineBiblesOpen(false)}
+        activeTranslation={activeTranslation}
+        onSelectTranslation={(id) => setActiveTranslation(id as any)}
       />
 
     </div>
