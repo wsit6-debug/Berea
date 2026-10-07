@@ -53,7 +53,7 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
     setDownloadingId(t.id);
     setDownloadError(null);
     try {
-      const res = await downloadAndStoreBible(t.apiCode, t.id);
+      await downloadAndStoreBible(t.apiCode, t.id);
       setDownloadSuccessId(t.id);
       setRefreshTrigger(prev => prev + 1);
       setTimeout(() => setDownloadSuccessId(null), 3500);
@@ -303,21 +303,25 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
                           )}
 
                           {isOffline ? (
-                            <button
-                              onClick={() => handleDownload(t)}
-                              disabled={isDownloading}
-                              className={`text-[10.5px] px-3 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
-                                isSuccess
-                                  ? 'bg-emerald-600 text-white border-emerald-700'
-                                  : isDownloaded
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                                    : 'bg-[var(--clean-accent-caramel,#B4793D)] text-white hover:bg-[var(--clean-accent-dark,#78471F)] border-[var(--clean-accent-dark,#8C5E2E)]'
-                              }`}
-                              title={`Download full ${t.id} JSON dataset and save for offline reading`}
-                            >
-                              <Download className="w-3 h-3" />
-                              {isDownloading ? 'Saving...' : isSuccess ? 'Saved & Active!' : isDownloaded ? 'Export JSON' : 'Download for Offline'}
-                            </button>
+                            isDownloaded || isSuccess ? (
+                              <div
+                                className="text-[10px] px-2.5 py-1 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-1 select-none shadow-2xs"
+                                title="Downloaded and stored locally for offline reading"
+                              >
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                {isSuccess ? 'Saved!' : 'Downloaded'}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleDownload(t)}
+                                disabled={isDownloading}
+                                className="text-[10.5px] px-3 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer bg-[var(--clean-accent-caramel,#B4793D)] text-white hover:bg-[var(--clean-accent-dark,#78471F)] border-[var(--clean-accent-dark,#8C5E2E)]"
+                                title={`Download full ${t.id} dataset for offline reading`}
+                              >
+                                <Download className="w-3 h-3" />
+                                {isDownloading ? 'Saving...' : 'Download for Offline'}
+                              </button>
+                            )
                           ) : (
                             <div
                               className="text-[10px] px-2.5 py-1 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 font-medium flex items-center gap-1 select-none"
