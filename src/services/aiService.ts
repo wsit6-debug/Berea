@@ -2,7 +2,6 @@ import { getTheologicalInsight } from "../data/theologyData";
 import { DenominationalLens } from '../data/theologyData';
 import { buildRagGroundingContext, DoctrinalEntry } from './ragService';
 import { getUserDenominationPreference, getDenominationLabel, UserDenominationSetting } from './configService';
-import { MLCEngine } from '@mlc-ai/web-llm';
 import { generateLocalAiResponse } from './webLlmService';
 import { ScripturePassage } from '../data/scriptureCorpus';
 import { getBook } from '../data/bibleData';
@@ -42,6 +41,17 @@ export interface ChatMessage {
   ragEntries?: DoctrinalEntry[];
   primaryCitation?: string;
   isLiveAi?: boolean;
+}
+
+function cleanAiResponseText(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .replace(/\[\s*(?:scripture|context|doctrinal)\s+chunk\s*\d*\s*\]/gi, '')
+    .replace(/\b(?:scripture|context|doctrinal)\s+chunk\s+\d+\b/gi, 'passage')
+    .replace(/\b(?:my child|dear child|dearest child|beloved child|my son|my daughter)\b[,:;]?\s*/gi, '')
+    .replace(/^(?:,\s*|;\s*|:\s*)/, '')
+    .replace(/^(?:[a-z])/, (match) => match.toUpperCase())
+    .trim();
 }
 
 /**
@@ -118,6 +128,19 @@ export async function askBereaAssistant(
   // Resolve active denomination preference
   const activeSetting: UserDenominationSetting = context.lens || getUserDenominationPreference();
   const USER_DENOMINATION = getDenominationLabel(activeSetting);
+
+  // Handle simple greetings and introductions directly with grace
+  const cleanPrompt = prompt.trim().toLowerCase();
+  const isGreeting = /^(hello|hi|hey|greetings|howdy|good\s+(morning|afternoon|evening)|shalom|peace)[.!,? ]*$/i.test(cleanPrompt);
+  const isIntroQuery = /^(who are you|what are you|what can you do|help)[.!?]*$/i.test(cleanPrompt);
+  if (isGreeting || isIntroQuery) {
+    return {
+      text: `Grace and peace to you! I am your Berea study companion, here to assist your exploration of Scripture through the ${USER_DENOMINATION} tradition.\n\nWe are currently centered on **${currentPassageRef}**.\n\nYou can ask me to:\n- **Explain passage meaning & context:** Historical setting, theological themes, and cross-references\n- **Explore confessional standards:** Reformed, Baptist, Lutheran, or Catholic confessions and catechisms\n- **Consult patristic & historical commentary:** Church fathers and classical theologians\n- **Provide pastoral & practical reflection:** Applying Scripture to daily Christian life\n\nHow can I help your study today?`,
+      ragEntries: [],
+      primaryCitation: currentPassageRef,
+      isLiveAi: false
+    };
+  }
 
   // Check if query is focused on summarizing or analyzing user notes
   const isNoteQuery = Boolean(
@@ -198,13 +221,14 @@ ${ragContextText}
 
 QUESTION: ${prompt}`;
   } else {
-    systemPrompt = `You are a strict and orthodox ${USER_DENOMINATION} theologian. 
-Your ONLY job is to synthesize the provided CONTEXT to answer the user.
+    systemPrompt = `You are an objective, scholarly biblical and theological study resource writing from the orthodox ${USER_DENOMINATION} perspective.
+Your goal is to answer the user's question clearly, thoroughly, and directly like an educator.
 
 CRITICAL RULES:
-1. THEOLOGICAL PURITY: You MUST interpret the scriptures strictly through the ${USER_DENOMINATION} lens provided in the context. DO NOT import outside interpretations, secular views, or opposing denominational biases from your pre-training. 
-2. NO EXTERNAL KNOWLEDGE: If the context does not explain the verse, do not invent an explanation. 
-3. FORMAT: Write a natural, concise summary. Do not copy-paste raw formatting. Never refer to the text as "chunks" or output internal labels like "[scripture chunk]"—refer directly to the scripture passage (e.g. Matthew 16:18) or confessional document. Always include a [Source: Document/Passage] citation.`;
+1. NATURAL, SCHOLARLY TONE: Answer directly like a normal, objective scholar or educator. NEVER use patronizing, paternalistic, or clerical speech (e.g. NEVER say "My child", "Dear child", "My son", or "Beloved child"). Do NOT roleplay as a priest or spiritual father; simply answer the question directly.
+2. THEOLOGICAL EXEGESIS & DOCTRINE: Explain the topic faithfully through the ${USER_DENOMINATION} tradition. When addressing complex, historical, or debated theological questions (such as the death and Assumption of Mary, sacraments, or justification), explain authentic Church teaching, the historical consensus of theologians, and biblical foundations.
+3. CONSTRUCTIVE EXPLANATION: Always provide constructive theological and historical context. Do not issue automated refusals or generic disclaimers (e.g., do not say "I cannot provide a response...").
+4. FORMAT & CITATIONS: Write a natural, articulate explanation. Summarize clearly and cite relevant scripture passages or Catechism/confessional paragraphs from the CONTEXT.`;
 
     userPromptText = `CONTEXT:\n${ragContextText}\n\nQUESTION: ${prompt}`;
   }
@@ -273,10 +297,7 @@ CRITICAL RULES:
 
     const data = await response.json();
     const rawContent = data.message?.content || '';
-    const cleanedContent = rawContent
-      .replace(/\[\s*(?:scripture|context|doctrinal)\s+chunk\s*\d*\s*\]/gi, '')
-      .replace(/\b(?:scripture|context|doctrinal)\s+chunk\s+\d+\b/gi, 'passage')
-      .trim();
+    const cleanedContent = cleanAiResponseText(rawContent);
 
     return {
       text: cleanedContent || generateIntelligentNoteSummary(noteTitle || 'Study Note', noteContent || prompt, book, chapter, USER_DENOMINATION),

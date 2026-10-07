@@ -102,7 +102,7 @@ export const VersionComparePanel: React.FC<VersionComparePanelProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white text-[#26221F] overflow-hidden select-none">
+    <div className="flex flex-col h-full bg-white text-[#26221F] overflow-hidden select-none rounded-2xl border border-[var(--clean-accent-border,#EBE5DC)] shadow-xs">
       {/* Top Verse Navigation Bar */}
       <div
         className="px-3 py-2 border-b flex items-center justify-between gap-2 flex-shrink-0"

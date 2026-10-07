@@ -187,8 +187,8 @@ export const Header: React.FC<HeaderProps> = ({
                       color: 'var(--clean-text-primary, #26221F)'
                     }
               }
-              className={`ios-glass-btn transition-all !px-2 sm:!px-2.5 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
-                showDenomDropdown ? 'active font-bold shadow-sm' : 'hover:border-[var(--clean-accent-caramel,#B4793D)]'
+              className={`ios-glass-btn transition-all !px-2.5 sm:!px-3 !py-1.5 flex items-center gap-1.5 rounded-full select-none cursor-pointer ${
+                showDenomDropdown ? 'active font-bold shadow-sm' : ''
               }`}
               title="Select Confessional Tradition (Filters Approved Bibles)"
             >
@@ -213,16 +213,22 @@ export const Header: React.FC<HeaderProps> = ({
                   borderColor: 'var(--clean-accent-border, #EBE5DC)',
                   color: 'var(--clean-text-primary, #26221F)'
                 }}
-                className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 border rounded-xl shadow-2xl z-50 p-2 space-y-1 animate-fadeIn max-h-[420px] overflow-y-auto custom-scrollbar"
+                className="absolute top-full left-0 mt-2 w-72 sm:w-84 border rounded-2xl shadow-[0_20px_48px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.04)] z-50 p-2 space-y-1 animate-dropdown max-h-[440px] overflow-y-auto custom-scrollbar backdrop-blur-xl"
               >
                 <div
                   style={{ borderBottomColor: 'var(--clean-accent-border, #EBE5DC)' }}
-                  className="text-[10px] uppercase font-bold text-[var(--clean-text-secondary,#A8A29E)] px-2 py-0.5 flex items-center justify-between border-b pb-1.5 mb-1"
+                  className="text-[10px] uppercase font-bold tracking-wider text-[var(--clean-text-secondary,#A8A29E)] px-2.5 py-1.5 flex items-center justify-between border-b pb-2 mb-1"
                 >
-                  <span>Confessional Traditions</span>
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-[var(--clean-accent-caramel,#B4793D)]" />
+                    Confessional Traditions
+                  </span>
                   <span
-                    style={{ color: 'var(--clean-accent-dark, #B4793D)' }}
-                    className="text-[9px] font-mono font-bold"
+                    style={{
+                      backgroundColor: 'var(--clean-highlight-cream, #FAF3E8)',
+                      color: 'var(--clean-accent-dark, #B4793D)'
+                    }}
+                    className="text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-full border border-[var(--clean-accent-border,#EBE5DC)]"
                   >
                     {availableDenominations.length} Available
                   </span>
@@ -241,20 +247,26 @@ export const Header: React.FC<HeaderProps> = ({
                         borderColor: isSelected ? 'var(--clean-accent-border-strong, #B4793D)' : 'transparent',
                         color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-primary, #26221F)'
                       }}
-                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]"
+                      className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between transition-all border cursor-pointer ${
+                        isSelected
+                          ? 'shadow-2xs font-semibold'
+                          : 'hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]'
+                      }`}
                     >
-                      <div className="flex items-start gap-2">
-                        <span className="text-base flex-shrink-0 mt-0.5">{d.icon}</span>
-                        <div>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-base flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--clean-surface-warm,#FAF5ED)] border border-[var(--clean-border-soft,#F0EAE1)]">
+                          {d.icon}
+                        </span>
+                        <div className="min-w-0 flex-1">
                           <div
                             style={{ color: isSelected ? 'var(--clean-accent-dark, #78471F)' : 'var(--clean-text-primary, #26221F)' }}
-                            className="font-semibold text-xs"
+                            className="font-semibold text-xs leading-tight"
                           >
                             {d.name}
                           </div>
                           <div
                             style={{ color: 'var(--clean-text-secondary, #78716C)' }}
-                            className="text-[10px] leading-snug line-clamp-1"
+                            className="text-[10px] leading-snug line-clamp-1 mt-0.5"
                           >
                             {d.tagline}
                           </div>
@@ -266,7 +278,11 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                         </div>
                       </div>
-                      {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} />}
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center bg-[var(--clean-accent-caramel,#B4793D)] text-white shadow-2xs ml-1 shrink-0">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -294,8 +310,8 @@ export const Header: React.FC<HeaderProps> = ({
                       color: 'var(--clean-text-primary, #26221F)'
                     }
               }
-              className={`ios-glass-btn transition-all !px-2 sm:!px-2.5 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
-                showTranslationDropdown ? 'active font-bold shadow-sm' : 'hover:border-[var(--clean-accent-caramel,#B4793D)]'
+              className={`ios-glass-btn transition-all !px-2.5 sm:!px-3 !py-1.5 flex items-center gap-1.5 rounded-full select-none cursor-pointer ${
+                showTranslationDropdown ? 'active font-bold shadow-sm' : ''
               }`}
               title="Select Scripture Translation (Approved for your denomination)"
             >
@@ -325,7 +341,7 @@ export const Header: React.FC<HeaderProps> = ({
                         borderColor: 'rgba(180, 121, 61, 0.25)'
                       }
                 }
-                className="hidden md:inline-block text-[9px] px-1.5 py-0.2 rounded border font-bold"
+                className="hidden md:inline-block text-[9px] px-1.5 py-0.2 rounded-full border font-bold"
               >
                 Approved
               </span>
@@ -343,11 +359,11 @@ export const Header: React.FC<HeaderProps> = ({
                   borderColor: 'var(--clean-accent-border, #EBE5DC)',
                   color: 'var(--clean-text-primary, #26221F)',
                   scrollbarWidth: 'thin',
-                  maxHeight: '384px',
+                  maxHeight: '440px',
                   overflowY: 'auto',
                   overscrollBehavior: 'contain'
                 }}
-                className="absolute top-full left-0 mt-1.5 w-80 border rounded-xl shadow-2xl z-50 p-2 animate-fadeIn"
+                className="absolute top-full left-0 mt-2 w-80 sm:w-84 border rounded-2xl shadow-[0_20px_48px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.04)] z-50 p-2.5 animate-dropdown backdrop-blur-xl"
               >
                 {/* Quick Access to Compare Versions Matrix */}
                 {onOpenCompare && (
@@ -361,7 +377,7 @@ export const Header: React.FC<HeaderProps> = ({
                       borderColor: isCompareActive ? 'var(--clean-accent-border-strong, #B4793D)' : 'var(--clean-accent-border, #EBE5DC)',
                       color: 'var(--clean-text-primary, #26221F)'
                     }}
-                    className="w-full mb-2 px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-all border shadow-xs hover:border-[var(--clean-accent-border-strong,#B4793D)] cursor-pointer"
+                    className="w-full mb-2 px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-all border shadow-2xs hover:border-[var(--clean-accent-border-strong,#B4793D)] cursor-pointer"
                     title="Open side-by-side Scripture Comparison Matrix"
                   >
                     <div className="flex items-center gap-2">
@@ -374,7 +390,7 @@ export const Header: React.FC<HeaderProps> = ({
                       </span>
                     </div>
                     {isCompareActive && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#15803D]/10 text-[#15803D] font-semibold">
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#15803D]/10 text-[#15803D] font-semibold">
                         Active
                       </span>
                     )}
@@ -426,7 +442,11 @@ export const Header: React.FC<HeaderProps> = ({
                           ? 'var(--clean-accent-dark, #78471F)'
                           : 'var(--clean-text-primary, #26221F)'
                       }}
-                      className="w-full text-left p-2 rounded-lg text-xs flex items-start justify-between transition-colors border hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]"
+                      className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between transition-all border cursor-pointer ${
+                        isSelected
+                          ? 'shadow-2xs font-semibold'
+                          : 'hover:bg-[var(--clean-surface-warm,#FAF5ED)] hover:text-[var(--clean-accent-dark,#B4793D)]'
+                      }`}
                     >
                       <div className="flex-1 pr-2">
                         <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
@@ -458,13 +478,13 @@ export const Header: React.FC<HeaderProps> = ({
                                   ? 'var(--clean-accent-dark, #B4793D)'
                                   : 'var(--clean-text-secondary, #78716C)'
                             }}
-                            className="text-[9px] px-1.5 py-0.2 rounded border font-medium truncate max-w-[120px]"
+                            className="text-[9px] px-1.5 py-0.2 rounded-full border font-medium truncate max-w-[120px]"
                           >
                             {t.badge}
                           </span>
                           {BUNDLED_OFFLINE_TRANSLATIONS.has(t.apiCode.toUpperCase()) ? (
                             <span
-                              className="text-[8.5px] px-1 py-0.2 rounded font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 flex items-center gap-0.5"
+                              className="text-[8.5px] px-1.5 py-0.2 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 flex items-center gap-0.5 shadow-2xs"
                               title="Offline Ready (CC0 / Public Domain)"
                             >
                               <CheckCircle2 className="w-2.5 h-2.5" />
@@ -472,7 +492,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </span>
                           ) : (
                             <span
-                              className="text-[8.5px] px-1 py-0.2 rounded font-medium bg-amber-50 text-amber-800 border border-amber-200 shrink-0 flex items-center gap-0.5"
+                              className="text-[8.5px] px-1.5 py-0.2 rounded-full font-medium bg-amber-50 text-amber-800 border border-amber-200 shrink-0 flex items-center gap-0.5 shadow-2xs"
                               title="Online Only (Publisher Restricted)"
                             >
                               <Globe className="w-2.5 h-2.5" />
@@ -490,10 +510,9 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                       </div>
                       {isSelected && (
-                        <Check
-                          className="w-3.5 h-3.5 flex-shrink-0 mt-0.5"
-                          style={{ color: 'var(--clean-accent-caramel, #B4793D)' }}
-                        />
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center bg-[var(--clean-accent-caramel,#B4793D)] text-white shadow-2xs shrink-0">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
                       )}
                     </button>
                   );
@@ -511,13 +530,13 @@ export const Header: React.FC<HeaderProps> = ({
                         setShowTranslationDropdown(false);
                         onOpenOfflineBibles();
                       }}
-                      className="w-full text-left p-1.5 rounded-lg text-xs flex items-center justify-between text-[var(--clean-accent-dark,#8C5E2E)] hover:bg-[var(--clean-highlight-cream,#FAF3E8)] transition-colors font-medium"
+                      className="w-full text-left p-2 rounded-xl text-xs flex items-center justify-between text-[var(--clean-accent-dark,#8C5E2E)] hover:bg-[var(--clean-highlight-cream,#FAF3E8)] transition-all font-medium cursor-pointer"
                     >
                       <span className="flex items-center gap-1.5 text-[11px]">
                         <HardDrive className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)]" />
                         Manage Offline Bibles & Downloads
                       </span>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold shadow-2xs">
                         21 CC0/PD
                       </span>
                     </button>
@@ -537,15 +556,15 @@ export const Header: React.FC<HeaderProps> = ({
               borderColor: 'var(--clean-border, #EBE5DC)',
               color: 'var(--clean-text-primary, #26221F)'
             }}
-            className="w-full max-w-sm ios-glass-btn !px-3 !py-1 cursor-pointer select-none flex items-center justify-between shadow-xs transition-all hover:border-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0"
+            className="w-full max-w-sm ios-glass-btn !px-3.5 !py-1.5 cursor-pointer select-none flex items-center justify-between rounded-full shadow-2xs transition-all hover:border-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0 group"
             title="Search Scripture, topics, notes (⌘K)"
           >
-            <div className="flex items-center gap-2 truncate">
-              <Search className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)] flex-shrink-0" />
-              <span className="text-xs font-normal text-stone-500 truncate">Search scripture, topics...</span>
+            <div className="flex items-center gap-2.5 truncate">
+              <Search className="w-3.5 h-3.5 text-[var(--clean-accent-caramel,#B4793D)] transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+              <span className="text-xs font-normal text-stone-500 group-hover:text-stone-700 transition-colors truncate">Search scripture, topics...</span>
             </div>
             <kbd
-              className="text-[9.5px] font-mono px-1.5 py-0.5 rounded border flex-shrink-0 ml-2"
+              className="text-[9px] font-mono px-2 py-0.5 rounded-full border flex-shrink-0 ml-2 shadow-2xs"
               style={{
                 backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
                 borderColor: 'var(--clean-border, #EBE5DC)',
@@ -578,7 +597,7 @@ export const Header: React.FC<HeaderProps> = ({
                     color: 'var(--clean-text-primary, #26221F)'
                   }
               }
-              className={`ios-glass-btn !px-2.5 !py-1 transition-all flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
+              className={`ios-glass-btn !px-3 !py-1.5 transition-all flex items-center gap-1.5 rounded-full select-none cursor-pointer ${
                 isBookmarksOpen ? 'active font-bold shadow-sm' : ''
               }`}
               title="Toggle Bookmarked Verses (⌘B)"
@@ -597,7 +616,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {bookmarkCount}
                 </span>
               )}
-              <kbd className={`hidden md:inline-block text-[9.5px] font-mono px-1.5 py-0.5 rounded border ${
+              <kbd className={`hidden md:inline-block text-[9px] font-mono px-2 py-0.5 rounded-full border ${
                 isBookmarksOpen
                   ? 'bg-black/25 text-white border-transparent'
                   : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
@@ -624,7 +643,7 @@ export const Header: React.FC<HeaderProps> = ({
                     color: 'var(--clean-text-primary, #26221F)'
                   }
               }
-              className={`ios-glass-btn transition-all !px-2.5 sm:!px-3 !py-1 flex items-center gap-1.5 rounded-lg select-none cursor-pointer ${
+              className={`ios-glass-btn transition-all !px-3 !py-1.5 flex items-center gap-1.5 rounded-full select-none cursor-pointer ${
                 isNotepadActive ? 'active font-bold shadow-sm' : ''
               }`}
               title="Open Personal Notepad (⌘N)"
@@ -637,7 +656,7 @@ export const Header: React.FC<HeaderProps> = ({
                 Notepad
               </span>
               <kbd
-                className={`hidden sm:inline-block text-[9px] font-mono px-1.5 py-0.5 rounded border ${isNotepadActive
+                className={`hidden sm:inline-block text-[9px] font-mono px-2 py-0.5 rounded-full border ${isNotepadActive
                     ? 'bg-black/25 text-white border-transparent'
                     : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
                   }`}
@@ -664,7 +683,7 @@ export const Header: React.FC<HeaderProps> = ({
                     color: 'var(--clean-text-primary, #26221F)'
                   }
               }
-              className={`ios-glass-btn transition-all !px-2.5 !py-1 flex items-center gap-1 rounded-lg select-none cursor-pointer ${isAiPanelOpen ? 'active font-bold shadow-sm' : ''
+              className={`ios-glass-btn transition-all !px-3 !py-1.5 flex items-center gap-1.5 rounded-full select-none cursor-pointer ${isAiPanelOpen ? 'active font-bold shadow-sm' : ''
                 }`}
               title="Toggle AI Guide Panel (⌘I)"
             >
@@ -676,7 +695,7 @@ export const Header: React.FC<HeaderProps> = ({
                 Guide
               </span>
               <kbd
-                className={`hidden sm:inline-block text-[9.5px] font-mono px-1.5 py-0.5 rounded border ${isAiPanelOpen
+                className={`hidden sm:inline-block text-[9px] font-mono px-2 py-0.5 rounded-full border ${isAiPanelOpen
                     ? 'bg-black/25 text-white border-transparent'
                     : 'bg-[var(--clean-surface,#FFFFFF)] text-[var(--clean-text-secondary,#78716C)] border-[var(--clean-border,#EBE5DC)]'
                   }`}
@@ -702,7 +721,7 @@ export const Header: React.FC<HeaderProps> = ({
                 backgroundColor: 'var(--clean-surface, #FFFFFF)',
                 borderColor: 'var(--clean-border, #EBE5DC)'
               }}
-              className="ios-glass-btn hover:!text-red-600 hover:!border-red-400 hover:!bg-red-500/10 !p-1.5 transition-all cursor-pointer flex-shrink-0"
+              className="ios-glass-btn hover:!text-red-600 hover:!border-red-400 hover:!bg-red-500/10 !p-2 rounded-full transition-all cursor-pointer flex-shrink-0"
               title="Lock & Log Out"
               aria-label="Lock and log out"
             >

@@ -24,6 +24,9 @@ export const BUNDLED_OFFLINE_TRANSLATIONS = new Set([
 // Clean HTML tags, remove Strong's concordance numbers, and strip footnote / cross-ref markers (e.g. [AA], [AB], [a], [1], †, ⓐ)
 export function cleanApiText(raw: string): string {
   if (!raw) return '';
+  if (raw.includes('Biblica, Inc. has prohibited') || raw.includes('prohibited me from using the NIV')) {
+    return 'NIV is restricted by publisher copyright (Biblica). Please choose a public domain or open translation (such as ESV, BSB, or KJV).';
+  }
   let cleaned = raw;
   
   // 1. Remove Strong's tag containers, footnotes, notes, superscripts, and subscripts with their inner contents
@@ -117,6 +120,67 @@ const STANDARD_BOOK_NUMBERS: Record<string, number> = {
   '1maccabees': 74, '2maccabees': 75
 };
 
+export const USFM_BOOK_CODES: Record<string, string> = {
+  genesis: 'GEN', exodus: 'EXO', leviticus: 'LEV', numbers: 'NUM', deuteronomy: 'DEU',
+  joshua: 'JOS', judges: 'JDG', ruth: 'RUT', '1samuel': '1SA', '2samuel': '2SA',
+  '1kings': '1KI', '2kings': '2KI', '1chronicles': '1CH', '2chronicles': '2CH',
+  ezra: 'EZR', nehemiah: 'NEH', esther: 'EST', job: 'JOB', psalms: 'PSA',
+  proverbs: 'PRO', ecclesiastes: 'ECC', songofsolomon: 'SNG',
+  isaiah: 'ISA', jeremiah: 'JER', lamentations: 'LAM', ezekiel: 'EZK', daniel: 'DAN',
+  hosea: 'HOS', joel: 'JOL', amos: 'AMO', obadiah: 'OBA', jonah: 'JON',
+  micah: 'MIC', nahum: 'NAM', habakkuk: 'HAB', zephaniah: 'ZEP', haggai: 'HAG',
+  zechariah: 'ZEC', malachi: 'MAL',
+  matthew: 'MAT', mark: 'MRK', luke: 'LUK', john: 'JHN', acts: 'ACT',
+  romans: 'ROM', '1corinthians': '1CO', '2corinthians': '2CO', galatians: 'GAL',
+  ephesians: 'EPH', philippians: 'PHP', colossians: 'COL', '1thessalonians': '1TH',
+  '2thessalonians': '2TH', '1timothy': '1TI', '2timothy': '2TI', titus: 'TIT',
+  philemon: 'PHM', hebrews: 'HEB', james: 'JAS', '1peter': '1PE', '2peter': '2PE',
+  '1john': '1JN', '2john': '2JN', '3john': '3JN', jude: 'JUD', revelation: 'REV',
+  tobit: 'TOB', judith: 'JDT', wisdom: 'WIS', sirach: 'SIR', baruch: 'BAR',
+  '1maccabees': '1MA', '2maccabees': '2MA'
+};
+
+export const YOUVERSION_BIBLE_IDS: Record<string, number> = {
+  bsb: 3034,
+  asv: 12,
+  cpdv: 42,
+  fbv: 1932,
+  gnv: 2163,
+  enggnv: 2163,
+  lsv: 2660,
+  tcent: 3427,
+  tojb2011: 130,
+  web: 206,
+  engwebus: 206,
+  wmb: 1209,
+  wmbbe: 1207,
+  amp: 1588,
+  nasb: 100,
+  nasb1995: 100,
+  nasb2020: 2692,
+  niv: 111,
+  niv11: 111,
+  niv2011: 111,
+  nirv: 110,
+  nivuk: 113,
+  tpt: 1849,
+};
+
+/**
+ * Flexibly find Bible book matching by ID, display name, or normalized alphanumeric key (e.g. '2chronicles' or '2 Chronicles')
+ */
+export function findBibleBook(bookIdOrName: string): BibleBook {
+  if (!bookIdOrName) return BIBLE_BOOKS[0];
+  const clean = bookIdOrName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const matched = BIBLE_BOOKS.find(b =>
+    b.id.toLowerCase() === bookIdOrName.toLowerCase() ||
+    b.name.toLowerCase() === bookIdOrName.toLowerCase() ||
+    b.id.toLowerCase().replace(/[^a-z0-9]/g, '') === clean ||
+    b.name.toLowerCase().replace(/[^a-z0-9]/g, '') === clean
+  );
+  return matched || BIBLE_BOOKS[0];
+}
+
 /**
  * Maps book ID to 1-based book number (1 for Genesis, 44 for Acts, 66 for Revelation, 68-75 for Deuterocanon)
  */
@@ -125,8 +189,81 @@ export function getBookNumber(bookId: string): number {
   if (clean in STANDARD_BOOK_NUMBERS) {
     return STANDARD_BOOK_NUMBERS[clean];
   }
-  const index = BIBLE_BOOKS.findIndex(b => b.id.toLowerCase() === bookId.toLowerCase());
+  const book = findBibleBook(bookId);
+  const matchedClean = book.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (matchedClean in STANDARD_BOOK_NUMBERS) {
+    return STANDARD_BOOK_NUMBERS[matchedClean];
+  }
+  const index = BIBLE_BOOKS.findIndex(b => b.id.toLowerCase() === book.id.toLowerCase());
   return index !== -1 ? index + 1 : 44; // default Acts
+}
+
+/**
+ * Fetch a chapter directly from the official YouVersion Platform API (https://api.youversion.com/v1)
+ */
+export async function fetchChapterFromOfficialYouVersion(
+  bookId: string,
+  chapterNum: number,
+  version: TranslationId
+): Promise<Verse[] | null> {
+  const appKey = import.meta.env.VITE_YOUVERSION_APP_KEY;
+  if (!appKey) return null;
+
+  const matchedTranslation = TRANSLATIONS.find(t => t.id.toLowerCase() === version.toLowerCase());
+  const vKey = (matchedTranslation?.id || version).toLowerCase();
+  const apiCodeKey = (matchedTranslation?.apiCode || '').toLowerCase();
+  const yvId = YOUVERSION_BIBLE_IDS[vKey] || YOUVERSION_BIBLE_IDS[apiCodeKey];
+  if (!yvId) return null;
+
+  const book = findBibleBook(bookId);
+  const cleanBookId = book.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const usfm = USFM_BOOK_CODES[cleanBookId] || 'JHN';
+  const passageRef = `${usfm}.${chapterNum}`;
+
+  try {
+    const res = await fetch(`https://api.youversion.com/v1/bibles/${yvId}/passages/${passageRef}?format=html`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-YVP-App-Key': appKey
+      }
+    });
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        console.info(`[YouVersion API] Version ${version} (${yvId}) requires publisher access request in developer portal.`);
+      }
+      return null;
+    }
+
+    const data = await res.json();
+    const html = data?.content || '';
+    if (!html) return null;
+
+    const verses: Verse[] = [];
+    const regex = /<span class=["']yv-v["']\s+v=["'](\d+)(?:-\d+)?["']><\/span>([\s\S]*?)(?=<span class=["']yv-v["']|$)/g;
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+      const vNum = parseInt(match[1], 10);
+      const rawVerseHtml = match[2]
+        .replace(/<span class=["']yv-vlbl["']>\d+(?:-\d+)?<\/span>/g, '')
+        .replace(/<[^>]+>/g, ' ');
+      const cleanText = cleanApiText(rawVerseHtml);
+      const isJesus = Boolean(checkIsWordsOfJesus(book.id, chapterNum, vNum, cleanText));
+
+      verses.push({
+        verseNumber: vNum,
+        text: {
+          [version]: cleanText
+        },
+        isWordsOfJesus: isJesus
+      });
+    }
+
+    return verses.length > 0 ? verses : null;
+  } catch (err) {
+    console.warn(`[YouVersion API] Error fetching ${passageRef} (${version}):`, err);
+    return null;
+  }
 }
 
 /**
@@ -137,7 +274,7 @@ export async function fetchChapterFromYouVersion(
   chapterNum: number,
   version: TranslationId = 'KJV'
 ): Promise<Verse[]> {
-  const book = BIBLE_BOOKS.find(b => b.id.toLowerCase() === bookId.toLowerCase()) || BIBLE_BOOKS[0];
+  const book = findBibleBook(bookId);
   const rawBookNum = getBookNumber(book.id);
   const safeBookNum = Math.max(1, Math.min(80, Math.floor(rawBookNum) || 1));
   const safeChapter = Math.max(1, Math.min(150, Math.floor(chapterNum) || 1));
@@ -156,7 +293,7 @@ export async function fetchChapterFromYouVersion(
     return [];
   }
 
-  const cacheKey = `${version}_${bookId}_${chapterNum}`;
+  const cacheKey = `${version}_${book.id}_${chapterNum}`;
   
   if (chapterCache.has(cacheKey)) {
     const cached = chapterCache.get(cacheKey)!;
@@ -263,6 +400,22 @@ export async function fetchChapterFromYouVersion(
     }
   }
 
+  // Strategy 0.5: Official YouVersion Platform API (https://api.youversion.com/v1)
+  try {
+    const officialVerses = await fetchChapterFromOfficialYouVersion(book.id, chapterNum, version);
+    if (officialVerses && officialVerses.length > 0) {
+      chapterCache.set(cacheKey, officialVerses);
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem(`berea_chapter_v5_${cacheKey}`, JSON.stringify(officialVerses));
+        } catch {}
+      }
+      return officialVerses;
+    }
+  } catch (yvErr) {
+    console.debug(`[youversionService] Official YouVersion API read for ${version} deferred:`, yvErr);
+  }
+
   // Strategy 1: High-Speed Open Scripture Endpoint (Bolls Life Scripture API - 66 books, all major versions)
   try {
     // Direct GetBible provider for Tagalog (Ang Dating Biblia 1905)
@@ -303,6 +456,16 @@ export async function fetchChapterFromYouVersion(
     if (response.ok) {
       const data: Array<{ pk: number; verse: number; text: string }> = await response.json();
       if (Array.isArray(data) && data.length > 0) {
+        // Detect upstream publisher block/protest message (e.g. Biblica cease-and-desist protest for NIV)
+        const isBlocked = data.some(item =>
+          item.text && (
+            item.text.includes('Biblica, Inc. has prohibited') ||
+            item.text.includes('prohibited me from using the NIV')
+          )
+        );
+        if (isBlocked) {
+          throw new Error(`Upstream ${version} blocked by publisher copyright restrictions.`);
+        }
         const verses: Verse[] = data.map(item => {
           const hasWj = /<(?:span\s+class=["'][^"']*\bwj\b|wj\b)/i.test(item.text);
           const isJesus = Boolean(hasWj || checkIsWordsOfJesus(book.id, chapterNum, item.verse, item.text));
@@ -386,7 +549,7 @@ export async function fetchFullMultiTranslationChapter(
   chapterNum: number,
   versions: TranslationId[] = ['KJV', 'ESV', 'NIV', 'NLT', 'NASB', 'CSB']
 ): Promise<Chapter> {
-  const book = BIBLE_BOOKS.find(b => b.id.toLowerCase() === bookId.toLowerCase()) || BIBLE_BOOKS[0];
+  const book = findBibleBook(bookId);
 
   // If we have local preloaded chapter with rich Greek/Hebrew word data, start with that
   let baseVerses: Verse[] = [];
@@ -446,7 +609,7 @@ export async function fetchFullMultiTranslationChapter(
 
   return {
     chapterNumber: chapterNum,
-    summary: book.chapters?.[chapterNum]?.summary || `The inspired text of ${book.name} chapter ${chapterNum}, examining God's revelation to His people.`,
+    summary: book.chapters?.[chapterNum]?.summary || '',
     verses: sortedVerses.length > 0 ? sortedVerses : (book.chapters?.[chapterNum]?.verses || []),
     locationKey: book.chapters?.[chapterNum]?.locationKey || 'jerusalem'
   };

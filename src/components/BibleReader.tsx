@@ -531,9 +531,9 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
       {/* Top Compact Reading Bar (Single Row, Never Wraps) */}
       <div
-        className="p-1 px-2 border-b border-[var(--clean-border,#EBE5DC)] flex items-center gap-1 select-none flex-shrink-0 relative overflow-hidden"
+        className="p-1 px-2.5 border-b border-[var(--clean-border,#EBE5DC)] flex items-center gap-1 select-none flex-shrink-0 relative overflow-hidden backdrop-blur-md"
         style={{
-          backgroundColor: 'var(--clean-surface-warm, #FAF7F2)',
+          backgroundColor: 'rgba(250, 247, 242, 0.92)',
           color: 'var(--clean-text-primary, #26221F)'
         }}
       >
@@ -1003,22 +1003,20 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           </div>
         ) : (
           <div className="w-full pb-6">
-            {/* Compact Chapter Header */}
-            <div className="mb-4 text-center select-none">
-              <h1 className="font-heading font-bold text-2xl sm:text-3xl text-[#26221F] tracking-tight">
+            {/* Elegant Editorial Chapter Header */}
+            <div className="mb-6 pt-1 text-center select-none flex flex-col items-center">
+              <span className="text-[10px] tracking-widest uppercase font-semibold text-[var(--clean-accent-caramel,#B4793D)] px-2.5 py-0.5 rounded-full bg-[var(--clean-highlight-cream,#FAF3E8)] border border-[var(--clean-accent-border,#EBE5DC)] mb-2 shadow-2xs">
+                {activeTranslation} • Holy Scripture
+              </span>
+              <h1 className="font-heading font-serif font-bold text-3xl sm:text-4xl text-[#26221F] tracking-tight">
                 {bookName} {chapter.chapterNumber}
               </h1>
-              {chapter.summary && (
-                <p className="mt-1 text-xs text-[#78716C] font-normal italic max-w-md mx-auto leading-normal">
-                  {chapter.summary}
-                </p>
-              )}
             </div>
 
             {/* Paragraph Mode (Flowing Narrative) */}
             {layoutMode === 'paragraph' ? (
               <div
-                style={{ fontSize: `${fontSize}px`, lineHeight: '1.8', color: '#26221F' }}
+                style={{ fontSize: `${fontSize}px`, lineHeight: '1.85', color: '#26221F' }}
                 className={`font-scripture text-[#26221F] text-justify space-y-3 ${isDragging ? 'select-none cursor-text' : ''}`}
                 onMouseMove={handleContainerMouseMove}
               >
@@ -1117,13 +1115,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           : isSelected
                             ? 'font-normal'
                             : isHighlighterMode
-                              ? 'hover:bg-black/5 hover:shadow-2xs rounded'
-                              : 'hover:bg-black/5 rounded'
+                              ? 'hover:bg-[rgba(180,121,61,0.08)] hover:shadow-2xs rounded'
+                              : 'hover:bg-[rgba(180,121,61,0.06)] rounded'
                           }`}
                       >
                         <sup
                           style={!tabHighlight && isSelected ? { color: 'var(--clean-accent-caramel, #B4793D)' } : undefined}
-                          className={`text-[10.5px] select-none mr-1 ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'font-black text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#8C827A] font-bold'}`}
+                          className={`text-[10px] select-none mr-1.5 align-super font-semibold tracking-normal transition-colors ${tabHighlight ? 'text-inherit font-extrabold' : isSelected ? 'font-bold text-[var(--clean-accent-caramel,#B4793D)]' : 'text-[#8C827A]'}`}
                         >
                           {verse.verseNumber}
                           {isBookmarked && <span style={{ color: 'var(--clean-accent-caramel, #B4793D)' }} className="ml-0.5">★</span>}
@@ -1545,6 +1543,35 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
 
             
+            {/* End of Chapter Navigation Bar */}
+            <div className="mt-10 pt-6 border-t border-[var(--clean-border-soft,#F0EAE1)] flex items-center justify-between gap-3 select-none">
+              <button
+                onClick={onPrevChapter}
+                disabled={isFirstChapter}
+                className="ios-glass-btn !px-3.5 !py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 disabled:opacity-30 cursor-pointer transition-all hover:border-[var(--clean-accent-caramel,#B4793D)]"
+                title="Go to previous chapter"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Previous Chapter</span>
+                <span className="sm:hidden">Prev</span>
+              </button>
+
+              <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--clean-text-tertiary,#A8A29E)] px-2 text-center">
+                {bookName} {chapter.chapterNumber}
+              </div>
+
+              <button
+                onClick={onNextChapter}
+                disabled={isLastChapter}
+                className="clean-caramel-btn !px-3.5 !py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 disabled:opacity-30 cursor-pointer transition-all"
+                title="Go to next chapter"
+              >
+                <span className="hidden sm:inline">Next Chapter</span>
+                <span className="sm:hidden">Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             {/* Book Completion Quiz Button */}
             {onOpenQuiz && isLastChapterOfBook && (
               <div className="mt-4 flex flex-wrap items-center justify-center gap-3 animate-fadeIn">

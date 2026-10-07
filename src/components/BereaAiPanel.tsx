@@ -1032,8 +1032,16 @@ export const BereaAiPanel: React.FC<BereaAiPanelProps> = ({
         isLiveAi
       };
       setChatMessages(prev => [...prev, aiMsg]);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Chat error:', err);
+      const errorMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: 'assistant',
+        text: `⚠️ **Error generating response:** ${err?.message || 'The AI service encountered an unexpected error.'}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        lensUsed: activeLens
+      };
+      setChatMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsAiThinking(false);
       setLocalModelProgress(null);
