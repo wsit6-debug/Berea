@@ -391,10 +391,15 @@ export function App() {
     setIsLoadingChapter(true);
     try {
       const transToLoad = currentTrans || activeTranslation;
-      const versionsToFetch: TranslationId[] = Array.from(new Set([
-        transToLoad,
-        'NABRE', 'RSVCE', 'NRSVCE', 'DRB', 'ESV', 'NIV', 'NLT', 'NASB', 'CSB', 'NKJV', 'KJV', 'GENEVA', 'BSB', 'CEB'
-      ]));
+      // Strictly load active translation; only load comparison versions if compare sidebar is open
+      const versionsToFetch: TranslationId[] = [transToLoad];
+      if (activeSidebar === 'compare') {
+        ['KJV', 'BSB', 'ESV', 'NIV'].forEach(v => {
+          if (!versionsToFetch.includes(v as TranslationId)) {
+            versionsToFetch.push(v as TranslationId);
+          }
+        });
+      }
       const fetched = await fetchFullMultiTranslationChapter(targetBookId, targetChapterNum, versionsToFetch);
       setCurrentChapter(fetched);
 

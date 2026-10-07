@@ -1,5 +1,6 @@
 import { BIBLE_BOOKS, BibleBook, Chapter, Verse, TranslationId, TRANSLATIONS } from '../data/bibleData';
 import { checkIsWordsOfJesus } from './redLetterService';
+import { getOfflineBibleFromDb, saveOfflineBibleToDb, OFFLINE_FILE_MAP } from './offlineBibleStorage';
 
 export interface YouVersionConfig {
   apiKey?: string;
@@ -215,20 +216,29 @@ export async function fetchChapterFromYouVersion(
     else if (safeChapter === 147) targetChapter = 146;
   }
 
-  // Strategy 0: 100% Offline Local Scripture Files (/bibles/{apiCode}.json)
+  // Strategy 0: 100% Offline Local Scripture Files (IndexedDB / /bibles/{apiCode}.json)
   const safeApiVersion = encodeURIComponent(rawApiVersion.replace(/[^a-zA-Z0-9_-]/g, ''));
-  if (BUNDLED_OFFLINE_TRANSLATIONS.has(safeApiVersion.toUpperCase())) {
+  const upperCode = safeApiVersion.toUpperCase();
+  if (BUNDLED_OFFLINE_TRANSLATIONS.has(upperCode)) {
     try {
-      let localBible = localTranslationCache.get(safeApiVersion);
+      let localBible = localTranslationCache.get(upperCode);
       if (!localBible) {
-        const res = await fetch(`/bibles/${safeApiVersion}.json`);
+        const fromDb = await getOfflineBibleFromDb(upperCode);
+        if (fromDb) {
+          localBible = fromDb as Record<string, Array<{ verse: number; text: string }>>;
+        }
+      }
+      if (!localBible) {
+        const fileName = OFFLINE_FILE_MAP[upperCode] || `${safeApiVersion}.json`;
+        const res = await fetch(`/bibles/${fileName}`);
         if (res.ok) {
           localBible = await res.json();
-          localTranslationCache.set(safeApiVersion, localBible!);
+          saveOfflineBibleToDb(upperCode, localBible!);
         }
       }
 
       if (localBible) {
+        localTranslationCache.set(upperCode, localBible);
         const chapterKey = `${safeBookNum}_${targetChapter}`;
         const chapterData = localBible[chapterKey];
         if (Array.isArray(chapterData) && chapterData.length > 0) {

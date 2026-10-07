@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { X, Download, CheckCircle2, Lock, Globe, HardDrive, ShieldCheck, Search } from 'lucide-react';
+import { X, Download, CheckCircle2, Lock, Globe, HardDrive, ShieldCheck, Search, Check } from 'lucide-react';
 import { AnimatedPresence } from './AnimatedPresence';
 import { TRANSLATIONS, TranslationInfo, getTranslationColor } from '../data/bibleData';
 import { BUNDLED_OFFLINE_TRANSLATIONS } from '../services/youversionService';
+import { downloadAndStoreBible, isBibleDownloadedLocally } from '../services/offlineBibleStorage';
 
 interface OfflineBiblesModalProps {
   isOpen: boolean;
@@ -19,6 +20,8 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
 }) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadSuccessId, setDownloadSuccessId] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'offline' | 'online'>('all');
 
@@ -38,7 +41,7 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
         (t.year && t.year.toLowerCase().includes(q))
       );
     });
-  }, [searchQuery, filterTab]);
+  }, [searchQuery, filterTab, refreshTrigger]);
 
   const offlineReadyCount = useMemo(() => 
     TRANSLATIONS.filter(t => BUNDLED_OFFLINE_TRANSLATIONS.has(t.apiCode.toUpperCase())).length
@@ -46,20 +49,20 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
 
   const onlineOnlyCount = TRANSLATIONS.length - offlineReadyCount;
 
-  const handleDownload = (t: TranslationInfo) => {
+  const handleDownload = async (t: TranslationInfo) => {
     setDownloadingId(t.id);
-    const link = document.createElement('a');
-    link.href = `/bibles/${t.apiCode}.json`;
-    link.download = `${t.id}_${t.apiCode}_Bible.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(() => {
-      setDownloadingId(null);
+    setDownloadError(null);
+    try {
+      const res = await downloadAndStoreBible(t.apiCode, t.id);
       setDownloadSuccessId(t.id);
-      setTimeout(() => setDownloadSuccessId(null), 3000);
-    }, 600);
+      setRefreshTrigger(prev => prev + 1);
+      setTimeout(() => setDownloadSuccessId(null), 3500);
+    } catch (err: any) {
+      console.error(`Failed to download ${t.id}:`, err);
+      setDownloadError(`Failed to download ${t.id}: ${err.message || 'Network error'}`);
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -218,6 +221,13 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
                 </p>
               </div>
 
+              {downloadError && (
+                <div className="p-3 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs flex items-center justify-between gap-2">
+                  <span>{downloadError}</span>
+                  <button onClick={() => setDownloadError(null)} className="text-red-600 font-bold text-xs p-1">Dismiss</button>
+                </div>
+              )}
+
               {/* Translation Cards List */}
               <div className="space-y-2">
                 {filteredTranslations.length === 0 ? (
@@ -227,6 +237,7 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
                 ) : (
                   filteredTranslations.map((t) => {
                     const isOffline = BUNDLED_OFFLINE_TRANSLATIONS.has(t.apiCode.toUpperCase());
+                    const isDownloaded = isBibleDownloadedLocally(t.apiCode);
                     const isSelected = activeTranslation === t.id;
                     const color = getTranslationColor(t.id);
                     const isSuccess = downloadSuccessId === t.id;
@@ -256,9 +267,17 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
                               </span>
                             )}
                             {isOffline ? (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                {t.id === 'BSB' ? 'CC0 Free' : 'Public Domain'}
-                              </span>
+                              <>
+                                <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  {t.id === 'BSB' ? 'CC0 Free' : 'Public Domain'}
+                                </span>
+                                {isDownloaded && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-0.5">
+                                    <Check className="w-2.5 h-2.5 text-emerald-700" />
+                                    Offline Active
+                                  </span>
+                                )}
+                              </>
                             ) : (
                               <span className="text-[9px] px-1.5 py-0.2 rounded font-medium bg-amber-50 text-amber-800 border border-amber-200">
                                 Publisher Copyright
@@ -290,12 +309,14 @@ export const OfflineBiblesModal: React.FC<OfflineBiblesModalProps> = ({
                               className={`text-[10.5px] px-3 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
                                 isSuccess
                                   ? 'bg-emerald-600 text-white border-emerald-700'
-                                  : 'bg-[var(--clean-accent-caramel,#B4793D)] text-white hover:bg-[var(--clean-accent-dark,#78471F)] border-[var(--clean-accent-dark,#8C5E2E)]'
+                                  : isDownloaded
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                                    : 'bg-[var(--clean-accent-caramel,#B4793D)] text-white hover:bg-[var(--clean-accent-dark,#78471F)] border-[var(--clean-accent-dark,#8C5E2E)]'
                               }`}
-                              title={`Download full ${t.id} JSON dataset for offline storage`}
+                              title={`Download full ${t.id} JSON dataset and save for offline reading`}
                             >
                               <Download className="w-3 h-3" />
-                              {isDownloading ? 'Exporting...' : isSuccess ? 'Saved!' : 'Download JSON'}
+                              {isDownloading ? 'Saving...' : isSuccess ? 'Saved & Active!' : isDownloaded ? 'Export JSON' : 'Download for Offline'}
                             </button>
                           ) : (
                             <div
