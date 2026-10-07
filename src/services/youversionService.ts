@@ -609,7 +609,7 @@ export async function fetchFullMultiTranslationChapter(
 
   return {
     chapterNumber: chapterNum,
-    summary: book.chapters?.[chapterNum]?.summary || `The inspired text of ${book.name} chapter ${chapterNum}, examining God's revelation to His people.`,
+    summary: book.chapters?.[chapterNum]?.summary || '',
     verses: sortedVerses.length > 0 ? sortedVerses : (book.chapters?.[chapterNum]?.verses || []),
     locationKey: book.chapters?.[chapterNum]?.locationKey || 'jerusalem'
   };

@@ -2161,7 +2161,7 @@ export function getChapter(bookId: string, chapterNum: number): Chapter {
 
   return {
     chapterNumber: chapterNum,
-    summary: `Reading the inspired text of ${book.name} ${chapterNum}.`,
+    summary: '',
     verses: mockVerses,
     locationKey: 'jerusalem'
   };

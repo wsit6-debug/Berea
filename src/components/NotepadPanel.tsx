@@ -907,7 +907,7 @@ ${noteText}
   const activeBadge = getPassageBadge(activeTab?.book, activeTab?.chapter);
 
   return (
-    <div className="flex flex-col h-full bg-[#FAF9F6] text-[#26221F] select-text relative overflow-hidden font-sans">
+    <div className="flex flex-col h-full bg-[#FAF9F6] text-[#26221F] select-text relative overflow-hidden font-sans rounded-2xl border border-[var(--clean-accent-border,#EBE5DC)] shadow-xs">
       {/* 1. TOP DOCUMENT NAVIGATION BAR (Single Row) */}
       <div
         className="px-3 sm:px-4 py-2 border-b flex items-center justify-between bg-white shrink-0 gap-2 select-none relative z-40"
