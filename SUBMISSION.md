@@ -39,3 +39,7 @@ During the competition build period, Berea was tested and iterated with coworker
 ## Getting Started
 
 See [README.md](README.md) for full installation instructions, keyboard shortcuts, and architectural documentation.
+
+
+Password for application: M@gg13
+Decrypt Key: DOTENV_PRIVATE_KEY=de79619f4fd834d43fae86645312cdea14b77060c210e13b24c7412ad15fd9e5
