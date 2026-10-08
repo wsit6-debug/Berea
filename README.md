@@ -157,4 +157,4 @@ Berea/
 ---
 
 ## 📜 License
-Private & Proprietary — Developed for the Berea Scripture & Theology Initiative.
+Licensed under the [MIT License](LICENSE). Open-source software developed for the Berea Scripture & Theology Initiative.
