@@ -42,4 +42,5 @@ See [README.md](README.md) for full installation instructions, keyboard shortcut
 
 
 Password for application: M@gg13
+
 Decrypt Key: DOTENV_PRIVATE_KEY=de79619f4fd834d43fae86645312cdea14b77060c210e13b24c7412ad15fd9e5
