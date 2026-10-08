@@ -158,3 +158,5 @@ Berea/
 
 ## 📜 License
 Private & Proprietary — Developed for the Berea Scripture & Theology Initiative.
+
+
