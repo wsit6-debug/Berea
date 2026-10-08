@@ -1,15 +1,41 @@
 # Berea — Gloo AI Hackathon Submission
 
-## 250-Word Official Description
+**Track:** Track 2 — Scripture Beyond the App (YouVersion & Biblica)  
+**Challenge Lane:** Lane 2 — Access (Scripture Where Access Is Constrained)  
+**License:** Open-Source [MIT License](LICENSE)  
+**Institution:** George Fox University (Applied AI Institute)
 
-### Problem
-Pastors, scholars, and everyday believers navigating Scripture face fragmented software, subscription paywalls, and intrusive surveillance telemetry. In sensitive or low-connectivity environments worldwide, cloud-dependent platforms compromise privacy, expose sacred study habits to external scrutiny, and break down entirely when reliable high-speed internet is unavailable.
+---
 
-### Solution
-Berea is a sovereign, open-source theological workspace inspired by the Bereans of Acts 17:11 who examined the Scriptures daily. Berea unites multi-translation Bible reading, historical character lineage tracking, and interactive biblical cartography with the Berea AI Guide—a contextual theological engine delivering instant exegetical analysis without ever relaying user prompts to corporate cloud servers.
+## Project Overview
 
-### Church Impact
-Berea serves the global Church by democratizing rigorous biblical scholarship while safeguarding spiritual freedom. Whether supporting bi-vocational pastors crafting weekly sermons, scholars analyzing multi-tradition perspectives, or frontline missionaries and persecuted believers in air-gapped mission fields, Berea removes friction from personal study and communal disciple-making through resilient, privacy-preserving technology.
+**Berea** is a sovereign, open-source theological study workspace built for pastors, scholars, and believers in low-connectivity or persecuted regions where accessing Scripture online creates digital risk. Inspired by Acts 17:11, Berea removes friction in personal and communal study by uniting parallel Scripture reading, ancient archaeological cartography, and interlinear Greek/Hebrew tools with a private, on-device theological AI guide.
 
-### AI Implementation
-Berea pioneers client-side theological intelligence using in-browser WebLLM (accelerated via WebGPU) alongside automated local Ollama orchestration (`llama3.1`). The system performs context-aware exegesis grounded in primary confessional standards—Catholic, Reformed, Wesleyan, Anglican, and Evangelical. It delivers instant verse cross-referencing, linguistic exposition, and historical theology comparisons directly on-device, ensuring zero server costs, zero platform telemetry, zero vendor lock-in, and total offline readiness.
+Guided by the George Fox University promise to **"Be Known"**, Berea enables believers to engage Scripture across three dimensions:
+- **Academically**: Through original Greek and Hebrew lemmas, historical context, and primary confessional standards.
+- **Personally**: Through distraction-free study notes, custom view settings, and red-letter text formatting.
+- **Spiritually**: Through interactive comprehension quizzes, study guides, and prayerful scripture engagement.
+
+---
+
+## Technical Architecture
+
+- **Client-Side AI Inference:** Runs high-performance LLMs directly in the browser via `@mlc-ai/web-llm` (WebGPU) with automated local Ollama background orchestration (`llama3.1`).
+- **Confessional RAG Engine:** Grounded in primary historical documents across Catholic, Reformed, Wesleyan, Anglican, and Evangelical traditions (Aquinas, Luther, Westminster, Trent, 39 Articles, BF&M) to eliminate hallucinations.
+- **Biblical GIS & Cartography:** Interactive map tracking ancient Roman highway routes and archaeological sites compiled from Stanford ORBIS and Ancient World Mapping Center (AWMC) datasets.
+- **Air-Gapped & Sovereign:** Zero remote server compute, zero tracking telemetry, and 100% offline capability.
+
+---
+
+## Build Period Testing
+
+During the competition build period, Berea was tested and iterated with coworkers and family members engaged in regular Bible study. This feedback led directly to:
+1. Adding tradition-specific confessional filtering so users receive answers aligned with their historical heritage.
+2. Integrating interactive Chapter Comprehension Quizzes and printable Study Guides for small-group discipleship.
+3. Ensuring complete offline functionality so the platform requires zero active internet connectivity once installed.
+
+---
+
+## Getting Started
+
+See [README.md](README.md) for full installation instructions, keyboard shortcuts, and architectural documentation.
